@@ -1,4 +1,4 @@
-import { GLRenderer, GLBuffer, GLShader, GLConstants } from '@sruim/rhi/webgl';
+import { GLRenderer, GLBuffer, GLShader, GLConstants } from '@sruim/rhi';
 
 // 获取canvas元素
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;

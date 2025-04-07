@@ -1,5 +1,6 @@
 import { GLBuffer } from '../../src/webgl/GLBuffer';
 import { GLConstants } from '../../src/webgl/GLConstants';
+import { expect } from '@jest/globals';
 
 describe('GLBuffer', () => {
   let buffer: GLBuffer;

@@ -1,4 +1,5 @@
 import { GLFramebuffer } from '../../src/webgl/GLFramebuffer';
+import { expect } from '@jest/globals';
 
 describe('GLFramebuffer', () => {
   let framebuffer: GLFramebuffer;
@@ -24,6 +25,7 @@ describe('GLFramebuffer', () => {
   test('获取颜色纹理', () => {
     framebuffer.create(800, 600);
     const colorTexture = framebuffer.getColorTexture();
+
     expect(colorTexture).toBeDefined();
     expect(colorTexture.getWidth()).toBe(800);
     expect(colorTexture.getHeight()).toBe(600);
@@ -32,6 +34,7 @@ describe('GLFramebuffer', () => {
   test('获取深度纹理', () => {
     framebuffer.create(800, 600);
     const depthTexture = framebuffer.getDepthTexture();
+
     expect(depthTexture).toBeDefined();
     expect(depthTexture.getWidth()).toBe(800);
     expect(depthTexture.getHeight()).toBe(600);
@@ -51,4 +54,4 @@ describe('GLFramebuffer', () => {
     // 由于WebGL上下文是模拟的，我们无法直接验证帧缓冲对象是否被销毁
     // 但可以验证方法是否被调用
   });
-}); 
+});

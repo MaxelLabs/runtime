@@ -1,5 +1,6 @@
 import { GLTexture } from '../../src/webgl/GLTexture';
 import { GLConstants } from '../../src/webgl/GLConstants';
+import { expect } from '@jest/globals';
 
 describe('GLTexture', () => {
   let texture: GLTexture;
@@ -29,6 +30,7 @@ describe('GLTexture', () => {
   test('设置纹理数据', () => {
     texture.create();
     const data = new Uint8Array(4 * 4 * 4);
+
     for (let i = 0; i < data.length; i += 4) {
       data[i] = 255;     // R
       data[i + 1] = 0;   // G
@@ -63,6 +65,7 @@ describe('GLTexture', () => {
   test('设置图像数据', () => {
     texture.create();
     const image = new Image();
+
     image.width = 4;
     image.height = 4;
     texture.setImage(image);
@@ -76,4 +79,4 @@ describe('GLTexture', () => {
     // 由于WebGL上下文是模拟的，我们无法直接验证纹理是否被销毁
     // 但可以验证方法是否被调用
   });
-}); 
+});

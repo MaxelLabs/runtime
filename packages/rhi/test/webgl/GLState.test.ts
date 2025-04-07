@@ -1,5 +1,6 @@
 import { GLState } from '../../src/webgl/GLState';
 import { GLConstants } from '../../src/webgl/GLConstants';
+import { expect } from '@jest/globals';
 
 describe('GLState', () => {
   let state: GLState;
@@ -72,4 +73,4 @@ describe('GLState', () => {
     // 由于WebGL上下文是模拟的，我们无法直接验证状态是否被重置
     // 但可以验证方法是否被调用
   });
-}); 
+});

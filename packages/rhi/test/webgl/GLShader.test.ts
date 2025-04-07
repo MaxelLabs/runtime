@@ -1,4 +1,5 @@
 import { GLShader } from '../../src/webgl/GLShader';
+import { expect } from '@jest/globals';
 import { GLShaderConstants } from '../../src/webgl/GLShaderConstants';
 
 describe('GLShader', () => {
@@ -59,8 +60,9 @@ describe('GLShader', () => {
       1, 0, 0, 0,
       0, 1, 0, 0,
       0, 0, 1, 0,
-      0, 0, 0, 1
+      0, 0, 0, 1,
     ]);
+
     shader.setUniformMatrix4fv('uModelViewMatrix', matrix);
 
     // 测试设置int uniform
@@ -79,4 +81,4 @@ describe('GLShader', () => {
     // 由于WebGL上下文是模拟的，我们无法直接验证着色器程序是否被销毁
     // 但可以验证方法是否被调用
   });
-}); 
+});

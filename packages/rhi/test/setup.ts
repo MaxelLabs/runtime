@@ -1,4 +1,14 @@
-// 模拟WebGL上下文
+// 模拟WebGL和WebGL2上下文和相关类
+
+// 创建模拟的WebGL类
+class MockWebGLBuffer {}
+class MockWebGLShader {}
+class MockWebGLProgram {}
+class MockWebGLUniformLocation {}
+class MockWebGLTexture {}
+class MockWebGLVertexArrayObject {}
+class MockWebGLFramebuffer {}
+
 class MockWebGLRenderingContext {
   // 常量
   ARRAY_BUFFER = 0x8892;
@@ -75,76 +85,110 @@ class MockWebGLRenderingContext {
   COLOR_ATTACHMENT0 = 0x8CE0;
   DEPTH_ATTACHMENT = 0x8D00;
   FRAMEBUFFER_COMPLETE = 0x8CD5;
+  TEXTURE0 = 0x84C0;
+  TEXTURE1 = 0x84C1;
+  TEXTURE2 = 0x84C2;
+  TEXTURE3 = 0x84C3;
+  TEXTURE4 = 0x84C4;
+  TEXTURE5 = 0x84C5;
+  TEXTURE6 = 0x84C6;
+  TEXTURE7 = 0x84C7;
 
   // 属性
-  canvas: HTMLCanvasElement;
+  canvas: any;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor (canvas: any) {
     this.canvas = canvas;
   }
 
   // 方法
-  viewport(x: number, y: number, width: number, height: number): void {}
-  clearColor(r: number, g: number, b: number, a: number): void {}
-  clear(mask: number): void {}
-  createBuffer(): WebGLBuffer | null { return null; }
-  deleteBuffer(buffer: WebGLBuffer | null): void {}
-  bindBuffer(target: number, buffer: WebGLBuffer | null): void {}
-  bufferData(target: number, data: BufferSource | null, usage: number): void {}
-  createShader(type: number): WebGLShader | null { return null; }
-  deleteShader(shader: WebGLShader | null): void {}
-  shaderSource(shader: WebGLShader, source: string): void {}
-  compileShader(shader: WebGLShader): void {}
-  getShaderParameter(shader: WebGLShader, pname: number): any { return null; }
-  getShaderInfoLog(shader: WebGLShader): string | null { return null; }
-  createProgram(): WebGLProgram | null { return null; }
-  deleteProgram(program: WebGLProgram | null): void {}
-  attachShader(program: WebGLProgram, shader: WebGLShader): void {}
-  linkProgram(program: WebGLProgram): void {}
-  getProgramParameter(program: WebGLProgram, pname: number): any { return null; }
-  getProgramInfoLog(program: WebGLProgram): string | null { return null; }
-  useProgram(program: WebGLProgram | null): void {}
-  getUniformLocation(program: WebGLProgram, name: string): WebGLUniformLocation | null { return null; }
-  uniform1f(location: WebGLUniformLocation | null, v0: number): void {}
-  uniform2f(location: WebGLUniformLocation | null, v0: number, v1: number): void {}
-  uniform3f(location: WebGLUniformLocation | null, v0: number, v1: number, v2: number): void {}
-  uniform4f(location: WebGLUniformLocation | null, v0: number, v1: number, v2: number, v3: number): void {}
-  uniformMatrix4fv(location: WebGLUniformLocation | null, transpose: boolean, value: Float32List): void {}
-  uniform1i(location: WebGLUniformLocation | null, v0: number): void {}
-  createTexture(): WebGLTexture | null { return null; }
-  deleteTexture(texture: WebGLTexture | null): void {}
-  bindTexture(target: number, texture: WebGLTexture | null): void {}
-  texImage2D(target: number, level: number, internalformat: number, width: number, height: number, border: number, format: number, type: number, pixels?: BufferSource | null): void {}
-  texParameteri(target: number, pname: number, param: number): void {}
-  createVertexArray(): WebGLVertexArrayObject | null { return null; }
-  deleteVertexArray(vertexArray: WebGLVertexArrayObject | null): void {}
-  bindVertexArray(vertexArray: WebGLVertexArrayObject | null): void {}
-  enableVertexAttribArray(index: number): void {}
-  vertexAttribPointer(index: number, size: number, type: number, normalized: boolean, stride: number, offset: number): void {}
-  createFramebuffer(): WebGLFramebuffer | null { return null; }
-  deleteFramebuffer(framebuffer: WebGLFramebuffer | null): void {}
-  bindFramebuffer(target: number, framebuffer: WebGLFramebuffer | null): void {}
-  framebufferTexture2D(target: number, attachment: number, textarget: number, texture: WebGLTexture | null, level: number): void {}
-  checkFramebufferStatus(target: number): number { return this.FRAMEBUFFER_COMPLETE; }
-  enable(cap: number): void {}
-  disable(cap: number): void {}
-  blendFunc(sfactor: number, dfactor: number): void {}
-  depthFunc(func: number): void {}
-  cullFace(mode: number): void {}
-  scissor(x: number, y: number, width: number, height: number): void {}
+  viewport (x: number, y: number, width: number, height: number): void {}
+  clearColor (r: number, g: number, b: number, a: number): void {}
+  clear (mask: number): void {}
+  createBuffer (): MockWebGLBuffer { return new MockWebGLBuffer(); }
+  deleteBuffer (buffer: MockWebGLBuffer | null): void {}
+  bindBuffer (target: number, buffer: MockWebGLBuffer | null): void {}
+  bufferData (target: number, data: any, usage: number): void {}
+  createShader (type: number): MockWebGLShader { return new MockWebGLShader(); }
+  deleteShader (shader: MockWebGLShader | null): void {}
+  shaderSource (shader: MockWebGLShader, source: string): void {}
+  compileShader (shader: MockWebGLShader): void {}
+  getShaderParameter (shader: MockWebGLShader, pname: number): any { return true; }
+  getShaderInfoLog (shader: MockWebGLShader): string | null { return null; }
+  createProgram (): MockWebGLProgram { return new MockWebGLProgram(); }
+  deleteProgram (program: MockWebGLProgram | null): void {}
+  attachShader (program: MockWebGLProgram, shader: MockWebGLShader): void {}
+  detachShader (program: MockWebGLProgram, shader: MockWebGLShader): void {}
+  linkProgram (program: MockWebGLProgram): void {}
+  getProgramParameter (program: MockWebGLProgram, pname: number): any { return true; }
+  getProgramInfoLog (program: MockWebGLProgram): string | null { return null; }
+  useProgram (program: MockWebGLProgram | null): void {}
+  getUniformLocation (program: MockWebGLProgram, name: string): MockWebGLUniformLocation { return new MockWebGLUniformLocation(); }
+  uniform1f (location: MockWebGLUniformLocation | null, v0: number): void {}
+  uniform2f (location: MockWebGLUniformLocation | null, v0: number, v1: number): void {}
+  uniform3f (location: MockWebGLUniformLocation | null, v0: number, v1: number, v2: number): void {}
+  uniform4f (location: MockWebGLUniformLocation | null, v0: number, v1: number, v2: number, v3: number): void {}
+  uniformMatrix4fv (location: MockWebGLUniformLocation | null, transpose: boolean, value: any): void {}
+  uniform1i (location: MockWebGLUniformLocation | null, v0: number): void {}
+  createTexture (): MockWebGLTexture { return new MockWebGLTexture(); }
+  deleteTexture (texture: MockWebGLTexture | null): void {}
+  bindTexture (target: number, texture: MockWebGLTexture | null): void {}
+  activeTexture (texture: number): void {}
+  texImage2D (target: number, level: number, internalformat: number, width: number, height: number, border: number, format: number, type: number, pixels?: any): void {}
+  texParameteri (target: number, pname: number, param: number): void {}
+  createVertexArray (): MockWebGLVertexArrayObject { return new MockWebGLVertexArrayObject(); }
+  deleteVertexArray (vertexArray: MockWebGLVertexArrayObject | null): void {}
+  bindVertexArray (vertexArray: MockWebGLVertexArrayObject | null): void {}
+  enableVertexAttribArray (index: number): void {}
+  vertexAttribPointer (index: number, size: number, type: number, normalized: boolean, stride: number, offset: number): void {}
+  createFramebuffer (): MockWebGLFramebuffer { return new MockWebGLFramebuffer(); }
+  deleteFramebuffer (framebuffer: MockWebGLFramebuffer | null): void {}
+  bindFramebuffer (target: number, framebuffer: MockWebGLFramebuffer | null): void {}
+  framebufferTexture2D (target: number, attachment: number, textarget: number, texture: MockWebGLTexture | null, level: number): void {}
+  checkFramebufferStatus (target: number): number { return this.FRAMEBUFFER_COMPLETE; }
+  enable (cap: number): void {}
+  disable (cap: number): void {}
+  blendFunc (sfactor: number, dfactor: number): void {}
+  depthFunc (func: number): void {}
+  cullFace (mode: number): void {}
+  scissor (x: number, y: number, width: number, height: number): void {}
+  drawArrays (mode: number, first: number, count: number): void {}
+  drawElements (mode: number, count: number, type: number, offset: number): void {}
 }
 
-// 扩展HTMLCanvasElement
-declare global {
-  interface HTMLCanvasElement {
-    getContext(contextId: '2d' | 'bitmaprenderer' | 'webgl', options?: any): CanvasRenderingContext2D | ImageBitmapRenderingContext | WebGLRenderingContext | null;
-  }
+// 使用继承的方式模拟WebGL2上下文
+class MockWebGL2RenderingContext extends MockWebGLRenderingContext {
+  // WebGL2特有的属性和方法可以在这里添加
 }
 
-// 模拟getContext方法
-HTMLCanvasElement.prototype.getContext = function(contextId: '2d' | 'bitmaprenderer' | 'webgl', options?: any): CanvasRenderingContext2D | ImageBitmapRenderingContext | WebGLRenderingContext | null {
-  if (contextId === 'webgl') {
-    return new MockWebGLRenderingContext(this);
-  }
-  return null;
-}; 
+// 直接修改HTMLCanvasElement.prototype
+Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+  value: function (contextId: string) {
+    if (contextId === 'webgl' || contextId === 'experimental-webgl') {
+      return new MockWebGLRenderingContext(this);
+    } else if (contextId === 'webgl2') {
+      return new MockWebGL2RenderingContext(this);
+    }
+
+    return null;
+  },
+  configurable: true,
+  writable: true,
+});
+
+// 设置全局变量
+global.WebGLRenderingContext = MockWebGLRenderingContext as any;
+global.WebGL2RenderingContext = MockWebGL2RenderingContext as any;
+global.WebGLBuffer = MockWebGLBuffer as any;
+global.WebGLShader = MockWebGLShader as any;
+global.WebGLProgram = MockWebGLProgram as any;
+global.WebGLUniformLocation = MockWebGLUniformLocation as any;
+global.WebGLTexture = MockWebGLTexture as any;
+global.WebGLVertexArrayObject = MockWebGLVertexArrayObject as any;
+global.WebGLFramebuffer = MockWebGLFramebuffer as any;
+
+// 确保数组类型存在
+global.Float32Array = global.Float32Array || Array;
+global.Uint8Array = global.Uint8Array || Array;
+global.Uint16Array = global.Uint16Array || Array;
+global.Uint32Array = global.Uint32Array || Array;

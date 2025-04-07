@@ -1,5 +1,6 @@
 import { GLRenderer } from '../../src/webgl/GLRenderer';
 import { GLConstants } from '../../src/webgl/GLConstants';
+import { expect } from '@jest/globals';
 
 describe('GLRenderer', () => {
   let renderer: GLRenderer;
@@ -40,6 +41,7 @@ describe('GLRenderer', () => {
       GLConstants.BUFFER_USAGE.STATIC_DRAW,
       1024
     );
+
     expect(buffer).toBeDefined();
     expect(buffer.type).toBe(GLConstants.BUFFER_TYPE.ARRAY_BUFFER);
     expect(buffer.usage).toBe(GLConstants.BUFFER_USAGE.STATIC_DRAW);
@@ -61,4 +63,4 @@ describe('GLRenderer', () => {
     // 由于WebGL上下文是模拟的，我们无法直接验证绘制结果
     // 但可以验证方法是否被调用
   });
-}); 
+});

@@ -1,5 +1,6 @@
 import { GLVertexArray } from '../../src/webgl/GLVertexArray';
 import { GLConstants } from '../../src/webgl/GLConstants';
+import { expect } from '@jest/globals';
 
 describe('GLVertexArray', () => {
   let vao: GLVertexArray;
@@ -9,7 +10,7 @@ describe('GLVertexArray', () => {
   beforeEach(() => {
     canvas = document.createElement('canvas');
     gl = canvas.getContext('webgl') as WebGLRenderingContext;
-    vao = new GLVertexArray(gl);
+    vao = new GLVertexArray(gl as any);
   });
 
   afterEach(() => {
@@ -38,13 +39,15 @@ describe('GLVertexArray', () => {
 
     // 创建测试缓冲区
     const buffer = gl.createBuffer();
+
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     const vertices = new Float32Array([1, 2, 3, 4]);
+
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
     vao.setAttribute(
       'aPosition',
-      buffer,
+      buffer as WebGLBuffer,
       2,
       GLConstants.DATA_TYPE.FLOAT,
       false,
@@ -70,4 +73,4 @@ describe('GLVertexArray', () => {
     // 由于WebGL上下文是模拟的，我们无法直接验证顶点数组对象是否被销毁
     // 但可以验证方法是否被调用
   });
-}); 
+});
