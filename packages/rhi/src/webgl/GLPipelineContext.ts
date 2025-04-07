@@ -3,7 +3,11 @@ import type { IPipelineContext } from '@sruim/core';
 import type * as spec from '@sruim/specification';
 
 export class GLPipelineContext implements IPipelineContext {
-  isReady: false;
+  isReady: boolean;
+
+  constructor () {
+    this.isReady = false;
+  }
 
   dispose (): void {
     throw new Error('Method not implemented.');

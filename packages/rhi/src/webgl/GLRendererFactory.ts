@@ -1,11 +1,10 @@
 import { GLRenderer } from './GLRenderer';
-import { GLBuffer } from './GLBuffer';
+import type { GLBuffer } from './GLBuffer';
 import { GLShader } from './GLShader';
 import { GLTexture } from './GLTexture';
 import { GLVertexArray } from './GLVertexArray';
 import { GLFramebuffer } from './GLFramebuffer';
 import { GLState } from './GLState';
-import { GLConstants } from './GLConstants';
 import { GLShaderConstants } from './GLShaderConstants';
 
 export class GLRendererFactory {
@@ -15,101 +14,110 @@ export class GLRendererFactory {
   private postProcessShader: GLShader | null = null;
   private state: GLState | null = null;
 
-  private constructor() {}
+  private constructor () {}
 
-  static getInstance(): GLRendererFactory {
+  static getInstance (): GLRendererFactory {
     if (!GLRendererFactory.instance) {
-      GLRendererFactory.instance = new GLRendererFactory(),
+      GLRendererFactory.instance = new GLRendererFactory();
     }
+
     return GLRendererFactory.instance;
   }
 
-  createRenderer(canvas: HTMLCanvasElement): GLRenderer {
+  createRenderer (canvas: HTMLCanvasElement): GLRenderer {
     if (!this.renderer) {
-      this.renderer = new GLRenderer(),
-      this.renderer.create(canvas),
-      this.state = new GLState(this.renderer.getGL()),
+      this.renderer = new GLRenderer();
+      this.renderer.create(canvas);
+      this.state = new GLState(this.renderer.getGL());
       this.state.reset();
     }
+
     return this.renderer;
   }
 
-  createShader(): GLShader {
+  createShader (): GLShader {
     if (!this.shader) {
       if (!this.renderer) {
-        throw new Error('Renderer not created'),
+        throw new Error('Renderer not created');
       }
-      this.shader = new GLShader(this.renderer.getGL()),
+      this.shader = new GLShader(this.renderer.getGL());
       this.shader.create(
         GLShaderConstants.VERTEX_SHADER,
         GLShaderConstants.FRAGMENT_SHADER
-      ),
+      );
     }
-    return this.shader,
+
+    return this.shader;
   }
 
-  createPostProcessShader(): GLShader {
+  createPostProcessShader (): GLShader {
     if (!this.postProcessShader) {
       if (!this.renderer) {
         throw new Error('Renderer not created');
       }
-      this.postProcessShader = new GLShader(this.renderer.gl);
+      this.postProcessShader = new GLShader(this.renderer.getGL());
       this.postProcessShader.create(
         GLShaderConstants.POST_PROCESS_VERTEX_SHADER,
         GLShaderConstants.POST_PROCESS_FRAGMENT_SHADER
       );
     }
-    return this.postProcessShader,
+
+    return this.postProcessShader;
   }
 
-  createBuffer(type: number, usage: number, size: number): GLBuffer {
+  createBuffer (type: number, usage: number, size: number): GLBuffer {
     if (!this.renderer) {
-      throw new Error('Renderer not created'),
+      throw new Error('Renderer not created');
     }
-    return this.renderer.createBuffer(type, usage, size),
+
+    return this.renderer.createBuffer(type, usage, size);
   }
 
-  createTexture(format: number, type: number): GLTexture {
+  createTexture (format: number, type: number): GLTexture {
     if (!this.renderer) {
-      throw new Error('Renderer not created'),
+      throw new Error('Renderer not created');
     }
-    return new GLTexture(this.renderer.getGL(), format, type),
+
+    return new GLTexture(this.renderer.getGL(), format, type);
   }
 
-  createVertexArray(): GLVertexArray {
+  createVertexArray (): GLVertexArray {
     if (!this.renderer) {
-      throw new Error('Renderer not created'),
+      throw new Error('Renderer not created');
     }
-    return new GLVertexArray(this.renderer.getGL()),
+
+    return new GLVertexArray(this.renderer.getGL());
   }
 
-  createFramebuffer(width: number, height: number): GLFramebuffer {
+  createFramebuffer (width: number, height: number): GLFramebuffer {
     if (!this.renderer) {
-      throw new Error('Renderer not created'),
+      throw new Error('Renderer not created');
     }
-    return new GLFramebuffer(this.renderer.getGL()),
+
+    return new GLFramebuffer(this.renderer.getGL());
   }
 
-  getState(): GLState {
+  getState (): GLState {
     if (!this.state) {
-      throw new Error('State not created'),
+      throw new Error('State not created');
     }
-    return this.state,
+
+    return this.state;
   }
 
-  destroy(): void {
+  destroy (): void {
     if (this.shader) {
-      this.shader.destroy(),
-      this.shader = null,
+      this.shader.destroy();
+      this.shader = null;
     }
     if (this.postProcessShader) {
-      this.postProcessShader.destroy(),
-      this.postProcessShader = null,
+      this.postProcessShader.destroy();
+      this.postProcessShader = null;
     }
     if (this.renderer) {
-      this.renderer.destroy(),
-      this.renderer = null,
+      this.renderer.destroy();
+      this.renderer = null;
     }
-    this.state = null,
+    this.state = null;
   }
-} 
+}

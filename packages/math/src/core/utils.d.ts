@@ -1,0 +1,11 @@
+export declare const PI2: number;
+export declare const DEG2RAD: number;
+export declare const RAD2DEG: number;
+export declare const NumberEpsilon = 0.000001;
+export declare function isZero(v: number): boolean;
+export declare function isEqual(a: number, b: number): boolean;
+export declare const damp: (x: number, y: number, lambda: number, dt: number) => number;
+export declare const lerp: (x: number, y: number, t: number) => number;
+export declare const degToRad: (degrees: number) => number;
+export declare const radToDeg: (radians: number) => number;
+export declare function clamp(value: number, min: number, max: number): number;

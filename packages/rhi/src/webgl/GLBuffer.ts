@@ -8,28 +8,28 @@ export class GLBuffer implements IBuffer {
   usage: number;
   size: number;
 
-  constructor(gl: WebGLRenderingContext, type: number, usage: number, size: number) {
+  constructor (gl: WebGLRenderingContext, type: number, usage: number, size: number) {
     this.gl = gl;
     this.type = type;
     this.usage = usage;
     this.size = size;
   }
 
-  create(): void {
+  create (): void {
     this.buffer = this.gl.createBuffer();
     if (!this.buffer) {
       throw new Error('Failed to create WebGL buffer');
     }
   }
 
-  destroy(): void {
+  destroy (): void {
     if (this.buffer) {
       this.gl.deleteBuffer(this.buffer);
       this.buffer = null;
     }
   }
 
-  update(data: Float32Array | Uint16Array, offset = 0): void {
+  update (data: Float32Array | Uint16Array, offset = 0): void {
     if (!this.buffer) {
       throw new Error('Buffer not created');
     }
@@ -38,14 +38,14 @@ export class GLBuffer implements IBuffer {
     this.unbind();
   }
 
-  bind(): void {
+  bind (): void {
     if (!this.buffer) {
       throw new Error('Buffer not created');
     }
     this.gl.bindBuffer(this.type, this.buffer);
   }
 
-  unbind(): void {
+  unbind (): void {
     this.gl.bindBuffer(this.type, null);
   }
 }

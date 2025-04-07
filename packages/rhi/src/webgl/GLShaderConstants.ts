@@ -64,4 +64,4 @@ export const GLShaderConstants = {
       gl_FragColor = color;
     }
   `,
-} as const; 
+} as const;

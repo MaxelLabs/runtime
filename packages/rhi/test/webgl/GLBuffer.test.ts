@@ -31,6 +31,7 @@ describe('GLBuffer', () => {
   test('更新缓冲区数据', () => {
     buffer.create();
     const data = new Float32Array([1, 2, 3, 4]);
+
     buffer.update(data);
     // 由于WebGL上下文是模拟的，我们无法直接验证数据是否正确更新
     // 但可以验证方法是否被调用
@@ -50,4 +51,4 @@ describe('GLBuffer', () => {
     // 由于WebGL上下文是模拟的，我们无法直接验证缓冲区是否被销毁
     // 但可以验证方法是否被调用
   });
-}); 
+});
