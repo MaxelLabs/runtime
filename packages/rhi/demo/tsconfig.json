@@ -1,11 +1,13 @@
 {
-  "extends": "../tsconfig.json",
+  "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "outDir": "../dist/demo",
-    "rootDir": ".",
-    "composite": false,
-    "declaration": false,
-    "sourceMap": true
+    "rootDir": "../../../",
+    "sourceMap": true,
+    "baseUrl": "../../../",
+    "paths": {
+      "@sruim/*": ["packages/*/src"]
+    }
   },
   "include": ["./**/*"],
   "exclude": ["node_modules"]

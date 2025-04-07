@@ -1,5 +1,5 @@
-import type { IBuffer } from './IBuffer',
-import type { Matrix4, Color } from '@sruim/math',
+import type { IBuffer } from './IBuffer';
+import type { Matrix4, Color } from '@sruim/math';
 
 export interface IRenderer {
   /**
@@ -62,4 +62,4 @@ export interface IRenderer {
    * @param offset - 偏移量
    */
   drawIndexed(mode: number, count: number, offset?: number): void,
-} 
+}

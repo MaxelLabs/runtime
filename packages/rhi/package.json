@@ -21,7 +21,7 @@
     "build": "tsc",
     "build:module": "rollup -c",
     "build:declaration": "tsc -d --emitDeclarationOnly",
-    "clean": "rimraf dist && rimraf \"*+(.tsbuildinfo)\"",
+    "clean": "rimraf dist",
     "prepublishOnly": "pnpm build",
     "test": "jest",
     "test:watch": "jest --watch",

@@ -1,4 +1,4 @@
-import { GLRenderer, GLBuffer, GLShader, GLVertexArray, GLConstants } from '@sruim/rhi/webgl';
+import { GLRenderer, GLBuffer, GLShader, GLConstants } from '@sruim/rhi/webgl';
 
 // 获取canvas元素
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -8,7 +8,10 @@ if (!canvas) {
 }
 
 // 创建渲染器
-const renderer = new GLRenderer(canvas);
+const renderer = new GLRenderer();
+
+renderer.create(canvas);
+const gl = renderer.getGL();
 
 // 顶点着色器源码
 const vertexShaderSource = `
@@ -39,7 +42,9 @@ const fragmentShaderSource = `
 `;
 
 // 创建着色器
-const shader = renderer.createShader(vertexShaderSource, fragmentShaderSource);
+const shader = new GLShader(gl);
+
+shader.create(vertexShaderSource, fragmentShaderSource);
 
 // 创建顶点数据
 const vertices = new Float32Array([
@@ -50,31 +55,29 @@ const vertices = new Float32Array([
 ]);
 
 // 创建顶点缓冲区
-const vertexBuffer = renderer.createBuffer(GLConstants.ARRAY_BUFFER, vertices, GLConstants.STATIC_DRAW);
+const vertexBuffer = new GLBuffer(gl, GLConstants.BUFFER_TYPE.ARRAY_BUFFER, GLConstants.BUFFER_USAGE.STATIC_DRAW, vertices.byteLength);
 
-// 创建顶点数组
-const vertexArray = renderer.createVertexArray();
+vertexBuffer.create();
+vertexBuffer.bind();
+vertexBuffer.update(vertices);
 
-vertexArray.bind();
-vertexArray.setVertexAttribPointer(0, 3, GLConstants.FLOAT, false, 36, 0);  // 位置
-vertexArray.setVertexAttribPointer(1, 2, GLConstants.FLOAT, false, 36, 12); // 纹理坐标
-vertexArray.setVertexAttribPointer(2, 4, GLConstants.FLOAT, false, 36, 20); // 颜色
-vertexArray.enableVertexAttribArray(0);
-vertexArray.enableVertexAttribArray(1);
-vertexArray.enableVertexAttribArray(2);
+// 设置顶点属性
+const stride = 36; // 每个顶点36字节 (9个float32 * 4字节)
+
+vertexBuffer.bind();
+gl.enableVertexAttribArray(0);
+gl.vertexAttribPointer(0, 3, GLConstants.DATA_TYPE.FLOAT, false, stride, 0); // 位置
+gl.enableVertexAttribArray(1);
+gl.vertexAttribPointer(1, 2, GLConstants.DATA_TYPE.FLOAT, false, stride, 12); // 纹理坐标
+gl.enableVertexAttribArray(2);
+gl.vertexAttribPointer(2, 4, GLConstants.DATA_TYPE.FLOAT, false, stride, 20); // 颜色
 
 // 渲染循环
 function render () {
-  // 清除画布
-  renderer.clear(GLConstants.COLOR_BUFFER_BIT | GLConstants.DEPTH_BUFFER_BIT);
-
-  // 使用着色器
+  renderer.clear();
   shader.use();
-
-  // 绘制三角形
-  renderer.drawArrays(GLConstants.TRIANGLES, 0, 3);
-
-  // 请求下一帧
+  vertexBuffer.bind(); // 确保绘制前缓冲区已绑定
+  gl.drawArrays(GLConstants.DRAW_MODE.TRIANGLES, 0, 3);
   requestAnimationFrame(render);
 }
 

@@ -5,11 +5,19 @@
     "composite": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "noEmit": false,
+    "rootDir": "src",
+    "baseUrl": ".",
+    "paths": {
+      "@sruim/math": ["../../packages/math/src"],
+      "@sruim/specification": ["../../packages/specification/src"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
   "references": [
-    { "path": "../../packages/math" }
+    { "path": "../../packages/math" },
+    { "path": "../../packages/specification" }
   ]
 }
