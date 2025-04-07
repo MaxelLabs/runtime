@@ -1,0 +1,112 @@
+export const GLConstants = {
+  // 缓冲区类型
+  BUFFER_TYPE: {
+    ARRAY_BUFFER: 0x8892,
+    ELEMENT_ARRAY_BUFFER: 0x8893,
+  },
+
+  // 缓冲区用途
+  BUFFER_USAGE: {
+    STATIC_DRAW: 0x88E4,
+    DYNAMIC_DRAW: 0x88E8,
+    STREAM_DRAW: 0x88E0,
+  },
+
+  // 着色器类型
+  SHADER_TYPE: {
+    VERTEX_SHADER: 0x8B31,
+    FRAGMENT_SHADER: 0x8B30,
+  },
+
+  // 数据类型
+  DATA_TYPE: {
+    BYTE: 0x1400,
+    UNSIGNED_BYTE: 0x1401,
+    SHORT: 0x1402,
+    UNSIGNED_SHORT: 0x1403,
+    INT: 0x1404,
+    UNSIGNED_INT: 0x1405,
+    FLOAT: 0x1406,
+    DOUBLE: 0x140A,
+  },
+
+  // 纹理格式
+  TEXTURE_FORMAT: {
+    RGB: 0x1907,
+    RGBA: 0x1908,
+    LUMINANCE: 0x1909,
+    LUMINANCE_ALPHA: 0x190A,
+    ALPHA: 0x1906,
+    DEPTH_COMPONENT: 0x1902,
+  },
+
+  // 纹理参数
+  TEXTURE_PARAMETER: {
+    MIN_FILTER: 0x2801,
+    MAG_FILTER: 0x2800,
+    WRAP_S: 0x2802,
+    WRAP_T: 0x2803,
+  },
+
+  // 纹理过滤
+  TEXTURE_FILTER: {
+    NEAREST: 0x2600,
+    LINEAR: 0x2601,
+    NEAREST_MIPMAP_NEAREST: 0x2700,
+    LINEAR_MIPMAP_NEAREST: 0x2701,
+    NEAREST_MIPMAP_LINEAR: 0x2702,
+    LINEAR_MIPMAP_LINEAR: 0x2703,
+  },
+
+  // 纹理环绕
+  TEXTURE_WRAP: {
+    REPEAT: 0x2901,
+    CLAMP_TO_EDGE: 0x812F,
+    MIRRORED_REPEAT: 0x8370,
+  },
+
+  // 绘制模式
+  DRAW_MODE: {
+    POINTS: 0x0000,
+    LINES: 0x0001,
+    LINE_LOOP: 0x0002,
+    LINE_STRIP: 0x0003,
+    TRIANGLES: 0x0004,
+    TRIANGLE_STRIP: 0x0005,
+    TRIANGLE_FAN: 0x0006,
+  },
+
+  // 深度测试函数
+  DEPTH_FUNC: {
+    NEVER: 0x0200,
+    LESS: 0x0201,
+    EQUAL: 0x0202,
+    LEQUAL: 0x0203,
+    GREATER: 0x0204,
+    NOTEQUAL: 0x0205,
+    GEQUAL: 0x0206,
+    ALWAYS: 0x0207,
+  },
+
+  // 混合函数
+  BLEND_FUNC: {
+    ZERO: 0,
+    ONE: 1,
+    SRC_COLOR: 0x0300,
+    ONE_MINUS_SRC_COLOR: 0x0301,
+    SRC_ALPHA: 0x0302,
+    ONE_MINUS_SRC_ALPHA: 0x0303,
+    DST_ALPHA: 0x0304,
+    ONE_MINUS_DST_ALPHA: 0x0305,
+    DST_COLOR: 0x0306,
+    ONE_MINUS_DST_COLOR: 0x0307,
+    SRC_ALPHA_SATURATE: 0x0308,
+  },
+
+  // 面剔除
+  CULL_FACE: {
+    FRONT: 0x0404,
+    BACK: 0x0405,
+    FRONT_AND_BACK: 0x0408,
+  },
+} as const, 

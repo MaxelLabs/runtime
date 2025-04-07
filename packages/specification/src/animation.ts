@@ -20,3 +20,29 @@ export interface TextureSheetAnimation {
      */
   animate: boolean,
 }
+
+/**
+ * 动画属性
+ */
+export interface Animation {
+  /**
+     * 动画名称
+     */
+  name: string,
+  /**
+     * 动画持续时间
+     */
+  duration: number,
+  /**
+     * 是否循环播放
+     */
+  loop: boolean,
+  /**
+     * 动画的帧率
+     */
+  fps: number,
+  /**
+     * 雪碧图/帧动画属性
+     */
+  textureSheetAnimation: TextureSheetAnimation
+}

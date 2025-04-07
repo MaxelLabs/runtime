@@ -1,7 +1,7 @@
 {
   "name": "@sruim/rhi",
-  "version": "0.0.1",
-  "description": "Sruim runtime rhi for the web",
+  "version": "1.0.0",
+  "description": "WebGL渲染层",
   "module": "./dist/index.mjs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -18,11 +18,14 @@
   "scripts": {
     "dev": "vite",
     "prebuild": "pnpm clean",
-    "build": "pnpm build:declaration && pnpm build:module",
+    "build": "tsc",
     "build:module": "rollup -c",
     "build:declaration": "tsc -d --emitDeclarationOnly",
     "clean": "rimraf dist && rimraf \"*+(.tsbuildinfo)\"",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm build",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "contributors": [
     {
@@ -36,6 +39,20 @@
   },
   "dependencies": {
     "@sruim/core": "workspace:*",
+    "@sruim/math": "workspace:*",
     "@sruim/specification": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^18.15.11",
+    "@vitejs/plugin-legacy": "^4.0.0",
+    "jest": "^29.5.0",
+    "jest-environment-jsdom": "^29.5.0",
+    "rimraf": "^5.0.0",
+    "rollup": "^3.20.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.0.4",
+    "vite": "^4.3.0",
+    "vite-tsconfig-paths": "^4.0.0"
   }
 }

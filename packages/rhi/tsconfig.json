@@ -1,20 +1,17 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist",
-    "composite": true
+    "outDir": "./dist",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "types": ["@types/jest", "@types/node"]
   },
-  "include": [
-    "src",
-    "../../types"
-  ],
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["node_modules", "dist"],
   "references": [
-    {
-      "path": "../../packages/core"
-    },
-    {
-      "path": "../../packages/specification"
-    }
+    { "path": "../../packages/core" },
+    { "path": "../../packages/math" }
   ]
 }
