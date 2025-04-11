@@ -1,5 +1,5 @@
 import { Quaternion } from './quaternion';
-import type { Vector3 } from './vector3';
+import { Vector3 } from './vector3';
 import { Matrix4 } from './matrix4';
 import { RAD2DEG, clamp } from './utils';
 import { DEG2RAD } from './utils';
@@ -67,7 +67,7 @@ export class Euler {
    * @returns
    */
   setFromRotationMatrix4 (m: Matrix4, order = this.order): this {
-    const te = m.elements;
+    const te = m.getElements();
     const m11 = te[0]; const m12 = te[4]; const m13 = te[8];
     const m21 = te[1]; const m22 = te[5]; const m23 = te[9];
     const m31 = te[2]; const m32 = te[6]; const m33 = te[10];
@@ -159,8 +159,10 @@ export class Euler {
    */
   setFromQuaternion (quat: Quaternion, order = this.order): this {
     const matrix = Euler.tempMat0;
+    const zero = new Vector3();
+    const one = new Vector3(1, 1, 1);
 
-    matrix.setFromQuaternion(quat);
+    matrix.compose(zero, quat, one);
 
     return this.setFromRotationMatrix4(matrix, order);
   }
@@ -258,7 +260,7 @@ export class Euler {
   reorder (newOrder: EulerOrder): this {
     const quaternion = new Quaternion();
 
-    quaternion.setFromEuler(this);
+    quaternion.setFromEuler(this.x, this.y, this.z);
 
     return this.setFromQuaternion(quaternion, newOrder);
   }
@@ -272,7 +274,9 @@ export class Euler {
   rotateVector3 (v: Vector3, out?: Vector3): Vector3 {
     const q = Euler.tempQuat0;
 
-    return q.setFromEuler(this).rotateVector3(v, out);
+    q.setFromEuler(this.x, this.y, this.z);
+
+    return q.rotateVector3(v, out);
   }
 
   /**
@@ -387,7 +391,7 @@ export class Euler {
    * @returns 返回目标矩阵
    */
   toMatrix4 (mat: Matrix4): Matrix4 {
-    const me = mat.elements;
+    const me = mat.getElements();
     const { x, y, z, order } = this;
     const cosX = Math.cos(x * DEG2RAD), sinX = Math.sin(x * DEG2RAD);
     const cosY = Math.cos(y * DEG2RAD), sinY = Math.sin(y * DEG2RAD);

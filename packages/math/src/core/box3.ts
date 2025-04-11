@@ -323,7 +323,7 @@ export class Box3 {
     this.clampPoint(sphere.center, vector);
 
     // If that point is inside the sphere, the AABB and sphere intersect.
-    return vector.distanceSquared(sphere.center) <= (sphere.radius * sphere.radius);
+    return vector.distanceToSquared(sphere.center) <= (sphere.radius * sphere.radius);
   }
 
   /**

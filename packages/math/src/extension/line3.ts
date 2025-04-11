@@ -13,8 +13,8 @@ export class Line3 {
    * @param [end=new Vector3()] - 线段终点，默认值为(0, 0, 0)
    */
   constructor (
-    start = Vector3.ZERO,
-    end = Vector3.ZERO,
+    start = new Vector3(),
+    end = new Vector3(),
   ) {
     this.start = start.clone();
     this.end = end.clone();
