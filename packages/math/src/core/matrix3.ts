@@ -4,14 +4,31 @@ import type { Matrix3DataType, mat3 } from './type';
 import { isEqual } from './utils';
 import type { Vector3 } from './vector3';
 
+// 对象池配置
+const MATRIX3_POOL_SIZE = 100;
+const matrix3Pool: Matrix3[] = [];
+let matrix3PoolIndex = 0;
+
 /**
  * 三维矩阵（列优先矩阵）
  */
 export class Matrix3 {
+  static readonly IDENTITY = Object.freeze(new Matrix3(
+    1, 0, 0,
+    0, 1, 0,
+    0, 0, 1,
+  ));
+
+  static readonly ZERO = Object.freeze(new Matrix3(
+    0, 0, 0,
+    0, 0, 0,
+    0, 0, 0,
+  ));
+
   /**
-   * 矩阵值数组
+   * 矩阵值数组 - 使用 TypedArray 提高性能
    */
-  elements: number[];
+  elements: Float32Array;
 
   /**
    * 构造函数，初始值为零矩阵
@@ -30,11 +47,11 @@ export class Matrix3 {
     m12 = 0, m22 = 1, m32 = 0,
     m13 = 0, m23 = 0, m33 = 1,
   ) {
-    this.elements = [
+    this.elements = new Float32Array([
       m11, m21, m31,
       m12, m22, m32,
       m13, m23, m33,
-    ];
+    ]);
   }
 
   /**
@@ -112,7 +129,7 @@ export class Matrix3 {
    * @returns 矩阵
    */
   setFromMatrix4 (m: Matrix4): this {
-    const me = m.elements;
+    const me = m.getElements();
 
     return this.set(
       me[0], me[1], me[2],
@@ -128,8 +145,12 @@ export class Matrix3 {
    * @returns 矩阵
    */
   setFromArray (array: Matrix3DataType, offset = 0): this {
-    for (let i = 0; i < 9; i++) {
-      this.elements[i] = array[offset + i];
+    if (array instanceof Float32Array && offset === 0) {
+      this.elements.set(array.subarray(0, 9));
+    } else {
+      for (let i = 0; i < 9; i++) {
+        this.elements[i] = array[offset + i];
+      }
     }
 
     return this;
@@ -175,9 +196,9 @@ export class Matrix3 {
    * @returns 零矩阵
    */
   setZero (): this {
-    for (let i = 0; i < 9; i++) {
-      this.elements[i] = 0;
-    }
+    const e = this.elements;
+
+    e.fill(0);
 
     return this;
   }
@@ -195,17 +216,11 @@ export class Matrix3 {
   }
 
   /**
-   * 矩阵克隆
+   * 矩阵克隆，使用对象池
    * @returns 克隆结果
    */
   clone (): Matrix3 {
-    const e = this.elements;
-
-    return new Matrix3(
-      e[0], e[1], e[2],
-      e[3], e[4], e[5],
-      e[6], e[7], e[8]
-    );
+    return Matrix3.create().copyFrom(this);
   }
 
   /**
@@ -214,7 +229,7 @@ export class Matrix3 {
    * @returns 复制结果
    */
   copyFrom (m: Matrix3): this {
-    this.elements = [...m.elements];
+    this.elements.set(m.elements);
 
     return this;
   }
@@ -225,10 +240,12 @@ export class Matrix3 {
    * @returns 列向量
    */
   getColumnVector (i: number, v: Vector3): Vector3 {
+    const e = this.elements;
+
     return v.set(
-      this.elements[i * 3],
-      this.elements[i * 3 + 1],
-      this.elements[i * 3 + 2]
+      e[i * 3],
+      e[i * 3 + 1],
+      e[i * 3 + 2]
     );
   }
 
@@ -297,8 +314,10 @@ export class Matrix3 {
    */
   multiply (right: Matrix3 | number): this {
     if (typeof right === 'number') {
+      const e = this.elements;
+
       for (let i = 0; i < 9; i++) {
-        this.elements[i] *= right;
+        e[i] *= right;
       }
 
       return this;
@@ -381,8 +400,8 @@ export class Matrix3 {
     const t13 = m23 * m12 - m22 * m13;
     const det = m11 * t11 + m21 * t12 + m31 * t13;
 
-    if (det === 0) {
-      return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0);
+    if (Math.abs(det) < 1e-8) {
+      return this.setZero();
     }
 
     const detInv = 1 / det;
@@ -408,11 +427,11 @@ export class Matrix3 {
    */
   transpose (): this {
     let t: number;
-    const m = this.elements;
+    const e = this.elements;
 
-    t = m[1]; m[1] = m[3]; m[3] = t;
-    t = m[2]; m[2] = m[6]; m[6] = t;
-    t = m[5]; m[5] = m[7]; m[7] = t;
+    t = e[1]; e[1] = e[3]; e[3] = t;
+    t = e[2]; e[2] = e[6]; e[6] = t;
+    t = e[5]; e[5] = e[7]; e[7] = t;
 
     return this;
   }
@@ -469,23 +488,65 @@ export class Matrix3 {
    * @returns
    */
   toArray (): mat3 {
-    return [...this.elements] as mat3;
+    return Array.from(this.elements) as mat3;
   }
 
+  /**
+   * 将矩阵数据填充到目标数组
+   * @param array 目标数组
+   * @param offset 偏移值
+   */
   fill (array: number[] | Float32Array, offset = 0) {
     const e = this.elements;
 
-    array[offset] = e[0];
-    array[offset + 1] = e[1];
-    array[offset + 2] = e[2];
+    if (array instanceof Float32Array && offset === 0 && array.length >= 9) {
+      // 对于 Float32Array，我们可以直接使用 set 方法
+      array.set(e);
+    } else {
+      // 手动复制
+      array[offset] = e[0];
+      array[offset + 1] = e[1];
+      array[offset + 2] = e[2];
+      array[offset + 3] = e[3];
+      array[offset + 4] = e[4];
+      array[offset + 5] = e[5];
+      array[offset + 6] = e[6];
+      array[offset + 7] = e[7];
+      array[offset + 8] = e[8];
+    }
+  }
 
-    array[offset + 3] = e[3];
-    array[offset + 4] = e[4];
-    array[offset + 5] = e[5];
+  /**
+   * 从对象池获取一个 Matrix3 实例
+   */
+  static create (): Matrix3 {
+    if (matrix3PoolIndex < matrix3Pool.length) {
+      return matrix3Pool[matrix3PoolIndex++].identity();
+    }
 
-    array[offset + 6] = e[6];
-    array[offset + 7] = e[7];
-    array[offset + 8] = e[8];
+    return new Matrix3();
+  }
+
+  /**
+   * 将 Matrix3 实例释放回对象池
+   */
+  static release (matrix: Matrix3): void {
+    if (matrix3PoolIndex > 0 && matrix3Pool.length < MATRIX3_POOL_SIZE) {
+      matrix3PoolIndex--;
+      matrix3Pool[matrix3PoolIndex] = matrix;
+    }
+  }
+
+  /**
+   * 预分配对象池
+   */
+  static preallocate (count: number): void {
+    const initialSize = matrix3Pool.length;
+
+    for (let i = 0; i < count && matrix3Pool.length < MATRIX3_POOL_SIZE; i++) {
+      matrix3Pool.push(new Matrix3());
+    }
+    console.debug(`Matrix3池：从${initialSize}增加到${matrix3Pool.length}`);
   }
 
   /**
@@ -493,11 +554,7 @@ export class Matrix3 {
    * @returns 单位矩阵
    */
   static fromIdentity (): Matrix3 {
-    return new Matrix3(
-      1, 0, 0,
-      0, 1, 0,
-      0, 0, 1,
-    );
+    return Matrix3.create();
   }
 
   /**
@@ -508,7 +565,7 @@ export class Matrix3 {
    * @returns 矩阵
    */
   static fromColumnVectors (c1: Vector3, c2: Vector3, c3: Vector3): Matrix3 {
-    return new Matrix3().setFromColumnVectors(c1, c2, c3);
+    return Matrix3.create().setFromColumnVectors(c1, c2, c3);
   }
 
   /**
@@ -517,7 +574,7 @@ export class Matrix3 {
    * @returns 矩阵
    */
   static fromMatrix4 (m: Matrix4): Matrix3 {
-    return new Matrix3().setFromMatrix4(m);
+    return Matrix3.create().setFromMatrix4(m);
   }
 
   /**
@@ -527,7 +584,7 @@ export class Matrix3 {
    * @returns 矩阵
    */
   static fromArray (array: Matrix3DataType, offset = 0): Matrix3 {
-    return new Matrix3().setFromArray(array, offset);
+    return Matrix3.create().setFromArray(array, offset);
   }
 
   /**
@@ -536,7 +593,7 @@ export class Matrix3 {
    * @returns 矩阵
    */
   static fromQuaternion (quat: Quaternion): Matrix3 {
-    return new Matrix3().setFromQuaternion(quat);
+    return Matrix3.create().setFromQuaternion(quat);
   }
 
   /**
@@ -557,7 +614,7 @@ export class Matrix3 {
     m21: number, m22: number, m23: number,
     m31: number, m32: number, m33: number,
   ): Matrix3 {
-    return new Matrix3(
+    return Matrix3.create().set(
       m11, m21, m31,
       m12, m22, m32,
       m13, m23, m33,

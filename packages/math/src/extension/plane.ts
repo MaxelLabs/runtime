@@ -1,7 +1,7 @@
 import { Vector3 } from '../core/vector3';
 
 /**
- *
+ * 平面类
  */
 export class Plane {
   distance: number;
@@ -9,7 +9,7 @@ export class Plane {
 
   constructor (
     distance = 0,
-    normal = Vector3.Z,
+    normal = new Vector3(0, 0, 1),
   ) {
     this.distance = distance;
     this.normal = normal.clone();

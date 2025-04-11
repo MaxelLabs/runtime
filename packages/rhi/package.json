@@ -18,7 +18,7 @@
   "scripts": {
     "dev": "vite",
     "prebuild": "pnpm clean",
-    "build": "tsc",
+    "build": "pnpm clean && tsc && vite build",
     "build:module": "rollup -c",
     "build:declaration": "tsc -d --emitDeclarationOnly",
     "clean": "rimraf dist",
@@ -39,14 +39,14 @@
   },
   "dependencies": {
     "@sruim/core": "workspace:*",
-    "@sruim/math": "workspace:*",
+    "@max/math": "workspace:*",
     "@sruim/specification": "workspace:*"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.0",
+    "@types/jest": "^29.5.12",
     "@types/node": "^18.15.11",
-    "@vitejs/plugin-legacy": "^4.0.0",
-    "jest": "^29.5.0",
+    "@vitejs/plugin-legacy": "^5.2.2",
+    "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.5.0",
     "rimraf": "^5.0.0",
     "rollup": "^3.20.0",

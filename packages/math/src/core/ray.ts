@@ -130,6 +130,7 @@ export class Ray {
       tmin = (bxmax - ox) * invdirx;
       tmax = (bxmin - ox) * invdirx;
     }
+
     if (invdiry >= 0) {
       tymin = (bymin - oy) * invdiry;
       tymax = (bymax - oy) * invdiry;
@@ -137,21 +138,19 @@ export class Ray {
       tymin = (bymax - oy) * invdiry;
       tymax = (bymin - oy) * invdiry;
     }
+
     if ((tmin > tymax) || (tymin > tmax)) {
       return;
     }
-    if (tymin > tmin || tmin !== tmin) {
+
+    if (tymin > tmin || Number.isNaN(tmin)) {
       tmin = tymin;
     }
-    if (tymax < tmax || tmax !== tmax) {
+
+    if (tymax < tmax || Number.isNaN(tmax)) {
       tmax = tymax;
     }
-    if (tymin > tmin || tmin !== tmin) {
-      tmin = tymin;
-    }
-    if (tymax < tmax || tmax !== tmax) {
-      tmax = tymax;
-    }
+
     if (invdirz >= 0) {
       tzmin = (bzmin - oz) * invdirz;
       tzmax = (bzmax - oz) * invdirz;
@@ -159,15 +158,19 @@ export class Ray {
       tzmin = (bzmax - oz) * invdirz;
       tzmax = (bzmin - oz) * invdirz;
     }
+
     if ((tmin > tzmax) || (tzmin > tmax)) {
       return;
     }
-    if (tzmin > tmin || tmin !== tmin) {
+
+    if (tzmin > tmin || Number.isNaN(tmin)) {
       tmin = tzmin;
     }
-    if (tzmax < tmax || tmax !== tmax) {
+
+    if (tzmax < tmax || Number.isNaN(tmax)) {
       tmax = tzmax;
     }
+
     if (tmax < 0) {
       return;
     }
