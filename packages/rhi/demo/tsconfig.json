@@ -1,0 +1,14 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../dist/demo",
+    "rootDir": "../../../",
+    "sourceMap": true,
+    "baseUrl": "../../../",
+    "paths": {
+      "@sruim/*": ["packages/*/src"]
+    }
+  },
+  "include": ["./**/*"],
+  "exclude": ["node_modules"]
+}

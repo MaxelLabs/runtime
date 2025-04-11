@@ -17,11 +17,10 @@
   },
   "scripts": {
     "prebuild": "pnpm clean",
-    "build": "pnpm build:fbs && pnpm build:declaration && pnpm build:module",
-    "build:fbs": "node ../../scripts/flatc ./src/__definations__/index.fbs",
+    "build": "pnpm build:declaration && pnpm build:module",
     "build:module": "rollup -c",
     "build:declaration": "tsc -d --emitDeclarationOnly",
-    "clean": "rimraf dist && rimraf \"*+(.tsbuildinfo)\"",
+    "clean": "rimraf dist",
     "prepublishOnly": "pnpm build"
   },
   "contributors": [
@@ -36,6 +35,7 @@
   },
   "dependencies": {
     "flatbuffers": "24.3.25",
-    "uuid": "9.0.1"
+    "uuid": "9.0.1",
+    "@sruim/specification": "workspace:*"
   }
 }

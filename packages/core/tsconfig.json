@@ -1,13 +1,23 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "outDir": "./dist",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noEmit": false,
     "rootDir": "src",
-    "outDir": "dist",
-    "composite": true
+    "baseUrl": ".",
+    "paths": {
+      "@sruim/math": ["../../packages/math/src"],
+      "@sruim/specification": ["../../packages/specification/src"]
+    }
   },
-  "include": [
-    "src",
-    "../../types"
-, "tsconfig.json"  ],
-  "references": []
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../../packages/math" },
+    { "path": "../../packages/specification" }
+  ]
 }

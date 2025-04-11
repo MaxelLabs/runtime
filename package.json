@@ -25,6 +25,11 @@
   "browserslist": [
     "iOS 9"
   ],
+  "workspaces": [
+    "packages/*",
+    "web-packages/*",
+    "plugin-packages/*"
+  ],
   "dependencies": {
     "string-hash": "^1.1.3"
   },

@@ -31,7 +31,10 @@
       ],
       "@sruim/math": [
         "./packages/math/src"
-      ]
+      ],
+      "@sruim/rhi": [
+        "./packages/rhi/src"
+      ],
     }
   }
 }

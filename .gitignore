@@ -14,3 +14,7 @@ lib
 temp
 api
 www
+.windsurfrules
+*.d.ts
+*.d.ts.map
+

@@ -7,9 +7,5 @@
   },
   "include": [
     "src",
-    "../../types"
-  ],
-  "exclude": [
-    "../../types"
   ]
 }
