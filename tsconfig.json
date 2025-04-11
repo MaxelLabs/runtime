@@ -14,7 +14,7 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@sruim/*": ["packages/*/src"]
+      "@max/*": ["packages/*/src"]
     }
   },
   "include": ["packages/**/*.ts", "packages/**/*.tsx"],

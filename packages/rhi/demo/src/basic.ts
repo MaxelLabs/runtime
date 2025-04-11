@@ -1,16 +1,15 @@
-import { GLRenderer, GLBuffer, GLShader, GLConstants } from '@sruim/rhi';
+import { GLRenderer, GLShader, GLBuffer, GLConstants } from '@max/rhi';
+import { Color } from '@max/math';
 
-// 获取canvas元素
-const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+const canvas = document.createElement('canvas');
+document.body.appendChild(canvas);
 
-if (!canvas) {
-  throw new Error('Canvas not found');
-}
-
-// 创建渲染器
 const renderer = new GLRenderer();
-
 renderer.create(canvas);
+renderer.setViewport(canvas.width, canvas.height);
+renderer.setClearColor(new Color(0, 0, 0, 1));
+renderer.clear();
+
 const gl = renderer.getGL();
 
 // 顶点着色器源码
@@ -43,7 +42,6 @@ const fragmentShaderSource = `
 
 // 创建着色器
 const shader = new GLShader(gl);
-
 shader.create(vertexShaderSource, fragmentShaderSource);
 
 // 创建顶点数据

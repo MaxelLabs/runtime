@@ -10,9 +10,9 @@
     "rootDir": "src",
     "baseUrl": ".",
     "paths": {
-      "@sruim/core": ["../../packages/core/src"],
-      "@sruim/math": ["../../packages/math/src"],
-      "@sruim/specification": ["../../packages/specification/src"]
+      "@max/core": ["../../packages/core/src"],
+      "@max/math": ["../../packages/math/src"],
+      "@max/specification": ["../../packages/specification/src"]
     },
     "types": ["@types/jest", "@types/node"]
   },

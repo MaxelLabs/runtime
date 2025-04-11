@@ -105,7 +105,6 @@ export class GLFramebuffer {
       throw new Error('Framebuffer not created');
     }
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.fbo);
-    this.gl.viewport(0, 0, this.width, this.height);
   }
 
   unbind (): void {
@@ -116,7 +115,6 @@ export class GLFramebuffer {
     if (!this.colorTexture) {
       throw new Error('Color texture not created');
     }
-
     return this.colorTexture;
   }
 
@@ -124,7 +122,6 @@ export class GLFramebuffer {
     if (!this.depthTexture) {
       throw new Error('Depth texture not created');
     }
-
     return this.depthTexture;
   }
 

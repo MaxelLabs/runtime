@@ -10,8 +10,8 @@
     "rootDir": "src",
     "baseUrl": ".",
     "paths": {
-      "@sruim/math": ["../../packages/math/src"],
-      "@sruim/specification": ["../../packages/specification/src"]
+      "@max/math": ["../../packages/math/src"],
+      "@max/specification": ["../../packages/specification/src"]
     }
   },
   "include": ["src/**/*"],

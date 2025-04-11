@@ -89,7 +89,10 @@ export class GLTexture {
     this.unbind();
   }
 
-  getTexture (): WebGLTexture | null {
+  getTexture (): WebGLTexture {
+    if (!this.texture) {
+      throw new Error('Texture not created');
+    }
     return this.texture;
   }
 

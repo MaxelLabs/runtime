@@ -1,5 +1,5 @@
 import type { IBuffer } from './IBuffer';
-import type { Matrix4, Color } from '@sruim/math';
+import type { Matrix4, Color } from '@max/math';
 
 export interface IRenderer {
   /**

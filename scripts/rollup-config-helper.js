@@ -1,34 +1,55 @@
+import { glsl } from './rollup-plugin-glsl-inner.js';
+import { babel } from '@rollup/plugin-babel';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import resolve from '@rollup/plugin-node-resolve';
+import typescript from '@rollup/plugin-typescript';
+import terser from '@rollup/plugin-terser';
 import replace from '@rollup/plugin-replace';
 import { swc, defineRollupSwcOption, minify } from 'rollup-plugin-swc3';
-import glslInner from './rollup-plugin-glsl-inner';
 
-export function getPlugins(pkg, options = {}) {
-  const { min = false, target, external } = options;
-  const defines = {
-    __VERSION__: JSON.stringify(pkg.version),
-    __DEBUG__: false,
-  };
+export function getPlugins(pkg, { min = false } = {}) {
   const plugins = [
-    replace({
-      preventAssignment: true,
-      values: defines,
-    }),
-    glslInner(),
-    getSWCPlugin({ target }, external),
-    resolve(),
+    nodeResolve(),
     commonjs(),
+    typescript({
+      tsconfig: './tsconfig.json',
+      declaration: false,
+    }),
+    babel({
+      babelHelpers: 'bundled',
+      exclude: 'node_modules/**',
+    }),
+    glsl(),
   ];
 
   if (min) {
-    plugins.push(minify({ sourceMap: true }));
+    plugins.push(
+      terser({
+        output: {
+          comments: /^!/,
+        },
+      })
+    );
   }
 
   return plugins;
 }
 
-export { glslInner };
+export function getBanner(pkg) {
+  return `/*!
+ * ${pkg.name} v${pkg.version}
+ * (c) 2024 Sruimeng
+ * Released under the MIT License.
+ */`;
+}
+
+export function onwarn(warning) {
+  if (warning.code === 'CIRCULAR_DEPENDENCY') {
+    return;
+  }
+
+  console.warn(`(!) ${warning.message}`)
+}
 
 export function getSWCPlugin(
   jscOptions = {},
@@ -55,23 +76,4 @@ export function getSWCPlugin(
   return swc(
     defineRollupSwcOption(options),
   );
-}
-
-export function getBanner(pkg) {
-  return `/*!
- * Name: ${pkg.name}
- * Description: ${pkg.description}
- * Author: ${pkg.author}
- * Contributors: ${pkg.contributors.map(c => c.name).join(',')}
- * Version: v${pkg.version}
- */
-`;
-}
-
-export function onwarn(warning) {
-  if (warning.code === 'CIRCULAR_DEPENDENCY') {
-    return;
-  }
-
-  console.warn(`(!) ${warning.message}`)
 }

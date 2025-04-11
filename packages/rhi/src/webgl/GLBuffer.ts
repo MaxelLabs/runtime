@@ -1,4 +1,4 @@
-import type { IBuffer } from '@sruim/core';
+import type { IBuffer } from '@max/core';
 
 export class GLBuffer implements IBuffer {
   private buffer: WebGLBuffer | null = null;
@@ -47,5 +47,12 @@ export class GLBuffer implements IBuffer {
 
   unbind (): void {
     this.gl.bindBuffer(this.type, null);
+  }
+
+  getBuffer(): WebGLBuffer {
+    if (!this.buffer) {
+      throw new Error('Buffer not created');
+    }
+    return this.buffer;
   }
 }

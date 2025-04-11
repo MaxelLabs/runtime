@@ -1,82 +1,90 @@
-import type { Color } from '@sruim/math';
-import { Matrix4 } from '@sruim/math';
+import type { Color } from '@max/math';
+import type { IRenderer, IBuffer } from '@max/core';
+import { Matrix4 } from '@max/math';
 import { GLBuffer } from './GLBuffer';
+import { GLState } from './GLState';
 
-export class GLRenderer /* implements IRenderer */ {
-  private gl!: WebGL2RenderingContext;
-  private canvas!: HTMLCanvasElement;
-  private transform: Matrix4;
-  private currentBuffer: GLBuffer | null = null;
+export class GLRenderer implements IRenderer {
+  private gl: WebGL2RenderingContext | null = null;
+  private canvas: HTMLCanvasElement | null = null;
+  private _transform: Matrix4;
+  private _currentBuffer: GLBuffer | null = null;
+  private state: GLState | null = null;
+  width: number = 0;
+  height: number = 0;
 
-  width: number;
-  height: number;
-
-  constructor () {
-    this.width = 0;
-    this.height = 0;
-    this.transform = new Matrix4();
+  constructor() {
+    this._transform = new Matrix4();
   }
 
-  create (canvas: HTMLCanvasElement): void {
+  create(canvas: HTMLCanvasElement): void {
     this.canvas = canvas;
-    this.gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
-    if (!this.gl) {
+    const gl = canvas.getContext('webgl2');
+    if (!gl) {
       throw new Error('WebGL2 not supported');
     }
-    this.setViewport(canvas.width, canvas.height);
+    this.gl = gl;
+    this.state = new GLState(gl);
+    this.state.reset();
   }
 
-  getGL (): WebGL2RenderingContext {
-    return this.gl;
-  }
-
-  destroy (): void {
-    if (this.currentBuffer) {
-      this.currentBuffer.unbind();
-      this.currentBuffer = null;
+  destroy(): void {
+    if (this._currentBuffer) {
+      this._currentBuffer.destroy();
+      this._currentBuffer = null;
     }
   }
 
-  setViewport (width: number, height: number): void {
+  setViewport(width: number, height: number): void {
     this.width = width;
     this.height = height;
-    this.gl.viewport(0, 0, width, height);
+    this.gl!.viewport(0, 0, width, height);
   }
 
-  clear (color?: Color): void {
+  setClearColor(color: Color): void {
+    this.gl!.clearColor(color.r, color.g, color.b, color.a);
+  }
+
+  clear(color?: Color): void {
     if (color) {
-      this.gl.clearColor(color.r, color.g, color.b, color.a);
-    } else {
-      this.gl.clearColor(0, 0, 0, 1);
+      this.setClearColor(color);
     }
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+    this.gl!.clear(this.gl!.COLOR_BUFFER_BIT | this.gl!.DEPTH_BUFFER_BIT);
   }
 
-  setTransform (matrix: Matrix4): void {
-    this.transform.copyFrom(matrix);
+  setTransform(matrix: Matrix4): void {
+    this._transform.copyFrom(matrix);
   }
 
-  createBuffer (type: number, usage: number, size: number): GLBuffer {
-    const buffer = new GLBuffer(this.gl, type, usage, size);
-
+  createBuffer(type: number, usage: number, size: number): IBuffer {
+    const buffer = new GLBuffer(this.gl!, type, usage, size);
     buffer.create();
-
     return buffer;
   }
 
-  destroyBuffer (buffer: GLBuffer): void {
-    if (this.currentBuffer === buffer) {
-      buffer.unbind();
-      this.currentBuffer = null;
+  destroyBuffer(buffer: IBuffer): void {
+    if (this._currentBuffer === buffer) {
+      this._currentBuffer = null;
     }
     buffer.destroy();
   }
 
-  draw (mode: number, count: number, offset = 0): void {
-    this.gl.drawArrays(mode, offset, count);
+  draw(mode: number, count: number, offset = 0): void {
+    this.gl!.drawArrays(mode, offset, count);
   }
 
-  drawIndexed (mode: number, count: number, offset = 0): void {
-    this.gl.drawElements(mode, count, this.gl.UNSIGNED_SHORT, offset);
+  drawIndexed(mode: number, count: number, offset = 0): void {
+    this.gl!.drawElements(mode, count, this.gl!.UNSIGNED_SHORT, offset);
+  }
+
+  dispose(): void {
+    this.destroy();
+  }
+
+  getGL(): WebGL2RenderingContext {
+    if (!this.gl) {
+      throw new Error('WebGL2 context not created');
+    }
+    return this.gl;
   }
 }

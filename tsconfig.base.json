@@ -26,15 +26,18 @@
       "ESNext"
     ],
     "paths": {
-      "@sruim/core": [
+      "@max/core": [
         "./packages/core/src"
       ],
-      "@sruim/math": [
+      "@max/math": [
         "./packages/math/src"
       ],
-      "@sruim/rhi": [
+      "@max/rhi": [
         "./packages/rhi/src"
       ],
+      "@max/specification": [
+        "./packages/specification/src"
+      ]
     }
   }
 }

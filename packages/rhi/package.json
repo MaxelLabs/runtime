@@ -1,5 +1,5 @@
 {
-  "name": "@sruim/rhi",
+  "name": "@max/rhi",
   "version": "1.0.0",
   "description": "WebGL渲染层",
   "module": "./dist/index.mjs",
@@ -38,9 +38,9 @@
     "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "@sruim/core": "workspace:*",
+    "@max/core": "workspace:*",
     "@max/math": "workspace:*",
-    "@sruim/specification": "workspace:*"
+    "@max/specification": "workspace:*"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

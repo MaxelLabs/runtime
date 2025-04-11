@@ -1,6 +1,5 @@
-import type { IPipelineContext } from '@sruim/core';
-
-import type * as spec from '@sruim/specification';
+import type { IPipelineContext } from '@max/core';
+import type { Vector2, Vector3, Color } from '@max/math';
 
 export class GLPipelineContext implements IPipelineContext {
   isReady: boolean;
@@ -18,13 +17,13 @@ export class GLPipelineContext implements IPipelineContext {
   setInt (uniformName: string, value: number): void {
     throw new Error('Method not implemented.');
   }
-  setVec2 (uniformName: string, value: spec.Vector2): void {
+  setVec2 (uniformName: string, value: Vector2): void {
     throw new Error('Method not implemented.');
   }
-  setVec3 (uniformName: string, value: spec.Vector3): void {
+  setVec3 (uniformName: string, value: Vector3): void {
     throw new Error('Method not implemented.');
   }
-  setVec4 (uniformName: string, value: spec.Color): void {
+  setVec4 (uniformName: string, value: Color): void {
     throw new Error('Method not implemented.');
   }
 }
