@@ -1,10 +1,10 @@
 import { GLRenderer, GLShader, GLBuffer, GLConstants } from '@max/rhi';
 import { Color } from '@max/math';
 
-const canvas = document.createElement('canvas');
-document.body.appendChild(canvas);
+const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 
 const renderer = new GLRenderer();
+
 renderer.create(canvas);
 renderer.setViewport(canvas.width, canvas.height);
 renderer.setClearColor(new Color(0, 0, 0, 1));
@@ -42,6 +42,7 @@ const fragmentShaderSource = `
 
 // 创建着色器
 const shader = new GLShader(gl);
+
 shader.create(vertexShaderSource, fragmentShaderSource);
 
 // 创建顶点数据
