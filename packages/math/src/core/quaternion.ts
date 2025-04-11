@@ -11,6 +11,9 @@ import type { Vector4Like } from './type';
 export class Quaternion {
   private static readonly tempVec0: Vector3 = new Vector3();
 
+  // 使用Float32Array存储四元数元素，提高内存访问效率
+  private elements: Float32Array;
+
   /**
    * 构造函数
    * @param [x=0] - x 分量
@@ -24,6 +27,7 @@ export class Quaternion {
     public z = 0,
     public w = 1,
   ) {
+    this.elements = new Float32Array([x, y, z, w]);
   }
 
   /**
@@ -40,18 +44,40 @@ export class Quaternion {
     this.z = z;
     this.w = w;
 
+    this.elements[0] = x;
+    this.elements[1] = y;
+    this.elements[2] = z;
+    this.elements[3] = w;
+
     return this;
   }
 
   /**
-   * 通过欧拉角设置四元数
-   * @param euler - 欧拉角
-   * @returns
+   * 从欧拉角设置四元数
+   * @param x 绕X轴的旋转角度（弧度）
+   * @param y 绕Y轴的旋转角度（弧度）
+   * @param z 绕Z轴的旋转角度（弧度）
+   * @returns 当前四元数
    */
-  setFromEuler (euler: Euler): this {
-    euler.toQuaternion(this);
+  setFromEuler (x: number, y: number, z: number): Quaternion {
+    const c1 = Math.cos(x / 2);
+    const c2 = Math.cos(y / 2);
+    const c3 = Math.cos(z / 2);
+    const s1 = Math.sin(x / 2);
+    const s2 = Math.sin(y / 2);
+    const s3 = Math.sin(z / 2);
 
-    return this;
+    this.x = s1 * c2 * c3 + c1 * s2 * s3;
+    this.y = c1 * s2 * c3 - s1 * c2 * s3;
+    this.z = c1 * c2 * s3 + s1 * s2 * c3;
+    this.w = c1 * c2 * c3 - s1 * s2 * s3;
+
+    this.elements[0] = this.x;
+    this.elements[1] = this.y;
+    this.elements[2] = this.z;
+    this.elements[3] = this.w;
+
+    return this.normalize();
   }
 
   /**
@@ -71,6 +97,11 @@ export class Quaternion {
     this.z = v.z * s;
     this.w = Math.cos(halfAngle);
 
+    this.elements[0] = this.x;
+    this.elements[1] = this.y;
+    this.elements[2] = this.z;
+    this.elements[3] = this.w;
+
     return this;
   }
 
@@ -84,6 +115,11 @@ export class Quaternion {
     this.y = v.y;
     this.z = v.z;
     this.w = v.w;
+
+    this.elements[0] = this.x;
+    this.elements[1] = this.y;
+    this.elements[2] = this.z;
+    this.elements[3] = this.w;
 
     return this;
   }
@@ -100,6 +136,11 @@ export class Quaternion {
     this.z = array[offset + 2];
     this.w = array[offset + 3];
 
+    this.elements[0] = this.x;
+    this.elements[1] = this.y;
+    this.elements[2] = this.z;
+    this.elements[3] = this.w;
+
     return this;
   }
 
@@ -112,7 +153,7 @@ export class Quaternion {
     // http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
 
     // assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
-    const te = m.elements;
+    const te = m.getElements();
 
     const m11 = te[0];
     const m12 = te[4];
@@ -132,6 +173,11 @@ export class Quaternion {
       this.x = (m32 - m23) * s;
       this.y = (m13 - m31) * s;
       this.z = (m21 - m12) * s;
+
+      this.elements[0] = this.x;
+      this.elements[1] = this.y;
+      this.elements[2] = this.z;
+      this.elements[3] = this.w;
     } else if (m11 > m22 && m11 > m33) {
       const s = 2.0 * Math.sqrt(1.0 + m11 - m22 - m33);
 
@@ -140,6 +186,11 @@ export class Quaternion {
       this.y = (m12 + m21) / s;
       this.z = (m13 + m31) / s;
       this.negate();
+
+      this.elements[0] = this.x;
+      this.elements[1] = this.y;
+      this.elements[2] = this.z;
+      this.elements[3] = this.w;
     } else if (m22 > m33) {
       const s = 2.0 * Math.sqrt(1.0 + m22 - m11 - m33);
 
@@ -148,6 +199,11 @@ export class Quaternion {
       this.y = 0.25 * s;
       this.z = (m23 + m32) / s;
       this.negate();
+
+      this.elements[0] = this.x;
+      this.elements[1] = this.y;
+      this.elements[2] = this.z;
+      this.elements[3] = this.w;
     } else {
       const s = 2.0 * Math.sqrt(1.0 + m33 - m11 - m22);
 
@@ -156,6 +212,11 @@ export class Quaternion {
       this.y = (m23 + m32) / s;
       this.z = 0.25 * s;
       this.negate();
+
+      this.elements[0] = this.x;
+      this.elements[1] = this.y;
+      this.elements[2] = this.z;
+      this.elements[3] = this.w;
     }
 
     // 兼容原先数学库
@@ -192,6 +253,11 @@ export class Quaternion {
       this.w = r;
     }
 
+    this.elements[0] = this.x;
+    this.elements[1] = this.y;
+    this.elements[2] = this.z;
+    this.elements[3] = this.w;
+
     return this.normalize();
   }
 
@@ -205,6 +271,11 @@ export class Quaternion {
     this.y = quat.y;
     this.z = quat.z;
     this.w = quat.w;
+
+    this.elements[0] = this.x;
+    this.elements[1] = this.y;
+    this.elements[2] = this.z;
+    this.elements[3] = this.w;
 
     return this;
   }
@@ -271,6 +342,11 @@ export class Quaternion {
     this.z = -this.z;
     this.w = -this.w;
 
+    this.elements[0] = this.x;
+    this.elements[1] = this.y;
+    this.elements[2] = this.z;
+    this.elements[3] = this.w;
+
     return this;
   }
 
@@ -282,6 +358,11 @@ export class Quaternion {
     this.x = -this.x;
     this.y = -this.y;
     this.z = -this.z;
+
+    this.elements[0] = this.x;
+    this.elements[1] = this.y;
+    this.elements[2] = this.z;
+    this.elements[3] = this.w;
 
     return this;
   }
@@ -316,19 +397,16 @@ export class Quaternion {
    * @returns 归一化值
    */
   normalize (): this {
-    let l = this.length();
+    const e = this.elements;
+    const len = e[0] * e[0] + e[1] * e[1] + e[2] * e[2] + e[3] * e[3];
 
-    if (l === 0) {
-      this.x = 0;
-      this.y = 0;
-      this.z = 0;
-      this.w = 1;
-    } else {
-      l = 1 / l;
-      this.x = this.x * l;
-      this.y = this.y * l;
-      this.z = this.z * l;
-      this.w = this.w * l;
+    if (len > 0) {
+      const invLen = 1 / Math.sqrt(len);
+
+      e[0] *= invLen;
+      e[1] *= invLen;
+      e[2] *= invLen;
+      e[3] *= invLen;
     }
 
     return this;
@@ -340,7 +418,18 @@ export class Quaternion {
    * @returns
    */
   multiply (right: Quaternion): this {
-    return this.multiplyQuaternions(this, right);
+    const a = this.elements;
+    const b = right.elements;
+    const r = new Float32Array(4);
+
+    r[0] = a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1];
+    r[1] = a[3] * b[1] - a[0] * b[2] + a[1] * b[3] + a[2] * b[0];
+    r[2] = a[3] * b[2] + a[0] * b[1] - a[1] * b[0] + a[2] * b[3];
+    r[3] = a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2];
+
+    this.elements = r;
+
+    return this;
   }
 
   /**
@@ -349,32 +438,7 @@ export class Quaternion {
    * @returns
    */
   premultiply (left: Quaternion): this {
-    return this.multiplyQuaternions(left, this);
-  }
-
-  /**
-   * 四元数乘法
-   * @param left - 四元数
-   * @param right - 四元数
-   * @returns 四元数
-   */
-  multiplyQuaternions (left: Quaternion, right: Quaternion): this {
-    // from http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/code/index.htm
-    const qax = left.x;
-    const qay = left.y;
-    const qaz = left.z;
-    const qaw = left.w;
-    const qbx = right.x;
-    const qby = right.y;
-    const qbz = right.z;
-    const qbw = right.w;
-
-    this.x = qax * qbw + qaw * qbx + qay * qbz - qaz * qby;
-    this.y = qay * qbw + qaw * qby + qaz * qbx - qax * qbz;
-    this.z = qaz * qbw + qaw * qbz + qax * qby - qay * qbx;
-    this.w = qaw * qbw - qax * qbx - qay * qby - qaz * qbz;
-
-    return this;
+    return this.multiply(left);
   }
 
   /**
@@ -385,56 +449,54 @@ export class Quaternion {
    * @returns 插值结果
    */
   slerp (other: Quaternion, t: number): this {
-    if (t === 0) { return this; }
-    if (t === 1) { return this.copyFrom(other); }
+    const e = this.elements;
+    const b = other.elements;
 
-    const { x, y, z, w } = this;
-    let cosHalfTheta = w * other.w + x * other.x + y * other.y + z * other.z;
+    // 计算点积
+    let cosHalfTheta = e[0] * b[0] + e[1] * b[1] + e[2] * b[2] + e[3] * b[3];
 
+    // 如果点积为负，取反以获得最短路径
     if (cosHalfTheta < 0) {
-      this.w = - other.w;
-      this.x = - other.x;
-      this.y = - other.y;
-      this.z = - other.z;
-      cosHalfTheta = - cosHalfTheta;
-    } else {
-      this.copyFrom(other);
+      cosHalfTheta = -cosHalfTheta;
+      b[0] = -b[0];
+      b[1] = -b[1];
+      b[2] = -b[2];
+      b[3] = -b[3];
     }
 
-    if (cosHalfTheta >= 1.0) {
-      this.w = w;
-      this.x = x;
-      this.y = y;
-      this.z = z;
+    // 如果四元数非常接近，使用线性插值
+    if (Math.abs(cosHalfTheta) >= 1.0) {
+      e[0] = e[0] + t * (b[0] - e[0]);
+      e[1] = e[1] + t * (b[1] - e[1]);
+      e[2] = e[2] + t * (b[2] - e[2]);
+      e[3] = e[3] + t * (b[3] - e[3]);
 
-      return this;
+      return this.normalize();
     }
 
-    const sqrSinHalfTheta = 1.0 - cosHalfTheta * cosHalfTheta;
+    // 计算球面线性插值
+    const halfTheta = Math.acos(cosHalfTheta);
+    const sinHalfTheta = Math.sqrt(1.0 - cosHalfTheta * cosHalfTheta);
 
-    if (sqrSinHalfTheta <= Number.EPSILON) {
-      const s = 1 - t;
+    // 如果角度非常小，使用线性插值
+    if (Math.abs(sinHalfTheta) < 0.001) {
+      e[0] = e[0] + t * (b[0] - e[0]);
+      e[1] = e[1] + t * (b[1] - e[1]);
+      e[2] = e[2] + t * (b[2] - e[2]);
+      e[3] = e[3] + t * (b[3] - e[3]);
 
-      this.w = s * w + t * this.w;
-      this.x = s * x + t * this.x;
-      this.y = s * y + t * this.y;
-      this.z = s * z + t * this.z;
-      this.normalize();
-
-      return this;
+      return this.normalize();
     }
 
-    const sinHalfTheta = Math.sqrt(sqrSinHalfTheta);
-    const halfTheta = Math.atan2(sinHalfTheta, cosHalfTheta);
     const ratioA = Math.sin((1 - t) * halfTheta) / sinHalfTheta;
     const ratioB = Math.sin(t * halfTheta) / sinHalfTheta;
 
-    this.w = (w * ratioA + this.w * ratioB);
-    this.x = (x * ratioA + this.x * ratioB);
-    this.y = (y * ratioA + this.y * ratioB);
-    this.z = (z * ratioA + this.z * ratioB);
+    e[0] = e[0] * ratioA + b[0] * ratioB;
+    e[1] = e[1] * ratioA + b[1] * ratioB;
+    e[2] = e[2] * ratioA + b[2] * ratioB;
+    e[3] = e[3] * ratioA + b[3] * ratioB;
 
-    return this;
+    return this.normalize();
   }
 
   /**
@@ -515,7 +577,10 @@ export class Quaternion {
    * @returns
    */
   toMatrix4 (mat: Matrix4): Matrix4 {
-    return mat.compose(Vector3.ZERO, this, Vector3.ONE);
+    const zero = new Vector3();
+    const one = new Vector3(1, 1, 1);
+
+    return mat.compose(zero, this, one);
   }
 
   /**
@@ -524,7 +589,7 @@ export class Quaternion {
    * @returns 四元数
    */
   static fromEuler (euler: Euler): Quaternion {
-    return new Quaternion().setFromEuler(euler);
+    return new Quaternion().setFromEuler(euler.x, euler.y, euler.z);
   }
 
   /**

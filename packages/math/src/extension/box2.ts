@@ -1,5 +1,11 @@
 import { Line2 } from './line2';
 import { Vector2 } from '../core/vector2';
+import type { Box2Like } from '../core/type';
+
+// 对象池配置
+const POOL_SIZE = 100;
+const box2Pool: Box2[] = [];
+let box2PoolIndex = 0;
 
 /**
  * 二维包围盒
@@ -11,7 +17,20 @@ export class Box2 {
   /**
    * @member corners - 二维包围盒角点
    */
-  corners: Vector2[];
+  private _corners: Vector2[] = [];
+
+  /**
+   * 获取角点数组
+   * @returns 二维包围盒角点数组
+   */
+  get corners (): Vector2[] {
+    // 如果corners数组为空但包围盒非空，重新生成角点
+    if (this._corners.length === 0 && !this.isEmpty()) {
+      this._generateCorners();
+    }
+
+    return this._corners;
+  }
 
   /**
    * 构造函数，传入值为空时表示空包围盒
@@ -24,17 +43,27 @@ export class Box2 {
   ) {
     this.min = min.clone();
     this.max = max.clone();
-    //
+
     if (!this.isEmpty()) {
-      this.corners = [
-        min.clone(),
-        new Vector2(max.x, min.y),
-        max.clone(),
-        new Vector2(min.x, max.y),
-      ];
-    } else {
-      this.corners = [];
+      this._generateCorners();
     }
+  }
+
+  /**
+   * 生成角点数组
+   * @private
+   */
+  private _generateCorners (): void {
+    // 清空现有角点
+    this._corners.length = 0;
+
+    // 按照左上、右上、右下、左下的顺序生成角点
+    this._corners.push(
+      this.min.clone(),
+      new Vector2(this.max.x, this.min.y),
+      this.max.clone(),
+      new Vector2(this.min.x, this.max.y)
+    );
   }
 
   /**
@@ -46,12 +75,12 @@ export class Box2 {
   set (min: Vector2, max: Vector2): this {
     this.min.copyFrom(min);
     this.max.copyFrom(max);
-    this.corners = [
-      min.clone(),
-      new Vector2(max.x, min.y),
-      max.clone(),
-      new Vector2(min.x, max.y),
-    ];
+
+    // 清空并重新生成角点
+    this._corners.length = 0;
+    if (!this.isEmpty()) {
+      this._generateCorners();
+    }
 
     return this;
   }
@@ -62,29 +91,52 @@ export class Box2 {
    * @returns 二维包围盒
    */
   setFromVec2Array (vecArray: Vector2[]): this {
+    if (vecArray.length === 0) {
+      return this.makeEmpty();
+    }
+
     this.min = vecArray[0].clone();
     this.max = vecArray[0].clone();
-    vecArray.forEach(v => {
+
+    // 清空现有角点
+    this._corners.length = 0;
+
+    for (let i = 0; i < vecArray.length; i++) {
+      const v = vecArray[i];
+
       this.min.min(v);
       this.max.max(v);
-      this.corners.push(v.clone());
-    });
+      this._corners.push(v.clone());
+    }
 
     return this;
   }
 
+  /**
+   * 通过二维点数组设置包围盒，但不保留原始角点，而是生成新的角点
+   * @param vecArray - 二维空间点数组
+   * @returns 二维包围盒
+   */
   setFromVec2ArrayWithOutCorners (vecArray: Vector2[]): this {
+    if (vecArray.length === 0) {
+      return this.makeEmpty();
+    }
+
     this.min = vecArray[0].clone();
     this.max = vecArray[0].clone();
-    vecArray.forEach(v => {
+
+    for (let i = 1; i < vecArray.length; i++) {
+      const v = vecArray[i];
+
       this.min.min(v);
       this.max.max(v);
-    });
+    }
 
-    this.corners.push(new Vector2(this.min.x, this.min.y));
-    this.corners.push(new Vector2(this.min.x, this.max.y));
-    this.corners.push(new Vector2(this.max.x, this.max.y));
-    this.corners.push(new Vector2(this.max.x, this.min.y));
+    // 清空并重新生成角点
+    this._corners.length = 0;
+    if (!this.isEmpty()) {
+      this._generateCorners();
+    }
 
     return this;
   }
@@ -100,22 +152,40 @@ export class Box2 {
 
     this.min.copyFrom(center).subtract(halfSize);
     this.max.copyFrom(center).add(halfSize);
-    this.corners = [
-      this.min.clone(),
-      new Vector2(this.max.x, this.min.y),
-      this.max.clone(),
-      new Vector2(this.min.x, this.max.y),
-    ];
+
+    // 清空并重新生成角点
+    this._corners.length = 0;
+    if (!this.isEmpty()) {
+      this._generateCorners();
+    }
 
     return this;
   }
 
   /**
-   * 克隆二维包围盒
+   * 通过类Box2对象设置包围盒
+   * @param box - Box2Like对象
+   * @returns 二维包围盒
+   */
+  setFromBox2Like (box: Box2Like): this {
+    this.min.copyFrom(box.min);
+    this.max.copyFrom(box.max);
+
+    // 清空并重新生成角点
+    this._corners.length = 0;
+    if (!this.isEmpty()) {
+      this._generateCorners();
+    }
+
+    return this;
+  }
+
+  /**
+   * 克隆二维包围盒，使用对象池
    * @returns 克隆结果
    */
   clone (): Box2 {
-    return new Box2().copyFrom(this);
+    return Box2.create().copyFrom(this);
   }
 
   /**
@@ -124,12 +194,18 @@ export class Box2 {
    * @returns 复制结果
    */
   copyFrom (box: Box2): this {
-    this.corners = [];
     this.min.copyFrom(box.min);
     this.max.copyFrom(box.max);
-    box.corners.forEach(corner => {
-      this.corners.push(corner.clone());
-    });
+
+    // 清空现有角点
+    this._corners.length = 0;
+
+    // 复制其他Box2的角点
+    const otherCorners = box.corners;
+
+    for (let i = 0; i < otherCorners.length; i++) {
+      this._corners.push(otherCorners[i].clone());
+    }
 
     return this;
   }
@@ -141,7 +217,7 @@ export class Box2 {
   makeEmpty (): this {
     this.min.x = this.min.y = +Infinity;
     this.max.x = this.max.y = -Infinity;
-    this.corners = [];
+    this._corners.length = 0;
 
     return this;
   }
@@ -161,16 +237,17 @@ export class Box2 {
    */
   getCorners (): Vector2[] {
     const res: Vector2[] = [];
+    const corners = this.corners; // 使用getter确保角点存在
 
-    this.corners.forEach(corner => {
-      res.push(corner.clone());
-    });
+    for (let i = 0; i < corners.length; i++) {
+      res.push(corners[i].clone());
+    }
 
     return res;
   }
 
   /**
-   * 过去二维包围盒左上角点
+   * 获取二维包围盒左上角点
    * @returns 二维包围盒左上角点
    */
   getLeftTopCorner (): Vector2 {
@@ -456,12 +533,11 @@ export class Box2 {
     this.min.min(box.min);
     this.max.max(box.max);
 
-    this.corners = [
-      this.min.clone(),
-      new Vector2(this.max.x, this.min.y),
-      this.max.clone(),
-      new Vector2(this.min.x, this.max.y),
-    ];
+    // 清空并重新生成角点
+    this._corners.length = 0;
+    if (!this.isEmpty()) {
+      this._generateCorners();
+    }
 
     return this;
   }
@@ -475,9 +551,10 @@ export class Box2 {
     this.min.add(offset);
     this.max.add(offset);
 
-    this.corners.forEach(corner => {
-      corner.add(offset);
-    });
+    // 更新每个角点位置
+    for (let i = 0; i < this._corners.length; i++) {
+      this._corners[i].add(offset);
+    }
 
     return this;
   }
@@ -489,5 +566,37 @@ export class Box2 {
    */
   equals (box: Box2): boolean {
     return box.min.equals(this.min) && box.max.equals(this.max);
+  }
+
+  /**
+   * 从对象池获取一个 Box2 实例
+   */
+  static create (): Box2 {
+    if (box2PoolIndex < box2Pool.length) {
+      const box = box2Pool[box2PoolIndex++];
+
+      return box.makeEmpty();
+    }
+
+    return new Box2();
+  }
+
+  /**
+   * 将 Box2 实例释放回对象池
+   */
+  static release (box: Box2): void {
+    if (box2PoolIndex > 0 && box2Pool.length < POOL_SIZE) {
+      box2PoolIndex--;
+      box2Pool[box2PoolIndex] = box;
+    }
+  }
+
+  /**
+   * 预分配对象池
+   */
+  static preallocate (count: number): void {
+    for (let i = 0; i < count && box2Pool.length < POOL_SIZE; i++) {
+      box2Pool.push(new Box2());
+    }
   }
 }

@@ -50,7 +50,7 @@ export class Sphere {
       let maxRadiusSq = 0;
 
       for (let i = 0; i < points.length; i++) {
-        maxRadiusSq = Math.max(maxRadiusSq, center.distanceSquared(points[i]));
+        maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(points[i]));
       }
 
       this.radius = Math.sqrt(maxRadiusSq);
@@ -102,7 +102,7 @@ export class Sphere {
    * @returns 空间点包含判断
    */
   containsPoint (point: Vector3): boolean {
-    return point.distanceSquared(this.center) <= (this.radius * this.radius);
+    return point.distanceToSquared(this.center) <= (this.radius * this.radius);
   }
 
   /**
@@ -111,7 +111,7 @@ export class Sphere {
    * @returns 距离结果
    */
   distanceToPoint (point: Vector3): number {
-    return (point.distance(this.center) - this.radius);
+    return (point.distanceTo(this.center) - this.radius);
   }
 
   /**
@@ -122,7 +122,7 @@ export class Sphere {
   intersectsSphere (sphere: Sphere): boolean {
     const radiusSum = this.radius + sphere.radius;
 
-    return sphere.center.distanceSquared(this.center) <= (radiusSum * radiusSum);
+    return sphere.center.distanceToSquared(this.center) <= (radiusSum * radiusSum);
   }
 
   /**
@@ -142,7 +142,7 @@ export class Sphere {
    * @returns 收敛结果
    */
   clampPoint (point: Vector3, target?: Vector3): Vector3 {
-    const deltaLengthSq = this.center.distanceSquared(point);
+    const deltaLengthSq = this.center.distanceToSquared(point);
 
     if (target === undefined) { target = new Vector3(); }
 
@@ -185,7 +185,7 @@ export class Sphere {
    * @returns 变换结果
    */
   applyMatrix4 (matrix: Matrix4): this {
-    const mt = matrix.elements;
+    const mt = matrix.getElements();
 
     const scaleXSq = mt[0] * mt[0] + mt[1] * mt[1] + mt[2] * mt[2];
     const scaleYSq = mt[4] * mt[4] + mt[5] * mt[5] + mt[6] * mt[6];
@@ -240,16 +240,44 @@ export class Sphere {
    * @returns 求并结果
    */
   union (sphere: Sphere): this {
-    // To enclose another sphere into this sphere, we only need to enclose two points:
-    // 1) Enclose the farthest point on the other sphere into this sphere.
-    // 2) Enclose the opposite point of the farthest point into this sphere.
-    const v1 = new Vector3();
-    const toFarthestPoint = new Vector3();
+    if (sphere.isEmpty()) {
+      return this;
+    }
 
-    toFarthestPoint.subtractVectors(sphere.center, this.center).normalize().multiply(sphere.radius);
+    if (this.isEmpty()) {
+      this.center.copyFrom(sphere.center);
+      this.radius = sphere.radius;
 
-    this.expandByPoint(v1.copyFrom(sphere.center).add(toFarthestPoint));
-    this.expandByPoint(v1.copyFrom(sphere.center).subtract(toFarthestPoint));
+      return this;
+    }
+
+    // 计算两个球心之间的距离
+    const distance = this.center.distanceTo(sphere.center);
+
+    // 如果一个球完全包含另一个球，则返回较大的球
+    if (distance + sphere.radius <= this.radius) {
+      // 当前球已经包含了另一个球，不需要任何操作
+      return this;
+    }
+
+    if (distance + this.radius <= sphere.radius) {
+      // 另一个球完全包含当前球，使用另一个球的属性
+      this.center.copyFrom(sphere.center);
+      this.radius = sphere.radius;
+
+      return this;
+    }
+
+    // 创建一个新球，使其包含两个原始球
+    // 新球心位于两个球心的连线上
+    // 新半径等于两个球心距离的一半加上两个半径的最大值
+    const newRadius = (distance + this.radius + sphere.radius) * 0.5;
+
+    // 计算新球心的位置，使其偏向半径较大的球
+    const ratio = (newRadius - this.radius) / distance;
+
+    this.center.lerp(sphere.center, ratio);
+    this.radius = newRadius;
 
     return this;
   }

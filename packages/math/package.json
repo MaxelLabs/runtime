@@ -1,11 +1,11 @@
 {
-  "name": "@sruim/math",
+  "name": "@max/math",
   "version": "0.0.1",
-  "description": "Sruim Runtime Math Library",
-  "module": "./dist/index.mjs",
-  "main": "./dist/index.js",
+  "description": "Math library for Max Engine",
+  "module": "dist/index.esm.js",
+  "main": "dist/index.js",
   "brower": "./dist/index.min.js",
-  "types": "./dist/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
@@ -22,7 +22,15 @@
     "build:module": "rollup -c",
     "build:declaration": "tsc -d --emitDeclarationOnly",
     "clean": "rimraf dist && rimraf \"*+(.tsbuildinfo)\"",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm build",
+    "dev": "rollup -c -w",
+    "test": "jest",
+    "bench": "node test/bench-cjs.js",
+    "bench:advanced": "node --expose-gc test/advanced-bench.js",
+    "bench:all": "pnpm bench && pnpm bench:advanced",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "prepare": "npm run build"
   },
   "contributors": [
     {
@@ -33,5 +41,7 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
+  },
+  "dependencies": {
   }
 }

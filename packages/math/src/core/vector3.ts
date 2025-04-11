@@ -1,10 +1,12 @@
-import type { Euler } from './euler';
-import type { Matrix3 } from './matrix3';
-import type { Quaternion } from './quaternion';
 import type { Matrix4 } from './matrix4';
 import type { Vector3DataType, Vector3Like, vec3 } from './type';
-import { NumberEpsilon } from './utils';
+import { NumberEpsilon, fastInvSqrt } from './utils';
 import { Vector2 } from './vector2';
+
+// 对象池配置 - 增加池大小以应对高负载场景
+const POOL_SIZE = 2000;
+const pool: Vector3[] = [];
+let poolIndex = 0;
 
 /**
  * 三维向量
@@ -13,11 +15,14 @@ export class Vector3 {
   /**
    * 三维向量的常量
    */
-  static readonly X = new Vector3(1.0, 0.0, 0.0);
-  static readonly Y = new Vector3(0.0, 1.0, 0.0);
-  static readonly Z = new Vector3(0.0, 0.0, 1.0);
-  static readonly ONE = new Vector3(1.0, 1.0, 1.0);
-  static readonly ZERO = new Vector3(0.0, 0.0, 0.0);
+  static readonly X = Object.freeze(new Vector3(1.0, 0.0, 0.0));
+  static readonly Y = Object.freeze(new Vector3(0.0, 1.0, 0.0));
+  static readonly Z = Object.freeze(new Vector3(0.0, 0.0, 1.0));
+  static readonly ONE = Object.freeze(new Vector3(1.0, 1.0, 1.0));
+  static readonly ZERO = Object.freeze(new Vector3(0.0, 0.0, 0.0));
+
+  // 使用TypedArray而不是单独的属性，提高内存密度和访问速度
+  private elements: Float32Array;
 
   /**
    * 构造函数，默认值为零向量
@@ -25,11 +30,42 @@ export class Vector3 {
    * @param [y=0]
    * @param [z=0]
    */
-  constructor (
-    public x = 0,
-    public y = 0,
-    public z = 0,
-  ) {}
+  constructor (x = 0, y = 0, z = 0) {
+    this.elements = new Float32Array([x, y, z]);
+  }
+
+  /**
+   * x坐标访问器
+   */
+  get x (): number {
+    return this.elements[0];
+  }
+
+  set x (value: number) {
+    this.elements[0] = value;
+  }
+
+  /**
+   * y坐标访问器
+   */
+  get y (): number {
+    return this.elements[1];
+  }
+
+  set y (value: number) {
+    this.elements[1] = value;
+  }
+
+  /**
+   * z坐标访问器
+   */
+  get z (): number {
+    return this.elements[2];
+  }
+
+  set z (value: number) {
+    this.elements[2] = value;
+  }
 
   /**
    * 设置向量
@@ -39,9 +75,9 @@ export class Vector3 {
    * @returns 向量
    */
   set (x: number, y: number, z: number): this {
-    this.x = x;
-    this.y = y;
-    this.z = z;
+    this.elements[0] = x;
+    this.elements[1] = y;
+    this.elements[2] = z;
 
     return this;
   }
@@ -51,9 +87,9 @@ export class Vector3 {
    * @returns 向量
    */
   setZero (): this {
-    this.x = 0;
-    this.y = 0;
-    this.z = 0;
+    this.elements[0] = 0;
+    this.elements[1] = 0;
+    this.elements[2] = 0;
 
     return this;
   }
@@ -64,9 +100,9 @@ export class Vector3 {
    * @returns 向量
    */
   setFromNumber (num: number): this {
-    this.x = num;
-    this.y = num;
-    this.z = num;
+    this.elements[0] = num;
+    this.elements[1] = num;
+    this.elements[2] = num;
 
     return this;
   }
@@ -78,9 +114,9 @@ export class Vector3 {
    * @returns 向量
    */
   setFromArray (array: Vector3DataType, offset = 0): this {
-    this.x = array[offset] ?? 0;
-    this.y = array[offset + 1] ?? 0;
-    this.z = array[offset + 2] ?? 0;
+    this.elements[0] = array[offset] ?? 0;
+    this.elements[1] = array[offset + 1] ?? 0;
+    this.elements[2] = array[offset + 2] ?? 0;
 
     return this;
   }
@@ -91,19 +127,19 @@ export class Vector3 {
    * @returns 向量
    */
   copyFrom (v: Vector3Like): this {
-    this.x = v.x;
-    this.y = v.y;
-    this.z = v.z;
+    this.elements[0] = v.x;
+    this.elements[1] = v.y;
+    this.elements[2] = v.z;
 
     return this;
   }
 
   /**
-   * 克隆向量
-   * @returns 向量
+   * 克隆向量，使用对象池
+   * @returns 新的向量
    */
   clone (): Vector3 {
-    return new Vector3(this.x, this.y, this.z);
+    return Vector3.create(this.x, this.y, this.z);
   }
 
   /**
@@ -113,17 +149,10 @@ export class Vector3 {
    * @returns 向量
    */
   setElement (index: number, value: number): this {
-    switch (index) {
-      case 0: this.x = value;
-
-        break;
-      case 1: this.y = value;
-
-        break;
-      case 2: this.z = value;
-
-        break;
-      default: console.error('index is out of range: ' + index);
+    if (index >= 0 && index <= 2) {
+      this.elements[index] = value;
+    } else {
+      console.error('index is out of range: ' + index);
     }
 
     return this;
@@ -132,37 +161,37 @@ export class Vector3 {
   /**
    * 根据下标获取向量分量
    * @param index - 下标
-   * @returns
+   * @returns 向量分量
    */
   getElement (index: number): number {
-    switch (index) {
-      case 0: return this.x;
-      case 1: return this.y;
-      case 2: return this.z;
-      default: console.error('index is out of range: ' + index);
+    if (index >= 0 && index <= 2) {
+      return this.elements[index];
     }
+    console.error('index is out of range: ' + index);
 
     return 0;
   }
 
   /**
-   * 向量相加
+   * 向量相加（优化版本）
    * @param right - 向量 | 数字
    * @returns 相加结果
    */
   add (right: number | vec3 | Vector3): this {
+    const e = this.elements;
+
     if (typeof right === 'number') {
-      this.x += right;
-      this.y += right;
-      this.z += right;
+      e[0] += right;
+      e[1] += right;
+      e[2] += right;
     } else if (right instanceof Array) {
-      this.x += right[0];
-      this.y += right[1];
-      this.z += right[2];
+      e[0] += right[0];
+      e[1] += right[1];
+      e[2] += right[2];
     } else {
-      this.x += right.x;
-      this.y += right.y;
-      this.z += right.z;
+      e[0] += right.x;
+      e[1] += right.y;
+      e[2] += right.z;
     }
 
     return this;
@@ -175,9 +204,11 @@ export class Vector3 {
    * @returns 相加结果
    */
   addVectors (left: Vector3, right: Vector3): this {
-    this.x = left.x + right.x;
-    this.y = left.y + right.y;
-    this.z = left.z + right.z;
+    const e = this.elements;
+
+    e[0] = left.x + right.x;
+    e[1] = left.y + right.y;
+    e[2] = left.z + right.z;
 
     return this;
   }
@@ -189,31 +220,35 @@ export class Vector3 {
    * @returns 相加结果
    */
   addScaledVector (right: Vector3, s: number): this {
-    this.x += right.x * s;
-    this.y += right.y * s;
-    this.z += right.z * s;
+    const e = this.elements;
+
+    e[0] += right.x * s;
+    e[1] += right.y * s;
+    e[2] += right.z * s;
 
     return this;
   }
 
   /**
-   * 向量相减
+   * 向量相减（优化版本）
    * @param right - 向量 | 数字
-   * @returns 相减
+   * @returns 相减结果
    */
   subtract (right: number | vec3 | Vector3): this {
+    const e = this.elements;
+
     if (typeof right === 'number') {
-      this.x -= right;
-      this.y -= right;
-      this.z -= right;
+      e[0] -= right;
+      e[1] -= right;
+      e[2] -= right;
     } else if (right instanceof Array) {
-      this.x -= right[0];
-      this.y -= right[1];
-      this.z -= right[2];
+      e[0] -= right[0];
+      e[1] -= right[1];
+      e[2] -= right[2];
     } else {
-      this.x -= right.x;
-      this.y -= right.y;
-      this.z -= right.z;
+      e[0] -= right.x;
+      e[1] -= right.y;
+      e[2] -= right.z;
     }
 
     return this;
@@ -226,31 +261,35 @@ export class Vector3 {
    * @returns 相减结果
    */
   subtractVectors (left: Vector3, right: Vector3): this {
-    this.x = left.x - right.x;
-    this.y = left.y - right.y;
-    this.z = left.z - right.z;
+    const e = this.elements;
+
+    e[0] = left.x - right.x;
+    e[1] = left.y - right.y;
+    e[2] = left.z - right.z;
 
     return this;
   }
 
   /**
    * 向量相乘
-   * @param right - 向量 | 数字
-   * @returns 相乘结果
+   * @param right - 相乘对象，对象 | 数字
+   * @returns 向量
    */
   multiply (right: number | vec3 | Vector3): this {
+    const e = this.elements;
+
     if (typeof right === 'number') {
-      this.x *= right;
-      this.y *= right;
-      this.z *= right;
+      e[0] *= right;
+      e[1] *= right;
+      e[2] *= right;
     } else if (right instanceof Array) {
-      this.x *= right[0];
-      this.y *= right[1];
-      this.z *= right[2];
+      e[0] *= right[0];
+      e[1] *= right[1];
+      e[2] *= right[2];
     } else {
-      this.x *= right.x;
-      this.y *= right.y;
-      this.z *= right.z;
+      e[0] *= right.x;
+      e[1] *= right.y;
+      e[2] *= right.z;
     }
 
     return this;
@@ -260,164 +299,14 @@ export class Vector3 {
    * 向量相乘
    * @param left - 向量
    * @param right - 向量
-   * @returns 相乘结果
+   * @returns 向量
    */
   multiplyVectors (left: Vector3, right: Vector3): this {
-    this.x = left.x * right.x;
-    this.y = left.y * right.y;
-    this.z = left.z * right.z;
+    const e = this.elements;
 
-    return this;
-  }
-
-  /**
-   * 向量相除
-   * @param right - 向量 | 数字
-   * @returns 相除结果
-   */
-  divide (right: number | vec3 | Vector3): this {
-    if (typeof right === 'number') {
-      this.x /= right;
-      this.y /= right;
-      this.z /= right;
-    } else if (right instanceof Array) {
-      this.x /= right[0];
-      this.y /= right[1];
-      this.z /= right[2];
-    } else {
-      this.x /= right.x;
-      this.y /= right.y;
-      this.z /= right.z;
-    }
-
-    return this;
-  }
-
-  /**
-   * 向量缩放
-   * @param v - 数字
-   * @returns 缩放结果
-   */
-  scale (v: number): this {
-    this.x *= v;
-    this.y *= v;
-    this.z *= v;
-
-    return this;
-  }
-
-  /**
-   * 分量求和
-   * @returns 求和结果
-   */
-  sum (): number {
-    return this.x + this.y + this.z;
-  }
-
-  /**
-   * 向量求最小值
-   * @param v - 向量或数值
-   * @returns 求值结果
-   */
-  min (v: Vector3 | number): this {
-    if (typeof v === 'number') {
-      this.x = Math.min(this.x, v);
-      this.y = Math.min(this.y, v);
-      this.z = Math.min(this.z, v);
-    } else {
-      this.x = Math.min(this.x, v.x);
-      this.y = Math.min(this.y, v.y);
-      this.z = Math.min(this.z, v.z);
-    }
-
-    return this;
-  }
-
-  /**
-   * 向量求最大值
-   * @param v - 向量或数值
-   * @returns 求值结果
-   */
-  max (v: Vector3 | number): this {
-    if (typeof v === 'number') {
-      this.x = Math.max(this.x, v);
-      this.y = Math.max(this.y, v);
-      this.z = Math.max(this.z, v);
-    } else {
-      this.x = Math.max(this.x, v.x);
-      this.y = Math.max(this.y, v.y);
-      this.z = Math.max(this.z, v.z);
-    }
-
-    return this;
-  }
-
-  /**
-   * 向量阈值约束
-   * @param min - 向量
-   * @param max - 向量
-   * @returns 求值结果
-   */
-  clamp (min: Vector3 | number, max: Vector3 | number): this {
-    return this.max(min).min(max);
-  }
-
-  /**
-   * 向量向下取整
-   * @returns 取整结果
-   */
-  floor (): this {
-    this.x = Math.floor(this.x);
-    this.y = Math.floor(this.y);
-    this.z = Math.floor(this.z);
-
-    return this;
-  }
-
-  /**
-   * 向量向上取整
-   * @returns 取整结果
-   */
-  ceil (): this {
-    this.x = Math.ceil(this.x);
-    this.y = Math.ceil(this.y);
-    this.z = Math.ceil(this.z);
-
-    return this;
-  }
-
-  /**
-   * 向量四舍五入
-   * @returns 计算结果
-   */
-  round (): this {
-    this.x = Math.round(this.x);
-    this.y = Math.round(this.y);
-    this.z = Math.round(this.z);
-
-    return this;
-  }
-
-  /**
-   * 向量取绝对值
-   * @returns 向量
-   */
-  abs (): this {
-    this.x = Math.abs(this.x);
-    this.y = Math.abs(this.y);
-    this.z = Math.abs(this.z);
-
-    return this;
-  }
-
-  /**
-   * 向量取反
-   * @returns 向量
-   */
-  negate (): this {
-    this.x = - this.x;
-    this.y = - this.y;
-    this.z = - this.z;
+    e[0] = left.x * right.x;
+    e[1] = left.y * right.y;
+    e[2] = left.z * right.z;
 
     return this;
   }
@@ -427,7 +316,10 @@ export class Vector3 {
    * @returns 长度
    */
   length (): number {
-    return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    const e = this.elements;
+    const x = e[0], y = e[1], z = e[2];
+
+    return Math.sqrt(x * x + y * y + z * z);
   }
 
   /**
@@ -435,62 +327,41 @@ export class Vector3 {
    * @returns 长度平方
    */
   lengthSquared (): number {
-    return this.x * this.x + this.y * this.y + this.z * this.z;
+    const e = this.elements;
+    const x = e[0], y = e[1], z = e[2];
+
+    return x * x + y * y + z * z;
   }
 
   /**
-   * 向量归一化
-   * @returns 向量
+   * 向量归一化（优化版本）
    */
   normalize (): this {
-    return this.divide(this.length() || 1);
-  }
+    const e = this.elements;
+    const x = e[0], y = e[1], z = e[2];
+    const len = x * x + y * y + z * z;
 
-  /**
-   * 设置向量长度
-   * @param length - 长度
-   * @returns 向量
-   */
-  setLength (length: number): this {
-    return this.normalize().multiply(length);
-  }
+    if (len > 0) {
+      // 使用快速反平方根算法
+      const invLen = fastInvSqrt(len);
 
-  /**
-   * 向量间求线性插值
-   * @param other - 向量
-   * @param alpha - 插值比例
-   * @returns 插值结果
-   */
-  lerp (other: Vector3, alpha: number): this {
-    this.x += (other.x - this.x) * alpha;
-    this.y += (other.y - this.y) * alpha;
-    this.z += (other.z - this.z) * alpha;
+      e[0] = x * invLen;
+      e[1] = y * invLen;
+      e[2] = z * invLen;
+    }
 
     return this;
   }
 
   /**
-   * 向量间求线性插值
-   * @param v1 - 第一个向量
-   * @param v2 - 第二个向量
-   * @param alpha - 插值比例
-   * @returns 求值结果
-   */
-  lerpVectors (v1: Vector3, v2: Vector3, alpha: number): this {
-    this.x = v1.x + (v2.x - v1.x) * alpha;
-    this.y = v1.y + (v2.y - v1.y) * alpha;
-    this.z = v1.z + (v2.z - v1.z) * alpha;
-
-    return this;
-  }
-
-  /**
-   * 向量求点积，点积为零表示两向量垂直
+   * 向量求点积
    * @param v - 向量
    * @returns 点积结果
    */
   dot (v: Vector3): number {
-    return this.x * v.x + this.y * v.y + this.z * v.z;
+    const e = this.elements;
+
+    return e[0] * v.x + e[1] * v.y + e[2] * v.z;
   }
 
   /**
@@ -503,49 +374,38 @@ export class Vector3 {
   }
 
   /**
-   * 向量（a 与 b）求叉积
+   * 向量（a 与 b）求叉积（优化版本）
    * @param left - 向量
    * @param right - 向量
    * @returns 叉积结果
    */
   crossVectors (left: Vector3, right: Vector3): this {
-    const { x: ax, y: ay, z: az } = left;
-    const { x: bx, y: by, z: bz } = right;
+    const e = this.elements;
+    const ax = left.x, ay = left.y, az = left.z;
+    const bx = right.x, by = right.y, bz = right.z;
 
-    this.x = ay * bz - az * by;
-    this.y = az * bx - ax * bz;
-    this.z = ax * by - ay * bx;
+    e[0] = ay * bz - az * by;
+    e[1] = az * bx - ax * bz;
+    e[2] = ax * by - ay * bx;
 
     return this;
   }
 
   /**
-   * 向量反射
-   * @param normal - 法线
-   * @returns 反射结果
-   */
-  reflect (normal: Vector3): this {
-    // reflect incident vector off plane orthogonal to normal
-    // normal is assumed to have unit length
-
-    return this.subtract(normal.clone().multiply(2 * this.dot(normal)));
-  }
-
-  /**
-   * 计算向量距离
-   * @param v - 向量
+   * 计算到另一个向量的距离
+   * @param v 另一个向量
    * @returns 距离
    */
-  distance (v: Vector3): number {
-    return Math.sqrt(this.distanceSquared(v));
+  distanceTo (v: Vector3): number {
+    return Math.sqrt(this.distanceToSquared(v));
   }
 
   /**
-   * 计算向量距离平方
-   * @param v - 向量
+   * 计算到另一个向量的距离平方
+   * @param v 另一个向量
    * @returns 距离平方
    */
-  distanceSquared (v: Vector3): number {
+  distanceToSquared (v: Vector3): number {
     const dx = this.x - v.x;
     const dy = this.y - v.y;
     const dz = this.z - v.z;
@@ -554,12 +414,58 @@ export class Vector3 {
   }
 
   /**
+   * 向量缩放
+   * @param v - 数字
+   * @returns 缩放结果
+   */
+  scale (v: number): this {
+    const e = this.elements;
+
+    e[0] *= v;
+    e[1] *= v;
+    e[2] *= v;
+
+    return this;
+  }
+
+  /**
+   * 向量转数组
+   * @returns 数组
+   */
+  toArray (): [x: number, y: number, z: number] {
+    const e = this.elements;
+
+    return [e[0], e[1], e[2]];
+  }
+
+  /**
+   * 转换为Vector2类型
+   * @returns Vector2对象
+   */
+  toVector2 (): Vector2 {
+    return new Vector2(this.x, this.y);
+  }
+
+  /**
+   * 将向量填充到数组
+   * @param array 目标数组
+   * @param offset 偏移值
+   */
+  fill (array: number[] | Float32Array, offset = 0) {
+    const e = this.elements;
+
+    array[offset] = e[0];
+    array[offset + 1] = e[1];
+    array[offset + 2] = e[2];
+  }
+
+  /**
    * 向量判等
    * @param v - 向量
    * @returns 判等结果
    */
   equals (v: Vector3): boolean {
-    return v.x === this.x && v.y === this.y && v.z === this.z;
+    return this.x === v.x && this.y === v.y && this.z === v.z;
   }
 
   /**
@@ -574,102 +480,277 @@ export class Vector3 {
   }
 
   /**
-   * 向量转数组
-   * @param array - 目标保存对象
-   * @returns 数组
+   * 向量求最小值
+   * @param v - 向量
+   * @returns 最小值
    */
-  toArray (): [x: number, y: number, z: number] {
-    return [this.x, this.y, this.z];
-  }
+  min (v: Vector3 | number): this {
+    const e = this.elements;
 
-  toVector2 (): Vector2 {
-    return new Vector2(this.x, this.y);
-  }
-
-  fill (array: number[] | Float32Array, offset = 0) {
-    array[offset] = this.x;
-    array[offset + 1] = this.y;
-    array[offset + 2] = this.z;
-  }
-
-  /**
-   * 获取随机向量
-   * @returns
-   */
-  random (): this {
-    this.x = Math.random();
-    this.y = Math.random();
-    this.z = Math.random();
+    if (typeof v === 'number') {
+      e[0] = Math.min(e[0], v);
+      e[1] = Math.min(e[1], v);
+      e[2] = Math.min(e[2], v);
+    } else {
+      e[0] = Math.min(e[0], v.x);
+      e[1] = Math.min(e[1], v.y);
+      e[2] = Math.min(e[2], v.z);
+    }
 
     return this;
   }
 
   /**
-   * 用欧拉角旋转向量
-   * @param euler - 欧拉角
-   * @param [out] - 输出结果，如果没有就覆盖当前向量值
-   * @returns 旋转结果
+   * 向量求最大值
+   * @param v - 向量
+   * @returns 最大值
    */
-  applyEuler (euler: Euler, out?: Vector3): Vector3 {
-    return euler.rotateVector3(this, out);
+  max (v: Vector3 | number): this {
+    const e = this.elements;
+
+    if (typeof v === 'number') {
+      e[0] = Math.max(e[0], v);
+      e[1] = Math.max(e[1], v);
+      e[2] = Math.max(e[2], v);
+    } else {
+      e[0] = Math.max(e[0], v.x);
+      e[1] = Math.max(e[1], v.y);
+      e[2] = Math.max(e[2], v.z);
+    }
+
+    return this;
   }
 
   /**
-   * 用四元数旋转向量
-   * @param q - 四元数
-   * @param [out] - 输出结果，如果没有就覆盖当前向量值
-   * @returns 旋转结果
-   */
-  applyQuaternion (q: Quaternion, out?: Vector3): Vector3 {
-    return q.rotateVector3(this, out);
-  }
-
-  /**
-   * 用矩阵变换点
-   * @param m - 变换矩阵
-   * @param [out] - 输出结果，如果没有就覆盖当前向量值
-   * @returns 结果点
-   */
-  applyMatrix (m: Matrix3 | Matrix4, out?: Vector3): Vector3 {
-    return m.transformPoint(this, out);
-  }
-
-  /**
-   * 用法向量矩阵变换法向量
-   * @param m - 法向量矩阵
-   * @param [out] - 输出结果，如果没有就覆盖当前向量值
+   * 向量阈值约束
+   * @param min - 极小值
+   * @param max - 极大值
    * @returns 向量
    */
-  applyNormalMatrix (m: Matrix3 | Matrix4, out?: Vector3): Vector3 {
-    return m.transformNormal(this, out);
+  clamp (min: Vector3 | number, max: Vector3 | number): this {
+    return this.max(min).min(max);
   }
 
   /**
-   * 用投影矩阵变换点
-   * @param m - 投影矩阵
-   * @param [out] - 输出结果，如果没有就覆盖当前向量值
-   * @returns 结果点
+   * 向量向下取整
+   * @returns 取整结果
    */
-  applyProjectionMatrix (m: Matrix4, out?: Vector3): Vector3 {
-    return m.projectPoint(this, out);
+  floor (): this {
+    const e = this.elements;
+
+    e[0] = Math.floor(e[0]);
+    e[1] = Math.floor(e[1]);
+    e[2] = Math.floor(e[2]);
+
+    return this;
   }
 
   /**
-   * 通过标量数值创建向量
-   * @param num - 数值
+   * 向量向上取整
+   * @returns 取整结果
+   */
+  ceil (): this {
+    const e = this.elements;
+
+    e[0] = Math.ceil(e[0]);
+    e[1] = Math.ceil(e[1]);
+    e[2] = Math.ceil(e[2]);
+
+    return this;
+  }
+
+  /**
+   * 向量四舍五入
+   * @returns 取整结果
+   */
+  round (): this {
+    const e = this.elements;
+
+    e[0] = Math.round(e[0]);
+    e[1] = Math.round(e[1]);
+    e[2] = Math.round(e[2]);
+
+    return this;
+  }
+
+  /**
+   * 向量取绝对值
    * @returns 向量
    */
-  static fromNumber (num: number): Vector3 {
-    return new Vector3().setFromNumber(num);
+  abs (): this {
+    const e = this.elements;
+
+    e[0] = Math.abs(e[0]);
+    e[1] = Math.abs(e[1]);
+    e[2] = Math.abs(e[2]);
+
+    return this;
   }
 
   /**
-   * 通过数组创建向量
-   * @param array - 数组
-   * @param [offset=0] - 起始偏移值
+   * 向量取反
+   * @returns 取反结果
+   */
+  negate (): this {
+    const e = this.elements;
+
+    e[0] = -e[0];
+    e[1] = -e[1];
+    e[2] = -e[2];
+
+    return this;
+  }
+
+  /**
+   * 设置向量长度
+   * @param length - 长度
    * @returns 向量
    */
-  static fromArray (array: Vector3DataType, offset = 0): Vector3 {
-    return new Vector3().setFromArray(array, offset);
+  setLength (length: number): this {
+    return this.normalize().scale(length);
+  }
+
+  /**
+   * 向量线性插值
+   * @param v - 向量
+   * @param alpha - 插值比例
+   * @returns 插值结果
+   */
+  lerp (v: Vector3, alpha: number): this {
+    const e = this.elements;
+
+    e[0] += (v.x - e[0]) * alpha;
+    e[1] += (v.y - e[1]) * alpha;
+    e[2] += (v.z - e[2]) * alpha;
+
+    return this;
+  }
+
+  /**
+   * 两向量间的线性插值
+   * @param v1 - 第一个向量
+   * @param v2 - 第二个向量
+   * @param alpha - 插值比例
+   * @returns 插值结果
+   */
+  lerpVectors (v1: Vector3, v2: Vector3, alpha: number): this {
+    const e = this.elements;
+
+    e[0] = v1.x + (v2.x - v1.x) * alpha;
+    e[1] = v1.y + (v2.y - v1.y) * alpha;
+    e[2] = v1.z + (v2.z - v1.z) * alpha;
+
+    return this;
+  }
+
+  /**
+   * 变换矩阵作用于向量
+   * @param matrix - 变换矩阵
+   * @returns 向量
+   */
+  applyMatrix (matrix: Matrix4): this {
+    const e = this.elements;
+    const x = e[0];
+    const y = e[1];
+    const z = e[2];
+    const m = matrix.getElements();
+
+    // 应用矩阵变换 (列优先矩阵)
+    e[0] = m[0] * x + m[4] * y + m[8] * z + m[12];
+    e[1] = m[1] * x + m[5] * y + m[9] * z + m[13];
+    e[2] = m[2] * x + m[6] * y + m[10] * z + m[14];
+
+    return this;
+  }
+
+  /**
+   * 应用投影矩阵变换
+   * @param matrix - 变换矩阵
+   * @returns 向量
+   */
+  applyProjectionMatrix (matrix: Matrix4): this {
+    const e = this.elements;
+    const x = e[0];
+    const y = e[1];
+    const z = e[2];
+    const m = matrix.getElements();
+
+    // 应用投影矩阵变换并进行齐次坐标除法
+    const w = m[3] * x + m[7] * y + m[11] * z + m[15];
+    const invW = (Math.abs(w) < 1e-8) ? 1 : 1 / w;
+
+    e[0] = (m[0] * x + m[4] * y + m[8] * z + m[12]) * invW;
+    e[1] = (m[1] * x + m[5] * y + m[9] * z + m[13]) * invW;
+    e[2] = (m[2] * x + m[6] * y + m[10] * z + m[14]) * invW;
+
+    return this;
+  }
+
+  /**
+   * 应用法线变换矩阵
+   * @param matrix - 变换矩阵
+   * @returns 向量
+   */
+  applyNormalMatrix (matrix: Matrix4): this {
+    // 法线向量变换需要使用矩阵的伴随转置矩阵
+    // 对于刚体变换，可以直接使用旋转部分
+    const e = this.elements;
+    const x = e[0];
+    const y = e[1];
+    const z = e[2];
+    const m = matrix.getElements();
+
+    // 只应用旋转部分
+    e[0] = m[0] * x + m[1] * y + m[2] * z;
+    e[1] = m[4] * x + m[5] * y + m[6] * z;
+    e[2] = m[8] * x + m[9] * y + m[10] * z;
+
+    // 归一化结果
+    return this.normalize();
+  }
+
+  /**
+   * 从对象池获取或创建新的 Vector3 实例
+   */
+  static create (x = 0, y = 0, z = 0): Vector3 {
+    if (poolIndex < pool.length) {
+      const vector = pool[poolIndex++];
+
+      vector.set(x, y, z);
+
+      return vector;
+    }
+
+    return new Vector3(x, y, z);
+  }
+
+  /**
+   * 释放 Vector3 实例到对象池
+   */
+  static release (vector: Vector3): void {
+    if (poolIndex > 0 && pool.length < POOL_SIZE) {
+      poolIndex--;
+      pool[poolIndex] = vector;
+    }
+  }
+
+  /**
+   * 预分配对象池
+   */
+  static preallocate (count: number): void {
+    const initialSize = pool.length;
+
+    for (let i = 0; i < count && pool.length < POOL_SIZE; i++) {
+      pool.push(new Vector3());
+    }
+    console.debug(`Vector3池：从${initialSize}增加到${pool.length}`);
+  }
+
+  /**
+   * 清空对象池
+   */
+  static clearPool (): void {
+    pool.length = 0;
+    poolIndex = 0;
   }
 }

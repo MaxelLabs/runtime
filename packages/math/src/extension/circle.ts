@@ -127,13 +127,14 @@ export class Circle {
    * @returns 包含判断结果
    */
   containsBox (box: Box2): boolean {
-    for (let i = 0; i < 4; i++) {
-      if (!this.containsPoint(box.corners[i])) {
-        return false;
-      }
-    }
+    // 计算包围盒到圆心的最大距离
+    const boxCenter = box.getCenter();
+    const boxSize = box.getSize();
+    const boxHalfDiagonal = Math.sqrt(boxSize.x * boxSize.x + boxSize.y * boxSize.y) / 2;
+    const distanceToCenter = this.center.distance(boxCenter);
 
-    return true;
+    // 如果(圆心到包围盒中心的距离 + 包围盒对角线的一半) <= 圆的半径，则圆包含包围盒
+    return distanceToCenter + boxHalfDiagonal <= this.radius;
   }
 
   /**
