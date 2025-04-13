@@ -1,22 +1,17 @@
 {
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "moduleResolution": "node",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "preserve",
-    "baseUrl": ".",
-    "paths": {
-      "@max/*": ["packages/*/src"]
+  "references": [
+    {
+      "path": "./packages/math"
+    },
+    {
+      "path": "./packages/specification"
+    },
+    {
+      "path": "./packages/rhi"
+    },
+    {
+      "path": "./packages/core"
     }
-  },
-  "include": ["packages/**/*.ts", "packages/**/*.tsx"],
-  "exclude": ["node_modules"]
+  ],
+  "files": []
 }

@@ -3,11 +3,7 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
-    "composite": true,
-    "esModuleInterop": true,
-    "moduleResolution": "node",
-    "declaration": true,
-    "declarationMap": true
+    "composite": true
   },
   "include": [
     "src",

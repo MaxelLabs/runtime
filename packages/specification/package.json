@@ -1,6 +1,6 @@
 {
   "name": "@max/specification",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "类型定义",
   "type": "module",
   "module": "./dist/index.mjs",

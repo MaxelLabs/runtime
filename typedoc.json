@@ -3,7 +3,8 @@
   "entryPoints": [
     "packages/core",
     "packages/rhi",
-    "packages/spec",
+    "packages/specification",
+    "packages/math"
   ],
   "entryPointStrategy": "packages",
   "out": "api",

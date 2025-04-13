@@ -17,26 +17,28 @@
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
+    "stripInternal": true,
     "moduleResolution": "node",
     "module": "ESNext",
     "target": "ESNext",
     "lib": [
       "DOM",
+      "DOM.Iterable",
       "ES2015",
       "ESNext"
     ],
     "paths": {
       "@max/core": [
-        "./packages/core/dist"
+        "./packages/core/src"
       ],
       "@max/math": [
-        "./packages/math/dist"
+        "./packages/math/src"
       ],
       "@max/rhi": [
-        "./packages/rhi/dist"
+        "./packages/rhi/src"
       ],
       "@max/specification": [
-        "./packages/specification/dist"
+        "./packages/specification/src"
       ]
     }
   }
