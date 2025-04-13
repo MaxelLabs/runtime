@@ -15,5 +15,13 @@
     "types": ["@types/jest", "@types/node"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test/**/*"]
+  "exclude": ["node_modules", "dist", "test/**/*"],
+  "references": [
+    {
+      "path": "../math"
+    },
+    {
+      "path": "../core"
+    }
+  ]
 }
