@@ -261,3 +261,4 @@ export declare class Vector2 {
      */
     static fromArray(array: Vector2DataType, offset?: number): Vector2;
 }
+//# sourceMappingURL=vector2.d.ts.map

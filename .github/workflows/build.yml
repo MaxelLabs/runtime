@@ -1,0 +1,29 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'pnpm'
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build core libraries
+        run: pnpm build:core
+      - name: Build other packages
+        run: pnpm build:others
+      - name: Run tests
+        run: pnpm test

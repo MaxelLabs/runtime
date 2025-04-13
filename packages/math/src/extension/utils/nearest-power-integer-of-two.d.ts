@@ -5,3 +5,4 @@
  * @returns
  */
 export declare function nearestPowerIntegerOfTwo(value: number): number;
+//# sourceMappingURL=nearest-power-integer-of-two.d.ts.map

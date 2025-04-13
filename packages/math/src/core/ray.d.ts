@@ -22,7 +22,7 @@ export declare class Ray {
      * @param [origin] - 原点，默认是 (0, 0, 0)
      * @param [direction] - 方向，默认是 (1, 0, 0)
      */
-    constructor(origin?: Vector3, direction?: Vector3);
+    constructor(origin?: Readonly<Vector3>, direction?: Readonly<Vector3>);
     /**
      * 光线设置
      * @param origin - 原点
@@ -96,3 +96,4 @@ export declare class Ray {
      */
     intersectTriangle(triangle: TriangleLike, out?: Vector3, backfaceCulling?: boolean): Vector3 | undefined;
 }
+//# sourceMappingURL=ray.d.ts.map

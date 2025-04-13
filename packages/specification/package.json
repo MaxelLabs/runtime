@@ -17,7 +17,7 @@
     }
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "rollup -c -w",
     "prebuild": "pnpm clean",
     "build": "pnpm build:declaration && pnpm build:module",
     "build:module": "rollup -c",

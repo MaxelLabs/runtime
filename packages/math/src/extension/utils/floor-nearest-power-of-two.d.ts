@@ -4,3 +4,4 @@
  * @returns
  */
 export declare function floorNearestPowerOfTwo(value: number): number;
+//# sourceMappingURL=floor-nearest-power-of-two.d.ts.map

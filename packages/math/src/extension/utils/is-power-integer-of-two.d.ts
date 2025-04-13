@@ -5,3 +5,4 @@
  * @returns
  */
 export declare function isPowerIntegerOfTwo(testNum: number): boolean;
+//# sourceMappingURL=is-power-integer-of-two.d.ts.map

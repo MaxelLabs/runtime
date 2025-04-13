@@ -135,3 +135,4 @@ export interface PlaneLike {
     distance: number;
     normal: Vector3Like;
 }
+//# sourceMappingURL=type.d.ts.map

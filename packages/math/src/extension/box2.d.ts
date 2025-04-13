@@ -1,4 +1,5 @@
 import { Vector2 } from '../core/vector2';
+import type { Box2Like } from '../core/type';
 /**
  * 二维包围盒
  */
@@ -8,13 +9,23 @@ export declare class Box2 {
     /**
      * @member corners - 二维包围盒角点
      */
-    corners: Vector2[];
+    private _corners;
+    /**
+     * 获取角点数组
+     * @returns 二维包围盒角点数组
+     */
+    get corners(): Vector2[];
     /**
      * 构造函数，传入值为空时表示空包围盒
      * @param min - 最小点
      * @param max - 最大点
      */
     constructor(min?: Vector2, max?: Vector2);
+    /**
+     * 生成角点数组
+     * @private
+     */
+    private _generateCorners;
     /**
      * 通过最大最小点设置二维包围盒
      * @param min 最小点
@@ -28,6 +39,11 @@ export declare class Box2 {
      * @returns 二维包围盒
      */
     setFromVec2Array(vecArray: Vector2[]): this;
+    /**
+     * 通过二维点数组设置包围盒，但不保留原始角点，而是生成新的角点
+     * @param vecArray - 二维空间点数组
+     * @returns 二维包围盒
+     */
     setFromVec2ArrayWithOutCorners(vecArray: Vector2[]): this;
     /**
      * 通过中心与大小设置二维包围盒
@@ -37,7 +53,13 @@ export declare class Box2 {
      */
     setFromCenterAndSize(center: Vector2, size: Vector2): this;
     /**
-     * 克隆二维包围盒
+     * 通过类Box2对象设置包围盒
+     * @param box - Box2Like对象
+     * @returns 二维包围盒
+     */
+    setFromBox2Like(box: Box2Like): this;
+    /**
+     * 克隆二维包围盒，使用对象池
      * @returns 克隆结果
      */
     clone(): Box2;
@@ -63,7 +85,7 @@ export declare class Box2 {
      */
     getCorners(): Vector2[];
     /**
-     * 过去二维包围盒左上角点
+     * 获取二维包围盒左上角点
      * @returns 二维包围盒左上角点
      */
     getLeftTopCorner(): Vector2;
@@ -182,4 +204,17 @@ export declare class Box2 {
      * @returns 判等结果
      */
     equals(box: Box2): boolean;
+    /**
+     * 从对象池获取一个 Box2 实例
+     */
+    static create(): Box2;
+    /**
+     * 将 Box2 实例释放回对象池
+     */
+    static release(box: Box2): void;
+    /**
+     * 预分配对象池
+     */
+    static preallocate(count: number): void;
 }
+//# sourceMappingURL=box2.d.ts.map

@@ -5,3 +5,4 @@ export declare enum IntervalType {
     RIGHT_CLOSE = 3
 }
 export declare function isRangeIn(num: number, min: number, max: number, intervalType?: IntervalType): boolean;
+//# sourceMappingURL=is-range-in.d.ts.map

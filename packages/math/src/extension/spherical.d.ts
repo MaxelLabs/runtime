@@ -59,3 +59,4 @@ declare class Spherical {
     getCartesianCoords(): Vector3;
 }
 export { Spherical };
+//# sourceMappingURL=spherical.d.ts.map

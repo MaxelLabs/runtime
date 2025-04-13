@@ -201,3 +201,4 @@ export declare class Color {
     static linearToGamma(value: number): number;
     static ToHex(i: number): string;
 }
+//# sourceMappingURL=color.d.ts.map

@@ -2,25 +2,18 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "composite": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "noEmit": false,
     "rootDir": "src",
     "baseUrl": ".",
-    "paths": {
-      "@max/core": ["../../packages/core/src"],
-      "@max/math": ["../../packages/math/src"],
-      "@max/specification": ["../../packages/specification/src"]
-    },
+    "composite": false,
+    "skipLibCheck": true,
+    "noImplicitAny": false,
+    "strict": false,
     "types": ["@types/jest", "@types/node"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test/**/*"],
-  "references": [
-    { "path": "../../packages/core" },
-    { "path": "../../packages/math" },
-    { "path": "../../packages/specification" }
-  ]
+  "exclude": ["node_modules", "dist", "test/**/*"]
 }

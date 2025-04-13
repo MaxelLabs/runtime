@@ -1,6 +1,3 @@
-import type { Euler } from './euler';
-import type { Matrix3 } from './matrix3';
-import type { Quaternion } from './quaternion';
 import type { Matrix4 } from './matrix4';
 import type { Vector3DataType, Vector3Like, vec3 } from './type';
 import { Vector2 } from './vector2';
@@ -8,17 +5,15 @@ import { Vector2 } from './vector2';
  * 三维向量
  */
 export declare class Vector3 {
-    x: number;
-    y: number;
-    z: number;
     /**
      * 三维向量的常量
      */
-    static readonly X: Vector3;
-    static readonly Y: Vector3;
-    static readonly Z: Vector3;
-    static readonly ONE: Vector3;
-    static readonly ZERO: Vector3;
+    static readonly X: Readonly<Vector3>;
+    static readonly Y: Readonly<Vector3>;
+    static readonly Z: Readonly<Vector3>;
+    static readonly ONE: Readonly<Vector3>;
+    static readonly ZERO: Readonly<Vector3>;
+    private elements;
     /**
      * 构造函数，默认值为零向量
      * @param [x=0]
@@ -26,6 +21,21 @@ export declare class Vector3 {
      * @param [z=0]
      */
     constructor(x?: number, y?: number, z?: number);
+    /**
+     * x坐标访问器
+     */
+    get x(): number;
+    set x(value: number);
+    /**
+     * y坐标访问器
+     */
+    get y(): number;
+    set y(value: number);
+    /**
+     * z坐标访问器
+     */
+    get z(): number;
+    set z(value: number);
     /**
      * 设置向量
      * @param x - x 轴分量
@@ -59,8 +69,8 @@ export declare class Vector3 {
      */
     copyFrom(v: Vector3Like): this;
     /**
-     * 克隆向量
-     * @returns 向量
+     * 克隆向量，使用对象池
+     * @returns 新的向量
      */
     clone(): Vector3;
     /**
@@ -73,11 +83,11 @@ export declare class Vector3 {
     /**
      * 根据下标获取向量分量
      * @param index - 下标
-     * @returns
+     * @returns 向量分量
      */
     getElement(index: number): number;
     /**
-     * 向量相加
+     * 向量相加（优化版本）
      * @param right - 向量 | 数字
      * @returns 相加结果
      */
@@ -97,9 +107,9 @@ export declare class Vector3 {
      */
     addScaledVector(right: Vector3, s: number): this;
     /**
-     * 向量相减
+     * 向量相减（优化版本）
      * @param right - 向量 | 数字
-     * @returns 相减
+     * @returns 相减结果
      */
     subtract(right: number | vec3 | Vector3): this;
     /**
@@ -111,23 +121,62 @@ export declare class Vector3 {
     subtractVectors(left: Vector3, right: Vector3): this;
     /**
      * 向量相乘
-     * @param right - 向量 | 数字
-     * @returns 相乘结果
+     * @param right - 相乘对象，对象 | 数字
+     * @returns 向量
      */
     multiply(right: number | vec3 | Vector3): this;
     /**
      * 向量相乘
      * @param left - 向量
      * @param right - 向量
-     * @returns 相乘结果
+     * @returns 向量
      */
     multiplyVectors(left: Vector3, right: Vector3): this;
     /**
-     * 向量相除
-     * @param right - 向量 | 数字
-     * @returns 相除结果
+     * 向量长度
+     * @returns 长度
      */
-    divide(right: number | vec3 | Vector3): this;
+    length(): number;
+    /**
+     * 向量长度平方
+     * @returns 长度平方
+     */
+    lengthSquared(): number;
+    /**
+     * 向量归一化（优化版本）
+     */
+    normalize(): this;
+    /**
+     * 向量求点积
+     * @param v - 向量
+     * @returns 点积结果
+     */
+    dot(v: Vector3): number;
+    /**
+     * 向量求叉积
+     * @param right - 向量
+     * @returns 叉积结果
+     */
+    cross(right: Vector3): this;
+    /**
+     * 向量（a 与 b）求叉积（优化版本）
+     * @param left - 向量
+     * @param right - 向量
+     * @returns 叉积结果
+     */
+    crossVectors(left: Vector3, right: Vector3): this;
+    /**
+     * 计算到另一个向量的距离
+     * @param v 另一个向量
+     * @returns 距离
+     */
+    distanceTo(v: Vector3): number;
+    /**
+     * 计算到另一个向量的距离平方
+     * @param v 另一个向量
+     * @returns 距离平方
+     */
+    distanceToSquared(v: Vector3): number;
     /**
      * 向量缩放
      * @param v - 数字
@@ -135,27 +184,49 @@ export declare class Vector3 {
      */
     scale(v: number): this;
     /**
-     * 分量求和
-     * @returns 求和结果
+     * 向量转数组
+     * @returns 数组
      */
-    sum(): number;
+    toArray(): [x: number, y: number, z: number];
+    /**
+     * 转换为Vector2类型
+     * @returns Vector2对象
+     */
+    toVector2(): Vector2;
+    /**
+     * 将向量填充到数组
+     * @param array 目标数组
+     * @param offset 偏移值
+     */
+    fill(array: number[] | Float32Array, offset?: number): void;
+    /**
+     * 向量判等
+     * @param v - 向量
+     * @returns 判等结果
+     */
+    equals(v: Vector3): boolean;
+    /**
+     * 是否零向量
+     * @returns 是否零向量
+     */
+    isZero(): boolean;
     /**
      * 向量求最小值
-     * @param v - 向量或数值
-     * @returns 求值结果
+     * @param v - 向量
+     * @returns 最小值
      */
     min(v: Vector3 | number): this;
     /**
      * 向量求最大值
-     * @param v - 向量或数值
-     * @returns 求值结果
+     * @param v - 向量
+     * @returns 最大值
      */
     max(v: Vector3 | number): this;
     /**
      * 向量阈值约束
-     * @param min - 向量
-     * @param max - 向量
-     * @returns 求值结果
+     * @param min - 极小值
+     * @param max - 极大值
+     * @returns 向量
      */
     clamp(min: Vector3 | number, max: Vector3 | number): this;
     /**
@@ -170,7 +241,7 @@ export declare class Vector3 {
     ceil(): this;
     /**
      * 向量四舍五入
-     * @returns 计算结果
+     * @returns 取整结果
      */
     round(): this;
     /**
@@ -180,24 +251,9 @@ export declare class Vector3 {
     abs(): this;
     /**
      * 向量取反
-     * @returns 向量
+     * @returns 取反结果
      */
     negate(): this;
-    /**
-     * 向量长度
-     * @returns 长度
-     */
-    length(): number;
-    /**
-     * 向量长度平方
-     * @returns 长度平方
-     */
-    lengthSquared(): number;
-    /**
-     * 向量归一化
-     * @returns 向量
-     */
-    normalize(): this;
     /**
      * 设置向量长度
      * @param length - 长度
@@ -205,127 +261,53 @@ export declare class Vector3 {
      */
     setLength(length: number): this;
     /**
-     * 向量间求线性插值
-     * @param other - 向量
+     * 向量线性插值
+     * @param v - 向量
      * @param alpha - 插值比例
      * @returns 插值结果
      */
-    lerp(other: Vector3, alpha: number): this;
+    lerp(v: Vector3, alpha: number): this;
     /**
-     * 向量间求线性插值
+     * 两向量间的线性插值
      * @param v1 - 第一个向量
      * @param v2 - 第二个向量
      * @param alpha - 插值比例
-     * @returns 求值结果
+     * @returns 插值结果
      */
     lerpVectors(v1: Vector3, v2: Vector3, alpha: number): this;
     /**
-     * 向量求点积，点积为零表示两向量垂直
-     * @param v - 向量
-     * @returns 点积结果
-     */
-    dot(v: Vector3): number;
-    /**
-     * 向量求叉积
-     * @param right - 向量
-     * @returns 叉积结果
-     */
-    cross(right: Vector3): this;
-    /**
-     * 向量（a 与 b）求叉积
-     * @param left - 向量
-     * @param right - 向量
-     * @returns 叉积结果
-     */
-    crossVectors(left: Vector3, right: Vector3): this;
-    /**
-     * 向量反射
-     * @param normal - 法线
-     * @returns 反射结果
-     */
-    reflect(normal: Vector3): this;
-    /**
-     * 计算向量距离
-     * @param v - 向量
-     * @returns 距离
-     */
-    distance(v: Vector3): number;
-    /**
-     * 计算向量距离平方
-     * @param v - 向量
-     * @returns 距离平方
-     */
-    distanceSquared(v: Vector3): number;
-    /**
-     * 向量判等
-     * @param v - 向量
-     * @returns 判等结果
-     */
-    equals(v: Vector3): boolean;
-    /**
-     * 是否零向量
-     * @returns 是否零向量
-     */
-    isZero(): boolean;
-    /**
-     * 向量转数组
-     * @param array - 目标保存对象
-     * @returns 数组
-     */
-    toArray(): [x: number, y: number, z: number];
-    toVector2(): Vector2;
-    fill(array: number[] | Float32Array, offset?: number): void;
-    /**
-     * 获取随机向量
-     * @returns
-     */
-    random(): this;
-    /**
-     * 用欧拉角旋转向量
-     * @param euler - 欧拉角
-     * @param [out] - 输出结果，如果没有就覆盖当前向量值
-     * @returns 旋转结果
-     */
-    applyEuler(euler: Euler, out?: Vector3): Vector3;
-    /**
-     * 用四元数旋转向量
-     * @param q - 四元数
-     * @param [out] - 输出结果，如果没有就覆盖当前向量值
-     * @returns 旋转结果
-     */
-    applyQuaternion(q: Quaternion, out?: Vector3): Vector3;
-    /**
-     * 用矩阵变换点
-     * @param m - 变换矩阵
-     * @param [out] - 输出结果，如果没有就覆盖当前向量值
-     * @returns 结果点
-     */
-    applyMatrix(m: Matrix3 | Matrix4, out?: Vector3): Vector3;
-    /**
-     * 用法向量矩阵变换法向量
-     * @param m - 法向量矩阵
-     * @param [out] - 输出结果，如果没有就覆盖当前向量值
+     * 变换矩阵作用于向量
+     * @param matrix - 变换矩阵
      * @returns 向量
      */
-    applyNormalMatrix(m: Matrix3 | Matrix4, out?: Vector3): Vector3;
+    applyMatrix(matrix: Matrix4): this;
     /**
-     * 用投影矩阵变换点
-     * @param m - 投影矩阵
-     * @param [out] - 输出结果，如果没有就覆盖当前向量值
-     * @returns 结果点
-     */
-    applyProjectionMatrix(m: Matrix4, out?: Vector3): Vector3;
-    /**
-     * 通过标量数值创建向量
-     * @param num - 数值
+     * 应用投影矩阵变换
+     * @param matrix - 变换矩阵
      * @returns 向量
      */
-    static fromNumber(num: number): Vector3;
+    applyProjectionMatrix(matrix: Matrix4): this;
     /**
-     * 通过数组创建向量
-     * @param array - 数组
-     * @param [offset=0] - 起始偏移值
+     * 应用法线变换矩阵
+     * @param matrix - 变换矩阵
      * @returns 向量
      */
-    static fromArray(array: Vector3DataType, offset?: number): Vector3;
+    applyNormalMatrix(matrix: Matrix4): this;
+    /**
+     * 从对象池获取或创建新的 Vector3 实例
+     */
+    static create(x?: number, y?: number, z?: number): Vector3;
+    /**
+     * 释放 Vector3 实例到对象池
+     */
+    static release(vector: Vector3): void;
+    /**
+     * 预分配对象池
+     */
+    static preallocate(count: number): void;
+    /**
+     * 清空对象池
+     */
+    static clearPool(): void;
 }
+//# sourceMappingURL=vector3.d.ts.map
