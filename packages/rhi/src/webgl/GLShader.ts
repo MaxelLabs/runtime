@@ -6,6 +6,8 @@ export class GLShader implements IShader {
   private uniformCache: Map<string, any>;
   private attributeLocations: Map<string, number>;
   private uniformLocations: Map<string, WebGLUniformLocation>;
+  public vertexSource: string = '';
+  public fragmentSource: string = '';
 
   constructor(gl: WebGLRenderingContext) {
     this.gl = gl;
@@ -111,6 +113,30 @@ export class GLShader implements IShader {
       this.updateUniform(location, value);
       this.uniformCache.set(name, value);
     }
+  }
+
+  setUniform1f(name: string, value: number): void {
+    this.setUniform(name, value);
+  }
+
+  setUniform2f(name: string, x: number, y: number): void {
+    this.setUniform(name, new Float32Array([x, y]));
+  }
+
+  setUniform3f(name: string, x: number, y: number, z: number): void {
+    this.setUniform(name, new Float32Array([x, y, z]));
+  }
+
+  setUniform4f(name: string, x: number, y: number, z: number, w: number): void {
+    this.setUniform(name, new Float32Array([x, y, z, w]));
+  }
+
+  setUniform1i(name: string, value: number): void {
+    this.setUniform(name, value);
+  }
+
+  setUniformMatrix4fv(name: string, value: Float32Array): void {
+    this.setUniform(name, value);
   }
 
   private updateUniform(location: WebGLUniformLocation, value: any): void {

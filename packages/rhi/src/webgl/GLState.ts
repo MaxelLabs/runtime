@@ -121,6 +121,10 @@ export class GLState {
     }
   }
 
+  setScissorBox(x: number, y: number, width: number, height: number): void {
+    this.setScissor(x, y, width, height);
+  }
+
   private compareScissorBox(a: [number, number, number, number], b: [number, number, number, number]): boolean {
     return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3];
   }

@@ -22,8 +22,8 @@ export class GLTexture {
       GLTexture.texturePool.set(key, []);
     }
 
-    const pool = GLTexture.texturePool.get(key)!;
-    if (pool.length > 0) {
+    const pool = GLTexture.texturePool.get(key);
+    if (pool && pool.length > 0) {
       return pool.pop()!;
     }
 
@@ -149,6 +149,13 @@ export class GLTexture {
     this.gl.bindTexture(this.gl.TEXTURE_2D, null);
   }
 
+  getTexture(): WebGLTexture {
+    if (!this.texture) {
+      throw new Error('Texture not created');
+    }
+    return this.texture;
+  }
+
   retain() {
     this.refCount++;
   }
@@ -160,10 +167,12 @@ export class GLTexture {
     }
   }
 
-  private recycle() {
+  private recycle(): void {
     const key = `${this.format}_${this.type}_${this.width}_${this.height}`;
-    const pool = GLTexture.texturePool.get(key)!;
-    pool.push(this.texture!);
+    const pool = GLTexture.texturePool.get(key);
+    if (pool && this.texture) {
+      pool.push(this.texture);
+    }
   }
 
   destroy() {

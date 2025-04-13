@@ -52,7 +52,7 @@ export class GLRenderer implements IRenderer {
   }
 
   setTransform(matrix: Matrix4): void {
-    this.transform.copyFrom(matrix);
+    this.transform = matrix;
   }
 
   createBuffer(type: number, usage: number, size: number): IBuffer {

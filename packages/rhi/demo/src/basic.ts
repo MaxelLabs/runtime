@@ -1,7 +1,7 @@
 import { GLRenderer, GLShader, GLBuffer, GLConstants, GLTexture, GLFramebuffer } from '@max/rhi';
 import { Color, Matrix4, Vector3 } from '@max/math';
 
-const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+const canvas = document.getElementById('J-canvas') as HTMLCanvasElement;
 
 const renderer = new GLRenderer();
 

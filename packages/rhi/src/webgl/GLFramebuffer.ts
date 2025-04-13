@@ -29,9 +29,9 @@ export class GLFramebuffer {
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.fbo);
 
     if (this.samples > 0) {
-      this.createMultisampleColorAttachments(width, height, options.colorAttachments);
+      this.createMultisampleColorAttachments(width, height, options.colorAttachments ?? 1);
     } else {
-      this.createColorAttachments(width, height, options.colorAttachments);
+      this.createColorAttachments(width, height, options.colorAttachments ?? 1);
     }
 
     if (options.depthStencil) {
@@ -44,20 +44,23 @@ export class GLFramebuffer {
   private createMultisampleColorAttachments(width: number, height: number, colorAttachments: number) {
     for (let i = 0; i < colorAttachments; i++) {
       const texture = this.gl.createTexture();
-      this.gl.bindTexture(this.gl.TEXTURE_2D_MULTISAMPLE, texture);
-      this.gl.texStorage2DMultisample(
-        this.gl.TEXTURE_2D_MULTISAMPLE,
-        this.samples,
-        this.gl.RGBA8,
+      this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+      this.gl.texImage2D(
+        this.gl.TEXTURE_2D,
+        0,
+        this.gl.RGBA,
         width,
         height,
-        true
+        0,
+        this.gl.RGBA,
+        this.gl.UNSIGNED_BYTE,
+        null
       );
       this.colorAttachments.push(texture!);
       this.gl.framebufferTexture2D(
         this.gl.FRAMEBUFFER,
         this.gl.COLOR_ATTACHMENT0 + i,
-        this.gl.TEXTURE_2D_MULTISAMPLE,
+        this.gl.TEXTURE_2D,
         texture,
         0
       );
@@ -68,12 +71,13 @@ export class GLFramebuffer {
     for (let i = 0; i < colorAttachments; i++) {
       const texture = new GLTexture(this.gl);
       texture.create(width, height, this.gl.RGBA, this.gl.UNSIGNED_BYTE);
-      this.colorAttachments.push(texture.getTexture());
+      const glTexture = texture.getTexture();
+      this.colorAttachments.push(glTexture);
       this.gl.framebufferTexture2D(
         this.gl.FRAMEBUFFER,
         this.gl.COLOR_ATTACHMENT0 + i,
         this.gl.TEXTURE_2D,
-        texture.getTexture(),
+        glTexture,
         0
       );
     }
@@ -81,7 +85,7 @@ export class GLFramebuffer {
 
   private createDepthStencilAttachment(width: number, height: number) {
     const texture = new GLTexture(this.gl);
-    texture.create(width, height, this.gl.DEPTH24_STENCIL8, this.gl.UNSIGNED_INT_24_8);
+    texture.create(width, height, this.gl.DEPTH_STENCIL, this.gl.UNSIGNED_INT);
     this.depthStencilAttachment = texture.getTexture();
     this.gl.framebufferTexture2D(
       this.gl.FRAMEBUFFER,
@@ -108,14 +112,10 @@ export class GLFramebuffer {
   }
 
   blitToScreen() {
-    this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.fbo);
-    this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, null);
-    this.gl.blitFramebuffer(
-      0, 0, this.width, this.height,
-      0, 0, this.width, this.height,
-      this.gl.COLOR_BUFFER_BIT,
-      this.gl.NEAREST
-    );
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+    this.gl.viewport(0, 0, this.width, this.height);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.fbo);
   }
 
   getColorAttachment(index: number): WebGLTexture | null {

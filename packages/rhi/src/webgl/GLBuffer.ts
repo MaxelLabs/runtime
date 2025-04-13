@@ -7,7 +7,7 @@ export class GLBuffer implements IBuffer {
   private refCount: number;
   private size: number;
   private usage: number;
-  private type: number;
+  public type: number;
 
   constructor(gl: WebGLRenderingContext, type: number, usage: number, size: number) {
     this.gl = gl;
@@ -24,8 +24,8 @@ export class GLBuffer implements IBuffer {
       GLBuffer.bufferPool.set(key, []);
     }
 
-    const pool = GLBuffer.bufferPool.get(key)!;
-    if (pool.length > 0) {
+    const pool = GLBuffer.bufferPool.get(key);
+    if (pool && pool.length > 0) {
       return pool.pop()!;
     }
 
@@ -51,8 +51,10 @@ export class GLBuffer implements IBuffer {
 
   private recycle(): void {
     const key = `${this.type}_${this.usage}_${this.size}`;
-    const pool = GLBuffer.bufferPool.get(key)!;
-    pool.push(this.buffer!);
+    const pool = GLBuffer.bufferPool.get(key);
+    if (pool && this.buffer) {
+      pool.push(this.buffer);
+    }
   }
 
   update(data: Float32Array | Uint16Array, offset = 0): void {

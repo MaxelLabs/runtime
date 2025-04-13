@@ -4,6 +4,11 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 import legacy from '@vitejs/plugin-legacy';
 import ip from 'ip';
 import { getSWCPlugin } from '../../scripts/rollup-config-helper';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export default defineConfig(({ mode }) => {
   const development = mode === 'development';
@@ -20,8 +25,9 @@ export default defineConfig(({ mode }) => {
       minify: false, // iOS 9 等低版本加载压缩代码报脚本异常
     },
     server: {
-      host: '0.0.0.0',
-      port: 8081,
+      host: ip.address(),
+      port: 3000,
+      open: true,
     },
     preview: {
       host: '0.0.0.0',
@@ -43,6 +49,12 @@ export default defineConfig(({ mode }) => {
       tsconfigPaths() as PluginOption,
       configureServerPlugin() as PluginOption,
     ],
+    resolve: {
+      alias: {
+        '@max/core': resolve(__dirname, '../core/src'),
+        '@max/math': resolve(__dirname, '../math/src'),
+      },
+    },
   };
 });
 
