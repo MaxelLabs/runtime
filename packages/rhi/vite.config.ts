@@ -60,10 +60,21 @@ export default defineConfig(({ mode }) => {
 
 // 用于配置开发服务器的钩子
 function configureServerPlugin() {
-  const handleServer = function (server) {
-    const host = ip.address() ?? 'localhost';
-    const port = server.config.server.port;
-    const baseUrl = `http://${host}:${port}`;
+  interface Server {
+    config: {
+      server: {
+        port: number;
+      };
+    };
+    httpServer: {
+      once(event: string, listener: (...args: any[]) => void): void;
+    };
+  }
+
+  const handleServer = function (server: Server): void {
+    const host: string = ip.address() ?? 'localhost';
+    const port: number = server.config.server.port;
+    const baseUrl: string = `http://${host}:${port}`;
 
     setTimeout(() => {
       console.log(`  \x1b[1m\x1b[32m->\x1b[97m Demo: \x1b[0m\x1b[96m${baseUrl}/demo/index.html\x1b[0m`);

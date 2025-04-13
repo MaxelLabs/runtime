@@ -5,8 +5,8 @@ export class GLBuffer implements IBuffer {
   private gl: WebGLRenderingContext;
   private buffer: WebGLBuffer | null;
   private refCount: number;
-  private size: number;
-  private usage: number;
+   size: number;
+  usage: number;
   public type: number;
 
   constructor(gl: WebGLRenderingContext, type: number, usage: number, size: number) {
