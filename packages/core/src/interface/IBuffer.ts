@@ -40,4 +40,9 @@ export interface IBuffer {
    * 解绑缓冲区
    */
   unbind(): void,
+
+  /**
+   * 
+   */
+  destroy(): void
 }

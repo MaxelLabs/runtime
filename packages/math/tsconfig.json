@@ -5,7 +5,9 @@
     "outDir": "dist",
     "composite": true,
     "esModuleInterop": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "declaration": true,
+    "declarationMap": true
   },
   "include": [
     "src",

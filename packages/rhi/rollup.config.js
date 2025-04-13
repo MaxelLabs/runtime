@@ -26,6 +26,11 @@ export default () => {
         sourcemap: true,
       }],
       plugins,
+      external: [
+        '@max/math',
+        '@max/core',
+        '@max/specification'
+      ]
     },
   ];
 };

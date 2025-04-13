@@ -8,6 +8,9 @@ export class GLUniformBuffer implements IUniformBuffer {
         this._gl = gl;
         this._buffer = gl.createBuffer()!;
     }
+    update(): void {
+        throw new Error('Method not implemented.');
+    }
 
     setData(data: Float32Array): void {
         const gl = this._gl;

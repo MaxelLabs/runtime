@@ -27,16 +27,16 @@
     ],
     "paths": {
       "@max/core": [
-        "./packages/core/src"
+        "./packages/core/dist"
       ],
       "@max/math": [
-        "./packages/math/src"
+        "./packages/math/dist"
       ],
       "@max/rhi": [
-        "./packages/rhi/src"
+        "./packages/rhi/dist"
       ],
       "@max/specification": [
-        "./packages/specification/src"
+        "./packages/specification/dist"
       ]
     }
   }

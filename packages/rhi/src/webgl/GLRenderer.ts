@@ -1,20 +1,19 @@
-import type { Color } from '@max/math';
+import { Matrix4, Color } from '@max/math';
 import type { IRenderer, IBuffer } from '@max/core';
-import { Matrix4 } from '@max/math';
 import { GLBuffer } from './GLBuffer';
 import { GLState } from './GLState';
 
 export class GLRenderer implements IRenderer {
   private gl: WebGL2RenderingContext | null = null;
   private canvas: HTMLCanvasElement | null = null;
-  private _transform: Matrix4;
-  private _currentBuffer: GLBuffer | null = null;
+  private transform: Matrix4;
+  private currentBuffer: GLBuffer | null = null;
   private state: GLState | null = null;
   width: number = 0;
   height: number = 0;
 
   constructor() {
-    this._transform = new Matrix4();
+    this.transform = new Matrix4();
   }
 
   create(canvas: HTMLCanvasElement): void {
@@ -29,9 +28,9 @@ export class GLRenderer implements IRenderer {
   }
 
   destroy(): void {
-    if (this._currentBuffer) {
-      this._currentBuffer.destroy();
-      this._currentBuffer = null;
+    if (this.currentBuffer) {
+      this.currentBuffer.destroy();
+      this.currentBuffer = null;
     }
   }
 
@@ -53,7 +52,7 @@ export class GLRenderer implements IRenderer {
   }
 
   setTransform(matrix: Matrix4): void {
-    this._transform.copyFrom(matrix);
+    this.transform.copyFrom(matrix);
   }
 
   createBuffer(type: number, usage: number, size: number): IBuffer {
@@ -63,8 +62,8 @@ export class GLRenderer implements IRenderer {
   }
 
   destroyBuffer(buffer: IBuffer): void {
-    if (this._currentBuffer === buffer) {
-      this._currentBuffer = null;
+    if (this.currentBuffer === buffer) {
+      this.currentBuffer = null;
     }
     buffer.destroy();
   }
