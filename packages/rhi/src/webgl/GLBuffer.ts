@@ -1,35 +1,61 @@
 import type { IBuffer } from '@max/core';
 
 export class GLBuffer implements IBuffer {
-  private buffer: WebGLBuffer | null = null;
+  private static bufferPool: Map<string, WebGLBuffer[]> = new Map();
   private gl: WebGLRenderingContext;
+  private buffer: WebGLBuffer | null;
+  private refCount: number;
+  private size: number;
+  private usage: number;
+  private type: number;
 
-  type: number;
-  usage: number;
-  size: number;
-
-  constructor (gl: WebGLRenderingContext, type: number, usage: number, size: number) {
+  constructor(gl: WebGLRenderingContext, type: number, usage: number, size: number) {
     this.gl = gl;
     this.type = type;
     this.usage = usage;
     this.size = size;
+    this.refCount = 1;
+    this.buffer = this.allocateFromPool();
   }
 
-  create (): void {
-    this.buffer = this.gl.createBuffer();
-    if (!this.buffer) {
+  private allocateFromPool(): WebGLBuffer {
+    const key = `${this.type}_${this.usage}_${this.size}`;
+    if (!GLBuffer.bufferPool.has(key)) {
+      GLBuffer.bufferPool.set(key, []);
+    }
+
+    const pool = GLBuffer.bufferPool.get(key)!;
+    if (pool.length > 0) {
+      return pool.pop()!;
+    }
+
+    const buffer = this.gl.createBuffer();
+    if (!buffer) {
       throw new Error('Failed to create WebGL buffer');
+    }
+    return buffer;
+  }
+
+  create(): void {
+    if (!this.buffer) {
+      this.buffer = this.allocateFromPool();
     }
   }
 
-  destroy (): void {
+  destroy(): void {
     if (this.buffer) {
-      this.gl.deleteBuffer(this.buffer);
+      this.recycle();
       this.buffer = null;
     }
   }
 
-  update (data: Float32Array | Uint16Array, offset = 0): void {
+  private recycle(): void {
+    const key = `${this.type}_${this.usage}_${this.size}`;
+    const pool = GLBuffer.bufferPool.get(key)!;
+    pool.push(this.buffer!);
+  }
+
+  update(data: Float32Array | Uint16Array, offset = 0): void {
     if (!this.buffer) {
       throw new Error('Buffer not created');
     }
@@ -38,15 +64,26 @@ export class GLBuffer implements IBuffer {
     this.unbind();
   }
 
-  bind (): void {
+  bind(): void {
     if (!this.buffer) {
       throw new Error('Buffer not created');
     }
     this.gl.bindBuffer(this.type, this.buffer);
   }
 
-  unbind (): void {
+  unbind(): void {
     this.gl.bindBuffer(this.type, null);
+  }
+
+  retain(): void {
+    this.refCount++;
+  }
+
+  release(): void {
+    this.refCount--;
+    if (this.refCount <= 0) {
+      this.destroy();
+    }
   }
 
   getBuffer(): WebGLBuffer {
@@ -54,5 +91,9 @@ export class GLBuffer implements IBuffer {
       throw new Error('Buffer not created');
     }
     return this.buffer;
+  }
+
+  static clearPool(): void {
+    GLBuffer.bufferPool.clear();
   }
 }

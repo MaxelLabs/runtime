@@ -18,3 +18,4 @@ www
 *.d.ts
 *.d.ts.map
 
+.cursor

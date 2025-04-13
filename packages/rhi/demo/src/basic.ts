@@ -1,5 +1,5 @@
-import { GLRenderer, GLShader, GLBuffer, GLConstants } from '@max/rhi';
-import { Color } from '@max/math';
+import { GLRenderer, GLShader, GLBuffer, GLConstants, GLTexture, GLFramebuffer } from '@max/rhi';
+import { Color, Matrix4, Vector3 } from '@max/math';
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 
@@ -18,13 +18,16 @@ const vertexShaderSource = `
   attribute vec2 aTexCoord;
   attribute vec4 aColor;
   
+  uniform mat4 uModelViewMatrix;
+  uniform mat4 uProjectionMatrix;
+  
   varying vec2 vTexCoord;
   varying vec4 vColor;
   
   void main() {
     vTexCoord = aTexCoord;
     vColor = aColor;
-    gl_Position = vec4(aPosition, 1.0);
+    gl_Position = uProjectionMatrix * uModelViewMatrix * vec4(aPosition, 1.0);
   }
 `;
 
@@ -35,8 +38,12 @@ const fragmentShaderSource = `
   varying vec2 vTexCoord;
   varying vec4 vColor;
   
+  uniform sampler2D uTexture;
+  uniform float uTime;
+  
   void main() {
-    gl_FragColor = vColor;
+    vec4 texColor = texture2D(uTexture, vTexCoord);
+    gl_FragColor = mix(texColor, vColor, sin(uTime) * 0.5 + 0.5);
   }
 `;
 
@@ -60,6 +67,24 @@ vertexBuffer.create();
 vertexBuffer.bind();
 vertexBuffer.update(vertices);
 
+// 创建纹理
+const texture = new GLTexture(gl);
+texture.create(256, 256, gl.RGBA, gl.UNSIGNED_BYTE, {
+  minFilter: gl.LINEAR,
+  magFilter: gl.LINEAR,
+  wrapS: gl.CLAMP_TO_EDGE,
+  wrapT: gl.CLAMP_TO_EDGE,
+  generateMipmaps: true
+});
+
+// 创建帧缓冲
+const framebuffer = new GLFramebuffer(gl);
+framebuffer.create(canvas.width, canvas.height, {
+  samples: 4,
+  colorAttachments: 1,
+  depthStencil: true
+});
+
 // 设置顶点属性
 const stride = 36; // 每个顶点36字节 (9个float32 * 4字节)
 
@@ -71,12 +96,38 @@ gl.vertexAttribPointer(1, 2, GLConstants.DATA_TYPE.FLOAT, false, stride, 12); //
 gl.enableVertexAttribArray(2);
 gl.vertexAttribPointer(2, 4, GLConstants.DATA_TYPE.FLOAT, false, stride, 20); // 颜色
 
+// 创建变换矩阵
+const modelViewMatrix = new Matrix4();
+const projectionMatrix = new Matrix4();
+projectionMatrix.perspective(45, canvas.width / canvas.height, 0.1, 100.0);
+modelViewMatrix.translate(new Vector3(0, 0, -2));
+
 // 渲染循环
-function render () {
+let time = 0;
+function render() {
+  time += 0.01;
+  
+  // 渲染到帧缓冲
+  framebuffer.bind();
+  renderer.setViewport(canvas.width, canvas.height);
   renderer.clear();
+  
   shader.use();
-  vertexBuffer.bind(); // 确保绘制前缓冲区已绑定
+  shader.setUniform('uModelViewMatrix', modelViewMatrix.elements);
+  shader.setUniform('uProjectionMatrix', projectionMatrix.elements);
+  shader.setUniform('uTime', time);
+  
+  texture.bind(0);
+  vertexBuffer.bind();
   gl.drawArrays(GLConstants.DRAW_MODE.TRIANGLES, 0, 3);
+  
+  // 渲染到屏幕
+  framebuffer.unbind();
+  renderer.setViewport(canvas.width, canvas.height);
+  renderer.clear();
+  
+  framebuffer.blitToScreen();
+  
   requestAnimationFrame(render);
 }
 
