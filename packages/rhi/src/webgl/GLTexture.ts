@@ -2,31 +2,37 @@ export class GLTexture {
   private static texturePool: Map<string, WebGLTexture[]> = new Map();
   private gl: WebGLRenderingContext;
   private texture: WebGLTexture | null;
-  private width: number;
-  private height: number;
-  private format: number;
-  private type: number;
-  private mipmapLevels: number;
-  private compressed: boolean;
+  private width: number = 0;
+  private height: number = 0;
+  private format: number = 0;
+  private type: number = 0;
+  private mipmapLevels: number = 1;
+  private compressed: boolean = false;
   private refCount: number;
 
-  constructor(gl: WebGLRenderingContext) {
+  constructor(gl: WebGLRenderingContext, format?: number, type?: number) {
     this.gl = gl;
+    if (format !== undefined) this.format = format;
+    if (type !== undefined) this.type = type;
     this.texture = this.allocateFromPool();
     this.refCount = 1;
   }
 
-  private allocateFromPool(): WebGLTexture {
-    const key = `${this.format}_${this.type}_${this.width}_${this.height}`;
-    if (!GLTexture.texturePool.has(key)) {
-      GLTexture.texturePool.set(key, []);
-    }
+  private allocateFromPool(): WebGLTexture | null {
+    // 只有当有足够的信息来创建键时才尝试从池中分配
+    if (this.format && this.type && this.width && this.height) {
+      const key = `${this.format}_${this.type}_${this.width}_${this.height}`;
+      if (!GLTexture.texturePool.has(key)) {
+        GLTexture.texturePool.set(key, []);
+      }
 
-    const pool = GLTexture.texturePool.get(key);
-    if (pool && pool.length > 0) {
-      return pool.pop()!;
+      const pool = GLTexture.texturePool.get(key);
+      if (pool && pool.length > 0) {
+        return pool.pop()!;
+      }
     }
-
+    
+    // 如果没有足够的信息或池是空的，则创建一个新的纹理
     const texture = this.gl.createTexture();
     if (!texture) {
       throw new Error('Failed to create WebGL texture');

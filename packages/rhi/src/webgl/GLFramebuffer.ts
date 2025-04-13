@@ -21,7 +21,7 @@ export class GLFramebuffer {
     this.refCount = 1;
   }
 
-  create(width: number, height: number, options: FramebufferOptions) {
+  create(width: number, height: number, options: FramebufferOptions = {}) {
     this.width = width;
     this.height = height;
     this.samples = options.samples ?? 0;
