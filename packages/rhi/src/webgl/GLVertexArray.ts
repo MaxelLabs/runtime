@@ -1,3 +1,5 @@
+import { GLBuffer } from "./GLBuffer";
+
 export class GLVertexArray {
   private gl!: WebGL2RenderingContext;
   private vao: WebGLVertexArrayObject | null = null;
@@ -35,7 +37,7 @@ export class GLVertexArray {
 
   setAttribute (
     name: string,
-    buffer: WebGLBuffer,
+    buffer: GLBuffer,
     size: number,
     type: number,
     normalized: boolean,
@@ -46,7 +48,7 @@ export class GLVertexArray {
       throw new Error('Vertex array object not created');
     }
     this.bind();
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.getBuffer());
     const location = this.attributes.get(name);
 
     if (location === undefined) {
