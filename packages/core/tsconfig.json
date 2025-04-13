@@ -9,5 +9,9 @@
     "src",
     "../../types"
   ],
-  "references": []
+  "references": [
+    {
+      "path": "../math"
+    }
+  ]
 }

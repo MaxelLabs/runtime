@@ -2,11 +2,11 @@
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "outDir": "../dist/demo",
-    "rootDir": "../../../",
+    "rootDir": ".",
     "sourceMap": true,
-    "baseUrl": "../../../",
+    "baseUrl": ".",
     "paths": {
-      "@sruim/*": ["packages/*/src"]
+      "@max/*": ["../packages/*/src"]
     }
   },
   "include": ["./**/*"],

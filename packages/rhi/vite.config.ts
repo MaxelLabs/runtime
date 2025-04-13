@@ -14,7 +14,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@sruim/rhi': resolve(__dirname, 'src'),
+      '@max/rhi': resolve(__dirname, 'src'),
     },
   },
   plugins: [
