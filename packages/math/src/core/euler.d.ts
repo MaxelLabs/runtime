@@ -1,5 +1,5 @@
 import { Quaternion } from './quaternion';
-import type { Vector3 } from './vector3';
+import { Vector3 } from './vector3';
 import { Matrix4 } from './matrix4';
 /**
  * 欧拉角顺序
@@ -156,3 +156,4 @@ export declare class Euler {
      */
     static fromArray(array: number[], offset?: number, order?: EulerOrder): Euler;
 }
+//# sourceMappingURL=euler.d.ts.map

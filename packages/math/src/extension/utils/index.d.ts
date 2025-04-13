@@ -20,3 +20,4 @@ export declare const isPowerOfTwo: (value: number) => boolean;
 export declare const ceilPowerOfTwo: (value: number) => number;
 export declare const floorPowerOfTwo: (value: number) => number;
 export declare function modByFloat(number: number, mod: number): number;
+//# sourceMappingURL=index.d.ts.map

@@ -19,7 +19,33 @@ export class WebGLDemo {
     this.renderer = this.factory.getInstance().createRenderer(canvas);
     
     // 创建着色器
-    this.shader = this.factory.getInstance().createShader();
+    const vertexShaderSource = `
+      attribute vec3 aPosition;
+      attribute vec2 aTexCoord;
+      attribute vec4 aColor;
+      
+      varying vec2 vTexCoord;
+      varying vec4 vColor;
+      
+      void main() {
+        vTexCoord = aTexCoord;
+        vColor = aColor;
+        gl_Position = vec4(aPosition, 1.0);
+      }
+    `;
+
+    const fragmentShaderSource = `
+      precision mediump float;
+      
+      varying vec2 vTexCoord;
+      varying vec4 vColor;
+      
+      void main() {
+        gl_FragColor = vColor;
+      }
+    `;
+
+    this.shader = this.factory.getInstance().createShader(vertexShaderSource, fragmentShaderSource);
     
     // 创建顶点数据
     const vertices = new Float32Array([
@@ -167,8 +193,9 @@ export class WebGLDemo {
       this.vao.destroy();
     }
     if (this.shader) {
-      this.shader.destroy();
+      this.shader.dispose();
     }
+    this.renderer.dispose();
     this.factory.getInstance().destroy();
   }
 } 

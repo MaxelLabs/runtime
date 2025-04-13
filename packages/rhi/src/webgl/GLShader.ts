@@ -1,146 +1,184 @@
-export class GLShader {
-  private gl!: WebGLRenderingContext;
-  private program: WebGLProgram | null = null;
-  private vertexShader: WebGLShader | null = null;
-  private fragmentShader: WebGLShader | null = null;
+import type { IShader } from '@max/core';
 
-  constructor (gl: WebGLRenderingContext) {
+export class GLShader implements IShader {
+  private gl: WebGLRenderingContext;
+  private program: WebGLProgram | null = null;
+  private uniformCache: Map<string, any>;
+  private attributeLocations: Map<string, number>;
+  private uniformLocations: Map<string, WebGLUniformLocation>;
+  public vertexSource: string = '';
+  public fragmentSource: string = '';
+
+  constructor(gl: WebGLRenderingContext) {
     this.gl = gl;
+    this.uniformCache = new Map();
+    this.attributeLocations = new Map();
+    this.uniformLocations = new Map();
   }
 
-  create (vertexSource: string, fragmentSource: string): void {
-    // 创建顶点着色器
-    this.vertexShader = this.gl.createShader(this.gl.VERTEX_SHADER);
-    if (!this.vertexShader) {
-      throw new Error('Failed to create vertex shader');
-    }
-    this.gl.shaderSource(this.vertexShader, vertexSource);
-    this.gl.compileShader(this.vertexShader);
+  create(vertexSource: string, fragmentSource: string): void {
+    const vertexShader = this.compileShader(vertexSource, this.gl.VERTEX_SHADER);
+    const fragmentShader = this.compileShader(fragmentSource, this.gl.FRAGMENT_SHADER);
 
-    if (!this.gl.getShaderParameter(this.vertexShader, this.gl.COMPILE_STATUS)) {
-      const info = this.gl.getShaderInfoLog(this.vertexShader);
-
-      throw new Error('Failed to compile vertex shader: ' + info);
-    }
-
-    // 创建片段着色器
-    this.fragmentShader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
-    if (!this.fragmentShader) {
-      throw new Error('Failed to create fragment shader');
-    }
-    this.gl.shaderSource(this.fragmentShader, fragmentSource);
-    this.gl.compileShader(this.fragmentShader);
-
-    if (!this.gl.getShaderParameter(this.fragmentShader, this.gl.COMPILE_STATUS)) {
-      const info = this.gl.getShaderInfoLog(this.fragmentShader);
-
-      throw new Error('Failed to compile fragment shader: ' + info);
-    }
-
-    // 创建着色器程序
     this.program = this.gl.createProgram();
     if (!this.program) {
       throw new Error('Failed to create shader program');
     }
 
-    this.gl.attachShader(this.program, this.vertexShader);
-    this.gl.attachShader(this.program, this.fragmentShader);
+    this.gl.attachShader(this.program, vertexShader);
+    this.gl.attachShader(this.program, fragmentShader);
     this.gl.linkProgram(this.program);
 
     if (!this.gl.getProgramParameter(this.program, this.gl.LINK_STATUS)) {
-      const info = this.gl.getProgramInfoLog(this.program);
-
-      throw new Error('Failed to link shader program: ' + info);
-    }
-  }
-
-  destroy (): void {
-    if (this.program) {
-      if (this.vertexShader) {
-        this.gl.detachShader(this.program, this.vertexShader);
-        this.gl.deleteShader(this.vertexShader);
-        this.vertexShader = null;
-      }
-      if (this.fragmentShader) {
-        this.gl.detachShader(this.program, this.fragmentShader);
-        this.gl.deleteShader(this.fragmentShader);
-        this.fragmentShader = null;
-      }
+      const error = this.gl.getProgramInfoLog(this.program);
       this.gl.deleteProgram(this.program);
-      this.program = null;
+      throw new Error(`Failed to link shader program: ${error}`);
+    }
+
+    this.gl.deleteShader(vertexShader);
+    this.gl.deleteShader(fragmentShader);
+
+    this.queryUniforms();
+    this.queryAttributes();
+  }
+
+  private compileShader(source: string, type: number): WebGLShader {
+    const shader = this.gl.createShader(type);
+    if (!shader) {
+      throw new Error('Failed to create shader');
+    }
+
+    this.gl.shaderSource(shader, source);
+    this.gl.compileShader(shader);
+
+    if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+      const error = this.gl.getShaderInfoLog(shader);
+      this.gl.deleteShader(shader);
+      throw new Error(`Failed to compile shader: ${error}`);
+    }
+
+    return shader;
+  }
+
+  private queryUniforms(): void {
+    if (!this.program) return;
+
+    const numUniforms = this.gl.getProgramParameter(this.program, this.gl.ACTIVE_UNIFORMS);
+    for (let i = 0; i < numUniforms; i++) {
+      const info = this.gl.getActiveUniform(this.program, i);
+      if (info) {
+        const location = this.gl.getUniformLocation(this.program, info.name);
+        if (location) {
+          this.uniformLocations.set(info.name, location);
+        }
+      }
     }
   }
 
-  use (): void {
+  private queryAttributes(): void {
+    if (!this.program) return;
+
+    const numAttributes = this.gl.getProgramParameter(this.program, this.gl.ACTIVE_ATTRIBUTES);
+    for (let i = 0; i < numAttributes; i++) {
+      const info = this.gl.getActiveAttrib(this.program, i);
+      if (info) {
+        const location = this.gl.getAttribLocation(this.program, info.name);
+        this.attributeLocations.set(info.name, location);
+      }
+    }
+  }
+
+  use(): void {
     if (!this.program) {
       throw new Error('Shader program not created');
     }
     this.gl.useProgram(this.program);
   }
 
-  setUniform1f (name: string, value: number): void {
-    if (!this.program) {
-      throw new Error('Shader program not created');
-    }
-    const location = this.gl.getUniformLocation(this.program, name);
+  bind(): void {
+    this.use();
+  }
 
-    if (location) {
+  unbind(): void {
+    this.gl.useProgram(null);
+  }
+
+  setUniform(name: string, value: any): void {
+    if (!this.program) return;
+
+    const location = this.uniformLocations.get(name);
+    if (!location) return;
+
+    if (this.uniformCache.get(name) !== value) {
+      this.updateUniform(location, value);
+      this.uniformCache.set(name, value);
+    }
+  }
+
+  setUniform1f(name: string, value: number): void {
+    this.setUniform(name, value);
+  }
+
+  setUniform2f(name: string, x: number, y: number): void {
+    this.setUniform(name, new Float32Array([x, y]));
+  }
+
+  setUniform3f(name: string, x: number, y: number, z: number): void {
+    this.setUniform(name, new Float32Array([x, y, z]));
+  }
+
+  setUniform4f(name: string, x: number, y: number, z: number, w: number): void {
+    this.setUniform(name, new Float32Array([x, y, z, w]));
+  }
+
+  setUniform1i(name: string, value: number): void {
+    this.setUniform(name, value);
+  }
+
+  setUniformMatrix4fv(name: string, value: Float32Array): void {
+    this.setUniform(name, value);
+  }
+
+  private updateUniform(location: WebGLUniformLocation, value: any): void {
+    if (value instanceof Float32Array) {
+      switch (value.length) {
+        case 1:
+          this.gl.uniform1fv(location, value);
+          break;
+        case 2:
+          this.gl.uniform2fv(location, value);
+          break;
+        case 3:
+          this.gl.uniform3fv(location, value);
+          break;
+        case 4:
+          this.gl.uniform4fv(location, value);
+          break;
+        case 9:
+          this.gl.uniformMatrix3fv(location, false, value);
+          break;
+        case 16:
+          this.gl.uniformMatrix4fv(location, false, value);
+          break;
+      }
+    } else if (typeof value === 'number') {
       this.gl.uniform1f(location, value);
+    } else if (typeof value === 'boolean') {
+      this.gl.uniform1i(location, value ? 1 : 0);
     }
   }
 
-  setUniform2f (name: string, x: number, y: number): void {
-    if (!this.program) {
-      throw new Error('Shader program not created');
-    }
-    const location = this.gl.getUniformLocation(this.program, name);
-
-    if (location) {
-      this.gl.uniform2f(location, x, y);
-    }
+  getAttributeLocation(name: string): number {
+    return this.attributeLocations.get(name) ?? -1;
   }
 
-  setUniform3f (name: string, x: number, y: number, z: number): void {
-    if (!this.program) {
-      throw new Error('Shader program not created');
+  dispose(): void {
+    if (this.program) {
+      this.gl.deleteProgram(this.program);
+      this.program = null;
     }
-    const location = this.gl.getUniformLocation(this.program, name);
-
-    if (location) {
-      this.gl.uniform3f(location, x, y, z);
-    }
-  }
-
-  setUniform4f (name: string, x: number, y: number, z: number, w: number): void {
-    if (!this.program) {
-      throw new Error('Shader program not created');
-    }
-    const location = this.gl.getUniformLocation(this.program, name);
-
-    if (location) {
-      this.gl.uniform4f(location, x, y, z, w);
-    }
-  }
-
-  setUniformMatrix4fv (name: string, value: Float32Array): void {
-    if (!this.program) {
-      throw new Error('Shader program not created');
-    }
-    const location = this.gl.getUniformLocation(this.program, name);
-
-    if (location) {
-      this.gl.uniformMatrix4fv(location, false, value);
-    }
-  }
-
-  setUniform1i (name: string, value: number): void {
-    if (!this.program) {
-      throw new Error('Shader program not created');
-    }
-    const location = this.gl.getUniformLocation(this.program, name);
-
-    if (location) {
-      this.gl.uniform1i(location, value);
-    }
+    this.uniformCache.clear();
+    this.attributeLocations.clear();
+    this.uniformLocations.clear();
   }
 }

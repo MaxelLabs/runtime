@@ -12,3 +12,4 @@ export declare class Line3 {
      */
     constructor(start?: Vector3, end?: Vector3);
 }
+//# sourceMappingURL=line3.d.ts.map

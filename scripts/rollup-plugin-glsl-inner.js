@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-export default function glslInner() {
+function glsl() {
   return {
     name: 'rollup-plugin-glsl-inner',
     transform(code, id) {
@@ -68,3 +68,5 @@ function compressShader(code) {
 // const { code: result } = ins.transform(code, filePath);
 
 // console.log(result);
+
+module.exports = { glsl };

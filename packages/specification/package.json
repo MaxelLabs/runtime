@@ -1,10 +1,10 @@
 {
-  "name": "@sruim/specification",
+  "name": "@max/specification",
   "version": "0.0.1",
-  "description": "Sruim specification Library",
+  "description": "类型定义",
+  "type": "module",
   "module": "./dist/index.mjs",
   "main": "./dist/index.js",
-  "brower": "./dist/index.min.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
@@ -17,12 +17,16 @@
     }
   },
   "scripts": {
+    "dev": "rollup -c -w",
     "prebuild": "pnpm clean",
     "build": "pnpm build:declaration && pnpm build:module",
     "build:module": "rollup -c",
     "build:declaration": "tsc -d --emitDeclarationOnly",
-    "clean": "rimraf dist && rimraf \"*+(.tsbuildinfo)\"",
-    "prepublishOnly": "pnpm build"
+    "clean": "rimraf dist",
+    "prepublishOnly": "pnpm build",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "contributors": [
     {
@@ -33,5 +37,22 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
+  },
+  "dependencies": {
+    "@max/math": "workspace:*"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^18.15.11",
+    "@vitejs/plugin-legacy": "^5.2.2",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.5.0",
+    "rimraf": "^5.0.0",
+    "rollup": "^3.20.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.0.4",
+    "vite": "^4.3.0",
+    "vite-tsconfig-paths": "^4.0.0"
   }
 }

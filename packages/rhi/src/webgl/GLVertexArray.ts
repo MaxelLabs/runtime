@@ -1,3 +1,5 @@
+import { GLBuffer } from "./GLBuffer";
+
 export class GLVertexArray {
   private gl!: WebGL2RenderingContext;
   private vao: WebGLVertexArrayObject | null = null;
@@ -35,7 +37,7 @@ export class GLVertexArray {
 
   setAttribute (
     name: string,
-    buffer: WebGLBuffer,
+    buffer: GLBuffer,
     size: number,
     type: number,
     normalized: boolean,
@@ -46,12 +48,25 @@ export class GLVertexArray {
       throw new Error('Vertex array object not created');
     }
     this.bind();
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.getBuffer());
     const location = this.attributes.get(name);
 
     if (location === undefined) {
-      throw new Error(`Attribute ${name} not found`);
+      // 如果没有找到属性位置，尝试从当前着色器程序中查找
+      const currentProgram = this.gl.getParameter(this.gl.CURRENT_PROGRAM);
+      if (currentProgram) {
+        const attribLocation = this.gl.getAttribLocation(currentProgram, name);
+        if (attribLocation >= 0) {
+          this.setAttributeLocation(name, attribLocation);
+          this.gl.enableVertexAttribArray(attribLocation);
+          this.gl.vertexAttribPointer(attribLocation, size, type, normalized, stride, offset);
+          this.unbind();
+          return;
+        }
+      }
+      throw new Error(`Attribute ${name} not found in the current shader program`);
     }
+    
     this.gl.enableVertexAttribArray(location);
     this.gl.vertexAttribPointer(location, size, type, normalized, stride, offset);
     this.unbind();

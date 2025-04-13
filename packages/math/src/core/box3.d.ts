@@ -190,3 +190,4 @@ export declare class Box3 {
      */
     equals(other: Box3): boolean;
 }
+//# sourceMappingURL=box3.d.ts.map

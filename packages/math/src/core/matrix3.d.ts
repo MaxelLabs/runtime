@@ -6,10 +6,12 @@ import type { Vector3 } from './vector3';
  * 三维矩阵（列优先矩阵）
  */
 export declare class Matrix3 {
+    static readonly IDENTITY: Readonly<Matrix3>;
+    static readonly ZERO: Readonly<Matrix3>;
     /**
-     * 矩阵值数组
+     * 矩阵值数组 - 使用 TypedArray 提高性能
      */
-    elements: number[];
+    elements: Float32Array;
     /**
      * 构造函数，初始值为零矩阵
      * @param [m11=1] - 第 1 行，第 1 列
@@ -89,7 +91,7 @@ export declare class Matrix3 {
      */
     identity(): this;
     /**
-     * 矩阵克隆
+     * 矩阵克隆，使用对象池
      * @returns 克隆结果
      */
     clone(): Matrix3;
@@ -184,7 +186,24 @@ export declare class Matrix3 {
      * @returns
      */
     toArray(): mat3;
+    /**
+     * 将矩阵数据填充到目标数组
+     * @param array 目标数组
+     * @param offset 偏移值
+     */
     fill(array: number[] | Float32Array, offset?: number): void;
+    /**
+     * 从对象池获取一个 Matrix3 实例
+     */
+    static create(): Matrix3;
+    /**
+     * 将 Matrix3 实例释放回对象池
+     */
+    static release(matrix: Matrix3): void;
+    /**
+     * 预分配对象池
+     */
+    static preallocate(count: number): void;
     /**
      * 创建单位阵
      * @returns 单位矩阵
@@ -232,3 +251,4 @@ export declare class Matrix3 {
      */
     static fromRowMajorData(m11: number, m12: number, m13: number, m21: number, m22: number, m23: number, m31: number, m32: number, m33: number): Matrix3;
 }
+//# sourceMappingURL=matrix3.d.ts.map

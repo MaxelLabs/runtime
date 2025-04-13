@@ -1,6 +1,6 @@
 import { Vector3 } from '../core/vector3';
 /**
- *
+ * 平面类
  */
 export declare class Plane {
     distance: number;
@@ -13,3 +13,4 @@ export declare class Plane {
     clone(): Plane;
     distanceToPoint(point: Vector3): number;
 }
+//# sourceMappingURL=plane.d.ts.map

@@ -1,36 +1,57 @@
-import commonjs from '@rollup/plugin-commonjs';
-import resolve from '@rollup/plugin-node-resolve';
-import replace from '@rollup/plugin-replace';
-import { swc, defineRollupSwcOption, minify } from 'rollup-plugin-swc3';
-import glslInner from './rollup-plugin-glsl-inner';
+const { glsl } = require('./rollup-plugin-glsl-inner.js');
+const { babel } = require('@rollup/plugin-babel');
+const { nodeResolve } = require('@rollup/plugin-node-resolve');
+const commonjs = require('@rollup/plugin-commonjs');
+const typescript = require('@rollup/plugin-typescript');
+const terser = require('@rollup/plugin-terser');
+const replace = require('@rollup/plugin-replace');
+const { swc, defineRollupSwcOption, minify } = require('rollup-plugin-swc3');
 
-export function getPlugins(pkg, options = {}) {
-  const { min = false, target, external } = options;
-  const defines = {
-    __VERSION__: JSON.stringify(pkg.version),
-    __DEBUG__: false,
-  };
+function getPlugins(pkg, { min = false } = {}) {
   const plugins = [
-    replace({
-      preventAssignment: true,
-      values: defines,
-    }),
-    glslInner(),
-    getSWCPlugin({ target }, external),
-    resolve(),
+    nodeResolve(),
     commonjs(),
+    typescript({
+      tsconfig: './tsconfig.json',
+      declaration: false,
+    }),
+    babel({
+      babelHelpers: 'bundled',
+      exclude: 'node_modules/**',
+    }),
+    glsl(),
   ];
 
   if (min) {
-    plugins.push(minify({ sourceMap: true }));
+    plugins.push(
+      terser({
+        output: {
+          comments: /^!/,
+        },
+      })
+    );
   }
 
   return plugins;
 }
 
-export { glslInner };
+function getBanner(pkg) {
+  return `/*!
+ * ${pkg.name} v${pkg.version}
+ * (c) 2024 Sruimeng
+ * Released under the MIT License.
+ */`;
+}
 
-export function getSWCPlugin(
+function onwarn(warning) {
+  if (warning.code === 'CIRCULAR_DEPENDENCY') {
+    return;
+  }
+
+  console.warn(`(!) ${warning.message}`)
+}
+
+function getSWCPlugin(
   jscOptions = {},
   external = [],
 ) {
@@ -57,21 +78,9 @@ export function getSWCPlugin(
   );
 }
 
-export function getBanner(pkg) {
-  return `/*!
- * Name: ${pkg.name}
- * Description: ${pkg.description}
- * Author: ${pkg.author}
- * Contributors: ${pkg.contributors.map(c => c.name).join(',')}
- * Version: v${pkg.version}
- */
-`;
-}
-
-export function onwarn(warning) {
-  if (warning.code === 'CIRCULAR_DEPENDENCY') {
-    return;
-  }
-
-  console.warn(`(!) ${warning.message}`)
-}
+module.exports = {
+  getBanner,
+  getPlugins,
+  onwarn,
+  getSWCPlugin
+};

@@ -112,3 +112,4 @@ export declare class Circle {
      */
     equals(circle: Circle): boolean;
 }
+//# sourceMappingURL=circle.d.ts.map

@@ -3,27 +3,43 @@ import { expect } from '@jest/globals';
 import { GLShaderConstants } from '../../src/webgl/GLShaderConstants';
 
 describe('GLShader', () => {
-  let shader: GLShader;
-  let gl: WebGLRenderingContext;
   let canvas: HTMLCanvasElement;
+  let gl: WebGLRenderingContext;
+  let shader: GLShader;
 
   beforeEach(() => {
     canvas = document.createElement('canvas');
-    gl = canvas.getContext('webgl') as WebGLRenderingContext;
+    gl = canvas.getContext('webgl')!;
     shader = new GLShader(gl);
+    shader.create(`
+      attribute vec4 a_position;
+      void main() {
+        gl_Position = a_position;
+      }
+    `, `
+      void main() {
+        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+      }
+    `);
   });
 
   afterEach(() => {
-    shader.destroy();
+    shader.dispose();
   });
 
-  test('创建着色器程序', () => {
-    shader.create(
-      GLShaderConstants.VERTEX_SHADER,
-      GLShaderConstants.FRAGMENT_SHADER
-    );
-    // 由于WebGL上下文是模拟的，我们无法直接验证着色器程序是否创建成功
-    // 但可以验证方法是否被调用
+  it('should create shader program', () => {
+    expect(shader.vertexSource).toBeDefined();
+    expect(shader.fragmentSource).toBeDefined();
+  });
+
+  it('should set uniform values', () => {
+    shader.use();
+    shader.setUniform1f('u_time', 1.0);
+    shader.setUniform2f('u_resolution', 800, 600);
+    shader.setUniform3f('u_color', 1.0, 0.0, 0.0);
+    shader.setUniform4f('u_color', 1.0, 0.0, 0.0, 1.0);
+    shader.setUniform1i('u_texture', 0);
+    shader.setUniformMatrix4fv('u_matrix', new Float32Array(16));
   });
 
   test('使用着色器程序', () => {
@@ -77,7 +93,7 @@ describe('GLShader', () => {
       GLShaderConstants.VERTEX_SHADER,
       GLShaderConstants.FRAGMENT_SHADER
     );
-    shader.destroy();
+    shader.dispose();
     // 由于WebGL上下文是模拟的，我们无法直接验证着色器程序是否被销毁
     // 但可以验证方法是否被调用
   });

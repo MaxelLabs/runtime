@@ -96,3 +96,4 @@ export declare class Line2 {
      */
     crossWithLine(other: Line2): boolean;
 }
+//# sourceMappingURL=line2.d.ts.map

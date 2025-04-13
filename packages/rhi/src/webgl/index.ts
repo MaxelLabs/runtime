@@ -8,3 +8,4 @@ export * from './GLState';
 export * from './GLConstants';
 export * from './GLShaderConstants';
 export * from './GLRendererFactory';
+export * from './GLDevice';

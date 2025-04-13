@@ -12,6 +12,7 @@ export declare class Quaternion {
     z: number;
     w: number;
     private static readonly tempVec0;
+    private elements;
     /**
      * 构造函数
      * @param [x=0] - x 分量
@@ -30,11 +31,13 @@ export declare class Quaternion {
      */
     set(x: number, y: number, z: number, w: number): this;
     /**
-     * 通过欧拉角设置四元数
-     * @param euler - 欧拉角
-     * @returns
+     * 从欧拉角设置四元数
+     * @param x 绕X轴的旋转角度（弧度）
+     * @param y 绕Y轴的旋转角度（弧度）
+     * @param z 绕Z轴的旋转角度（弧度）
+     * @returns 当前四元数
      */
-    setFromEuler(euler: Euler): this;
+    setFromEuler(x: number, y: number, z: number): Quaternion;
     /**
      * 通过旋转轴和旋转角度设置四元数
      * @param axis - 旋转轴
@@ -146,13 +149,6 @@ export declare class Quaternion {
      */
     premultiply(left: Quaternion): this;
     /**
-     * 四元数乘法
-     * @param left - 四元数
-     * @param right - 四元数
-     * @returns 四元数
-     */
-    multiplyQuaternions(left: Quaternion, right: Quaternion): this;
-    /**
      * 四元数线性插值
      * @see http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/
      * @param other - 四元数
@@ -243,3 +239,4 @@ export declare class Quaternion {
      */
     static fromUnitVectors(from: Vector3, to: Vector3): Quaternion;
 }
+//# sourceMappingURL=quaternion.d.ts.map

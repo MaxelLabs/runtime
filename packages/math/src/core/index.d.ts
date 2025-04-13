@@ -11,3 +11,4 @@ export * from './utils';
 export * from './color';
 export * from './box3';
 export * from './sphere';
+//# sourceMappingURL=index.d.ts.map

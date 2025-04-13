@@ -377,6 +377,59 @@ export class Matrix4 {
   }
 
   /**
+   * 创建透视投影矩阵
+   * @param fov - 视场角，单位为角度
+   * @param aspect - 宽高比
+   * @param near - 近平面距离
+   * @param far - 远平面距离
+   * @returns 透视投影矩阵
+   */
+  perspective (fov: number, aspect: number, near: number, far: number): this {
+    const e = this.elements;
+    const tanHalfFov = Math.tan(fov * Math.PI / 360);
+    const range = 1.0 / (near - far);
+
+    e[0] = 1.0 / (tanHalfFov * aspect);
+    e[1] = 0;
+    e[2] = 0;
+    e[3] = 0;
+
+    e[4] = 0;
+    e[5] = 1.0 / tanHalfFov;
+    e[6] = 0;
+    e[7] = 0;
+
+    e[8] = 0;
+    e[9] = 0;
+    e[10] = (near + far) * range;
+    e[11] = -1;
+
+    e[12] = 0;
+    e[13] = 0;
+    e[14] = 2 * near * far * range;
+    e[15] = 0;
+
+    return this;
+  }
+
+  /**
+   * 创建平移矩阵或应用平移变换
+   * @param v - 平移向量
+   * @returns 平移后的矩阵
+   */
+  translate (v: Vector3): this {
+    const e = this.elements;
+    const x = v.x, y = v.y, z = v.z;
+
+    e[12] = e[0] * x + e[4] * y + e[8] * z + e[12];
+    e[13] = e[1] * x + e[5] * y + e[9] * z + e[13];
+    e[14] = e[2] * x + e[6] * y + e[10] * z + e[14];
+    e[15] = e[3] * x + e[7] * y + e[11] * z + e[15];
+
+    return this;
+  }
+
+  /**
    * 从对象池获取一个 Matrix4 实例
    */
   static create (): Matrix4 {

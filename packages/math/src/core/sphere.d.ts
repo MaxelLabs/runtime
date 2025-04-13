@@ -12,7 +12,7 @@ export declare class Sphere {
      * @param [center=Vector3.ZERO] - 球心，默认值为(0, 0, 0)
      * @param [radius=-1] - 半径
      */
-    constructor(center?: Vector3, radius?: number);
+    constructor(center?: Readonly<Vector3>, radius?: number);
     /**
      * 通过参数设置球
      * @param center - 球心
@@ -123,3 +123,4 @@ export declare class Sphere {
      */
     clone(): Sphere;
 }
+//# sourceMappingURL=sphere.d.ts.map
