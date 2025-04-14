@@ -180,8 +180,10 @@ let time = 0;
 function render() {
   time += 0.01;
   
-  // 确保没有活动的着色器
-  gl.useProgram(null);
+  // 更新矩阵
+  modelViewMatrix.identity(); // 重置为单位矩阵
+  modelViewMatrix.translate(new Vector3(0, 0, -2)); // 移动到原始位置
+  modelViewMatrix.rotateY(time); // 围绕Y轴旋转
   
   // First pass: Render to framebuffer
   framebuffer.bind();
@@ -191,13 +193,27 @@ function render() {
   // 使用着色器
   shader.use();
   
-  // 设置uniform变量 - 直接使用GLShader的方法
+  // 获取矩阵数据
   const mvMatrix = modelViewMatrix.getElements();
   const projMatrix = projectionMatrix.getElements();
   
-  // 使用GLShader提供的方法设置uniform
+  // // 检查矩阵数据格式
+  // if (!(mvMatrix instanceof Float32Array) || !(projMatrix instanceof Float32Array)) {
+  //   console.error('Matrix data must be Float32Array');
+  //   return;
+  // }
+  
+  // // 检查矩阵数据大小
+  // if (mvMatrix.length !== 16 || projMatrix.length !== 16) {
+  //   console.error(`Invalid matrix size: ModelView(${mvMatrix.length}), Projection(${projMatrix.length})`);
+  //   return;
+  // }
+  
+  // 设置矩阵uniform
   shader.setUniformMatrix4fv('uModelViewMatrix', mvMatrix);
   shader.setUniformMatrix4fv('uProjectionMatrix', projMatrix);
+  
+  // 设置其他uniform
   shader.setUniform1f('uTime', time);
   
   // 绑定纹理到纹理单元0

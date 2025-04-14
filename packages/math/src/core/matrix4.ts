@@ -471,9 +471,38 @@ export class Matrix4 {
   }
 
   /**
-   * 获取矩阵元素数组
+   * 获取矩阵元素数组（列主序格式）
+   * @returns 矩阵元素的Float32Array副本
    */
   getElements (): Float32Array {
-    return this.elements;
+    // 返回一个副本以避免外部修改
+    return new Float32Array(this.elements);
+  }
+
+  /**
+   * 围绕Y轴旋转
+   * @param angle - 旋转角度（弧度）
+   * @returns 旋转后的矩阵
+   */
+  rotateY (angle: number): this {
+    const e = this.elements;
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+
+    const m11 = e[0], m12 = e[4], m13 = e[8], m14 = e[12];
+    const m31 = e[2], m32 = e[6], m33 = e[10], m34 = e[14];
+
+    // 更新受影响的元素
+    e[0] = c * m11 - s * m31;
+    e[4] = c * m12 - s * m32;
+    e[8] = c * m13 - s * m33;
+    e[12] = c * m14 - s * m34;
+
+    e[2] = s * m11 + c * m31;
+    e[6] = s * m12 + c * m32;
+    e[10] = s * m13 + c * m33;
+    e[14] = s * m14 + c * m34;
+
+    return this;
   }
 }

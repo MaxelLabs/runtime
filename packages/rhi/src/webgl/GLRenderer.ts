@@ -6,19 +6,19 @@ import { GLState } from './GLState';
 export class GLRenderer implements IRenderer {
   private gl: WebGL2RenderingContext | null = null;
   private canvas: HTMLCanvasElement | null = null;
-  private _transform: Matrix4;
+  private transform: Matrix4;
   private currentBuffer: GLBuffer | null = null;
   private state: GLState | null = null;
   width: number = 0;
   height: number = 0;
 
   constructor() {
-    this._transform = new Matrix4();
+    this.transform = new Matrix4();
   }
 
   create(canvas: HTMLCanvasElement): void {
     this.canvas = canvas;
-    const gl = canvas.getContext('webgl2');
+    const gl = this.canvas.getContext('webgl2');
     if (!gl) {
       throw new Error('WebGL2 not supported');
     }
@@ -62,7 +62,7 @@ export class GLRenderer implements IRenderer {
   }
 
   setTransform(matrix: Matrix4): void {
-    this._transform.copyFrom(matrix);
+    this.transform.copyFrom(matrix);
   }
 
   createBuffer(type: number, usage: number, size: number): IBuffer {

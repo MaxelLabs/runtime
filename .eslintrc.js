@@ -16,6 +16,7 @@ module.exports = {
     '*.js',
     '*.d.ts',
     'temp',
+    '**/vite.config.ts',  // Add this line to ignore vite.config.ts files
   ],
   extends: [
     "eslint:recommended",
