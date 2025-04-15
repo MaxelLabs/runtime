@@ -1,5 +1,6 @@
 import { GLVertexArray } from '../../src/webgl/GLVertexArray';
 import { GLConstants } from '../../src/webgl/GLConstants';
+import { GLBuffer } from '../../src/webgl/GLBuffer';
 import { expect } from '@jest/globals';
 
 describe('GLVertexArray', () => {
@@ -38,18 +39,13 @@ describe('GLVertexArray', () => {
     vao.setAttributeLocation('aPosition', 0);
 
     // 创建测试缓冲区
-    const buffer = gl.createBuffer();
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    const vertices = new Float32Array([1, 2, 3, 4]);
-
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-    vao.setAttribute(
-      'aPosition',
-      buffer as WebGLBuffer,
-      2,
-      GLConstants.DATA_TYPE.FLOAT,
+    const buffer = new GLBuffer(gl, gl.ARRAY_BUFFER, gl.STATIC_DRAW, 1024);
+    buffer.create();
+    vao.setVertexBuffer(
+      buffer,
+      0,
+      3,
+      gl.FLOAT,
       false,
       0,
       0

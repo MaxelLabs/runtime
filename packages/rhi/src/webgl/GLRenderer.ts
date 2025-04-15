@@ -13,7 +13,6 @@ export class GLRenderer implements IRenderer {
   height: number = 0;
 
   constructor() {
-    debugger
     this.transform = new Matrix4();
   }
 
@@ -63,7 +62,7 @@ export class GLRenderer implements IRenderer {
   }
 
   setTransform(matrix: Matrix4): void {
-    this.transform.copyFrom(matrix);
+    this.transform = matrix;
   }
 
   createBuffer(type: number, usage: number, size: number): IBuffer {

@@ -85,4 +85,28 @@ export class GLVertexArray {
 
     return location;
   }
+
+  setVertexBuffer(
+    buffer: GLBuffer,
+    index: number,
+    size: number,
+    type: number,
+    normalized: boolean,
+    stride: number,
+    offset: number
+  ): void {
+    this.bind();
+    buffer.bind();
+    this.gl.enableVertexAttribArray(index);
+    this.gl.vertexAttribPointer(
+      index,
+      size,
+      type,
+      normalized,
+      stride,
+      offset
+    );
+    buffer.unbind();
+    this.unbind();
+  }
 }

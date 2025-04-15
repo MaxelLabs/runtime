@@ -25,19 +25,20 @@ describe('GLFramebuffer', () => {
   test('获取颜色纹理', () => {
     framebuffer.create(800, 600);
     const colorTexture = framebuffer.getColorTexture();
-
-    expect(colorTexture).toBeDefined();
-    expect(colorTexture.getWidth()).toBe(800);
-    expect(colorTexture.getHeight()).toBe(600);
-  });
-
-  test('获取深度纹理', () => {
-    framebuffer.create(800, 600);
     const depthTexture = framebuffer.getDepthTexture();
 
-    expect(depthTexture).toBeDefined();
-    expect(depthTexture.getWidth()).toBe(800);
-    expect(depthTexture.getHeight()).toBe(600);
+    expect(colorTexture).not.toBeNull();
+    expect(depthTexture).not.toBeNull();
+
+    if (colorTexture) {
+      expect(colorTexture.getWidth()).toBe(800);
+      expect(colorTexture.getHeight()).toBe(600);
+    }
+
+    if (depthTexture) {
+      expect(depthTexture.getWidth()).toBe(800);
+      expect(depthTexture.getHeight()).toBe(600);
+    }
   });
 
   test('绑定和解绑帧缓冲对象', () => {
