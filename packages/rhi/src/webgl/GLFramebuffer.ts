@@ -9,6 +9,8 @@ export class GLFramebuffer {
   private height: number;
   private samples: number;
   private refCount: number;
+  private colorTextureInstance: GLTexture | null = null;
+  private depthTextureInstance: GLTexture | null = null;
 
   constructor(gl: WebGLRenderingContext) {
     this.gl = gl;
@@ -73,6 +75,9 @@ export class GLFramebuffer {
       texture.create(width, height, this.gl.RGBA, this.gl.UNSIGNED_BYTE);
       const glTexture = texture.getTexture();
       this.colorAttachments.push(glTexture);
+      if (i === 0) {
+        this.colorTextureInstance = texture;
+      }
       this.gl.framebufferTexture2D(
         this.gl.FRAMEBUFFER,
         this.gl.COLOR_ATTACHMENT0 + i,
@@ -86,12 +91,14 @@ export class GLFramebuffer {
   private createDepthStencilAttachment(width: number, height: number) {
     const texture = new GLTexture(this.gl);
     texture.create(width, height, this.gl.DEPTH_STENCIL, this.gl.UNSIGNED_INT);
-    this.depthStencilAttachment = texture.getTexture();
+    const glTexture = texture.getTexture();
+    this.depthStencilAttachment = glTexture;
+    this.depthTextureInstance = texture;
     this.gl.framebufferTexture2D(
       this.gl.FRAMEBUFFER,
       this.gl.DEPTH_STENCIL_ATTACHMENT,
       this.gl.TEXTURE_2D,
-      texture.getTexture(),
+      glTexture,
       0
     );
   }
@@ -112,6 +119,10 @@ export class GLFramebuffer {
   }
 
   blitToScreen() {
+    if (!this.fbo) {
+      throw new Error('Framebuffer not created');
+    }
+
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
     this.gl.viewport(0, 0, this.width, this.height);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
@@ -124,6 +135,22 @@ export class GLFramebuffer {
 
   getDepthStencilAttachment(): WebGLTexture | null {
     return this.depthStencilAttachment;
+  }
+
+  getWidth(): number {
+    return this.width;
+  }
+
+  getHeight(): number {
+    return this.height;
+  }
+
+  getColorTexture(): GLTexture | null {
+    return this.colorTextureInstance;
+  }
+
+  getDepthTexture(): GLTexture | null {
+    return this.depthTextureInstance;
   }
 
   retain() {
@@ -150,6 +177,8 @@ export class GLFramebuffer {
     }
     this.colorAttachments = [];
     this.depthStencilAttachment = null;
+    this.colorTextureInstance = null;
+    this.depthTextureInstance = null;
   }
 }
 

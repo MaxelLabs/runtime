@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 import { resolve } from 'path';
 import { defineConfig, type PluginOption } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
@@ -86,10 +84,10 @@ function configureServerPlugin() {
   return {
     name: 'configure-server',
     configurePreviewServer(server: { httpServer: { once: (arg0: string, arg1: any) => void; }; }) {
-      server.httpServer.once('listening', handleServer.bind(this, server));
+      server.httpServer.once('listening', handleServer.bind(this, server as Server));
     },
     configureServer(server: { httpServer: { once: (arg0: string, arg1: any) => void; }; }) {
-      server.httpServer.once('listening', handleServer.bind(this, server));
+      server.httpServer.once('listening', handleServer.bind(this, server as Server));
     },
   }
 }

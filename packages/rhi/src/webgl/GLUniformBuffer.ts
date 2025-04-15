@@ -164,6 +164,13 @@ export class GLUniformBuffer implements IUniformBuffer {
     }
   }
 
+  setData(data: Float32Array): void {
+    this.data = data;
+    this.size = data.byteLength;
+    this.isDirty = true;
+    this.updateBufferData();
+  }
+
   getData(): Float32Array {
     return this.data;
   }

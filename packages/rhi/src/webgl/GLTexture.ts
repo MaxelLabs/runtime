@@ -97,6 +97,10 @@ export class GLTexture {
   }
 
   upload(data: TexImageSource | ArrayBufferView, level: number = 0) {
+    if (!this.texture) {
+      throw new Error('Texture not created');
+    }
+
     this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
     
     if (this.compressed) {
@@ -190,6 +194,28 @@ export class GLTexture {
 
   static clearPool() {
     GLTexture.texturePool.clear();
+  }
+
+  getWidth(): number {
+    return this.width;
+  }
+
+  getHeight(): number {
+    return this.height;
+  }
+
+  setData(data: ArrayBufferView, width: number, height: number): void {
+    this.width = width;
+    this.height = height;
+    this.upload(data);
+  }
+
+  setParameters(params: Partial<TextureOptions>): void {
+    this.setTextureParameters(params);
+  }
+
+  setImage(image: TexImageSource): void {
+    this.upload(image);
   }
 }
 

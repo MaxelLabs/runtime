@@ -1,5 +1,5 @@
 import { GLRenderer, GLShader, GLBuffer, GLConstants, GLTexture, GLFramebuffer, GLVertexArray } from '@max/rhi';
-import { Color, Matrix4, Vector3 } from '@max/math';
+import { Color, Matrix4, Vector3 } from '../../../math/src/core';
 
 // Get canvas and resize it to fill the window
 const canvas = document.getElementById('J-canvas') as HTMLCanvasElement;

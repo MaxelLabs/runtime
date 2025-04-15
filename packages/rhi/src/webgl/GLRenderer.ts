@@ -13,6 +13,7 @@ export class GLRenderer implements IRenderer {
   height: number = 0;
 
   constructor() {
+    debugger
     this.transform = new Matrix4();
   }
 
