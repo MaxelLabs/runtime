@@ -1,13 +1,13 @@
-const { glsl } = require('./rollup-plugin-glsl-inner.js');
-const { babel } = require('@rollup/plugin-babel');
-const { nodeResolve } = require('@rollup/plugin-node-resolve');
-const commonjs = require('@rollup/plugin-commonjs');
-const typescript = require('@rollup/plugin-typescript');
-const terser = require('@rollup/plugin-terser');
-const replace = require('@rollup/plugin-replace');
-const { swc, defineRollupSwcOption, minify } = require('rollup-plugin-swc3');
+import { glsl } from './rollup-plugin-glsl-inner.js';
+import { babel } from '@rollup/plugin-babel';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import typescript from '@rollup/plugin-typescript';
+import terser from '@rollup/plugin-terser';
+import replace from '@rollup/plugin-replace';
+import { swc, defineRollupSwcOption, minify } from 'rollup-plugin-swc3';
 
-function getPlugins(pkg, { min = false } = {}) {
+export function getPlugins(pkg, { min = false } = {}) {
   const plugins = [
     nodeResolve(),
     commonjs(),
@@ -35,7 +35,7 @@ function getPlugins(pkg, { min = false } = {}) {
   return plugins;
 }
 
-function getBanner(pkg) {
+export function getBanner(pkg) {
   return `/*!
  * ${pkg.name} v${pkg.version}
  * (c) 2024 Sruimeng
@@ -43,7 +43,7 @@ function getBanner(pkg) {
  */`;
 }
 
-function onwarn(warning) {
+export function onwarn(warning) {
   if (warning.code === 'CIRCULAR_DEPENDENCY') {
     return;
   }
@@ -51,7 +51,7 @@ function onwarn(warning) {
   console.warn(`(!) ${warning.message}`)
 }
 
-function getSWCPlugin(
+export function getSWCPlugin(
   jscOptions = {},
   external = [],
 ) {
@@ -77,10 +77,3 @@ function getSWCPlugin(
     defineRollupSwcOption(options),
   );
 }
-
-module.exports = {
-  getBanner,
-  getPlugins,
-  onwarn,
-  getSWCPlugin
-};
