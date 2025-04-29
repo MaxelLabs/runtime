@@ -4,7 +4,7 @@
 
 import { JSDOM } from 'jsdom';
 import chalk from 'chalk';
-import { runTests } from './tests/index.js';
+import { runTests } from './tests/index';
 
 // 创建虚拟DOM环境
 const dom = new JSDOM('<!DOCTYPE html><html><body><canvas id="webgl-canvas" width="800" height="600"></canvas></body></html>');
@@ -16,18 +16,18 @@ global.HTMLCanvasElement = dom.window.HTMLCanvasElement;
 // 添加性能API
 global.performance = {
   now: () => {
-    return process.hrtime.bigint() / BigInt(1000000);
+    return Number(process.hrtime.bigint() / BigInt(1000000));
   }
 };
 
 /**
  * 运行命令行环境下的性能基准测试
  */
-async function startBenchmark() {
+async function startBenchmark(): Promise<void> {
   console.log(chalk.blue('初始化WebGL上下文...'));
   
   try {
-    const canvas = document.getElementById('webgl-canvas');
+    const canvas = document.getElementById('webgl-canvas') as HTMLCanvasElement;
     
     // 记录开始时间
     const startTime = performance.now();

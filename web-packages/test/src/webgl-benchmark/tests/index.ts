@@ -3,13 +3,29 @@
  * 导出所有WebGL基准测试套件并提供统一运行接口
  */
 
-import { bufferTests } from './buffer-tests.js';
-import { shaderTests } from './shader-tests.js';
-import { textureTests } from './texture-tests.js';
-import { rendererTests } from './renderer-tests.js';
+import { bufferTests } from './buffer-tests';
+import { shaderTests } from './shader-tests';
+import { textureTests } from './texture-tests';
+import { rendererTests } from './renderer-tests';
+
+// 定义测试接口
+export interface TestCase {
+  name: string;
+  iterations: number;
+  setup?: (renderer: any) => void;
+  execute: (renderer: any) => void;
+  teardown?: () => void;
+}
+
+export interface TestResult {
+  name: string;
+  iterations: number;
+  duration: number;
+  opsPerSecond: number;
+}
 
 // 合并所有测试
-const allTests = [
+const allTests: TestCase[] = [
   ...bufferTests || [],
   ...shaderTests || [],
   ...textureTests || [],
@@ -22,8 +38,11 @@ const allTests = [
  * @param {Function} onTestComplete 测试完成回调函数
  * @returns {Promise<Array>} 测试结果数组
  */
-export async function runTests(renderer, onTestComplete) {
-  const results = [];
+export async function runTests(
+  renderer: any, 
+  onTestComplete?: (result: TestResult) => void
+): Promise<TestResult[]> {
+  const results: TestResult[] = [];
   
   // 依次运行每个测试
   for (const test of allTests) {
@@ -49,7 +68,7 @@ export async function runTests(renderer, onTestComplete) {
       const opsPerSecond = iterations / (duration / 1000);
       
       // 记录结果
-      const result = {
+      const result: TestResult = {
         name: test.name,
         iterations,
         duration,
@@ -67,7 +86,7 @@ export async function runTests(renderer, onTestComplete) {
     } finally {
       // 清理测试
       if (test.teardown) {
-        test.teardown(renderer);
+        test.teardown();
       }
     }
   }

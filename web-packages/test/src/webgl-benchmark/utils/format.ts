@@ -3,7 +3,7 @@
  * @param {number} num 要格式化的数字
  * @returns {string} 格式化后的数字
  */
-export function formatNumber(num) {
+export function formatNumber(num: number): string {
   return num.toLocaleString('en-US');
 }
 
@@ -12,7 +12,7 @@ export function formatNumber(num) {
  * @param {number} ms 毫秒数
  * @returns {string} 格式化后的时间
  */
-export function formatTime(ms) {
+export function formatTime(ms: number): string {
   if (ms < 1) {
     return `${(ms * 1000).toFixed(2)}μs`;
   } else if (ms < 1000) {
@@ -27,7 +27,7 @@ export function formatTime(ms) {
  * @param {number} bytes 字节数
  * @returns {string} 格式化后的大小
  */
-export function formatBytes(bytes) {
+export function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 Bytes';
   
   const k = 1024;
