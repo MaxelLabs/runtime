@@ -2,18 +2,16 @@
   "name": "@maxellabs/math",
   "version": "0.0.3",
   "description": "Math library for Max Engine",
-  "module": "dist/index.esm.js",
-  "main": "dist/index.cjs.js",
-  "browser": "dist/index.umd.min.js",
-  "types": "dist/index.d.ts",
+  "module": "./dist/index.mjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
   "exports": {
     ".": {
-      "import": "./dist/index.esm.js",
-      "require": "./dist/index.cjs.js",
-      "browser": "./dist/index.umd.min.js",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }
   },
