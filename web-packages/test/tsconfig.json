@@ -5,9 +5,9 @@
     "rootDir": "./src",
     "baseUrl": ".",
     "paths": {
-      "@max/rhi": ["../../packages/rhi/src"],
-      "@max/core": ["../../packages/core/src"],
-      "@max/math": ["../../packages/math/src"]
+      "@maxellabs/rhi": ["../../packages/rhi/src"],
+      "@maxellabs/core": ["../../packages/core/src"],
+      "@maxellabs/math": ["../../packages/math/src"]
     }
   },
   "include": ["src/**/*"],

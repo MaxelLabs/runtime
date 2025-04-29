@@ -1,4 +1,4 @@
-import type { IRenderer, IBuffer, IShader } from '@max/core';
+import type { IRenderer, IBuffer, IShader } from '@maxellabs/core';
 import { GLRenderer } from './GLRenderer';
 import { GLShader } from './GLShader';
 import { GLBuffer } from './GLBuffer';

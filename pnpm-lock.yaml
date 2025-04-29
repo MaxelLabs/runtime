@@ -168,10 +168,10 @@ importers:
 
   packages/core:
     dependencies:
-      '@max/math':
+      '@maxellabs/math':
         specifier: workspace:*
         version: link:../math
-      '@max/specification':
+      '@maxellabs/specification':
         specifier: workspace:*
         version: link:../specification
     devDependencies:
@@ -216,13 +216,13 @@ importers:
 
   packages/rhi:
     dependencies:
-      '@max/core':
+      '@maxellabs/core':
         specifier: workspace:*
         version: link:../core
-      '@max/math':
+      '@maxellabs/math':
         specifier: workspace:*
         version: link:../math
-      '@max/specification':
+      '@maxellabs/specification':
         specifier: workspace:*
         version: link:../specification
     devDependencies:
@@ -268,7 +268,7 @@ importers:
 
   packages/specification:
     dependencies:
-      '@max/math':
+      '@maxellabs/math':
         specifier: workspace:*
         version: link:../math
     devDependencies:
@@ -311,13 +311,13 @@ importers:
 
   web-packages/test:
     dependencies:
-      '@max/core':
+      '@maxellabs/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@max/math':
+      '@maxellabs/math':
         specifier: workspace:*
         version: link:../../packages/math
-      '@max/rhi':
+      '@maxellabs/rhi':
         specifier: workspace:*
         version: link:../../packages/rhi
     devDependencies:

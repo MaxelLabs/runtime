@@ -51,8 +51,8 @@ export default defineConfig(({ mode }) => {
     ],
     resolve: {
       alias: {
-        '@max/core': resolve(__dirname, '../core/src'),
-        '@max/math': resolve(__dirname, '../math/src'),
+        '@maxellabs/core': resolve(__dirname, '../core/src'),
+        '@maxellabs/math': resolve(__dirname, '../math/src'),
       },
     },
   };

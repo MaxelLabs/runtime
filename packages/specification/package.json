@@ -1,5 +1,5 @@
 {
-  "name": "@max/specification",
+  "name": "@maxellabs/specification",
   "version": "0.0.1",
   "description": "类型定义",
   "type": "module",
@@ -39,7 +39,7 @@
     "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "@max/math": "workspace:*"
+    "@maxellabs/math": "workspace:*"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

@@ -1,5 +1,5 @@
 {
-  "name": "@max/test",
+  "name": "@maxellabs/test",
   "version": "1.0.0",
   "description": "WebGL渲染接口性能测试工具",
   "type": "module",
@@ -10,9 +10,9 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@max/core": "workspace:*",
-    "@max/math": "workspace:*",
-    "@max/rhi": "workspace:*"
+    "@maxellabs/core": "workspace:*",
+    "@maxellabs/math": "workspace:*",
+    "@maxellabs/rhi": "workspace:*"
   },
   "devDependencies": {
     "@types/jsdom": "^21.1.7",

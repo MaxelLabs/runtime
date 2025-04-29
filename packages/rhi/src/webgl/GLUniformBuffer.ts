@@ -1,4 +1,4 @@
-import type { IUniformBuffer } from '@max/core';
+import type { IUniformBuffer } from '@maxellabs/core';
 
 export class GLUniformBuffer implements IUniformBuffer {
   private gl: WebGLRenderingContext;

@@ -1,4 +1,4 @@
-import type { IRenderPass } from '@max/core';
+import type { IRenderPass } from '@maxellabs/core';
 import { GLRenderer } from './GLRenderer';
 import { GLFramebuffer } from './GLFramebuffer';
 import { GLShader } from './GLShader';

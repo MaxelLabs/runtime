@@ -2,7 +2,7 @@
  * 渲染器性能测试套件
  */
 
-import { ClearFlags } from '@max/rhi';
+import { ClearFlags } from '@maxellabs/rhi';
 import { TestCase } from './index';
 
 // 存储用于测试的临时对象

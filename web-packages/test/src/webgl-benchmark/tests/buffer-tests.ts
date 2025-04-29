@@ -2,7 +2,7 @@
  * 缓冲区性能测试套件
  */
 
-import { GLBuffer, BufferType } from '@max/rhi';
+import { GLBuffer, BufferType } from '@maxellabs/rhi';
 import { TestCase } from './index';
 
 // 测试中使用的缓冲区

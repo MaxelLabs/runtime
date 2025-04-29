@@ -2,7 +2,7 @@
  * 着色器性能测试套件
  */
 
-import { GLShader, GLRenderer } from '@max/rhi';
+import { GLShader, GLRenderer } from '@maxellabs/rhi';
 
 // 样本着色器代码
 const basicVertexShader = `

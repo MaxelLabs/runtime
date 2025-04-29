@@ -2,7 +2,7 @@
  * 纹理性能测试套件
  */
 
-import { GLTexture, TextureFormat, TextureFilter, TextureWrap } from '@max/rhi';
+import { GLTexture, TextureFormat, TextureFilter, TextureWrap } from '@maxellabs/rhi';
 import { TestCase } from './index';
 
 // 测试中使用的纹理

@@ -59,7 +59,7 @@ export async function startBenchmark(): Promise<BenchmarkResults> {
  */
 async function createRenderer(canvas: HTMLCanvasElement): Promise<any> {
   // 加载RHI模块
-  const { GLRenderer } = await import('@max/rhi');
+  const { GLRenderer } = await import('@maxellabs/rhi');
   
   try {
     const renderer = new GLRenderer();

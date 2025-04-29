@@ -1,5 +1,5 @@
-import type { IPipelineContext } from '@max/core';
-import type { Vector2, Vector3, Color } from '@max/math';
+import type { IPipelineContext } from '@maxellabs/core';
+import type { Vector2, Vector3, Color } from '@maxellabs/math';
 import { GLShader } from './GLShader';
 
 export class GLPipelineContext implements IPipelineContext {

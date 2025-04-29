@@ -1,4 +1,4 @@
-import type { IShader } from '@max/core';
+import type { IShader } from '@maxellabs/core';
 
 export class GLShader implements IShader {
   private gl: WebGLRenderingContext;

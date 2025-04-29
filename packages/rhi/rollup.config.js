@@ -27,9 +27,9 @@ export default () => {
       }],
       plugins,
       external: [
-        '@max/math',
-        '@max/core',
-        '@max/specification'
+        '@maxellabs/math',
+        '@maxellabs/core',
+        '@maxellabs/specification'
       ]
     },
   ];

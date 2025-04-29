@@ -1,5 +1,5 @@
 {
-  "name": "@max/math",
+  "name": "@maxellabs/math",
   "version": "0.0.1",
   "description": "Math library for Max Engine",
   "module": "dist/index.esm.js",
