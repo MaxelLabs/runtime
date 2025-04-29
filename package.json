@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "pnpm --filter @galacean/effects-demo dev",
     "preview": "pnpm --filter @galacean/effects-demo preview",
-    "build": "pnpm build:pipeline",
+    "build": "pnpm build:core && pnpm build:others",
     "build:core": "pnpm --filter \"@maxellabs/specification\" build && pnpm --filter \"@maxellabs/math\" build",
     "build:others": "pnpm --filter \"!@maxellabs/specification\" --filter \"!@maxellabs/math\" --filter \"./packages/**\" build",
     "build:pipeline": "node ./scripts/build-pipeline.js",
@@ -25,7 +25,7 @@
     "clean:all": "pnpm clean:artifacts && pnpm clean:declaration && pnpm clean:dist && pnpm clean:nm",
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky install",
-    "publish": "pnpm -r publish --no-git-checks --filter \"./packages/*\" --filter \"[\\\"version\\\"]:*\"",
+    "publish": "pnpm -r publish --no-git-checks --filter \"./packages/**\"",
     "test:watch": "pnpm --filter \"./packages/**\" test:watch",
     "test:coverage": "pnpm --filter \"./packages/**\" test:coverage"
   },

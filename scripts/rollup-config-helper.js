@@ -4,8 +4,7 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import typescript from '@rollup/plugin-typescript';
 import terser from '@rollup/plugin-terser';
-import replace from '@rollup/plugin-replace';
-import { swc, defineRollupSwcOption, minify } from 'rollup-plugin-swc3';
+import { swc, defineRollupSwcOption } from 'rollup-plugin-swc3';
 
 export function getPlugins(pkg, { min = false } = {}) {
   const plugins = [

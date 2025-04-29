@@ -1,6 +1,6 @@
 {
   "name": "@maxellabs/specification",
-  "version": "0.0.1",
+  "version": "0.0.6",
   "description": "类型定义",
   "type": "module",
   "module": "./dist/index.mjs",
@@ -23,10 +23,10 @@
     "build:module": "rollup -c",
     "build:declaration": "tsc -d --emitDeclarationOnly",
     "clean": "rimraf dist",
-    "prepublishOnly": "pnpm build",
     "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "prepublishOnly": "pnpm build",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
   },
   "contributors": [
     {
