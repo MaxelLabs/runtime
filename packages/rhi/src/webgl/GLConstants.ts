@@ -1,24 +1,50 @@
+/**
+ * WebGL常量集合
+ * 
+ * 封装了WebGL API中使用的各种常量值，提供了类型安全和分类组织的常量定义。
+ * 使用这些常量可以避免直接使用魔术数字，提高代码可读性和可维护性。
+ */
 export const GLConstants = {
-  // 缓冲区类型
+  /**
+   * 缓冲区类型常量
+   * 
+   * - ARRAY_BUFFER: 用于存储顶点属性数据，如位置、颜色、纹理坐标等
+   * - ELEMENT_ARRAY_BUFFER: 用于存储顶点索引数据
+   */
   BUFFER_TYPE: {
     ARRAY_BUFFER: 0x8892,
     ELEMENT_ARRAY_BUFFER: 0x8893,
   },
 
-  // 缓冲区用途
+  /**
+   * 缓冲区用途常量
+   * 
+   * - STATIC_DRAW: 数据不会或几乎不会改变，适用于加载一次然后多次渲染的数据
+   * - DYNAMIC_DRAW: 数据会被多次修改并使用，适用于频繁更新的数据
+   * - STREAM_DRAW: 数据每帧都会修改并且只使用几次，适用于每帧都变化的数据
+   */
   BUFFER_USAGE: {
     STATIC_DRAW: 0x88E4,
     DYNAMIC_DRAW: 0x88E8,
     STREAM_DRAW: 0x88E0,
   },
 
-  // 着色器类型
+  /**
+   * 着色器类型常量
+   * 
+   * - VERTEX_SHADER: 顶点着色器，处理每个顶点的变换
+   * - FRAGMENT_SHADER: 片元着色器，处理像素颜色计算
+   */
   SHADER_TYPE: {
     VERTEX_SHADER: 0x8B31,
     FRAGMENT_SHADER: 0x8B30,
   },
 
-  // 数据类型
+  /**
+   * 数据类型常量
+   * 
+   * 定义了WebGL中使用的各种数据类型，用于指定缓冲区、纹理和属性数据的格式
+   */
   DATA_TYPE: {
     BYTE: 0x1400,
     UNSIGNED_BYTE: 0x1401,
