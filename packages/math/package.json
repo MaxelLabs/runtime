@@ -1,6 +1,6 @@
 {
   "name": "@maxellabs/math",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Math library for Max Engine",
   "module": "dist/index.esm.js",
   "main": "dist/index.cjs.js",
