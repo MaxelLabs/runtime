@@ -1,11 +1,10 @@
 {
   "name": "@maxellabs/math",
-  "version": "0.0.1",
+  "version": "0.0.6",
   "description": "Math library for Max Engine",
-  "module": "dist/index.esm.js",
-  "main": "dist/index.js",
-  "browser": "./dist/index.min.js",
-  "types": "dist/index.d.ts",
+  "module": "./dist/index.mjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
@@ -20,7 +19,7 @@
     "prebuild": "pnpm clean",
     "build": "pnpm build:declaration && pnpm build:module",
     "build:module": "rollup -c",
-    "build:declaration": "tsc -p tsconfig.build.json",
+    "build:declaration": "tsc -d --emitDeclarationOnly",
     "clean": "rimraf dist && rimraf \"*+(.tsbuildinfo)\"",
     "prepublishOnly": "pnpm build",
     "dev": "rollup -c -w",
@@ -29,8 +28,7 @@
     "bench:advanced": "node --expose-gc test/advanced-bench.js",
     "bench:all": "pnpm bench && pnpm bench:advanced",
     "lint": "eslint src --ext .ts",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "prepare": "npm run build"
+    "format": "prettier --write \"src/**/*.ts\""
   },
   "contributors": [
     {

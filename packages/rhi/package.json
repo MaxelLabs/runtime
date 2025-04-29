@@ -1,6 +1,6 @@
 {
   "name": "@maxellabs/rhi",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "WebGL渲染层",
   "module": "./dist/index.mjs",
   "main": "./dist/index.js",
