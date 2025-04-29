@@ -28,8 +28,7 @@
     "bench:advanced": "node --expose-gc test/advanced-bench.js",
     "bench:all": "pnpm bench && pnpm bench:advanced",
     "lint": "eslint src --ext .ts",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "prepare": "pnpm clean"
+    "format": "prettier --write \"src/**/*.ts\""
   },
   "contributors": [
     {
