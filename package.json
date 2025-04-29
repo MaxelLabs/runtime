@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "pnpm --filter @galacean/effects-demo dev",
     "preview": "pnpm --filter @galacean/effects-demo preview",
-    "build": "pnpm build:pipeline",
+    "build": "pnpm build:core && pnpm build:others",
     "build:core": "pnpm --filter \"@maxellabs/specification\" build && pnpm --filter \"@maxellabs/math\" build",
     "build:others": "pnpm --filter \"!@maxellabs/specification\" --filter \"!@maxellabs/math\" --filter \"./packages/**\" build",
     "build:pipeline": "node ./scripts/build-pipeline.js",
