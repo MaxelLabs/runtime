@@ -2,7 +2,7 @@
  * 着色器性能测试套件
  */
 
-import { GLShader } from '@max/rhi';
+import { GLShader, GLRenderer } from '@maxellabs/rhi';
 
 // 样本着色器代码
 const basicVertexShader = `
@@ -120,21 +120,21 @@ const complexFragmentShader = `
 `;
 
 // 保存着色器引用
-let testShader = null;
-let testMatrix = null;
+let testShader: GLShader | null = null;
+let testMatrix: Float32Array | null = null;
 
 export const shaderTests = [
   {
     name: '着色器: 编译基本着色器',
     iterations: 50,
-    setup: (renderer) => {
+    setup: (renderer: GLRenderer) => {
       // 确保之前的着色器被清理
       if (testShader) {
         testShader.dispose();
         testShader = null;
       }
     },
-    execute: (renderer) => {
+    execute: (renderer: GLRenderer) => {
       const gl = renderer.getGL();
       const shader = new GLShader(gl);
       shader.create(basicVertexShader, basicFragmentShader);
@@ -156,14 +156,14 @@ export const shaderTests = [
   {
     name: '着色器: 编译复杂PBR着色器',
     iterations: 20,
-    setup: (renderer) => {
+    setup: (renderer: GLRenderer) => {
       // 确保之前的着色器被清理
       if (testShader) {
         testShader.dispose();
         testShader = null;
       }
     },
-    execute: (renderer) => {
+    execute: (renderer: GLRenderer) => {
       const gl = renderer.getGL();
       const shader = new GLShader(gl);
       shader.create(complexVertexShader, complexFragmentShader);
@@ -185,12 +185,12 @@ export const shaderTests = [
   {
     name: '着色器: 绑定与解绑',
     iterations: 2000,
-    setup: (renderer) => {
+    setup: (renderer: any) => {
       const gl = renderer.getGL();
       testShader = new GLShader(gl);
       testShader.create(basicVertexShader, basicFragmentShader);
     },
-    execute: () => {
+    execute: (renderer: any) => {
       testShader.bind();
       testShader.unbind();
     },
@@ -205,7 +205,7 @@ export const shaderTests = [
   {
     name: '着色器: 设置Uniform (矩阵)',
     iterations: 1000,
-    setup: (renderer) => {
+    setup: (renderer: any) => {
       const gl = renderer.getGL();
       testShader = new GLShader(gl);
       testShader.create(basicVertexShader, basicFragmentShader);
@@ -235,7 +235,7 @@ export const shaderTests = [
   {
     name: '着色器: 设置多个Uniform',
     iterations: 1000,
-    setup: (renderer) => {
+    setup: (renderer: GLRenderer) => {
       const gl = renderer.getGL();
       testShader = new GLShader(gl);
       testShader.create(basicVertexShader, basicFragmentShader);
@@ -248,7 +248,7 @@ export const shaderTests = [
         0, 0, 0, 1
       ]);
     },
-    execute: () => {
+    execute: (renderer: GLRenderer) => {
       testShader.bind();
       testShader.setUniformMatrix4fv('uModelMatrix', testMatrix);
       testShader.setUniformMatrix4fv('uViewMatrix', testMatrix);

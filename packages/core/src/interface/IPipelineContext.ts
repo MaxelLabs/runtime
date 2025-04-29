@@ -1,4 +1,4 @@
-import type { Vector2, Vector3, Color } from '@max/math';
+import type { Vector2, Vector3, Color } from '@maxellabs/math';
 
 export interface IPipelineContext {
   isReady: boolean,

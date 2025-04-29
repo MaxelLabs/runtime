@@ -4,13 +4,14 @@ import { resolve } from 'path';
 export default defineConfig({
   resolve: {
     alias: {
-      '@max/rhi': resolve(__dirname, '../../packages/rhi/src/index.js'),
-      '@max/core': resolve(__dirname, '../../packages/core/src/index.js'),
-      '@max/math': resolve(__dirname, '../../packages/math/src/index.js')
-    }
+      '@maxellabs/rhi': resolve(__dirname, '../../packages/rhi/src/index.ts'),
+      '@maxellabs/core': resolve(__dirname, '../../packages/core/src/index.ts'),
+      '@maxellabs/math': resolve(__dirname, '../../packages/math/src/index.ts')
+    },
+    extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
   },
   optimizeDeps: {
-    include: ['@max/rhi', '@max/core', '@max/math'],
+    include: ['@maxellabs/rhi', '@maxellabs/core', '@maxellabs/math'],
     esbuildOptions: {
       target: 'es2020'
     }

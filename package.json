@@ -5,16 +5,16 @@
     "dev": "pnpm --filter @galacean/effects-demo dev",
     "preview": "pnpm --filter @galacean/effects-demo preview",
     "build": "pnpm build:core && pnpm build:others",
-    "build:core": "pnpm --filter \"@max/specification\" build && pnpm --filter \"@max/math\" build",
-    "build:others": "pnpm --filter \"!@max/specification\" --filter \"!@max/math\" --filter \"./packages/**\" build",
+    "build:core": "pnpm --filter \"@maxellabs/specification\" build && pnpm --filter \"@maxellabs/math\" build",
+    "build:others": "pnpm --filter \"!@maxellabs/specification\" --filter \"!@maxellabs/math\" --filter \"./packages/**\" build",
     "build:pipeline": "node ./scripts/build-pipeline.js",
     "build:plugins": "pnpm build && pnpm --filter \"./plugin-packages/**\" build",
     "build:docs": "pnpm build && pnpm build:plugins && typedoc",
-    "dev:core": "pnpm --parallel --filter \"@max/specification\" --filter \"@max/math\" dev",
+    "dev:core": "pnpm --parallel --filter \"@maxellabs/specification\" --filter \"@maxellabs/math\" dev",
     "dev:all": "pnpm --parallel dev",
     "lint": "eslint --ext .ts .",
     "lint:fix": "eslint --fix --ext .ts .",
-    "test": "pnpm --filter @max/test test",
+    "test": "pnpm --filter @maxellabs/test test",
     "version": "node ./scripts/update-version",
     "changelog": "git fetch origin && node ./scripts/print-changelog",
     "check:ts": "tsc -b ./tsconfig.check.json",
@@ -92,5 +92,6 @@
     "@babel/core": "^7.24.0",
     "@babel/preset-env": "^7.24.0",
     "@babel/preset-typescript": "^7.23.3"
-  }
+  },
+  "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39"
 }

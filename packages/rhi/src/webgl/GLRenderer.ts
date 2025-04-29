@@ -1,5 +1,5 @@
-import { Matrix4, Color } from '@max/math';
-import type { IRenderer, IBuffer } from '@max/core';
+import { Matrix4, Color } from '@maxellabs/math';
+import type { IRenderer, IBuffer } from '@maxellabs/core';
 import { GLBuffer } from './GLBuffer';
 import { GLState } from './GLState';
 

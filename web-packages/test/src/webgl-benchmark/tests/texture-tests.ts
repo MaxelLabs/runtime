@@ -2,11 +2,12 @@
  * 纹理性能测试套件
  */
 
-import { GLTexture, TextureFormat, TextureFilter, TextureWrap } from '@max/rhi';
+import { GLTexture, TextureFormat, TextureFilter, TextureWrap } from '@maxellabs/rhi';
+import { TestCase } from './index';
 
 // 测试中使用的纹理
-let testTexture = null;
-let testData = null;
+let testTexture: GLTexture | null = null;
+let testData: Uint8Array | null = null;
 
 /**
  * 创建测试纹理数据
@@ -14,7 +15,7 @@ let testData = null;
  * @param {number} height 纹理高度
  * @returns {Uint8Array} 测试数据
  */
-function createTextureData(width, height) {
+function createTextureData(width: number, height: number): Uint8Array {
   const size = width * height * 4; // RGBA数据
   const data = new Uint8Array(size);
   
@@ -29,7 +30,7 @@ function createTextureData(width, height) {
   return data;
 }
 
-export const textureTests = [
+export const textureTests: TestCase[] = [
   {
     name: '纹理: 创建2D纹理 (小型 256x256)',
     iterations: 100,
@@ -116,17 +117,19 @@ export const textureTests = [
     },
     execute: () => {
       // 更新随机数据
-      for (let i = 0; i < testData.length; i += 4) {
-        testData[i] = Math.floor(Math.random() * 256);     // R
-        testData[i + 1] = Math.floor(Math.random() * 256); // G
-        testData[i + 2] = Math.floor(Math.random() * 256); // B
+      if (testData) {
+        for (let i = 0; i < testData.length; i += 4) {
+          testData[i] = Math.floor(Math.random() * 256);     // R
+          testData[i + 1] = Math.floor(Math.random() * 256); // G
+          testData[i + 2] = Math.floor(Math.random() * 256); // B
+        }
+        
+        testTexture?.update({
+          width: 256,
+          height: 256,
+          data: testData
+        });
       }
-      
-      testTexture.update({
-        width: 256,
-        height: 256,
-        data: testData
-      });
     },
     teardown: () => {
       if (testTexture) {
@@ -155,8 +158,8 @@ export const textureTests = [
       });
     },
     execute: () => {
-      testTexture.bind(0); // 绑定到纹理单元0
-      testTexture.unbind();
+      testTexture?.bind(0); // 绑定到纹理单元0
+      testTexture?.unbind();
     },
     teardown: () => {
       if (testTexture) {

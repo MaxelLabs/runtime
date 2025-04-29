@@ -2,18 +2,19 @@
  * 缓冲区性能测试套件
  */
 
-import { GLBuffer, BufferType, BufferUsage } from '@max/rhi';
+import { GLBuffer, BufferType } from '@maxellabs/rhi';
+import { TestCase } from './index';
 
 // 测试中使用的缓冲区
-let testBuffer = null;
-let testData = null;
+let testBuffer: GLBuffer | null = null;
+let testData: Float32Array | Uint16Array | null = null;
 
 /**
  * 创建测试数据
  * @param {number} size 数据大小
  * @returns {Float32Array} 测试数据
  */
-function createTestData(size) {
+function createTestData(size: number): Float32Array {
   const data = new Float32Array(size);
   for (let i = 0; i < size; i++) {
     data[i] = Math.random();
@@ -21,7 +22,7 @@ function createTestData(size) {
   return data;
 }
 
-export const bufferTests = [
+export const bufferTests: TestCase[] = [
   {
     name: '缓冲区: 创建顶点缓冲区 (小型 4KB)',
     iterations: 200,
@@ -38,7 +39,7 @@ export const bufferTests = [
     execute: (renderer) => {
       const gl = renderer.getGL();
       testBuffer = new GLBuffer(gl);
-      testBuffer.create(BufferType.VERTEX, testData, gl.STATIC_DRAW);
+      testBuffer.create(BufferType.VERTEX, testData as Float32Array, gl.STATIC_DRAW);
     },
     teardown: () => {
       if (testBuffer) {
@@ -64,7 +65,7 @@ export const bufferTests = [
     execute: (renderer) => {
       const gl = renderer.getGL();
       testBuffer = new GLBuffer(gl);
-      testBuffer.create(BufferType.VERTEX, testData, gl.STATIC_DRAW);
+      testBuffer.create(BufferType.VERTEX, testData as Float32Array, gl.STATIC_DRAW);
     },
     teardown: () => {
       if (testBuffer) {
@@ -90,7 +91,7 @@ export const bufferTests = [
     execute: (renderer) => {
       const gl = renderer.getGL();
       testBuffer = new GLBuffer(gl);
-      testBuffer.create(BufferType.VERTEX, testData, gl.STATIC_DRAW);
+      testBuffer.create(BufferType.VERTEX, testData as Float32Array, gl.STATIC_DRAW);
     },
     teardown: () => {
       if (testBuffer) {
@@ -112,10 +113,12 @@ export const bufferTests = [
     },
     execute: () => {
       // 更新随机数据
-      for (let i = 0; i < testData.length; i++) {
-        testData[i] = Math.random();
+      if (testData) {
+        for (let i = 0; i < testData.length; i++) {
+          (testData as Float32Array)[i] = Math.random();
+        }
+        testBuffer?.update(testData as Float32Array);
       }
-      testBuffer.update(testData);
     },
     teardown: () => {
       if (testBuffer) {
@@ -137,10 +140,12 @@ export const bufferTests = [
     },
     execute: () => {
       // 更新随机数据
-      for (let i = 0; i < testData.length; i++) {
-        testData[i] = Math.random();
+      if (testData) {
+        for (let i = 0; i < testData.length; i++) {
+          (testData as Float32Array)[i] = Math.random();
+        }
+        testBuffer?.update(testData as Float32Array);
       }
-      testBuffer.update(testData);
     },
     teardown: () => {
       if (testBuffer) {
@@ -161,8 +166,8 @@ export const bufferTests = [
       testBuffer.create(BufferType.VERTEX, testData, gl.STATIC_DRAW);
     },
     execute: () => {
-      testBuffer.bind();
-      testBuffer.unbind();
+      testBuffer?.bind();
+      testBuffer?.unbind();
     },
     teardown: () => {
       if (testBuffer) {
@@ -191,7 +196,7 @@ export const bufferTests = [
     execute: (renderer) => {
       const gl = renderer.getGL();
       testBuffer = new GLBuffer(gl);
-      testBuffer.create(BufferType.INDEX, testData, gl.STATIC_DRAW);
+      testBuffer.create(BufferType.INDEX, testData as Uint16Array, gl.STATIC_DRAW);
     },
     teardown: () => {
       if (testBuffer) {

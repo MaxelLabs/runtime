@@ -1,4 +1,4 @@
-import type { IRHIDevice } from '@max/core';
+import type { IRHIDevice } from '@maxellabs/core';
 
 export class GLDevice implements IRHIDevice {
   private gl: WebGL2RenderingContext | WebGLRenderingContext;

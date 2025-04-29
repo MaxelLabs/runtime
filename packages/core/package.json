@@ -1,5 +1,5 @@
 {
-  "name": "@max/core",
+  "name": "@maxellabs/core",
   "version": "0.0.1",
   "description": "核心库",
   "module": "./dist/index.mjs",
@@ -38,8 +38,8 @@
     "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "@max/math": "workspace:*",
-    "@max/specification": "workspace:*"
+    "@maxellabs/math": "workspace:*",
+    "@maxellabs/specification": "workspace:*"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

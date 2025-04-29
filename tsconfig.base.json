@@ -28,16 +28,16 @@
       "ESNext"
     ],
     "paths": {
-      "@max/core": [
+      "@maxellabs/core": [
         "./packages/core/src"
       ],
-      "@max/math": [
+      "@maxellabs/math": [
         "./packages/math/src"
       ],
-      "@max/rhi": [
+      "@maxellabs/rhi": [
         "./packages/rhi/src"
       ],
-      "@max/specification": [
+      "@maxellabs/specification": [
         "./packages/specification/src"
       ]
     }

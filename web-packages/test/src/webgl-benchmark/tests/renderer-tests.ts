@@ -2,10 +2,18 @@
  * 渲染器性能测试套件
  */
 
-import { ClearFlags } from '@max/rhi';
+import { ClearFlags } from '@maxellabs/rhi';
+import { TestCase } from './index';
 
 // 存储用于测试的临时对象
-let testData = {
+interface TestData {
+  colors: Array<{r: number, g: number, b: number, a: number}>;
+  currentColorIndex: number;
+  width?: number;
+  height?: number;
+}
+
+let testData: TestData = {
   colors: [
     { r: 0.1, g: 0.2, b: 0.3, a: 1.0 },
     { r: 0.7, g: 0.5, b: 0.3, a: 1.0 },
@@ -15,7 +23,7 @@ let testData = {
   currentColorIndex: 0
 };
 
-export const rendererTests = [
+export const rendererTests: TestCase[] = [
   {
     name: '渲染器: 清除屏幕',
     iterations: 1000,
@@ -47,10 +55,12 @@ export const rendererTests = [
     },
     execute: (renderer) => {
       // 设置不同的视口尺寸
-      renderer.setViewport(0, 0, testData.width, testData.height);
-      renderer.setViewport(0, 0, testData.width / 2, testData.height / 2);
-      renderer.setViewport(testData.width / 2, testData.height / 2, testData.width / 2, testData.height / 2);
-      renderer.setViewport(0, 0, testData.width, testData.height); // 恢复原始视口
+      if (testData.width !== undefined && testData.height !== undefined) {
+        renderer.setViewport(0, 0, testData.width, testData.height);
+        renderer.setViewport(0, 0, testData.width / 2, testData.height / 2);
+        renderer.setViewport(testData.width / 2, testData.height / 2, testData.width / 2, testData.height / 2);
+        renderer.setViewport(0, 0, testData.width, testData.height); // 恢复原始视口
+      }
     },
     teardown: () => {
       // 不需要特别的清理
@@ -68,7 +78,7 @@ export const rendererTests = [
       renderer.enableDepthTest();
       renderer.disableDepthTest();
     },
-    teardown: () => {
+    teardown: (renderer) => {
       // 确保还原状态
       renderer.disableDepthTest();
     }
@@ -85,7 +95,7 @@ export const rendererTests = [
       renderer.enableBlend();
       renderer.disableBlend();
     },
-    teardown: () => {
+    teardown: (renderer) => {
       // 确保还原状态
       renderer.disableBlend();
     }
@@ -103,7 +113,7 @@ export const rendererTests = [
       renderer.setCullFace('back');
       renderer.disableCullFace();
     },
-    teardown: () => {
+    teardown: (renderer) => {
       // 确保还原状态
       renderer.disableCullFace();
     }

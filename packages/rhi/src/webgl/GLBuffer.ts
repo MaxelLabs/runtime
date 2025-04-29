@@ -1,4 +1,4 @@
-import type { IBuffer } from '@max/core';
+import type { IBuffer } from '@maxellabs/core';
 
 export class GLBuffer implements IBuffer {
   private static bufferPool: Map<string, WebGLBuffer[]> = new Map();
