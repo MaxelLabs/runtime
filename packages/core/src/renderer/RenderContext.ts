@@ -3,11 +3,15 @@ import { ShaderData } from '../shader/ShaderData';
 import { ShaderMacroCollection } from '../shader/ShaderMacroCollection';
 import { Camera } from '../camera/Camera';
 import { Scene } from '../scene/Scene';
+import type { Engine } from '../Engine';
+import type { CullingResults } from './CullingResults';
 
 /**
  * 渲染上下文类，包含渲染所需的各种上下文信息
  */
 export class RenderContext {
+  /** 引擎实例 */
+  readonly engine: Engine;
   /** 当前渲染的场景 */
   scene: Scene | null = null;
   /** 当前渲染的摄像机 */
@@ -36,6 +40,26 @@ export class RenderContext {
   enableHDR: boolean = false;
   /** 是否启用阴影 */
   enableShadow: boolean = false;
+  /** 着色器宏集合 */
+  shaderMacros: ShaderMacroCollection | null = null;
+  /** 模型矩阵 */
+  modelMatrix: Matrix4 = new Matrix4();
+  /** 模型-视图矩阵 */
+  modelViewMatrix: Matrix4 = new Matrix4();
+  /** 模型-视图-投影矩阵 */
+  mvpMatrix: Matrix4 = new Matrix4();
+  /** 当前渲染帧计数 */
+  frameCount: number = 0;
+  /** 剔除结果 */
+  cullingResults: CullingResults | null = null;
+
+  /**
+   * 创建渲染上下文
+   * @param engine 引擎实例
+   */
+  constructor(engine: Engine) {
+    this.engine = engine;
+  }
 
   /**
    * 重置渲染上下文
@@ -55,6 +79,8 @@ export class RenderContext {
     this.enablePostProcess = false;
     this.enableHDR = false;
     this.enableShadow = false;
+    this.shaderMacros = null;
+    this.cullingResults = null;
   }
 
   /**
@@ -79,6 +105,7 @@ export class RenderContext {
     this.cameraShaderData = camera.shaderData;
     this.enablePostProcess = camera.enablePostProcess;
     this.enableHDR = camera.enableHDR;
+    this.updateMatricesFromCamera();
   }
 
   /**
@@ -86,6 +113,34 @@ export class RenderContext {
    * @param macros 要合并的着色器宏集合
    */
   mergeMacros(macros: ShaderMacroCollection): void {
-    this.shaderMacroCollection.merge(macros);
+    if (!this.shaderMacros) {
+      this.shaderMacros = macros;
+    } else {
+      this.shaderMacros.merge(macros);
+    }
+  }
+
+  /**
+   * 从相机更新矩阵
+   */
+  updateMatricesFromCamera(): void {
+    if (!this.camera) return;
+    
+    this.viewMatrix.copyFrom(this.camera.viewMatrix);
+    this.projMatrix.copyFrom(this.camera.projectionMatrix);
+    
+    Matrix4.multiply(this.projMatrix, this.viewMatrix, this.viewProjMatrix);
+  }
+
+  /**
+   * 更新模型矩阵
+   * @param modelMatrix 模型矩阵
+   */
+  updateModelMatrix(modelMatrix: Matrix4): void {
+    this.modelMatrix.copyFrom(modelMatrix);
+    
+    Matrix4.multiply(this.viewMatrix, this.modelMatrix, this.modelViewMatrix);
+    
+    Matrix4.multiply(this.projMatrix, this.modelViewMatrix, this.mvpMatrix);
   }
 } 
