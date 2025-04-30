@@ -9,6 +9,18 @@ import type { Vector4Like } from './type';
  * 四元数
  */
 export class Quaternion {
+  static multiply(worldRotation: Quaternion, _localRotation: Quaternion): Quaternion {
+    throw new Error('Method not implemented.');
+  }
+  static invert(worldRotation: Quaternion) {
+    throw new Error('Method not implemented.');
+  }
+  static fromMatrix(rotationMatrix: Matrix4) {
+    throw new Error('Method not implemented.');
+  }
+  transformVector(arg0: Vector3) {
+    throw new Error('Method not implemented.');
+  }
   private static readonly tempVec0: Vector3 = new Vector3();
 
   // 使用Float32Array存储四元数元素，提高内存访问效率

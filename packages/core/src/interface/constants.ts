@@ -54,11 +54,11 @@ export enum TextureFormat {
   ALPHA = 0x1906,           // WebGL: gl.ALPHA
   LUMINANCE = 0x1909,       // WebGL: gl.LUMINANCE
   LUMINANCE_ALPHA = 0x190A, // WebGL: gl.LUMINANCE_ALPHA
-  
+
   // 深度/模板格式
   DEPTH = 0x1902,           // WebGL: gl.DEPTH_COMPONENT
   DEPTH_STENCIL = 0x84F9,   // WebGL: gl.DEPTH_STENCIL
-  
+
   // WebGL2/扩展支持的格式
   RGBA32F = 0x8814,         // Float32 RGBA
   RGB32F = 0x8815,          // Float32 RGB
@@ -70,7 +70,7 @@ export enum TextureFormat {
   RG8 = 0x822B,             // UInt8 RG
   RG16F = 0x822F,           // Float16 RG
   RG32F = 0x8230,           // Float32 RG
-  
+
   // 压缩格式
   COMPRESSED_RGB_S3TC_DXT1 = 0x83F0,
   COMPRESSED_RGBA_S3TC_DXT1 = 0x83F1,
@@ -273,4 +273,4 @@ export enum RenderQueue {
   ALPHA_TEST = 2450,
   TRANSPARENT = 3000,
   OVERLAY = 4000
-} 
+}

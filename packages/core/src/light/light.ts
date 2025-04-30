@@ -1,5 +1,5 @@
 import { Component } from '../base/component';
-import { Entity } from '../base/entity';
+import type { Entity } from '../base/entity';
 import { Vector3 } from '@maxellabs/math';
 
 /**
@@ -38,78 +38,78 @@ export abstract class Light extends Component {
    * @param entity 所属实体
    * @param type 光源类型
    */
-  constructor(entity: Entity, type: LightType) {
+  constructor (entity: Entity, type: LightType) {
     super(entity);
     this._type = type;
   }
 
   /** 获取光源类型 */
-  get type(): LightType {
+  get type (): LightType {
     return this._type;
   }
 
   /** 获取光源颜色 */
-  get color(): Vector3 {
+  get color (): Vector3 {
     return this._color.clone();
   }
 
   /** 设置光源颜色 */
-  set color(value: Vector3) {
+  set color (value: Vector3) {
     this._color.copyFrom(value);
   }
 
   /** 设置光源RGB颜色 */
-  setColor(r: number, g: number, b: number): void {
+  setColor (r: number, g: number, b: number): void {
     this._color.set(r, g, b);
   }
 
   /** 获取光源强度 */
-  get intensity(): number {
+  get intensity (): number {
     return this._intensity;
   }
 
   /** 设置光源强度 */
-  set intensity(value: number) {
+  set intensity (value: number) {
     this._intensity = value;
   }
 
   /** 获取是否投射阴影 */
-  get castShadow(): boolean {
+  get castShadow (): boolean {
     return this._castShadow;
   }
 
   /** 设置是否投射阴影 */
-  set castShadow(value: boolean) {
+  set castShadow (value: boolean) {
     this._castShadow = value;
   }
 
   /** 获取阴影贴图大小 */
-  get shadowMapSize(): number {
+  get shadowMapSize (): number {
     return this._shadowMapSize;
   }
 
   /** 设置阴影贴图大小 */
-  set shadowMapSize(value: number) {
+  set shadowMapSize (value: number) {
     this._shadowMapSize = Math.pow(2, Math.round(Math.log2(value))); // 确保是2的幂次方
   }
 
   /** 获取阴影偏移 */
-  get shadowBias(): number {
+  get shadowBias (): number {
     return this._shadowBias;
   }
 
   /** 设置阴影偏移 */
-  set shadowBias(value: number) {
+  set shadowBias (value: number) {
     this._shadowBias = value;
   }
 
   /** 当组件启用时调用 */
-  override onEnable(): void {
+  override onEnable (): void {
     // 子类可以重写该方法
   }
 
   /** 当组件禁用时调用 */
-  override onDisable(): void {
+  override onDisable (): void {
     // 子类可以重写该方法
   }
 }
@@ -129,21 +129,22 @@ export class DirectionalLight extends Light {
    * 创建一个新的平行光组件
    * @param entity 所属实体
    */
-  constructor(entity: Entity) {
+  constructor (entity: Entity) {
     super(entity, LightType.Directional);
   }
 
   /** 获取光源方向 */
-  get direction(): Vector3 {
+  get direction (): Vector3 {
     // 使用实体的前方向作为光源方向
     return this.entity.transform.forward;
   }
 
   /** 设置光源方向 */
-  set direction(value: Vector3) {
+  set direction (value: Vector3) {
     // 旋转实体使其前方向朝向指定方向
     this._direction.copyFrom(value).normalize();
     const normalizedDir = this._direction.clone().normalize();
+
     this.entity.transform.lookAt(
       new Vector3(
         this.entity.transform.worldPosition.x + normalizedDir.x,
@@ -154,22 +155,22 @@ export class DirectionalLight extends Light {
   }
 
   /** 获取阴影距离 */
-  get shadowDistance(): number {
+  get shadowDistance (): number {
     return this._shadowDistance;
   }
 
   /** 设置阴影距离 */
-  set shadowDistance(value: number) {
+  set shadowDistance (value: number) {
     this._shadowDistance = Math.max(0.1, value);
   }
 
   /** 获取阴影正交相机尺寸 */
-  get shadowOrthoSize(): number {
+  get shadowOrthoSize (): number {
     return this._shadowOrthoSize;
   }
 
   /** 设置阴影正交相机尺寸 */
-  set shadowOrthoSize(value: number) {
+  set shadowOrthoSize (value: number) {
     this._shadowOrthoSize = Math.max(0.1, value);
   }
 }
@@ -187,43 +188,44 @@ export class PointLight extends Light {
    * 创建一个新的点光源组件
    * @param entity 所属实体
    */
-  constructor(entity: Entity) {
+  constructor (entity: Entity) {
     super(entity, LightType.Point);
   }
 
   /** 获取光照范围 */
-  get range(): number {
+  get range (): number {
     return this._range;
   }
 
   /** 设置光照范围 */
-  set range(value: number) {
+  set range (value: number) {
     this._range = Math.max(0, value);
   }
 
   /** 获取衰减系数 */
-  get attenuation(): number {
+  get attenuation (): number {
     return this._attenuation;
   }
 
   /** 设置衰减系数 */
-  set attenuation(value: number) {
+  set attenuation (value: number) {
     this._attenuation = Math.max(0, value);
   }
 
-  /** 
+  /**
    * 计算给定位置处的光照强度
    * @param position 世界空间中的位置
    * @returns 光照强度，范围0-1
    */
-  calculateIntensityAt(position: Vector3): number {
+  calculateIntensityAt (position: Vector3): number {
     const lightPos = this.entity.transform.worldPosition;
     const distance = position.distanceTo(lightPos);
-    
-    if (distance >= this._range) return 0;
-    
+
+    if (distance >= this._range) {return 0;}
+
     // 计算基于距离的衰减
     const falloff = 1.0 - Math.pow(distance / this._range, this._attenuation);
+
     return Math.max(0, falloff) * this._intensity;
   }
 }
@@ -245,90 +247,92 @@ export class SpotLight extends Light {
    * 创建一个新的聚光灯组件
    * @param entity 所属实体
    */
-  constructor(entity: Entity) {
+  constructor (entity: Entity) {
     super(entity, LightType.Spot);
   }
 
   /** 获取光照方向 */
-  get direction(): Vector3 {
+  get direction (): Vector3 {
     // 使用实体的前方向作为光源方向
     return this.entity.transform.forward;
   }
 
   /** 获取光照范围 */
-  get range(): number {
+  get range (): number {
     return this._range;
   }
 
   /** 设置光照范围 */
-  set range(value: number) {
+  set range (value: number) {
     this._range = Math.max(0, value);
   }
 
   /** 获取衰减系数 */
-  get attenuation(): number {
+  get attenuation (): number {
     return this._attenuation;
   }
 
   /** 设置衰减系数 */
-  set attenuation(value: number) {
+  set attenuation (value: number) {
     this._attenuation = Math.max(0, value);
   }
 
   /** 获取内锥角度（度数） */
-  get innerConeAngle(): number {
+  get innerConeAngle (): number {
     return this._innerConeAngle;
   }
 
   /** 设置内锥角度（度数） */
-  set innerConeAngle(value: number) {
+  set innerConeAngle (value: number) {
     this._innerConeAngle = Math.max(0, Math.min(value, this._outerConeAngle));
   }
 
   /** 获取外锥角度（度数） */
-  get outerConeAngle(): number {
+  get outerConeAngle (): number {
     return this._outerConeAngle;
   }
 
   /** 设置外锥角度（度数） */
-  set outerConeAngle(value: number) {
+  set outerConeAngle (value: number) {
     this._outerConeAngle = Math.max(this._innerConeAngle, Math.min(value, 90));
   }
 
-  /** 
+  /**
    * 计算给定位置处的光照强度
    * @param position 世界空间中的位置
    * @returns 光照强度，范围0-1
    */
-  calculateIntensityAt(position: Vector3): number {
+  calculateIntensityAt (position: Vector3): number {
     const lightPos = this.entity.transform.worldPosition;
     const lightDir = this.direction;
-    
+
     // 计算到目标点的向量
     const toTarget = position.subtract(lightPos).normalize();
-    
+
     // 计算与光照方向的夹角余弦值
     const cosAngle = lightDir.dot(toTarget);
-    
+
     // 转换角度范围
     const innerCos = Math.cos(this._innerConeAngle * Math.PI / 180);
     const outerCos = Math.cos(this._outerConeAngle * Math.PI / 180);
-    
+
     // 如果在外锥角之外，则没有光照
-    if (cosAngle < outerCos) return 0;
-    
+    if (cosAngle < outerCos) {return 0;}
+
     // 计算距离衰减
     const distance = position.distanceTo(lightPos);
-    if (distance >= this._range) return 0;
+
+    if (distance >= this._range) {return 0;}
     const distanceFalloff = 1.0 - Math.pow(distance / this._range, this._attenuation);
-    
+
     // 计算角度衰减
     let angleFalloff = 1.0;
+
     if (cosAngle < innerCos) {
       // 在内锥角和外锥角之间，光照强度平滑过渡
       angleFalloff = (cosAngle - outerCos) / (innerCos - outerCos);
     }
-    
+
     return Math.max(0, distanceFalloff * angleFalloff) * this._intensity;
   }
 }
@@ -341,9 +345,9 @@ export class AmbientLight extends Light {
    * 创建一个新的环境光组件
    * @param entity 所属实体
    */
-  constructor(entity: Entity) {
+  constructor (entity: Entity) {
     super(entity, LightType.Ambient);
     // 环境光不投射阴影
     this._castShadow = false;
   }
-} 
+}
