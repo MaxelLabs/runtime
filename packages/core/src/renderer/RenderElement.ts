@@ -3,6 +3,7 @@ import { Mesh } from '../geometry/Mesh';
 import { Material } from '../material/Material';
 import { ShaderData } from '../shader/ShaderData';
 import { Entity } from '../base/Entity';
+import { SubRenderElement } from './SubRenderElement';
 
 /**
  * 渲染元素类型
@@ -62,6 +63,12 @@ export class RenderElement {
   instanceShaderData: ShaderData[] = [];
   /** 自定义渲染函数 */
   customRender: ((renderElement: RenderElement) => void) | null = null;
+  /** 子渲染元素列表 */
+  subRenderElements: SubRenderElement[] = [];
+  /** 渲染优先级 */
+  priority: number = 0;
+  /** 用于渲染排序的距离 */
+  distanceForSort: number = 0;
 
   /**
    * 创建渲染元素
@@ -73,6 +80,20 @@ export class RenderElement {
     this.entity = entity;
     this.mesh = mesh;
     this.material = material;
+    
+    // 创建一个默认的子渲染元素
+    this.createDefaultSubRenderElement();
+  }
+
+  /**
+   * 创建默认的子渲染元素
+   */
+  private createDefaultSubRenderElement(): void {
+    const component = this.entity.getComponent('MeshRenderer') || this.entity.getComponent('SkinnedMeshRenderer');
+    if (component && this.mesh && this.material) {
+      const subElement = new SubRenderElement(component, this.material, this.mesh);
+      this.subRenderElements.push(subElement);
+    }
   }
 
   /**
@@ -132,6 +153,36 @@ export class RenderElement {
    */
   setSortingValue(value: number): RenderElement {
     this.sortingValue = value;
+    return this;
+  }
+
+  /**
+   * 设置渲染优先级
+   * @param priority 优先级
+   * @returns 当前渲染元素实例
+   */
+  setPriority(priority: number): RenderElement {
+    this.priority = priority;
+    if (this.subRenderElements.length > 0) {
+      for (const subElement of this.subRenderElements) {
+        subElement.setPriority(priority);
+      }
+    }
+    return this;
+  }
+
+  /**
+   * 设置排序距离
+   * @param distance 距离
+   * @returns 当前渲染元素实例
+   */
+  setDistanceForSort(distance: number): RenderElement {
+    this.distanceForSort = distance;
+    if (this.subRenderElements.length > 0) {
+      for (const subElement of this.subRenderElements) {
+        subElement.setDistanceForSort(distance);
+      }
+    }
     return this;
   }
 
@@ -198,30 +249,45 @@ export class RenderElement {
 
   /**
    * 克隆渲染元素
-   * @returns 克隆的渲染元素
+   * @returns 新的渲染元素
    */
   clone(): RenderElement {
-    const clone = new RenderElement(this.entity, this.mesh, this.material);
+    const result = new RenderElement(this.entity, this.mesh, this.material);
     
-    clone.subMaterialIndex = this.subMaterialIndex;
-    clone.visible = this.visible;
-    clone.receiveShadow = this.receiveShadow;
-    clone.castShadow = this.castShadow;
-    clone.renderLayer = this.renderLayer;
-    clone.sortingValue = this.sortingValue;
-    clone.worldMatrix.copyFrom(this.worldMatrix);
-    clone.elementType = this.elementType;
-    clone.useInstancing = this.useInstancing;
-    clone.instanceCount = this.instanceCount;
-    clone.instanceBuffer = this.instanceBuffer;
-    clone.customRender = this.customRender;
-    clone.shaderData = this.shaderData.clone();
+    result.subMaterialIndex = this.subMaterialIndex;
+    result.visible = this.visible;
+    result.receiveShadow = this.receiveShadow;
+    result.castShadow = this.castShadow;
+    result.renderLayer = this.renderLayer;
+    result.sortingValue = this.sortingValue;
+    result.worldMatrix.copyFrom(this.worldMatrix);
+    result.elementType = this.elementType;
+    result.useInstancing = this.useInstancing;
+    result.instanceCount = this.instanceCount;
+    result.customRender = this.customRender;
+    result.priority = this.priority;
+    result.distanceForSort = this.distanceForSort;
     
-    // 克隆实例化着色器数据
-    for (const data of this.instanceShaderData) {
-      clone.instanceShaderData.push(data.clone());
+    // 复制着色器数据
+    for (const key of this.shaderData.getData()) {
+      result.shaderData.setData(key, this.shaderData.getData()[key]);
     }
     
-    return clone;
+    // 复制实例化着色器数据
+    for (let i = 0; i < this.instanceShaderData.length; i++) {
+      const data = this.instanceShaderData[i];
+      if (data) {
+        const newData = new ShaderData();
+        for (const key of data.getData()) {
+          newData.setData(key, data.getData()[key]);
+        }
+        result.instanceShaderData[i] = newData;
+      }
+    }
+    
+    // 复制子渲染元素
+    result.subRenderElements = this.subRenderElements.map(subElement => subElement.clone());
+    
+    return result;
   }
 } 

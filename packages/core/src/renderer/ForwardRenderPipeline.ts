@@ -7,6 +7,8 @@ import { RenderPassType } from './RenderPass';
 import type { Engine } from '../Engine';
 import type { Scene } from '../scene/Scene';
 import type { Camera } from '../camera/Camera';
+import { CullingResults } from './CullingResults';
+import { BatcherManager } from './BatcherManager';
 
 /**
  * 前向渲染管线配置
@@ -34,6 +36,10 @@ export class ForwardRenderPipeline extends RenderPipeline {
   private _uiPass: UIRenderPass;
   /** 是否启用阴影 */
   private _enableShadow: boolean;
+  /** 视锥体剔除结果 */
+  private _cullingResults: CullingResults;
+  /** 批处理管理器 */
+  private _batcherManager: BatcherManager;
 
   /**
    * 创建前向渲染管线
@@ -44,6 +50,12 @@ export class ForwardRenderPipeline extends RenderPipeline {
     super(engine);
     
     this._enableShadow = options.enableShadow ?? false;
+    
+    // 创建剔除结果
+    this._cullingResults = new CullingResults();
+    
+    // 创建批处理管理器
+    this._batcherManager = new BatcherManager(engine);
     
     // 创建各种渲染通道
     this._createRenderPasses();
@@ -90,6 +102,25 @@ export class ForwardRenderPipeline extends RenderPipeline {
     if (this._shadowPass) {
       this._shadowPass.enabled = this.renderContext.enableShadow;
     }
+    
+    // 执行场景剔除
+    this._cullingResults.cull(scene, camera);
+    
+    // 执行批处理
+    this._cullingResults.sortBatch(this._batcherManager);
+    
+    // 将剔除结果设置到渲染上下文中
+    this.renderContext.cullingResults = this._cullingResults;
+  }
+
+  /**
+   * 渲染后操作
+   * @param scene 场景
+   * @param camera 摄像机
+   */
+  protected override postRender(scene: Scene, camera: Camera): void {
+    // 清理剔除结果
+    this._cullingResults.reset();
   }
 
   /**
@@ -125,6 +156,10 @@ export class ForwardRenderPipeline extends RenderPipeline {
    */
   override destroy(): void {
     super.destroy();
+    
+    this._cullingResults.destroy();
+    this._batcherManager.destroy();
+    
     this._opaquePass = null;
     this._transparentPass = null;
     this._shadowPass = null;
