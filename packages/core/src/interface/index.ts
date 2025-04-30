@@ -7,3 +7,6 @@ export * from './IRenderTarget';
 export * from './IShader';
 export * from './ITexture';
 export * from './IUniformBuffer';
+export * from './IRenderState';
+export * from './IRenderStats';
+export * from './IResourceFactory';
