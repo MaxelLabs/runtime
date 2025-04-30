@@ -433,10 +433,10 @@ export class Color {
   }
 
   /**
-   * 颜色转数组
-   * @returns 数组
+   * 转换为数组
+   * @returns [r, g, b, a]数组
    */
-  toArray (): [r: number, g: number, b: number, b: number] {
+  toArray (): [r: number, g: number, b: number, a: number] {
     return [this.r, this.g, this.b, this.a];
   }
 
@@ -573,4 +573,113 @@ export class Color {
 
     return str.toUpperCase();
   }
+
+  /**
+   * 将颜色设置为HSL格式
+   * @param h - 色相 (0-360)
+   * @param s - 饱和度 (0-1)
+   * @param l - 亮度 (0-1)
+   * @param a - 透明度 (0-1)
+   * @returns 修改后的颜色对象
+   */
+  setFromHSL(h: number, s: number, l: number, a = 1): this {
+    const [r, g, b, alpha] = hslToRgb(h, s, l, a);
+    return this.set(r, g, b, alpha);
+  }
+
+  /**
+   * 转换为HSL颜色对象
+   * @returns HSL颜色对象
+   */
+  toHSL(): HSLColor {
+    return rgbToHsl(this.r, this.g, this.b, this.a);
+  }
+
+  /**
+   * 创建从HSL格式的颜色
+   * @param h - 色相 (0-360)
+   * @param s - 饱和度 (0-1)
+   * @param l - 亮度 (0-1)
+   * @param a - 透明度 (0-1)
+   * @returns 新的颜色对象
+   */
+  static fromHSL(h: number, s: number, l: number, a = 1): Color {
+    return new Color().setFromHSL(h, s, l, a);
+  }
+}
+
+/**
+ * 增加HSL颜色空间支持
+ */
+export interface HSLColor {
+  h: number; // 色相 (0-360)
+  s: number; // 饱和度 (0-1)
+  l: number; // 亮度 (0-1)
+  a: number; // 透明度 (0-1)
+}
+
+/**
+ * 从HSL转换为RGB
+ * @param h - 色相 (0-360)
+ * @param s - 饱和度 (0-1)
+ * @param l - 亮度 (0-1)
+ * @param a - 透明度 (0-1)
+ * @returns RGB颜色数组 [r, g, b, a]
+ */
+export function hslToRgb(h: number, s: number, l: number, a = 1): [number, number, number, number] {
+  h = ((h % 360) + 360) % 360 / 360;
+
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+  const m = l - c / 2;
+
+  let r = 0, g = 0, b = 0;
+
+  if (h < 1/6) {
+    r = c; g = x; b = 0;
+  } else if (h < 2/6) {
+    r = x; g = c; b = 0;
+  } else if (h < 3/6) {
+    r = 0; g = c; b = x;
+  } else if (h < 4/6) {
+    r = 0; g = x; b = c;
+  } else if (h < 5/6) {
+    r = x; g = 0; b = c;
+  } else {
+    r = c; g = 0; b = x;
+  }
+
+  return [r + m, g + m, b + m, a];
+}
+
+/**
+ * 从RGB转换为HSL
+ * @param r - 红色 (0-1)
+ * @param g - 绿色 (0-1)
+ * @param b - 蓝色 (0-1)
+ * @param a - 透明度 (0-1)
+ * @returns HSL颜色对象
+ */
+export function rgbToHsl(r: number, g: number, b: number, a = 1): HSLColor {
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+    if (max === r) {
+      h = (g - b) / d + (g < b ? 6 : 0);
+    } else if (max === g) {
+      h = (b - r) / d + 2;
+    } else if (max === b) {
+      h = (r - g) / d + 4;
+    }
+    
+    h *= 60;
+  }
+
+  return { h, s, l, a };
 }

@@ -1,4 +1,4 @@
-import { BlendFactor, BlendEquation, CullMode, CompareFunc, DepthMask, ShadingModel } from './constants';
+import type { BlendFactor, BlendEquation, CullMode, CompareFunc, DepthMask, ShadingModel } from './constants';
 
 /**
  * 渲染状态描述符
@@ -146,17 +146,34 @@ export interface IRenderStateDescriptor {
 }
 
 /**
+ * 渲染状态栈项
+ */
+export interface IRenderStateStackItem {
+  /**
+   * 状态ID
+   */
+  id: number;
+  
+  /**
+   * 状态数据
+   */
+  state: IRenderStateDescriptor;
+}
+
+/**
  * 渲染状态管理接口 - 控制渲染管线状态
  */
 export interface IRenderState {
   /**
    * 获取当前渲染状态描述符
+   * @returns 当前状态描述符的副本
    */
   getState(): IRenderStateDescriptor;
   
   /**
    * 设置完整的渲染状态
    * @param state - 渲染状态描述符
+   * @throws 当传入无效状态描述符时抛出错误
    */
   setState(state: IRenderStateDescriptor): void;
   
@@ -169,12 +186,14 @@ export interface IRenderState {
   /**
    * 设置深度写入状态
    * @param enabled - 是否启用
+   * @throws 当传入无效的深度掩码值时抛出错误
    */
   setDepthWrite(enabled: DepthMask): void;
   
   /**
    * 设置深度比较函数
    * @param func - 比较函数
+   * @throws 当传入无效的比较函数时抛出错误
    */
   setDepthFunc(func: CompareFunc): void;
   
@@ -183,6 +202,7 @@ export interface IRenderState {
    * @param enabled - 是否启用
    * @param srcFactor - 源因子
    * @param dstFactor - 目标因子
+   * @throws 当启用混合但未提供有效的混合因子时抛出错误
    */
   setBlending(enabled: boolean, srcFactor?: BlendFactor, dstFactor?: BlendFactor): void;
   
@@ -195,6 +215,7 @@ export interface IRenderState {
    * @param dstAlpha - Alpha目标因子
    * @param equationRGB - RGB混合方程
    * @param equationAlpha - Alpha混合方程
+   * @throws 当提供了无效的混合参数时抛出错误
    */
   setBlendingAdvanced(
     enabled: boolean,
@@ -208,28 +229,32 @@ export interface IRenderState {
   
   /**
    * 设置混合颜色
-   * @param r - 红色分量
-   * @param g - 绿色分量
-   * @param b - 蓝色分量
-   * @param a - 透明度分量
+   * @param r - 红色分量 [0,1]
+   * @param g - 绿色分量 [0,1]
+   * @param b - 蓝色分量 [0,1]
+   * @param a - 透明度分量 [0,1]
+   * @throws 当颜色分量超出有效范围时抛出警告
    */
   setBlendColor(r: number, g: number, b: number, a: number): void;
   
   /**
    * 设置剔除模式
    * @param mode - 剔除模式
+   * @throws 当提供无效的剔除模式时抛出错误
    */
   setCullMode(mode: CullMode): void;
   
   /**
    * 设置剔除面方向
    * @param frontFace - 前面方向('cw'顺时针，'ccw'逆时针)
+   * @throws 当提供无效的面方向时抛出错误
    */
   setFrontFace(frontFace: 'cw' | 'ccw'): void;
   
   /**
    * 设置线宽
    * @param width - 线宽
+   * @throws 当线宽为负值时抛出错误
    */
   setLineWidth(width: number): void;
   
@@ -246,6 +271,7 @@ export interface IRenderState {
    * @param y - 剪裁区域y坐标
    * @param width - 剪裁区域宽度
    * @param height - 剪裁区域高度
+   * @throws 当启用剪裁测试但提供了无效的剪裁区域时抛出错误
    */
   setScissorTest(enabled: boolean, x?: number, y?: number, width?: number, height?: number): void;
   
@@ -255,6 +281,7 @@ export interface IRenderState {
    * @param func - 比较函数
    * @param ref - 参考值
    * @param mask - 掩码
+   * @throws 当启用模板测试但提供了无效的参数时抛出错误
    */
   setStencilTest(enabled: boolean, func?: CompareFunc, ref?: number, mask?: number): void;
   
@@ -263,18 +290,21 @@ export interface IRenderState {
    * @param fail - 失败时操作
    * @param zfail - 深度测试失败时操作
    * @param zpass - 深度测试通过时操作
+   * @throws 当提供无效的模板操作时抛出错误
    */
   setStencilOp(fail: number, zfail: number, zpass: number): void;
   
   /**
    * 设置模板写入掩码
    * @param mask - 掩码
+   * @throws 当掩码是无效值时抛出错误
    */
   setStencilWriteMask(mask: number): void;
   
   /**
    * 设置着色模型
    * @param mode - 着色模型
+   * @throws 当提供无效的着色模型时抛出错误
    */
   setShadingModel(mode: ShadingModel): void;
   
@@ -283,6 +313,7 @@ export interface IRenderState {
    * @param enabled - 是否启用
    * @param factor - 偏移因子
    * @param units - 偏移单位
+   * @throws 当启用多边形偏移但提供了无效的参数时抛出警告
    */
   setPolygonOffset(enabled: boolean, factor?: number, units?: number): void;
   
@@ -304,6 +335,7 @@ export interface IRenderState {
   /**
    * 恢复之前保存的渲染状态
    * @param stateId - 状态ID，不提供则恢复最近保存的状态
+   * @throws 当指定的状态ID不存在时抛出错误
    */
   popState(stateId?: number): void;
   
@@ -311,4 +343,24 @@ export interface IRenderState {
    * 重置所有渲染状态到默认值
    */
   resetState(): void;
+  
+  /**
+   * 获取状态栈深度
+   * @returns 当前状态栈的深度
+   */
+  getStateStackDepth(): number;
+  
+  /**
+   * 检查渲染状态是否一致
+   * @param otherState - 要比较的另一个渲染状态
+   * @returns 如果状态一致返回true，否则返回false
+   */
+  isEqual(otherState: IRenderStateDescriptor): boolean;
+  
+  /**
+   * 验证状态描述符是否有效
+   * @param state - 要验证的状态描述符
+   * @returns 如果状态描述符有效返回true，否则返回false
+   */
+  validateState(state: IRenderStateDescriptor): boolean;
 } 
