@@ -1,5 +1,5 @@
-import { Component } from '../base/component';
-import { Scene } from '../scene/scene';
+import type { Component } from '../base/component';
+import type { Scene } from '../scene/scene';
 import { Transform } from '../base/transform';
 import { Vector3 } from '@maxellabs/math';
 
@@ -31,7 +31,7 @@ export class Entity {
    * @param name 实体的名称
    * @param scene 实体所属的场景
    */
-  constructor(name: string = 'Entity', scene: Scene | null = null) {
+  constructor (name: string = 'Entity', scene: Scene | null = null) {
     this._id = Entity._generateId();
     this._name = name;
     this._scene = scene;
@@ -41,42 +41,42 @@ export class Entity {
 
   /** 生成唯一ID */
   private static _idCounter: number = 0;
-  private static _generateId(): number {
+  private static _generateId (): number {
     return Entity._idCounter++;
   }
 
   /** 获取实体ID */
-  get id(): number {
+  get id (): number {
     return this._id;
   }
 
   /** 获取实体名称 */
-  get name(): string {
+  get name (): string {
     return this._name;
   }
 
   /** 设置实体名称 */
-  set name(value: string) {
+  set name (value: string) {
     this._name = value;
   }
 
   /** 获取实体标签 */
-  get tag(): string {
+  get tag (): string {
     return this._tag;
   }
 
   /** 设置实体标签 */
-  set tag(value: string) {
+  set tag (value: string) {
     this._tag = value;
   }
 
   /** 获取实体是否激活 */
-  get active(): boolean {
+  get active (): boolean {
     return this._active;
   }
 
   /** 设置实体是否激活 */
-  set active(value: boolean) {
+  set active (value: boolean) {
     if (this._active !== value) {
       this._active = value;
       // 通知组件实体激活状态改变
@@ -89,32 +89,33 @@ export class Entity {
   }
 
   /** 获取实体的变换组件 */
-  get transform(): Transform {
+  get transform (): Transform {
     return this._transform;
   }
 
   /** 获取实体所属的场景 */
-  get scene(): Scene | null {
+  get scene (): Scene | null {
     return this._scene;
   }
 
   /** 设置实体所属的场景 */
-  set scene(value: Scene | null) {
+  set scene (value: Scene | null) {
     this._scene = value;
   }
 
   /** 获取实体的父级 */
-  get parent(): Entity | null {
+  get parent (): Entity | null {
     return this._parent;
   }
 
   /** 设置实体的父级 */
-  set parent(value: Entity | null) {
-    if (this._parent === value) return;
+  set parent (value: Entity | null) {
+    if (this._parent === value) {return;}
 
     // 从原父级中移除
     if (this._parent) {
       const index = this._parent._children.indexOf(this);
+
       if (index !== -1) {
         this._parent._children.splice(index, 1);
       }
@@ -133,20 +134,21 @@ export class Entity {
   }
 
   /** 获取实体的子级列表 */
-  get children(): Entity[] {
+  get children (): Entity[] {
     return this._children.slice();
   }
 
   /** 添加子实体 */
-  addChild(entity: Entity): void {
+  addChild (entity: Entity): void {
     if (entity._parent !== this) {
       entity.parent = this;
     }
   }
 
   /** 移除子实体 */
-  removeChild(entity: Entity): void {
+  removeChild (entity: Entity): void {
     const index = this._children.indexOf(entity);
+
     if (index !== -1) {
       this._children.splice(index, 1);
       entity._parent = null;
@@ -162,27 +164,30 @@ export class Entity {
   addComponent<T extends Component>(componentType: { new(entity: Entity, ...args: any[]): T }, ...args: any[]): T {
     if (this.hasComponent(componentType)) {
       console.warn(`Entity already has component: ${componentType.name}`);
+
       return this.getComponent(componentType) as T;
     }
 
     const component = new componentType(this, ...args);
+
     this._components.set(componentType.name, component);
-    
+
     if (this._active && component.enabled) {
       component.onEnable();
     }
-    
+
     return component;
   }
 
   /** 获取组件 */
   getComponent<T extends Component>(componentType: { new(...args: any[]): T }): T | null {
     const component = this._components.get(componentType.name) as T;
+
     return component || null;
   }
 
   /** 获取所有组件 */
-  getComponents(): Component[] {
+  getComponents (): Component[] {
     return Array.from(this._components.values());
   }
 
@@ -190,23 +195,27 @@ export class Entity {
   removeComponent<T extends Component>(componentType: { new(...args: any[]): T }): boolean {
     if (componentType.name === 'Transform') {
       console.warn('Cannot remove Transform component');
+
       return false;
     }
 
     const component = this._components.get(componentType.name);
+
     if (component) {
       if (component.enabled && this._active) {
         component.onDisable();
       }
       component.onDestroy();
       this._components.delete(componentType.name);
+
       return true;
     }
+
     return false;
   }
 
   /** 销毁实体 */
-  destroy(): void {
+  destroy (): void {
     // 销毁子实体
     [...this._children].forEach(child => child.destroy());
 
@@ -230,4 +239,4 @@ export class Entity {
       this._scene = null;
     }
   }
-} 
+}

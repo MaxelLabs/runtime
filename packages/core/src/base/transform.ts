@@ -210,10 +210,10 @@ export class Transform extends Component {
     if (this.entity.parent) {
       // 如果有父级，需要将世界旋转转换为本地旋转
       const parentTransform = this.entity.parent.transform;
-      const parentWorldRotationInverse = Quaternion.invert(parentTransform.worldRotation);
+      const parentWorldRotationInverse = parentTransform.worldRotation.clone().invert();
 
       // 计算新的本地旋转
-      const newLocalRot = Quaternion.multiply(parentWorldRotationInverse, value);
+      const newLocalRot = parentWorldRotationInverse.multiply(value).clone();
 
       this.localRotation = newLocalRot;
     } else {

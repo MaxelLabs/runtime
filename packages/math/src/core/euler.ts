@@ -20,7 +20,7 @@ export enum EulerOrder {
  * 欧拉角
  */
 export class Euler {
-  static readonly DEFAULT_ORDER = EulerOrder.ZYX;
+  static readonly DEFAULT_ORDER = EulerOrder.XYZ;
 
   private static readonly tempQuat0 = new Quaternion();
   private static readonly tempMat0 = new Matrix4();

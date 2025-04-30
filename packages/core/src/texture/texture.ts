@@ -110,7 +110,7 @@ export abstract class Texture extends ReferResource {
    * @param format 纹理格式
    * @param type 纹理类型
    */
-  constructor(width: number, height: number, format: TextureFormat = TextureFormat.RGBA, type: TextureType = TextureType.Texture2D) {
+  constructor (width: number, height: number, format: TextureFormat = TextureFormat.RGBA, type: TextureType = TextureType.Texture2D) {
     super();
     this._width = width;
     this._height = height;
@@ -127,32 +127,32 @@ export abstract class Texture extends ReferResource {
   }
 
   /** 获取纹理宽度 */
-  get width(): number {
+  get width (): number {
     return this._width;
   }
 
   /** 获取纹理高度 */
-  get height(): number {
+  get height (): number {
     return this._height;
   }
 
   /** 获取纹理格式 */
-  get format(): TextureFormat {
+  get format (): TextureFormat {
     return this._format;
   }
 
   /** 获取纹理类型 */
-  get type(): TextureType {
+  get type (): TextureType {
     return this._type;
   }
 
   /** 获取是否生成mipmap */
-  get generateMipmap(): boolean {
+  get generateMipmap (): boolean {
     return this._generateMipmap;
   }
 
   /** 设置是否生成mipmap */
-  set generateMipmap(value: boolean) {
+  set generateMipmap (value: boolean) {
     if (this._generateMipmap !== value) {
       this._generateMipmap = value;
       this._isDirty = true;
@@ -160,12 +160,12 @@ export abstract class Texture extends ReferResource {
   }
 
   /** 获取最小过滤模式 */
-  get minFilter(): TextureFilter {
+  get minFilter (): TextureFilter {
     return this._minFilter;
   }
 
   /** 设置最小过滤模式 */
-  set minFilter(value: TextureFilter) {
+  set minFilter (value: TextureFilter) {
     if (this._minFilter !== value) {
       this._minFilter = value;
       this._isDirty = true;
@@ -173,12 +173,12 @@ export abstract class Texture extends ReferResource {
   }
 
   /** 获取最大过滤模式 */
-  get magFilter(): TextureFilter {
+  get magFilter (): TextureFilter {
     return this._magFilter;
   }
 
   /** 设置最大过滤模式 */
-  set magFilter(value: TextureFilter) {
+  set magFilter (value: TextureFilter) {
     if (this._magFilter !== value) {
       this._magFilter = value;
       this._isDirty = true;
@@ -186,12 +186,12 @@ export abstract class Texture extends ReferResource {
   }
 
   /** 获取水平寻址模式 */
-  get wrapS(): TextureWrapMode {
+  get wrapS (): TextureWrapMode {
     return this._wrapS;
   }
 
   /** 设置水平寻址模式 */
-  set wrapS(value: TextureWrapMode) {
+  set wrapS (value: TextureWrapMode) {
     if (this._wrapS !== value) {
       this._wrapS = value;
       this._isDirty = true;
@@ -199,12 +199,12 @@ export abstract class Texture extends ReferResource {
   }
 
   /** 获取垂直寻址模式 */
-  get wrapT(): TextureWrapMode {
+  get wrapT (): TextureWrapMode {
     return this._wrapT;
   }
 
   /** 设置垂直寻址模式 */
-  set wrapT(value: TextureWrapMode) {
+  set wrapT (value: TextureWrapMode) {
     if (this._wrapT !== value) {
       this._wrapT = value;
       this._isDirty = true;
@@ -212,12 +212,12 @@ export abstract class Texture extends ReferResource {
   }
 
   /** 获取是否为预乘alpha */
-  get premultiplyAlpha(): boolean {
+  get premultiplyAlpha (): boolean {
     return this._premultiplyAlpha;
   }
 
   /** 设置是否为预乘alpha */
-  set premultiplyAlpha(value: boolean) {
+  set premultiplyAlpha (value: boolean) {
     if (this._premultiplyAlpha !== value) {
       this._premultiplyAlpha = value;
       this._isDirty = true;
@@ -225,12 +225,12 @@ export abstract class Texture extends ReferResource {
   }
 
   /** 获取是否翻转Y轴 */
-  get flipY(): boolean {
+  get flipY (): boolean {
     return this._flipY;
   }
 
   /** 设置是否翻转Y轴 */
-  set flipY(value: boolean) {
+  set flipY (value: boolean) {
     if (this._flipY !== value) {
       this._flipY = value;
       this._isDirty = true;
@@ -238,12 +238,12 @@ export abstract class Texture extends ReferResource {
   }
 
   /** 获取各向异性过滤级别 */
-  get anisotropy(): number {
+  get anisotropy (): number {
     return this._anisotropy;
   }
 
   /** 设置各向异性过滤级别 */
-  set anisotropy(value: number) {
+  set anisotropy (value: number) {
     value = Math.max(1, Math.min(16, value));
     if (this._anisotropy !== value) {
       this._anisotropy = value;
@@ -252,17 +252,17 @@ export abstract class Texture extends ReferResource {
   }
 
   /** 获取原生纹理对象 */
-  get nativeTexture(): any {
+  get nativeTexture (): any {
     return this._nativeTexture;
   }
 
   /** 获取是否需要更新 */
-  get isDirty(): boolean {
+  get isDirty (): boolean {
     return this._isDirty;
   }
 
   /** 设置是否需要更新 */
-  set isDirty(value: boolean) {
+  set isDirty (value: boolean) {
     this._isDirty = value;
   }
 
@@ -271,7 +271,7 @@ export abstract class Texture extends ReferResource {
    * @param width 新宽度
    * @param height 新高度
    */
-  resize(width: number, height: number): void {
+  resize (width: number, height: number): void {
     if (this._width !== width || this._height !== height) {
       this._width = width;
       this._height = height;
@@ -283,7 +283,7 @@ export abstract class Texture extends ReferResource {
    * 释放纹理资源
    * 子类需要重写此方法以实现特定纹理类型的资源释放
    */
-  protected override onDispose(): void {
+  protected override onDispose (): void {
     this._nativeTexture = null;
   }
 }
@@ -301,7 +301,7 @@ export class Texture2D extends Texture {
    * @param height 纹理高度
    * @param format 纹理格式
    */
-  constructor(width: number, height: number, format: TextureFormat = TextureFormat.RGBA) {
+  constructor (width: number, height: number, format: TextureFormat = TextureFormat.RGBA) {
     super(width, height, format, TextureType.Texture2D);
   }
 
@@ -310,7 +310,7 @@ export class Texture2D extends Texture {
    * @param data 纹理数据
    * @param generateMipmap 是否生成mipmap
    */
-  setData(data: Uint8Array | Uint16Array | Float32Array | HTMLImageElement | HTMLCanvasElement, generateMipmap: boolean = true): void {
+  setData (data: Uint8Array | Uint16Array | Float32Array | HTMLImageElement | HTMLCanvasElement, generateMipmap: boolean = true): void {
     this._data = data;
     this._generateMipmap = generateMipmap;
     this._isDirty = true;
@@ -321,7 +321,7 @@ export class Texture2D extends Texture {
    * @param source HTML元素
    * @param generateMipmap 是否生成mipmap
    */
-  loadFromHTML(source: HTMLImageElement | HTMLCanvasElement, generateMipmap: boolean = true): void {
+  loadFromHTML (source: HTMLImageElement | HTMLCanvasElement, generateMipmap: boolean = true): void {
     this._width = source.width;
     this._height = source.height;
     this._data = source;
@@ -335,10 +335,10 @@ export class Texture2D extends Texture {
    * @param generateMipmap 是否生成mipmap
    * @returns Promise
    */
-  loadFromURL(url: string, generateMipmap: boolean = true): Promise<void> {
+  loadFromURL (url: string, generateMipmap: boolean = true): Promise<void> {
     return new Promise((resolve, reject) => {
       const image = new Image();
-      
+
       image.onload = () => {
         this._width = image.width;
         this._height = image.height;
@@ -347,11 +347,11 @@ export class Texture2D extends Texture {
         this._isDirty = true;
         resolve();
       };
-      
+
       image.onerror = () => {
         reject(new Error(`Failed to load texture from URL: ${url}`));
       };
-      
+
       image.src = url;
     });
   }
@@ -359,7 +359,7 @@ export class Texture2D extends Texture {
   /**
    * 释放纹理资源
    */
-  protected override onDispose(): void {
+  protected override onDispose (): void {
     super.onDispose();
     this._data = null;
   }
@@ -377,7 +377,7 @@ export class TextureCube extends Texture {
    * @param size 纹理尺寸
    * @param format 纹理格式
    */
-  constructor(size: number, format: TextureFormat = TextureFormat.RGBA) {
+  constructor (size: number, format: TextureFormat = TextureFormat.RGBA) {
     super(size, size, format, TextureType.TextureCube);
   }
 
@@ -386,7 +386,7 @@ export class TextureCube extends Texture {
    * @param face 面索引 (0-5)
    * @param data 纹理数据
    */
-  setFaceData(face: number, data: Uint8Array | HTMLImageElement | HTMLCanvasElement): void {
+  setFaceData (face: number, data: Uint8Array | HTMLImageElement | HTMLCanvasElement): void {
     if (face >= 0 && face < 6) {
       this._faceData[face] = data;
       this._isDirty = true;
@@ -399,34 +399,35 @@ export class TextureCube extends Texture {
    * @param url 图像URL
    * @returns Promise
    */
-  loadFaceFromURL(face: number, url: string): Promise<void> {
+  loadFaceFromURL (face: number, url: string): Promise<void> {
     if (face < 0 || face >= 6) {
       return Promise.reject(new Error(`Invalid face index: ${face}`));
     }
-    
+
     return new Promise((resolve, reject) => {
       const image = new Image();
-      
+
       image.onload = () => {
         if (image.width !== image.height) {
           reject(new Error('Cubemap face must be square'));
+
           return;
         }
-        
+
         if (this._width !== image.width) {
           this._width = image.width;
           this._height = image.width;
         }
-        
+
         this._faceData[face] = image;
         this._isDirty = true;
         resolve();
       };
-      
+
       image.onerror = () => {
         reject(new Error(`Failed to load cubemap face from URL: ${url}`));
       };
-      
+
       image.src = url;
     });
   }
@@ -436,23 +437,24 @@ export class TextureCube extends Texture {
    * @param urls 包含六个面URL的数组
    * @returns Promise
    */
-  loadFromURLs(urls: string[]): Promise<void> {
+  loadFromURLs (urls: string[]): Promise<void> {
     if (urls.length !== 6) {
       return Promise.reject(new Error('Must provide exactly 6 URLs for cubemap'));
     }
-    
+
     const promises = [];
+
     for (let i = 0; i < 6; i++) {
       promises.push(this.loadFaceFromURL(i, urls[i]));
     }
-    
+
     return Promise.all(promises).then(() => {});
   }
 
   /**
    * 释放纹理资源
    */
-  protected override onDispose(): void {
+  protected override onDispose (): void {
     super.onDispose();
     this._faceData = [null, null, null, null, null, null];
   }
@@ -478,7 +480,7 @@ export class RenderTexture extends Texture {
    * @param hasStencil 是否包含模板缓冲
    * @param samples 多重采样数量
    */
-  constructor(width: number, height: number, format: TextureFormat = TextureFormat.RGBA, hasDepth: boolean = true, hasStencil: boolean = false, samples: number = 1) {
+  constructor (width: number, height: number, format: TextureFormat = TextureFormat.RGBA, hasDepth: boolean = true, hasStencil: boolean = false, samples: number = 1) {
     super(width, height, format, TextureType.RenderTarget);
     this._hasDepth = hasDepth;
     this._hasStencil = hasStencil;
@@ -487,22 +489,22 @@ export class RenderTexture extends Texture {
   }
 
   /** 获取是否包含深度缓冲 */
-  get hasDepth(): boolean {
+  get hasDepth (): boolean {
     return this._hasDepth;
   }
 
   /** 获取是否包含模板缓冲 */
-  get hasStencil(): boolean {
+  get hasStencil (): boolean {
     return this._hasStencil;
   }
 
   /** 获取多重采样数量 */
-  get samples(): number {
+  get samples (): number {
     return this._samples;
   }
 
   /** 设置多重采样数量 */
-  set samples(value: number) {
+  set samples (value: number) {
     value = Math.max(1, Math.min(8, value));
     if (this._samples !== value) {
       this._samples = value;
@@ -513,7 +515,7 @@ export class RenderTexture extends Texture {
   /**
    * 释放纹理资源
    */
-  protected override onDispose(): void {
+  protected override onDispose (): void {
     super.onDispose();
   }
-} 
+}

@@ -1,4 +1,4 @@
 export interface IUniformBuffer {
-    setData(data: Float32Array): void;
-    dispose(): void;
-} 
+  setData(data: Float32Array): void,
+  dispose(): void,
+}

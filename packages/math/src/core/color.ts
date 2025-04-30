@@ -582,8 +582,9 @@ export class Color {
    * @param a - 透明度 (0-1)
    * @returns 修改后的颜色对象
    */
-  setFromHSL(h: number, s: number, l: number, a = 1): this {
+  setFromHSL (h: number, s: number, l: number, a = 1): this {
     const [r, g, b, alpha] = hslToRgb(h, s, l, a);
+
     return this.set(r, g, b, alpha);
   }
 
@@ -591,7 +592,7 @@ export class Color {
    * 转换为HSL颜色对象
    * @returns HSL颜色对象
    */
-  toHSL(): HSLColor {
+  toHSL (): HSLColor {
     return rgbToHsl(this.r, this.g, this.b, this.a);
   }
 
@@ -603,7 +604,7 @@ export class Color {
    * @param a - 透明度 (0-1)
    * @returns 新的颜色对象
    */
-  static fromHSL(h: number, s: number, l: number, a = 1): Color {
+  static fromHSL (h: number, s: number, l: number, a = 1): Color {
     return new Color().setFromHSL(h, s, l, a);
   }
 }
@@ -612,10 +613,10 @@ export class Color {
  * 增加HSL颜色空间支持
  */
 export interface HSLColor {
-  h: number; // 色相 (0-360)
-  s: number; // 饱和度 (0-1)
-  l: number; // 亮度 (0-1)
-  a: number; // 透明度 (0-1)
+  h: number, // 色相 (0-360)
+  s: number, // 饱和度 (0-1)
+  l: number, // 亮度 (0-1)
+  a: number, // 透明度 (0-1)
 }
 
 /**
@@ -626,7 +627,7 @@ export interface HSLColor {
  * @param a - 透明度 (0-1)
  * @returns RGB颜色数组 [r, g, b, a]
  */
-export function hslToRgb(h: number, s: number, l: number, a = 1): [number, number, number, number] {
+export function hslToRgb (h: number, s: number, l: number, a = 1): [number, number, number, number] {
   h = ((h % 360) + 360) % 360 / 360;
 
   const c = (1 - Math.abs(2 * l - 1)) * s;
@@ -635,15 +636,15 @@ export function hslToRgb(h: number, s: number, l: number, a = 1): [number, numbe
 
   let r = 0, g = 0, b = 0;
 
-  if (h < 1/6) {
+  if (h < 1 / 6) {
     r = c; g = x; b = 0;
-  } else if (h < 2/6) {
+  } else if (h < 2 / 6) {
     r = x; g = c; b = 0;
-  } else if (h < 3/6) {
+  } else if (h < 3 / 6) {
     r = 0; g = c; b = x;
-  } else if (h < 4/6) {
+  } else if (h < 4 / 6) {
     r = 0; g = x; b = c;
-  } else if (h < 5/6) {
+  } else if (h < 5 / 6) {
     r = x; g = 0; b = c;
   } else {
     r = c; g = 0; b = x;
@@ -660,7 +661,7 @@ export function hslToRgb(h: number, s: number, l: number, a = 1): [number, numbe
  * @param a - 透明度 (0-1)
  * @returns HSL颜色对象
  */
-export function rgbToHsl(r: number, g: number, b: number, a = 1): HSLColor {
+export function rgbToHsl (r: number, g: number, b: number, a = 1): HSLColor {
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
   let h = 0, s = 0;
@@ -668,6 +669,7 @@ export function rgbToHsl(r: number, g: number, b: number, a = 1): HSLColor {
 
   if (max !== min) {
     const d = max - min;
+
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
 
     if (max === r) {
@@ -677,7 +679,7 @@ export function rgbToHsl(r: number, g: number, b: number, a = 1): HSLColor {
     } else if (max === b) {
       h = (r - g) / d + 4;
     }
-    
+
     h *= 60;
   }
 
