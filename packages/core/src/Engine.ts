@@ -16,6 +16,7 @@ import { RendererType } from './renderer/RendererType';
 import { IHardwareRenderer } from './interface/IHardwareRenderer';
 import { BatcherManager } from './renderer/BatcherManager';
 import { SceneManager } from './scene/SceneManager';
+import { ObjectPoolManager, ObjectPoolManagerEventType } from './base/ObjectPoolManager';
 
 /**
  * 引擎配置接口
@@ -37,6 +38,10 @@ export interface EngineOptions {
   autoStart?: boolean;
   /** 是否开启性能统计 */
   enableStats?: boolean;
+  /** 是否自动管理对象池 */
+  enableObjectPoolManager?: boolean;
+  /** 对象池性能分析间隔（毫秒） */
+  objectPoolAnalysisInterval?: number;
 }
 
 /**
@@ -58,7 +63,9 @@ export enum EngineEventType {
   /** 设备丢失 */
   DeviceLost = 'engine-device-lost',
   /** 设备恢复 */
-  DeviceRestored = 'engine-device-restored'
+  DeviceRestored = 'engine-device-restored',
+  /** 对象池性能分析 */
+  ObjectPoolAnalysis = 'engine-object-pool-analysis'
 }
 
 /**
@@ -127,6 +134,15 @@ export class Engine extends EventDispatcher {
   };
   /** 是否启用性能统计 */
   private _enableStats: boolean = false;
+
+  /** 对象池管理器 */
+  readonly objectPoolManager: ObjectPoolManager;
+  
+  /** 是否启用对象池管理 */
+  private _enableObjectPoolManager: boolean = false;
+  
+  /** 对象池分析间隔 */
+  private _objectPoolAnalysisInterval: number = 30000;
 
   /**
    * 动画循环函数
@@ -248,11 +264,8 @@ export class Engine extends EventDispatcher {
       this._onDeviceRestored.bind(this)
     );
 
-    // 初始化资源管理器
+    // 创建资源管理器
     this._resourceManager = new ResourceManager(this);
-
-    // 创建批处理管理器
-    this._batcherManager = new BatcherManager(this);
 
     // 创建场景管理器
     this._sceneManager = new SceneManager(this);
@@ -260,13 +273,37 @@ export class Engine extends EventDispatcher {
     // 创建输入管理器
     this.inputManager = new InputManager(this);
 
-    // 设置性能统计选项
-    this._enableStats = options.enableStats ?? false;
+    // 创建批处理管理器
+    this._batcherManager = new BatcherManager(this);
 
-    // 如果配置了自动启动，则启动引擎
-    if (options.autoStart ?? true) {
+    // 初始化对象池管理器
+    this.objectPoolManager = ObjectPoolManager.getInstance();
+    this._enableObjectPoolManager = options.enableObjectPoolManager !== false;
+    
+    if (options.objectPoolAnalysisInterval !== undefined) {
+      this._objectPoolAnalysisInterval = Math.max(1000, options.objectPoolAnalysisInterval);
+    }
+    
+    if (this._enableObjectPoolManager) {
+      this.objectPoolManager.enableAutoAnalysis(true, this._objectPoolAnalysisInterval);
+      
+      // 监听对象池性能分析事件
+      this.objectPoolManager.on(ObjectPoolManagerEventType.PERFORMANCE_ANALYSIS, (e) => {
+        // 转发到引擎事件
+        this.dispatchEvent(EngineEventType.ObjectPoolAnalysis, e);
+      });
+    }
+
+    // 设置统计信息启用状态
+    this._enableStats = options.enableStats || false;
+
+    // 自动启动
+    if (options.autoStart !== false) {
       this.run();
     }
+
+    // 派发就绪事件
+    this.dispatchEvent(EngineEventType.Ready);
   }
 
   /**
@@ -343,45 +380,55 @@ export class Engine extends EventDispatcher {
    * 更新一帧
    */
   update(): void {
-    // 避免嵌套调用
-    if (this._frameInProcess) {
+    // 如果帧正在处理中或已销毁，则跳过
+    if (this._frameInProcess || this._destroyed) {
       return;
     }
 
-    if (this._waitingDestroy) {
-      this._destroy();
-      return;
-    }
-
+    // 标记帧处理中
     this._frameInProcess = true;
 
-    // 更新时间
+    // 更新时间信息
     this._time.update();
+    const time = this._time.time;
     const deltaTime = this._time.deltaTime;
 
-    // 发送帧开始事件
-    this.dispatch(new Event(EngineEventType.BeforeUpdate));
+    // 派发帧开始事件
+    this.dispatchEvent(EngineEventType.BeforeUpdate);
 
-    // 更新场景
-    this._sceneManager.update(deltaTime);
+    // 更新输入
+    this.inputManager.update(time, deltaTime);
 
-    // 发送更新完成事件
-    this.dispatch(new Event(EngineEventType.AfterUpdate));
-
-    // 发送渲染开始事件
-    this.dispatch(new Event(EngineEventType.BeforeRender));
-
-    // 渲染场景
-    this._render();
-
-    // 发送渲染完成事件
-    this.dispatch(new Event(EngineEventType.AfterRender));
-
-    // 更新性能统计
-    if (this._enableStats) {
-      this._updateStats(performance.now(), deltaTime);
+    // 更新资源管理器
+    this._resourceManager.update(time);
+    
+    // 更新对象池管理器
+    if (this._enableObjectPoolManager) {
+      this.objectPoolManager.update();
     }
 
+    // 更新场景
+    if (this._sceneManager.activeScene) {
+      this._sceneManager.activeScene.update(deltaTime);
+    }
+
+    // 派发帧更新完成事件
+    this.dispatchEvent(EngineEventType.AfterUpdate);
+
+    // 执行渲染
+    this._render();
+
+    // 更新统计信息
+    if (this._enableStats) {
+      this._updateStats(time, deltaTime);
+    }
+
+    // 处理可能的销毁请求
+    if (this._waitingDestroy) {
+      this._destroy();
+    }
+
+    // 标记帧处理完成
     this._frameInProcess = false;
   }
 
@@ -391,7 +438,7 @@ export class Engine extends EventDispatcher {
   run(): void {
     this.resume();
     // 发送引擎准备就绪事件
-    this.dispatch(new Event(EngineEventType.Ready));
+    this.dispatchEvent(EngineEventType.Ready);
   }
 
   /**
@@ -435,7 +482,7 @@ export class Engine extends EventDispatcher {
    */
   resize(width: number, height: number): void {
     this._canvas.resizeByClientSize(width, height);
-    this.dispatch(new Event(EngineEventType.Resize));
+    this.dispatchEvent(EngineEventType.Resize);
   }
 
   /**
@@ -502,6 +549,12 @@ export class Engine extends EventDispatcher {
     // 销毁硬件渲染器
     this._hardwareRenderer.destroy();
 
+    // 停用对象池管理器
+    if (this._enableObjectPoolManager) {
+      this.objectPoolManager.enableAutoAnalysis(false);
+      this.objectPoolManager.clearAllPools();
+    }
+
     this._destroyed = true;
   }
   
@@ -511,7 +564,7 @@ export class Engine extends EventDispatcher {
   private _onDeviceLost(): void {
     this._isDeviceLost = true;
     // 发送设备丢失事件
-    this.dispatch(new Event(EngineEventType.DeviceLost));
+    this.dispatchEvent(EngineEventType.DeviceLost);
   }
 
   /**
@@ -520,6 +573,6 @@ export class Engine extends EventDispatcher {
   private _onDeviceRestored(): void {
     this._isDeviceLost = false;
     // 发送设备恢复事件
-    this.dispatch(new Event(EngineEventType.DeviceRestored));
+    this.dispatchEvent(EngineEventType.DeviceRestored);
   }
 }
