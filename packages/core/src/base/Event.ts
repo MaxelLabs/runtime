@@ -1,58 +1,77 @@
 /**
- * 基础事件类
+ * 基本事件对象
  */
 export class Event {
   /** 事件类型 */
-  readonly type: string;
+  type: string | null;
   /** 事件目标 */
-  target: any = null;
-  /** 事件当前目标（用于事件冒泡） */
-  currentTarget: any = null;
-  /** 是否已阻止传播 */
-  propagationStopped: boolean = false;
-  /** 是否已阻止默认行为 */
-  defaultPrevented: boolean = false;
-  /** 时间戳 */
-  readonly timeStamp: number;
-  /** 额外数据 */
-  readonly data: any;
+  target: any;
+  /** 事件当前目标 */
+  currentTarget: any;
+  /** 是否已停止传播 */
+  private propagationStopped: boolean = false;
+  /** 是否立即停止传播(包括当前监听器) */
+  private immediatelyStopped: boolean = false;
+  /** 是否允许事件冒泡 */
+  bubbles: boolean = false;
+  /** 自定义数据 */
+  data: any;
+  /** 事件时间戳 */
+  timestamp: number;
 
   /**
    * 创建事件
    * @param type 事件类型
-   * @param data 额外数据
+   * @param bubbles 是否冒泡
+   * @param data 自定义数据
    */
-  constructor(type: string, data: any = null) {
+  constructor(type: string, bubbles: boolean = false, data?: any) {
     this.type = type;
-    this.timeStamp = performance.now();
+    this.bubbles = bubbles;
     this.data = data;
+    this.timestamp = Date.now();
   }
 
   /**
-   * 阻止事件传播
+   * 停止事件传播
    */
   stopPropagation(): void {
     this.propagationStopped = true;
   }
 
   /**
-   * 阻止默认行为
+   * 立即停止事件传播(包括当前监听器)
    */
-  preventDefault(): void {
-    this.defaultPrevented = true;
+  stopImmediatePropagation(): void {
+    this.propagationStopped = true;
+    this.immediatelyStopped = true;
   }
 
   /**
-   * 获取事件是否可取消
+   * 检查事件是否已停止传播
    */
-  get cancelable(): boolean {
-    return true;
+  isPropagationStopped(): boolean {
+    return this.propagationStopped;
   }
 
   /**
-   * 获取事件是否会冒泡
+   * 检查事件是否立即停止传播
    */
-  get bubbles(): boolean {
-    return false;
+  isImmediatelyStopped(): boolean {
+    return this.immediatelyStopped;
   }
-} 
+
+  /**
+   * 重置事件状态，用于事件池回收再利用
+   */
+  reset(): void {
+    this.type = null;
+    this.target = null;
+    this.currentTarget = null;
+    this.propagationStopped = false;
+    this.immediatelyStopped = false;
+    this.bubbles = false;
+    this.data = null;
+    this.timestamp = 0;
+  }
+}

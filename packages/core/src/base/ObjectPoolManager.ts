@@ -1,6 +1,6 @@
 import { ObjectPool } from './ObjectPool';
 import { Time } from './Time';
-import { EventDispatcher } from './EventDispatcher';
+import { EventDispatcher } from './eventDispatcher';
 
 /**
  * 对象池管理器事件类型

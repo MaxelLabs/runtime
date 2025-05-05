@@ -1,4 +1,4 @@
-import { EventDispatcher } from '../base/EventDispatcher';
+import { EventDispatcher } from '../base/eventDispatcher';
 import { Texture2D } from '../texture/Texture2D';
 import { Mesh } from '../geometry/Mesh';
 import { Material } from '../material/Material';
