@@ -25,7 +25,7 @@ export class Event {
    * @param bubbles 是否冒泡
    * @param data 自定义数据
    */
-  constructor(type: string, bubbles: boolean = false, data?: any) {
+  constructor (type: string, bubbles: boolean = false, data?: any) {
     this.type = type;
     this.bubbles = bubbles;
     this.data = data;
@@ -35,14 +35,14 @@ export class Event {
   /**
    * 停止事件传播
    */
-  stopPropagation(): void {
+  stopPropagation (): void {
     this.propagationStopped = true;
   }
 
   /**
    * 立即停止事件传播(包括当前监听器)
    */
-  stopImmediatePropagation(): void {
+  stopImmediatePropagation (): void {
     this.propagationStopped = true;
     this.immediatelyStopped = true;
   }
@@ -50,21 +50,21 @@ export class Event {
   /**
    * 检查事件是否已停止传播
    */
-  isPropagationStopped(): boolean {
+  isPropagationStopped (): boolean {
     return this.propagationStopped;
   }
 
   /**
    * 检查事件是否立即停止传播
    */
-  isImmediatelyStopped(): boolean {
+  isImmediatelyStopped (): boolean {
     return this.immediatelyStopped;
   }
 
   /**
    * 重置事件状态，用于事件池回收再利用
    */
-  reset(): void {
+  reset (): void {
     this.type = null;
     this.target = null;
     this.currentTarget = null;

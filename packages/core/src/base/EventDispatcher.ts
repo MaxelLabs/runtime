@@ -1,16 +1,16 @@
-import { Event } from './Event';
+import { Event } from './event';
 /**
  * 事件监听器接口
  */
 export interface EventListener {
   /** 回调函数 */
-  callback: Function;
+  callback: Function,
   /** 上下文对象 */
-  target?: any;
+  target?: any,
   /** 优先级，数值越大越先执行 */
-  priority: number;
+  priority: number,
   /** 是否只执行一次 */
-  once: boolean;
+  once: boolean,
 }
 
 /**
@@ -42,7 +42,7 @@ export class EventDispatcher {
    * @param id 派发器ID
    * @param tag 派发器标签
    */
-  constructor(id?: string, tag?: string) {
+  constructor (id?: string, tag?: string) {
     this.id = id || `dispatcher-${Math.floor(Math.random() * 10000)}`;
     this.tag = tag || '';
   }
@@ -56,7 +56,7 @@ export class EventDispatcher {
    * @param once 是否只执行一次
    * @returns 当前实例，支持链式调用
    */
-  on(type: string, callback: Function, target?: any, priority: number = 0, once: boolean = false): this {
+  on (type: string, callback: Function, target?: any, priority: number = 0, once: boolean = false): this {
     if (!type || !callback) {
       return this;
     }
@@ -67,13 +67,14 @@ export class EventDispatcher {
     }
 
     const listeners = this.listeners.get(type) as EventListener[];
-  
+
     // 检查是否已存在相同的监听器
     for (const listener of listeners) {
       if (listener.callback === callback && listener.target === target) {
         // 更新现有监听器
         listener.priority = priority;
         listener.once = once;
+
         return this;
       }
     }
@@ -83,7 +84,7 @@ export class EventDispatcher {
       callback,
       target,
       priority,
-      once
+      once,
     });
 
     // 如果不在派发中，则立即排序
@@ -102,7 +103,7 @@ export class EventDispatcher {
    * @param priority 优先级
    * @returns 当前实例，支持链式调用
    */
-  once(type: string, callback: Function, target?: any, priority: number = 0): this {
+  once (type: string, callback: Function, target?: any, priority: number = 0): this {
     return this.on(type, callback, target, priority, true);
   }
 
@@ -113,10 +114,11 @@ export class EventDispatcher {
    * @param target 上下文对象
    * @returns 当前实例，支持链式调用
    */
-  off(type?: string, callback?: Function, target?: any): this {
+  off (type?: string, callback?: Function, target?: any): this {
     if (!type) {
       // 移除所有监听器
       this.listeners.clear();
+
       return this;
     }
 
@@ -137,6 +139,7 @@ export class EventDispatcher {
         // 否则直接移除所有监听器
         this.listeners.delete(type);
       }
+
       return this;
     }
 
@@ -149,7 +152,7 @@ export class EventDispatcher {
       }
     } else {
       // 过滤出不匹配的监听器
-      const filteredListeners = listeners.filter(listener => 
+      const filteredListeners = listeners.filter(listener =>
         listener.callback !== callback || (target && listener.target !== target)
       );
 
@@ -169,10 +172,11 @@ export class EventDispatcher {
    * 移除所有事件监听器
    * @returns 当前实例，支持链式调用
    */
-  removeAllEventListeners(): this {
+  removeAllEventListeners (): this {
     // 如果有正在派发的事件，将这些事件的所有监听器设为一次性
     for (const type of this.dispatchingEvents) {
       const listeners = this.listeners.get(type);
+
       if (listeners) {
         for (const listener of listeners) {
           listener.once = true;
@@ -181,7 +185,7 @@ export class EventDispatcher {
     }
 
     // 清空其他未派发的事件监听器
-    for (const [type, listeners] of this.listeners.entries()) {
+    for (const [type] of this.listeners.entries()) {
       if (!this.dispatchingEvents.has(type)) {
         this.listeners.delete(type);
       }
@@ -196,12 +200,13 @@ export class EventDispatcher {
    * @param data 事件数据
    * @returns 事件是否成功派发
    */
-  dispatchEvent(typeOrEvent: string | Event, data?: any): boolean {
+  dispatchEvent (typeOrEvent: string | Event, data?: any): boolean {
     if (this.paused) {
       return false;
     }
 
     let event: Event;
+
     if (typeof typeOrEvent === 'string') {
       event = new Event(typeOrEvent, false, data);
     } else {
@@ -214,8 +219,10 @@ export class EventDispatcher {
     }
 
     const type = event.type;
-    if(!type){
+
+    if (!type) {
       console.warn('Event type is required');
+
       return false;
     }
     this.dispatchingEvents.add(type);
@@ -238,8 +245,9 @@ export class EventDispatcher {
     // 如果有待清理的一次性监听器，执行清理
     if (this.listeners.has(type) && !this.dispatchingEvents.has(type)) {
       const listeners = this.listeners.get(type);
-      const remainingListeners = listeners.filter(listener => !listener.once);
-      
+
+      const remainingListeners = listeners?.filter(listener => !listener.once) || [];
+
       if (remainingListeners.length === 0) {
         this.listeners.delete(type);
       } else {
@@ -255,14 +263,20 @@ export class EventDispatcher {
    * @param event 事件对象
    * @returns 事件是否成功派发
    */
-  private dispatchToLocalListeners(event: Event): boolean {
+  private dispatchToLocalListeners (event: Event): boolean {
     const type = event.type;
-    
+
+    if (!type) {
+      console.warn('Event type is required');
+
+      return false;
+    }
+
     if (!this.listeners.has(type)) {
       return false;
     }
 
-    const listeners = this.listeners.get(type);
+    const listeners = this.listeners.get(type) || [];
     let processed = false;
 
     for (const listener of listeners) {
@@ -286,13 +300,14 @@ export class EventDispatcher {
    * @param event 事件对象
    * @returns 事件是否成功派发
    */
-  private dispatchCaptureEvent(event: Event): boolean {
+  private dispatchCaptureEvent (event: Event): boolean {
     if (this.paused || event.isPropagationStopped()) {
       return false;
     }
 
     // 先向上传递，实现捕获阶段的自顶向下
     let success = false;
+
     if (this.parent) {
       success = this.parent.dispatchCaptureEvent(event) || success;
     }
@@ -300,10 +315,11 @@ export class EventDispatcher {
     // 如果事件未被停止，则处理当前级别的捕获监听器
     if (!event.isPropagationStopped()) {
       const captureType = `${event.type}_capture`;
+
       if (this.listeners.has(captureType)) {
         event.currentTarget = this;
-        const listeners = this.listeners.get(captureType);
-        
+        const listeners = this.listeners.get(captureType) || [];
+
         for (const listener of listeners) {
           if (event.isImmediatelyStopped()) {
             break;
@@ -327,13 +343,13 @@ export class EventDispatcher {
    * @param event 事件对象
    * @returns 事件是否成功派发
    */
-  private dispatchBubbleEvent(event: Event): boolean {
+  private dispatchBubbleEvent (event: Event): boolean {
     if (this.paused || event.isPropagationStopped()) {
       return false;
     }
 
     event.currentTarget = this;
-    
+
     // 处理当前级别的监听器
     let success = this.dispatchToLocalListeners(event);
 
@@ -350,8 +366,8 @@ export class EventDispatcher {
    * @param type 事件类型
    * @returns 是否有该类型的监听器
    */
-  hasEventListener(type: string): boolean {
-    return this.listeners.has(type) && this.listeners.get(type).length > 0;
+  hasEventListener (type: string): boolean {
+    return this.listeners.has(type) && (this.listeners.get(type) ?? []).length > 0;
   }
 
   /**
@@ -359,12 +375,14 @@ export class EventDispatcher {
    * @param type 事件类型，如果为空则返回所有监听器总数
    * @returns 监听器数量
    */
-  getEventListenerCount(type?: string): number {
+  getEventListenerCount (type?: string): number {
     if (!type) {
       let count = 0;
+
       for (const listeners of this.listeners.values()) {
         count += listeners.length;
       }
+
       return count;
     }
 
@@ -372,14 +390,14 @@ export class EventDispatcher {
       return 0;
     }
 
-    return this.listeners.get(type).length;
+    return (this.listeners.get(type) ?? []).length;
   }
 
   /**
    * 设置父事件分发器
    * @param parent 父分发器
    */
-  setParent(parent: EventDispatcher): void {
+  setParent (parent: EventDispatcher): void {
     // 如果已经有父级，先移除自己
     if (this.parent) {
       this.parent.removeChild(this);
@@ -397,13 +415,13 @@ export class EventDispatcher {
    * 添加子事件分发器
    * @param child 子分发器
    */
-  addChild(child: EventDispatcher): void {
+  addChild (child: EventDispatcher): void {
     if (child === this) {
       return; // 防止循环引用
     }
 
     this.children.add(child);
-    
+
     // 更新子级的父引用
     if (child.parent !== this) {
       child.setParent(this);
@@ -414,10 +432,10 @@ export class EventDispatcher {
    * 移除子事件分发器
    * @param child 子分发器
    */
-  removeChild(child: EventDispatcher): void {
+  removeChild (child: EventDispatcher): void {
     if (this.children.has(child)) {
       this.children.delete(child);
-      
+
       // 清除子级的父引用
       if (child.parent === this) {
         child.parent = null;
@@ -429,26 +447,27 @@ export class EventDispatcher {
    * 排序事件监听器，按优先级降序排序
    * @param type 事件类型
    */
-  private sortListeners(type: string): void {
+  private sortListeners (type: string): void {
     if (!this.listeners.has(type)) {
       return;
     }
 
-    const listeners = this.listeners.get(type);
+    const listeners = this.listeners.get(type) || [];
+
     listeners.sort((a, b) => b.priority - a.priority);
   }
 
   /**
    * 暂停事件分发
    */
-  pauseEvents(): void {
+  pauseEvents (): void {
     this.paused = true;
   }
 
   /**
    * 恢复事件分发
    */
-  resumeEvents(): void {
+  resumeEvents (): void {
     this.paused = false;
   }
 
@@ -456,7 +475,7 @@ export class EventDispatcher {
    * 启用或禁用事件捕获
    * @param enabled 是否启用
    */
-  enableCapture(enabled: boolean): void {
+  enableCapture (enabled: boolean): void {
     this.captureEnabled = enabled;
   }
 
@@ -464,31 +483,31 @@ export class EventDispatcher {
    * 启用或禁用事件冒泡
    * @param enabled 是否启用
    */
-  enableBubbling(enabled: boolean): void {
+  enableBubbling (enabled: boolean): void {
     this.bubbleEnabled = enabled;
   }
 
   /**
    * 销毁事件分发器
    */
-  destroy(): void {
+  destroy (): void {
     // 移除所有监听器
     this.removeAllEventListeners();
-    
+
     // 移除自己与父级的关联
     if (this.parent) {
       this.parent.removeChild(this);
       this.parent = null;
     }
-    
+
     // 移除所有子级
     for (const child of this.children) {
       child.parent = null;
     }
     this.children.clear();
-    
+
     // 清空其他属性
     this.dispatchingEvents.clear();
     this.listeners.clear();
   }
-} 
+}
