@@ -31,8 +31,6 @@ export class EventDispatcher extends MaxObject {
   private captureEnabled: boolean = true;
   /** 是否启用事件冒泡 */
   private bubbleEnabled: boolean = true;
-  /** 派发器ID */
-  protected id: string;
   /** 派发器标签 */
   protected tag: string;
   /** 是否暂停事件分发 */
@@ -391,7 +389,7 @@ export class EventDispatcher extends MaxObject {
   /**
    * 销毁事件分发器
    */
-  destroy (): void {
+  override destroy (): void {
     if (this.destroyed) return;
     // 移除所有监听器
     this.listeners.clear();

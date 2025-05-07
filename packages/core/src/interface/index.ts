@@ -10,3 +10,4 @@ export * from './IUniformBuffer';
 export * from './IRenderState';
 export * from './IRenderStats';
 export * from './IResourceFactory';
+export * from './constants';

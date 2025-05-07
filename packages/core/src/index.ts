@@ -39,9 +39,6 @@ export * from './base/ObjectPool';
 export * from './base/ObjectPoolManager';
 export * from './base/eventDispatcher';
 
-// 引擎核心
-export * from './engine';
-
 // 场景组件
 export * from './scene/Scene';
 export * from './scene/SceneManager';
