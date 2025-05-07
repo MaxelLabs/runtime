@@ -39,6 +39,9 @@
       ],
       "@maxellabs/specification": [
         "./packages/specification/src"
+      ],
+      "@maxellabs/engine": [
+        "./packages/engine/src"
       ]
     }
   }

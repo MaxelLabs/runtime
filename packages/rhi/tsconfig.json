@@ -8,7 +8,7 @@
     "noEmit": false,
     "rootDir": "src",
     "baseUrl": ".",
-    "composite": false,
+    "composite": true,
     "skipLibCheck": true,
     "noImplicitAny": false,
     "strict": false,

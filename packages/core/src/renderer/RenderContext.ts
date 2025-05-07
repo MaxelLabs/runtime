@@ -1,17 +1,15 @@
 import { Matrix4, Vector4 } from '@maxellabs/math';
-import { ShaderData } from '../shader/ShaderData';
-import { ShaderMacroCollection } from '../shader/ShaderMacroCollection';
 import { Camera } from '../camera/Camera';
 import { Scene } from '../scene/Scene';
-import type { Engine } from '../Engine';
-import type { CullingResults } from './CullingResults';
+import { ShaderData } from '../shader/ShaderData';
+import { ShaderMacroCollection } from '../shader/ShaderMacroCollection';
+import { Container, ServiceKeys } from '../base/IOC';
+import { CullingResults } from './CullingResults';
 
 /**
  * 渲染上下文类，包含渲染所需的各种上下文信息
  */
 export class RenderContext {
-  /** 引擎实例 */
-  readonly engine: Engine;
   /** 当前渲染的场景 */
   scene: Scene | null = null;
   /** 当前渲染的摄像机 */
@@ -52,13 +50,17 @@ export class RenderContext {
   frameCount: number = 0;
   /** 剔除结果 */
   cullingResults: CullingResults | null = null;
+  /** IOC容器实例 */
+  private container: Container;
 
   /**
    * 创建渲染上下文
-   * @param engine 引擎实例
    */
-  constructor(engine: Engine) {
-    this.engine = engine;
+  constructor() {
+    this.container = Container.getInstance();
+    
+    // 注册自身到IOC容器
+    this.container.register(ServiceKeys.RENDER_CONTEXT, this);
   }
 
   /**
@@ -124,7 +126,9 @@ export class RenderContext {
    * 从相机更新矩阵
    */
   updateMatricesFromCamera(): void {
-    if (!this.camera) return;
+    if (!this.camera) {
+      return;
+    }
     
     this.viewMatrix.copyFrom(this.camera.viewMatrix);
     this.projMatrix.copyFrom(this.camera.projectionMatrix);

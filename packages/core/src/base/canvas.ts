@@ -3,71 +3,65 @@
  */
 export class Canvas {
   /** HTML画布元素 */
-  private _element: HTMLCanvasElement;
+  private element: HTMLCanvasElement;
 
   /**
    * 创建画布
    * @param canvas HTML画布元素或Canvas ID
    */
-  constructor(canvas: HTMLCanvasElement | string) {
+  constructor (canvas: HTMLCanvasElement | string) {
     if (typeof canvas === 'string') {
       const element = document.getElementById(canvas) as HTMLCanvasElement;
+
       if (!element) {
         throw new Error(`Canvas with id '${canvas}' not found.`);
       }
-      this._element = element;
+      this.element = element;
     } else {
-      this._element = canvas;
+      this.element = canvas;
     }
-  }
-
-  /**
-   * 获取HTML画布元素
-   */
-  get element(): HTMLCanvasElement {
-    return this._element;
   }
 
   /**
    * 获取画布宽度
    */
-  get width(): number {
-    return this._element.width;
+  getWidth (): number {
+    return this.element.width;
   }
 
   /**
    * 设置画布宽度
    */
-  set width(value: number) {
-    this._element.width = value;
+  setWidth (value: number) {
+    this.element.width = value;
   }
 
   /**
    * 获取画布高度
    */
-  get height(): number {
-    return this._element.height;
+  getHeight (): number {
+    return this.element.height;
   }
 
   /**
    * 设置画布高度
    */
-  set height(value: number) {
-    this._element.height = value;
+  setHeight (value: number) {
+    this.element.height = value;
   }
 
   /**
    * 获取画布在网页中的宽度
    */
-  get clientWidth(): number {
-    return this._element.clientWidth;
+  getClientWidth (): number {
+    return this.element.clientWidth;
   }
 
   /**
    * 获取画布在网页中的高度
    */
-  get clientHeight(): number {
-    return this._element.clientHeight;
+  getClientHeight (): number {
+    return this.element.clientHeight;
   }
 
   /**
@@ -76,16 +70,17 @@ export class Canvas {
    * @param height 可选的设定高度，如果不指定则使用clientHeight
    * @returns 是否进行了大小调整
    */
-  resizeByClientSize(width?: number, height?: number): boolean {
-    const clientWidth = width ?? this.clientWidth;
-    const clientHeight = height ?? this.clientHeight;
+  resizeByClientSize (width?: number, height?: number): boolean {
+    const clientWidth = width ?? this.getClientWidth();
+    const clientHeight = height ?? this.getClientHeight();
 
-    if (this.width !== clientWidth || this.height !== clientHeight) {
-      this.width = clientWidth;
-      this.height = clientHeight;
+    if (this.getWidth() !== clientWidth || this.getHeight() !== clientHeight) {
+      this.setWidth(clientWidth);
+      this.setHeight(clientHeight);
+
       return true;
     }
 
     return false;
   }
-} 
+}

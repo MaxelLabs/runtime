@@ -122,14 +122,21 @@ export class Vector3 {
   }
 
   /**
-   * 拷贝向量
-   * @param v - 要拷贝的对象
-   * @returns 向量
+   * 从另一个向量复制值
+   * @param v - 源向量
+   * @returns 返回自身，用于链式调用
    */
-  copyFrom (v: Vector3Like): this {
-    this.elements[0] = v.x;
-    this.elements[1] = v.y;
-    this.elements[2] = v.z;
+  copyFrom (v: Readonly<Vector3> | Vector3Like): this {
+    this.x = v.x;
+    this.y = v.y;
+    this.z = v.z;
+
+    // 更新elements数组
+    if (this.elements) {
+      this.elements[0] = this.x;
+      this.elements[1] = this.y;
+      this.elements[2] = this.z;
+    }
 
     return this;
   }
@@ -327,10 +334,7 @@ export class Vector3 {
    * @returns 长度平方
    */
   lengthSquared (): number {
-    const e = this.elements;
-    const x = e[0], y = e[1], z = e[2];
-
-    return x * x + y * y + z * z;
+    return this.x * this.x + this.y * this.y + this.z * this.z;
   }
 
   /**
@@ -752,5 +756,69 @@ export class Vector3 {
   static clearPool (): void {
     pool.length = 0;
     poolIndex = 0;
+  }
+
+  /**
+   * 计算两个向量的叉积，返回一个新的向量
+   * @param a - 第一个向量
+   * @param b - 第二个向量
+   * @returns 叉积向量
+   */
+  static cross (a: Vector3, b: Vector3): Vector3 {
+    const ax = a.x, ay = a.y, az = a.z;
+    const bx = b.x, by = b.y, bz = b.z;
+
+    return new Vector3(
+      ay * bz - az * by,
+      az * bx - ax * bz,
+      ax * by - ay * bx
+    );
+  }
+
+  /**
+   * 计算两个向量的差值，返回一个新的向量
+   * @param a - 第一个向量
+   * @param b - 第二个向量
+   * @returns 差值向量 (a - b)
+   */
+  static subtract (a: Vector3, b: Vector3): Vector3 {
+    return new Vector3(
+      a.x - b.x,
+      a.y - b.y,
+      a.z - b.z
+    );
+  }
+
+  /**
+   * 返回一个归一化后的新向量
+   * @returns 归一化后的新向量
+   */
+  normalized (): Vector3 {
+    const len = this.length();
+
+    if (len < NumberEpsilon) {
+      return new Vector3();
+    }
+
+    const scale = 1 / len;
+
+    return new Vector3(
+      this.x * scale,
+      this.y * scale,
+      this.z * scale
+    );
+  }
+
+  /**
+   * 向量乘以标量，返回一个新向量
+   * @param scalar - 标量值
+   * @returns 新向量
+   */
+  multiplyScalar (scalar: number): Vector3 {
+    return new Vector3(
+      this.x * scalar,
+      this.y * scalar,
+      this.z * scalar
+    );
   }
 }

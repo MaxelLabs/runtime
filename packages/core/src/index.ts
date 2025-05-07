@@ -31,16 +31,13 @@ export * from './utils';
 export * from './interface';
 
 // 基础组件
-export * from './base/Event';
-export * from './base/EventDispatcher';
-export * from './base/Canvas';
+export * from './base/event';
+export * from './base/eventDispatcher';
+export * from './base/canvas';
 export * from './base/Time';
 export * from './base/ObjectPool';
 export * from './base/ObjectPoolManager';
-export * from './base/EnhancedEventDispatcher';
-
-// 引擎核心
-export * from './Engine';
+export * from './base/eventDispatcher';
 
 // 场景组件
 export * from './scene/Scene';

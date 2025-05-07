@@ -1,6 +1,6 @@
 import { ObjectPool } from './ObjectPool';
 import { Time } from './Time';
-import { EventDispatcher } from './EventDispatcher';
+import { EventDispatcher } from './eventDispatcher';
 
 /**
  * 对象池管理器事件类型
@@ -19,19 +19,19 @@ export enum ObjectPoolManagerEventType {
  */
 export interface ObjectPoolStats {
   /** 对象池ID */
-  poolId: string;
+  poolId: string,
   /** 池中可用对象数量 */
-  available: number;
+  available: number,
   /** 当前使用中对象数量 */
-  inUse: number;
+  inUse: number,
   /** 池中总对象数量 */
-  total: number;
+  total: number,
   /** 对象重用率 */
-  efficiency: number;
+  efficiency: number,
   /** 总获取对象次数 */
-  totalGets?: number;
+  totalGets?: number,
   /** 总创建对象次数 */
-  totalCreated?: number;
+  totalCreated?: number,
 }
 
 /**
@@ -40,36 +40,37 @@ export interface ObjectPoolStats {
 export class ObjectPoolManager extends EventDispatcher {
   /** 单例实例 */
   private static instance: ObjectPoolManager;
-  
+
   /** 所有注册的对象池 */
   private pools: Map<string, ObjectPool<any>> = new Map();
-  
+
   /** 是否自动分析性能 */
   private autoAnalysis: boolean = false;
-  
+
   /** 自动分析间隔 */
   private analysisInterval: number = 10000;
-  
+
   /** 上次分析时间 */
   private lastAnalysisTime: number = 0;
-  
+
   /**
    * 私有构造函数，使用单例模式
    */
-  private constructor() {
+  private constructor () {
     super();
   }
-  
+
   /**
    * 获取单例实例
    */
-  public static getInstance(): ObjectPoolManager {
+  public static getInstance (): ObjectPoolManager {
     if (!ObjectPoolManager.instance) {
       ObjectPoolManager.instance = new ObjectPoolManager();
     }
+
     return ObjectPoolManager.instance;
   }
-  
+
   /**
    * 注册对象池
    * @param id 对象池ID
@@ -79,11 +80,11 @@ export class ObjectPoolManager extends EventDispatcher {
     if (this.pools.has(id)) {
       console.warn(`[ObjectPoolManager] 对象池ID '${id}' 已存在，将被覆盖`);
     }
-    
+
     this.pools.set(id, pool);
     this.dispatchEvent(ObjectPoolManagerEventType.POOL_CREATED, { poolId: id, pool });
   }
-  
+
   /**
    * 创建并注册新对象池
    * @param id 对象池ID
@@ -97,14 +98,14 @@ export class ObjectPoolManager extends EventDispatcher {
     factory: () => T,
     resetFunc: (obj: T) => void,
     options: {
-      initialCapacity?: number;
-      maxSize?: number;
-      logStats?: boolean;
+      initialCapacity?: number,
+      maxSize?: number,
+      logStats?: boolean,
     } = {}
   ): ObjectPool<T> {
     // 确保带有命名空间的ID
     const fullId = id.includes(':') ? id : `default:${id}`;
-    
+
     // 创建对象池
     const pool = new ObjectPool<T>(
       factory,
@@ -113,16 +114,16 @@ export class ObjectPoolManager extends EventDispatcher {
         identifier: fullId,
         initialCapacity: options.initialCapacity,
         maxSize: options.maxSize,
-        logStats: options.logStats
+        logStats: options.logStats,
       }
     );
-    
+
     // 注册对象池
     this.registerPool(fullId, pool);
-    
+
     return pool;
   }
-  
+
   /**
    * 获取对象池
    * @param id 对象池ID
@@ -130,33 +131,35 @@ export class ObjectPoolManager extends EventDispatcher {
    */
   getPool<T>(id: string): ObjectPool<T> | null {
     const fullId = id.includes(':') ? id : `default:${id}`;
+
     return this.pools.get(fullId) as ObjectPool<T> || null;
   }
-  
+
   /**
    * 销毁对象池
    * @param id 对象池ID
    */
-  destroyPool(id: string): void {
+  destroyPool (id: string): void {
     const fullId = id.includes(':') ? id : `default:${id}`;
-    
+
     if (this.pools.has(fullId)) {
-      const pool = this.pools.get(fullId);
+      const pool = this.pools.get(fullId) as ObjectPool<any>;
+
       pool.clear();
       this.pools.delete(fullId);
-      
+
       this.dispatchEvent(ObjectPoolManagerEventType.POOL_DESTROYED, { poolId: fullId });
     }
   }
-  
+
   /**
    * 获取所有对象池统计信息
    * @param detailed 是否包含详细统计信息
    * @returns 所有对象池的统计信息
    */
-  getAllPoolStats(detailed: boolean = false): Map<string, ObjectPoolStats> {
+  getAllPoolStats (detailed: boolean = false): Map<string, ObjectPoolStats> {
     const stats = new Map<string, ObjectPoolStats>();
-    
+
     for (const [id, pool] of this.pools.entries()) {
       const poolStatus = pool.getStatus();
       const poolStats: ObjectPoolStats = {
@@ -164,86 +167,87 @@ export class ObjectPoolManager extends EventDispatcher {
         available: poolStatus.available,
         inUse: poolStatus.inUse,
         total: poolStatus.total,
-        efficiency: poolStatus.efficiency
+        efficiency: poolStatus.efficiency,
       };
-      
+
       if (detailed) {
         // 详细模式包含更多信息
         poolStats.totalGets = (pool as any).totalGets;
         poolStats.totalCreated = (pool as any).totalCreated;
       }
-      
+
       stats.set(id, poolStats);
     }
-    
+
     return stats;
   }
-  
+
   /**
    * 预热指定对象池
    * @param id 对象池ID
    * @param count 预创建数量
    */
-  warmUpPool(id: string, count: number): void {
+  warmUpPool (id: string, count: number): void {
     const pool = this.getPool(id);
+
     if (pool) {
       pool.warmUp(count);
     }
   }
-  
+
   /**
    * 预热所有对象池
    * @param count 每个池的预创建数量
    */
-  warmUpAllPools(count: number): void {
+  warmUpAllPools (count: number): void {
     for (const pool of this.pools.values()) {
       pool.warmUp(count);
     }
   }
-  
+
   /**
    * 清理所有对象池
    */
-  clearAllPools(): void {
-    for (const [id, pool] of this.pools.entries()) {
+  clearAllPools (): void {
+    for (const pool of this.pools.values()) {
       pool.clear();
     }
   }
-  
+
   /**
    * 启用自动性能分析
    * @param enabled 是否启用
    * @param interval 分析间隔（毫秒）
    */
-  enableAutoAnalysis(enabled: boolean, interval: number = 10000): void {
+  enableAutoAnalysis (enabled: boolean, interval: number = 10000): void {
     this.autoAnalysis = enabled;
     this.analysisInterval = interval;
   }
-  
+
   /**
    * 执行性能分析
    * @param force 是否强制执行，忽略时间间隔
    */
-  analyzePerformance(force: boolean = false): void {
+  analyzePerformance (force: boolean = false): void {
     const currentTime = Time.now;
-    
+
     if (!force && currentTime - this.lastAnalysisTime < this.analysisInterval) {
       return;
     }
-    
+
     this.lastAnalysisTime = currentTime;
     const stats = this.getAllPoolStats(true);
-    
+
     // 计算汇总信息
     let totalObjects = 0;
     let totalInUse = 0;
-    let totalPoolCount = stats.size;
-    
+    const totalPoolCount = stats.size;
+
     for (const stat of stats.values()) {
       totalObjects += stat.total;
       totalInUse += stat.inUse;
     }
-    
+
     // 触发性能分析事件
     this.dispatchEvent(ObjectPoolManagerEventType.PERFORMANCE_ANALYSIS, {
       timestamp: currentTime,
@@ -252,43 +256,47 @@ export class ObjectPoolManager extends EventDispatcher {
         poolCount: totalPoolCount,
         totalObjects,
         totalInUse,
-        usage: totalInUse / (totalObjects > 0 ? totalObjects : 1)
-      }
+        usage: totalInUse / (totalObjects > 0 ? totalObjects : 1),
+      },
     });
-    
+
     return stats;
   }
-  
+
   /**
    * 更新函数，在引擎每帧调用
    */
-  update(): void {
+  update (): void {
     if (this.autoAnalysis) {
       this.analyzePerformance();
     }
   }
-  
+
   /**
    * 获取池中总对象数量
    * @returns 所有对象池中的对象总数
    */
-  getTotalObjectCount(): number {
+  getTotalObjectCount (): number {
     let count = 0;
+
     for (const pool of this.pools.values()) {
       count += pool.getStatus().total;
     }
+
     return count;
   }
-  
+
   /**
    * 获取当前使用中对象数量
    * @returns 所有对象池中正在使用的对象总数
    */
-  getTotalInUseCount(): number {
+  getTotalInUseCount (): number {
     let count = 0;
+
     for (const pool of this.pools.values()) {
       count += pool.getStatus().inUse;
     }
+
     return count;
   }
-} 
+}

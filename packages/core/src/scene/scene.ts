@@ -1,169 +1,229 @@
+import { MaxObject } from '../base/maxObject';
+import { EventDispatcher } from '../base/eventDispatcher';
 import { Entity } from '../base/entity';
+import { ShaderData } from '../shader/ShaderData';
+import { Container, ServiceKeys } from '../base/IOC';
 import type { Component } from '../base/component';
 
 /**
- * 场景类，管理场景中的所有实体
+ * 场景类
+ * 包含游戏对象、灯光、相机等元素
  */
-export class Scene {
+export class Scene extends EventDispatcher {
   /** 场景名称 */
-  private _name: string;
-  /** 场景中的根实体列表 */
-  private _rootEntities: Entity[] = [];
-  /** 场景中的所有实体映射表 */
-  private _entitiesMap: Map<number, Entity> = new Map();
-  /** 是否激活 */
-  private _active: boolean = false;
-  /** 主摄像机实体 */
-  private _mainCamera: Entity | null = null;
+  name: string;
+  /** 场景中的实体列表 */
+  private entities: Map<string, Entity> = new Map();
+  /** 场景着色器数据 */
+  shaderData: ShaderData = new ShaderData();
+  /** 根实体 */
+  private rootEntity: Entity;
+  /** 是否已经加载 */
+  private isLoaded: boolean = false;
+  /** IOC容器 */
+  private container: Container;
 
   /**
-   * 创建一个新的场景
+   * 创建场景
    * @param name 场景名称
    */
-  constructor (name: string = 'Scene') {
-    this._name = name;
-  }
-
-  /** 获取场景名称 */
-  get name (): string {
-    return this._name;
-  }
-
-  /** 设置场景名称 */
-  set name (value: string) {
-    this._name = value;
-  }
-
-  /** 获取场景是否激活 */
-  get active (): boolean {
-    return this._active;
-  }
-
-  /** 获取场景中的所有根实体 */
-  get rootEntities (): Entity[] {
-    return this._rootEntities.slice();
-  }
-
-  /** 获取场景中的所有实体 */
-  get entities (): Entity[] {
-    return Array.from(this._entitiesMap.values());
-  }
-
-  /** 获取主摄像机实体 */
-  get mainCamera (): Entity | null {
-    return this._mainCamera;
-  }
-
-  /** 设置主摄像机实体 */
-  set mainCamera (value: Entity | null) {
-    this._mainCamera = value;
-  }
-
-  /**
-   * 创建一个新的实体
-   * @param name 实体名称
-   * @param parent 父实体，如果不指定则添加为根实体
-   * @returns 新创建的实体
-   */
-  createEntity (name: string = 'Entity', parent: Entity | null = null): Entity {
-    const entity = new Entity(name, this);
-
-    // 添加到实体映射表
-    this._entitiesMap.set(entity.id, entity);
-
-    // 设置父级
-    if (parent) {
-      entity.parent = parent;
-    } else {
-      // 没有父级，添加为根实体
-      this._rootEntities.push(entity);
-    }
-
-    return entity;
+  constructor(name: string) {
+    super();
+    this.name = name;
+    this.id = `scene_${this.name}_${Math.floor(Math.random() * 10000)}`;
+    this.container = Container.getInstance();
+    
+    // 创建根实体
+    this.rootEntity = new Entity('root');
+    this.addEntity(this.rootEntity);
   }
 
   /**
    * 添加实体到场景
-   * @param entity 要添加的实体
-   * @param parent 父实体，如果不指定则添加为根实体
+   * @param entity 实体
    */
-  addEntity (entity: Entity, parent: Entity | null = null): void {
-    // 如果实体已经在此场景中，则不做任何操作
-    if (entity.scene === this && this._entitiesMap.has(entity.id)) {
+  addEntity(entity: Entity): void {
+    if (this.entities.has(entity.id)) {
+      console.warn(`Entity with id ${entity.id} already exists in this scene`);
       return;
     }
-
-    // 如果实体在其他场景中，先从其他场景移除
-    if (entity.scene && entity.scene !== this) {
-      entity.scene.removeEntity(entity);
-    }
-
-    // 设置实体所属的场景
+    
+    this.entities.set(entity.id, entity);
     entity.scene = this;
-
-    // 添加到实体映射表
-    this._entitiesMap.set(entity.id, entity);
-
-    // 设置父级
-    if (parent) {
-      entity.parent = parent;
-    } else if (!entity.parent || !this._entitiesMap.has(entity.parent.id)) {
-      // 没有父级或父级不在此场景中，添加为根实体
-      this._rootEntities.push(entity);
-    }
+    
+    // 派发实体添加事件
+    this.dispatchEvent('entityAdded', { entity });
   }
 
   /**
    * 从场景中移除实体
-   * @param entity 要移除的实体
+   * @param entity 实体或实体ID
    */
-  removeEntity (entity: Entity): void {
-    // 如果实体不在此场景中，则不做任何操作
-    if (entity.scene !== this || !this._entitiesMap.has(entity.id)) {
+  removeEntity(entity: Entity | string): void {
+    const entityId = typeof entity === 'string' ? entity : entity.id;
+    const targetEntity = this.entities.get(entityId);
+    
+    if (!targetEntity) {
+      console.warn(`Entity with id ${entityId} does not exist in this scene`);
       return;
     }
-
-    // 从实体映射表中移除
-    this._entitiesMap.delete(entity.id);
-
-    // 如果是根实体，从根实体列表中移除
-    const rootIndex = this._rootEntities.indexOf(entity);
-
-    if (rootIndex !== -1) {
-      this._rootEntities.splice(rootIndex, 1);
+    
+    // 阻止移除根实体
+    if (targetEntity === this.rootEntity) {
+      console.error('Cannot remove root entity from scene');
+      return;
     }
-
-    // 清除实体的场景引用
-    entity.scene = null;
-
-    // 如果是主摄像机，清除主摄像机引用
-    if (this._mainCamera === entity) {
-      this._mainCamera = null;
-    }
+    
+    this.entities.delete(entityId);
+    targetEntity.scene = null;
+    
+    // 派发实体移除事件
+    this.dispatchEvent('entityRemoved', { entity: targetEntity });
   }
 
   /**
-   * 根据ID获取实体
+   * 查找实体
    * @param id 实体ID
-   * @returns 找到的实体，如果不存在则返回null
+   * @returns 找到的实体或null
    */
-  getEntityById (id: number): Entity | null {
-    return this._entitiesMap.get(id) || null;
+  findEntity(id: string): Entity | null {
+    return this.entities.get(id) || null;
   }
 
   /**
-   * 根据名称获取实体
+   * 查找实体通过名称
    * @param name 实体名称
-   * @returns 找到的第一个实体，如果不存在则返回null
+   * @returns 找到的第一个匹配实体或null
    */
-  getEntityByName (name: string): Entity | null {
-    for (const entity of this._entitiesMap.values()) {
+  findEntityByName(name: string): Entity | null {
+    for (const entity of this.entities.values()) {
       if (entity.name === name) {
         return entity;
       }
     }
-
     return null;
+  }
+
+  /**
+   * 创建新实体并添加到场景
+   * @param name 实体名称
+   * @returns 创建的实体
+   */
+  createEntity(name?: string): Entity {
+    const entity = new Entity(name);
+    this.addEntity(entity);
+    return entity;
+  }
+
+  /**
+   * 获取场景中的所有实体
+   */
+  getAllEntities(): Entity[] {
+    return Array.from(this.entities.values());
+  }
+
+  /**
+   * 场景加载时调用
+   */
+  onLoad(): void {
+    if (this.isLoaded) {
+      return;
+    }
+    
+    this.isLoaded = true;
+    
+    // 通知所有实体场景加载
+    for (const entity of this.entities.values()) {
+      entity.onSceneLoad();
+    }
+    
+    // 派发加载事件
+    this.dispatchEvent('load');
+  }
+
+  /**
+   * 场景卸载时调用
+   */
+  onUnload(): void {
+    if (!this.isLoaded) {
+      return;
+    }
+    
+    this.isLoaded = false;
+    
+    // 通知所有实体场景卸载
+    for (const entity of this.entities.values()) {
+      entity.onSceneUnload();
+    }
+    
+    // 派发卸载事件
+    this.dispatchEvent('unload');
+  }
+
+  /**
+   * 更新场景
+   * @param deltaTime 时间增量(秒)
+   */
+  update(deltaTime: number): void {
+    if (!this.isLoaded) {
+      return;
+    }
+    
+    // 更新所有实体
+    for (const entity of this.entities.values()) {
+      if (entity.enabled) {
+        entity.update(deltaTime);
+      }
+    }
+    
+    // 派发更新事件
+    this.dispatchEvent('update', { deltaTime });
+  }
+
+  /**
+   * 获取根实体
+   */
+  getRoot(): Entity {
+    return this.rootEntity;
+  }
+
+  /**
+   * 获取实体数量
+   */
+  get entityCount(): number {
+    return this.entities.size;
+  }
+
+  /**
+   * 销毁场景
+   */
+  override destroy(): void {
+    if (this.destroyed) {
+      return;
+    }
+    
+    // 派发销毁前事件
+    this.dispatchEvent('beforeDestroy');
+    
+    // 卸载场景
+    this.onUnload();
+    
+    // 销毁所有实体
+    for (const entity of this.entities.values()) {
+      if (entity !== this.rootEntity) {
+        entity.destroy();
+      }
+    }
+    
+    // 最后销毁根实体
+    this.rootEntity.destroy();
+    
+    this.entities.clear();
+    
+    // 派发销毁事件
+    this.dispatchEvent('destroyed');
+    
+    super.destroy();
   }
 
   /**
@@ -174,7 +234,7 @@ export class Scene {
   getEntitiesByTag (tag: string): Entity[] {
     const result: Entity[] = [];
 
-    for (const entity of this._entitiesMap.values()) {
+    for (const entity of this.entities.values()) {
       if (entity.tag === tag) {
         result.push(entity);
       }
@@ -191,115 +251,12 @@ export class Scene {
   findEntitiesWithComponent<T extends Component>(componentType: { new(...args: any[]): T }): Entity[] {
     const result: Entity[] = [];
 
-    for (const entity of this._entitiesMap.values()) {
+    for (const entity of this.entities.values()) {
       if (entity.hasComponent(componentType)) {
         result.push(entity);
       }
     }
 
     return result;
-  }
-
-  /**
-   * 激活场景
-   */
-  activate (): void {
-    if (this._active) {return;}
-
-    this._active = true;
-
-    // 激活所有根实体
-    for (const entity of this._rootEntities) {
-      entity.active = true;
-    }
-  }
-
-  /**
-   * 停用场景
-   */
-  deactivate (): void {
-    if (!this._active) {return;}
-
-    this._active = false;
-
-    // 停用所有根实体
-    for (const entity of this._rootEntities) {
-      entity.active = false;
-    }
-  }
-
-  /**
-   * 更新场景中的所有组件
-   * @param deltaTime 时间增量（秒）
-   */
-  update (deltaTime: number): void {
-    if (!this._active) {return;}
-
-    // 更新所有实体的组件
-    for (const entity of this._entitiesMap.values()) {
-      if (entity.active) {
-        for (const component of entity.getComponents()) {
-          if (component.enabled) {
-            component.update(deltaTime);
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * 物理更新，在update之后调用
-   * @param deltaTime 时间增量（秒）
-   */
-  lateUpdate (deltaTime: number): void {
-    if (!this._active) {return;}
-
-    // 更新所有实体的组件
-    for (const entity of this._entitiesMap.values()) {
-      if (entity.active) {
-        for (const component of entity.getComponents()) {
-          if (component.enabled) {
-            component.lateUpdate(deltaTime);
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * 渲染场景
-   */
-  render (): void {
-    if (!this._active) {return;}
-
-    // 渲染所有实体的组件
-    for (const entity of this._entitiesMap.values()) {
-      if (entity.active) {
-        for (const component of entity.getComponents()) {
-          if (component.enabled) {
-            component.render();
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * 销毁场景中的所有实体
-   */
-  destroy (): void {
-    // 复制根实体列表，防止在遍历过程中修改
-    const rootEntities = [...this._rootEntities];
-
-    // 销毁所有根实体（这会递归销毁所有子实体）
-    for (const entity of rootEntities) {
-      entity.destroy();
-    }
-
-    // 清空实体映射表和根实体列表
-    this._entitiesMap.clear();
-    this._rootEntities.length = 0;
-    this._mainCamera = null;
-    this._active = false;
   }
 }

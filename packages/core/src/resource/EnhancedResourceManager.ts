@@ -1,4 +1,4 @@
-import { EventDispatcher } from '../base/EventDispatcher';
+import { EventDispatcher } from '../base/eventDispatcher';
 import { Resource, ResourceLoadState, ResourceType } from './ResourceManager';
 import { Engine } from '../Engine';
 import { ObjectPool } from '../base/ObjectPool';
