@@ -29,7 +29,7 @@ export class Entity extends MaxObject {
    */
   constructor (name: string = 'Entity', scene: Scene | null = null) {
     super();
-    this._name = name;
+    this.name = name;
     this._scene = scene;
     this.transform = new Transform(this);
     this.components.set('Transform', this.transform);

@@ -1,250 +1,79 @@
-import { Matrix4, Vector3, Vector4, Color } from '@maxellabs/math';
-import { Scene } from './scene/Scene';
-import { ResourceManager } from './resource/ResourceManager';
-import { ShaderData } from './shader/ShaderData';
-import { ShaderMacroCollection } from './shader/ShaderMacroCollection';
-import { ShaderMacro } from './shader/ShaderMacro';
-import { ShaderProperty } from './shader/ShaderProperty';
-import { Event } from './base/event';
 import { EventDispatcher } from './base/eventDispatcher';
+import { Container, ServiceKeys } from './base/IOC';
 import { Time } from './base/Time';
-import { RenderContext } from './renderer/RenderContext';
-import { RenderPipeline } from './renderer/RenderPipeline';
-import { Canvas } from './base/Canvas';
-import { InputManager } from './input/InputManager';
-import { RendererType } from './renderer/RendererType';
-import { IHardwareRenderer } from './interface/IHardwareRenderer';
-import { BatcherManager } from './renderer/BatcherManager';
+import { Scene } from './scene/Scene';
 import { SceneManager } from './scene/SceneManager';
-import { ObjectPoolManager, ObjectPoolManagerEventType } from './base/ObjectPoolManager';
+import { ResourceManager } from './resource/ResourceManager';
+import { RenderContext } from './renderer/RenderContext';
+import { IRenderer, RendererFactory, RendererOptions } from './renderer/RendererFactory';
+import { RendererType } from './renderer/RendererType';
+import { InputManager } from './input/InputManager';
 
 /**
- * 引擎配置接口
+ * 引擎配置选项
  */
-export interface EngineOptions {
-  /** 目标画布 */
-  canvas: HTMLCanvasElement;
-  /** 是否使用抗锯齿 */
-  antialias?: boolean;
-  /** 是否启用Alpha通道 */
-  alpha?: boolean;
-  /** 背景颜色 */
-  backgroundColor?: Color;
-  /** 渲染器类型 */
-  rendererType?: RendererType;
-  /** 是否开启HDR */
-  enableHDR?: boolean;
-  /** 是否自动开始渲染循环 */
+export interface EngineOptions extends RendererOptions {
+  /** 目标帧率 */
+  targetFrameRate?: number;
+  /** 是否自动启动引擎 */
   autoStart?: boolean;
-  /** 是否开启性能统计 */
-  enableStats?: boolean;
-  /** 是否自动管理对象池 */
-  enableObjectPoolManager?: boolean;
-  /** 对象池性能分析间隔（毫秒） */
-  objectPoolAnalysisInterval?: number;
+  /** 是否启用物理系统 */
+  enablePhysics?: boolean;
+  /** 是否启用音频系统 */
+  enableAudio?: boolean;
+  /** 是否启用调试模式 */
+  debug?: boolean;
 }
 
 /**
- * 引擎事件类型
+ * 引擎状态枚举
  */
-export enum EngineEventType {
-  /** 引擎初始化完成 */
-  Ready = 'engine-ready',
-  /** 引擎每帧开始 */
-  BeforeUpdate = 'engine-before-update',
-  /** 引擎每帧更新完成 */
-  AfterUpdate = 'engine-after-update',
-  /** 引擎每帧渲染开始 */
-  BeforeRender = 'engine-before-render',
-  /** 引擎每帧渲染完成 */
-  AfterRender = 'engine-after-render',
-  /** 引擎窗口大小改变 */
-  Resize = 'engine-resize',
-  /** 设备丢失 */
-  DeviceLost = 'engine-device-lost',
-  /** 设备恢复 */
-  DeviceRestored = 'engine-device-restored',
-  /** 对象池性能分析 */
-  ObjectPoolAnalysis = 'engine-object-pool-analysis'
+export enum EngineState {
+  /** 未初始化 */
+  UNINITIALIZED,
+  /** 初始化中 */
+  INITIALIZING,
+  /** 运行中 */
+  RUNNING,
+  /** 暂停 */
+  PAUSED,
+  /** 已销毁 */
+  DESTROYED
 }
 
 /**
- * 引擎主类，作为整个引擎的入口点
+ * 3D引擎核心类
+ * 负责管理引擎生命周期、更新循环、场景管理和渲染
  */
 export class Engine extends EventDispatcher {
-  /** @internal 伽马空间着色器宏 */
-  static _gammaMacro: ShaderMacro = ShaderMacro.getByName("ENGINE_IS_COLORSPACE_GAMMA");
-  /** @internal 无深度纹理着色器宏 */
-  static _noDepthTextureMacro: ShaderMacro = ShaderMacro.getByName("ENGINE_NO_DEPTH_TEXTURE");
-  /** @internal 2D空间单位到像素单位的转换系数 */
-  static _pixelsPerUnit: number = 100;
-
-  /** 输入管理器 */
-  readonly inputManager: InputManager;
-
-  /** @internal 批处理管理器 */
-  _batcherManager: BatcherManager;
-  /** @internal 硬件渲染器 */
-  _hardwareRenderer: IHardwareRenderer;
-  /** @internal 渲染上下文 */
-  _renderContext: RenderContext = new RenderContext();
-  /** @internal 全局着色器宏集合 */
-  _globalShaderMacro: ShaderMacroCollection = new ShaderMacroCollection();
-  /** @internal 渲染次数统计 */
-  _renderCount: number = 0;
-
-  /** @internal */
-  private _canvas: Canvas;
-  /** 资源管理器 */
-  private _resourceManager: ResourceManager;
+  /** IOC容器 */
+  private container: Container;
+  /** 引擎状态 */
+  private state: EngineState = EngineState.UNINITIALIZED;
+  /** 渲染器实例 */
+  private renderer: IRenderer;
   /** 场景管理器 */
-  private _sceneManager: SceneManager;
+  private sceneManager: SceneManager;
+  /** 资源管理器 */
+  private resourceManager: ResourceManager;
+  /** 输入管理器 */
+  private inputManager: InputManager;
   /** 时间管理器 */
-  private _time: Time = new Time();
-  /** 是否暂停 */
-  private _isPaused: boolean = true;
-  /** 动画帧ID */
-  private _animFrameId: number = 0;
-  /** 帧间隔定时器ID */
-  private _timeoutId: number = 0;
-  /** 垂直同步计数 */
-  private _vSyncCount: number = 1;
-  /** 垂直同步计数器 */
-  private _vSyncCounter: number = 1;
+  private time: Time;
+  /** 渲染上下文 */
+  private renderContext: RenderContext;
   /** 目标帧率 */
-  private _targetFrameRate: number = 60;
-  /** 目标帧间隔（毫秒） */
-  private _targetFrameInterval: number = 1000 / 60;
-  /** 是否已销毁 */
-  private _destroyed: boolean = false;
-  /** 帧处理中标志 */
-  private _frameInProcess: boolean = false;
-  /** 等待销毁标志 */
-  private _waitingDestroy: boolean = false;
-  /** 设备丢失标志 */
-  private _isDeviceLost: boolean = false;
-  /** 性能统计数据 */
-  private _stats = {
-    fps: 0,
-    frameTime: 0,
-    drawCalls: 0,
-    triangles: 0,
-    lastUpdateTime: 0,
-    frames: 0,
-  };
-  /** 是否启用性能统计 */
-  private _enableStats: boolean = false;
-
-  /** 对象池管理器 */
-  readonly objectPoolManager: ObjectPoolManager;
-  
-  /** 是否启用对象池管理 */
-  private _enableObjectPoolManager: boolean = false;
-  
-  /** 对象池分析间隔 */
-  private _objectPoolAnalysisInterval: number = 30000;
-
-  /**
-   * 动画循环函数
-   */
-  private _animate = () => {
-    if (this._vSyncCount) {
-      // 使用requestAnimationFrame进行同步
-      this._animFrameId = requestAnimationFrame(this._animate);
-      if (this._vSyncCounter++ % this._vSyncCount === 0) {
-        this.update();
-        this._vSyncCounter = 1;
-      }
-    } else {
-      // 使用setTimeout实现自定义帧率
-      this._timeoutId = window.setTimeout(this._animate, this._targetFrameInterval);
-      this.update();
-    }
-  };
-
-  /**
-   * 引擎设置
-   */
-  get settings(): any {
-    return {};
-  }
-
-  /**
-   * 用于渲染的画布
-   */
-  get canvas(): Canvas {
-    return this._canvas;
-  }
-
-  /**
-   * 资源管理器
-   */
-  get resourceManager(): ResourceManager {
-    return this._resourceManager;
-  }
-
-  /**
-   * 场景管理器
-   */
-  get sceneManager(): SceneManager {
-    return this._sceneManager;
-  }
-
-  /**
-   * 引擎时间信息
-   */
-  get time(): Time {
-    return this._time;
-  }
-
-  /**
-   * 引擎是否已暂停
-   */
-  get isPaused(): boolean {
-    return this._isPaused;
-  }
-
-  /**
-   * 垂直同步计数，表示每帧的垂直消隐次数
-   * @remarks 0表示垂直同步已关闭
-   */
-  get vSyncCount(): number {
-    return this._vSyncCount;
-  }
-
-  set vSyncCount(value: number) {
-    this._vSyncCount = Math.max(0, Math.floor(value));
-  }
-
-  /**
-   * 设置要达到的目标帧率
-   * @remarks
-   * 仅当vSyncCount = 0时生效
-   * 值越大，目标帧率越高
-   */
-  get targetFrameRate(): number {
-    return this._targetFrameRate;
-  }
-
-  set targetFrameRate(value: number) {
-    value = Math.max(0.000001, value);
-    this._targetFrameRate = value;
-    this._targetFrameInterval = 1000 / value;
-  }
-
-  /**
-   * 引擎是否已销毁
-   */
-  get destroyed(): boolean {
-    return this._destroyed;
-  }
-
-  /**
-   * 获取性能统计信息
-   */
-  get stats() {
-    return { ...this._stats };
-  }
+  private targetFrameRate: number = 60;
+  /** 上一帧时间戳 */
+  private lastFrameTime: number = 0;
+  /** 是否在运行中 */
+  private isRunning: boolean = false;
+  /** 动画帧请求ID */
+  private animationFrameId: number = 0;
+  /** 引擎配置选项 */
+  private options: EngineOptions;
+  /** 调试模式 */
+  private debugMode: boolean = false;
 
   /**
    * 创建引擎实例
@@ -252,327 +81,321 @@ export class Engine extends EventDispatcher {
    */
   constructor(options: EngineOptions) {
     super();
-
-    // 创建画布
-    this._canvas = new Canvas(options.canvas);
-
-    // 创建硬件渲染器
-    this._hardwareRenderer = this._createHardwareRenderer(options);
-    this._hardwareRenderer.init(
-      this._canvas, 
-      this._onDeviceLost.bind(this), 
-      this._onDeviceRestored.bind(this)
-    );
-
-    // 创建资源管理器
-    this._resourceManager = new ResourceManager(this);
-
-    // 创建场景管理器
-    this._sceneManager = new SceneManager(this);
-
-    // 创建输入管理器
-    this.inputManager = new InputManager(this);
-
-    // 创建批处理管理器
-    this._batcherManager = new BatcherManager(this);
-
-    // 初始化对象池管理器
-    this.objectPoolManager = ObjectPoolManager.getInstance();
-    this._enableObjectPoolManager = options.enableObjectPoolManager !== false;
+    this.options = options;
+    this.targetFrameRate = options.targetFrameRate || 60;
+    this.debugMode = options.debug || false;
+    this.container = Container.getInstance();
     
-    if (options.objectPoolAnalysisInterval !== undefined) {
-      this._objectPoolAnalysisInterval = Math.max(1000, options.objectPoolAnalysisInterval);
+    // 注册自身到IOC容器
+    this.container.register(ServiceKeys.ENGINE, this);
+  }
+
+  /**
+   * 初始化引擎
+   * @returns Promise<void>
+   */
+  async initialize(): Promise<void> {
+    if (this.state !== EngineState.UNINITIALIZED) {
+      console.warn('Engine already initialized or initializing');
+      return;
     }
-    
-    if (this._enableObjectPoolManager) {
-      this.objectPoolManager.enableAutoAnalysis(true, this._objectPoolAnalysisInterval);
+
+    this.state = EngineState.INITIALIZING;
+
+    try {
+      // 创建时间管理器
+      this.time = new Time();
+      this.container.register(ServiceKeys.TIME, this.time);
+
+      // 创建渲染上下文
+      this.renderContext = new RenderContext();
+      this.container.register(ServiceKeys.RENDER_CONTEXT, this.renderContext);
+
+      // 创建资源管理器
+      this.resourceManager = new ResourceManager();
+      this.container.register(ServiceKeys.RESOURCE_MANAGER, this.resourceManager);
+
+      // 创建场景管理器
+      this.sceneManager = new SceneManager();
+      this.container.register(ServiceKeys.SCENE_MANAGER, this.sceneManager);
+
+      // 创建输入管理器
+      this.inputManager = new InputManager();
+      this.container.register(ServiceKeys.INPUT_MANAGER, this.inputManager);
+
+      // 创建渲染器
+      this.renderer = await RendererFactory.createRenderer(this.options);
+
+      // 初始化完成后，自动启动引擎(如果配置了autoStart)
+      if (this.options.autoStart) {
+        this.start();
+      }
+
+      this.state = EngineState.PAUSED;
       
-      // 监听对象池性能分析事件
-      this.objectPoolManager.on(ObjectPoolManagerEventType.PERFORMANCE_ANALYSIS, (e) => {
-        // 转发到引擎事件
-        this.dispatchEvent(EngineEventType.ObjectPoolAnalysis, e);
-      });
+      // 触发初始化完成事件
+      this.dispatchEvent('initialized');
+    } catch (error) {
+      console.error('Failed to initialize engine:', error);
+      this.state = EngineState.UNINITIALIZED;
+      throw error;
     }
-
-    // 设置统计信息启用状态
-    this._enableStats = options.enableStats || false;
-
-    // 自动启动
-    if (options.autoStart !== false) {
-      this.run();
-    }
-
-    // 派发就绪事件
-    this.dispatchEvent(EngineEventType.Ready);
   }
 
   /**
-   * 创建硬件渲染器
-   * @param options 引擎配置选项
-   * @returns 硬件渲染器实例
+   * 启动引擎
    */
-  private _createHardwareRenderer(options: EngineOptions): IHardwareRenderer {
-    // 根据配置选择渲染器类型
-    const rendererType = options.rendererType ?? RendererType.WebGL2;
-    
-    // 实际创建渲染器的代码（需要实现不同类型的渲染器）
-    // 这里仅为示例
-    let renderer: IHardwareRenderer;
-    
-    // 根据不同的渲染器类型创建对应的渲染器
-    // 实际代码需要实现各种渲染器类
-    switch (rendererType) {
-      case RendererType.WebGL:
-        // renderer = new WebGLRenderer();
-        break;
-      case RendererType.WebGPU:
-        // renderer = new WebGPURenderer();
-        break;
-      case RendererType.WebGL2:
-      default:
-        // renderer = new WebGL2Renderer();
-        break;
+  start(): void {
+    if (this.state === EngineState.RUNNING) {
+      return;
     }
-    
-    // 临时返回任意对象以避免类型错误
-    return {} as IHardwareRenderer;
-  }
 
-  /**
-   * 创建一个新的场景
-   * @param name 场景名称
-   * @returns 新创建的场景
-   */
-  createScene(name?: string): Scene {
-    const scene = new Scene(this, name);
-    return scene;
+    if (this.state === EngineState.UNINITIALIZED) {
+      console.warn('Engine not initialized. Call initialize() first.');
+      return;
+    }
+
+    this.state = EngineState.RUNNING;
+    this.isRunning = true;
+    this.lastFrameTime = performance.now();
+    
+    // 开始主循环
+    this.animationFrameId = requestAnimationFrame(this.mainLoop.bind(this));
+    
+    // 触发启动事件
+    this.dispatchEvent('started');
   }
 
   /**
    * 暂停引擎
    */
   pause(): void {
-    if (!this._isPaused) {
-      this._isPaused = true;
-      if (this._animFrameId) {
-        cancelAnimationFrame(this._animFrameId);
-        this._animFrameId = 0;
-      }
-      if (this._timeoutId) {
-        clearTimeout(this._timeoutId);
-        this._timeoutId = 0;
-      }
+    if (this.state !== EngineState.RUNNING) {
+      return;
     }
+
+    this.state = EngineState.PAUSED;
+    this.isRunning = false;
+    
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = 0;
+    }
+    
+    // 触发暂停事件
+    this.dispatchEvent('paused');
   }
 
   /**
    * 恢复引擎
    */
   resume(): void {
-    if (this._isPaused) {
-      this._isPaused = false;
-      this._time.reset();
-      this._animate();
-    }
-  }
-
-  /**
-   * 更新一帧
-   */
-  update(): void {
-    // 如果帧正在处理中或已销毁，则跳过
-    if (this._frameInProcess || this._destroyed) {
+    if (this.state !== EngineState.PAUSED) {
       return;
     }
 
-    // 标记帧处理中
-    this._frameInProcess = true;
+    this.start();
+  }
 
-    // 更新时间信息
-    this._time.update();
-    const time = this._time.time;
-    const deltaTime = this._time.deltaTime;
+  /**
+   * 引擎主循环
+   */
+  private mainLoop(timestamp: number): void {
+    if (!this.isRunning) {
+      return;
+    }
 
-    // 派发帧开始事件
-    this.dispatchEvent(EngineEventType.BeforeUpdate);
+    // 计算帧时间
+    const deltaTime = timestamp - this.lastFrameTime;
+    const targetFrameTime = 1000 / this.targetFrameRate;
 
-    // 更新输入
-    this.inputManager.update(time, deltaTime);
+    // 如果时间间隔小于目标帧率时间，则跳过这一帧
+    if (deltaTime < targetFrameTime) {
+      this.animationFrameId = requestAnimationFrame(this.mainLoop.bind(this));
+      return;
+    }
 
-    // 更新资源管理器
-    this._resourceManager.update(time);
+    // 更新时间管理器
+    this.time.update(deltaTime);
     
-    // 更新对象池管理器
-    if (this._enableObjectPoolManager) {
-      this.objectPoolManager.update();
-    }
+    // 更新输入管理器
+    this.inputManager.update();
 
+    // 更新场景和游戏对象
+    this.update(this.time.deltaTime);
+
+    // 渲染场景
+    this.render();
+
+    // 记录当前帧时间
+    this.lastFrameTime = timestamp;
+
+    // 请求下一帧
+    this.animationFrameId = requestAnimationFrame(this.mainLoop.bind(this));
+  }
+
+  /**
+   * 更新场景和所有游戏对象
+   * @param deltaTime 时间差(秒)
+   */
+  private update(deltaTime: number): void {
+    const activeScene = this.sceneManager.activeScene;
+    
+    if (!activeScene) {
+      return;
+    }
+    
     // 更新场景
-    if (this._sceneManager.activeScene) {
-      this._sceneManager.activeScene.update(deltaTime);
+    activeScene.update(deltaTime);
+    
+    // 触发更新事件
+    this.dispatchEvent('update', { deltaTime });
+  }
+
+  /**
+   * 渲染当前场景
+   */
+  private render(): void {
+    const activeScene = this.sceneManager.activeScene;
+    
+    if (!activeScene) {
+      return;
     }
-
-    // 派发帧更新完成事件
-    this.dispatchEvent(EngineEventType.AfterUpdate);
-
+    
+    // 设置渲染上下文
+    this.renderContext.setScene(activeScene);
+    
     // 执行渲染
-    this._render();
-
-    // 更新统计信息
-    if (this._enableStats) {
-      this._updateStats(time, deltaTime);
-    }
-
-    // 处理可能的销毁请求
-    if (this._waitingDestroy) {
-      this._destroy();
-    }
-
-    // 标记帧处理完成
-    this._frameInProcess = false;
+    this.renderer.render();
+    
+    // 触发渲染事件
+    this.dispatchEvent('render');
   }
 
   /**
-   * 开始运行引擎
+   * 设置引擎目标帧率
+   * @param fps 每秒帧数
    */
-  run(): void {
-    this.resume();
-    // 发送引擎准备就绪事件
-    this.dispatchEvent(EngineEventType.Ready);
+  setTargetFrameRate(fps: number): void {
+    this.targetFrameRate = Math.max(1, fps);
   }
 
   /**
-   * 强制设备丢失
+   * 创建新场景
+   * @param name 场景名称
+   * @returns 新创建的场景
    */
-  forceLoseDevice(): void {
-    if (!this._isDeviceLost) {
-      this._onDeviceLost();
-    }
+  createScene(name?: string): Scene {
+    return this.sceneManager.createScene(name);
   }
 
   /**
-   * 强制设备恢复
+   * 加载场景
+   * @param scene 要加载的场景
    */
-  forceRestoreDevice(): void {
-    if (this._isDeviceLost) {
-      this._onDeviceRestored();
-    }
+  loadScene(scene: Scene): void {
+    this.sceneManager.setActiveScene(scene);
   }
 
   /**
-   * 销毁引擎
+   * 销毁引擎实例
    */
   destroy(): void {
-    if (this._destroyed) {
+    if (this.state === EngineState.DESTROYED) {
       return;
     }
 
-    if (this._frameInProcess) {
-      this._waitingDestroy = true;
-      return;
-    }
-
-    this._destroy();
-  }
-
-  /**
-   * 调整大小
-   * @param width 宽度
-   * @param height 高度
-   */
-  resize(width: number, height: number): void {
-    this._canvas.resizeByClientSize(width, height);
-    this.dispatchEvent(EngineEventType.Resize);
-  }
-
-  /**
-   * 内部渲染方法
-   */
-  private _render(): void {
-    this._renderCount++;
-    const scenes = this._sceneManager.activeScenes;
-    
-    for (let i = 0, len = scenes.length; i < len; i++) {
-      const scene = scenes[i];
-      
-      // 获取场景的主摄像机
-      const cameras = scene.activeCameras;
-      for (let j = 0, len = cameras.length; j < len; j++) {
-        const camera = cameras[j];
-        // 使用摄像机渲染场景
-        camera.render();
-      }
-    }
-  }
-
-  /**
-   * 更新性能统计
-   * @param time 当前时间戳
-   * @param deltaTime 帧时间
-   */
-  private _updateStats(time: number, deltaTime: number): void {
-    const stats = this._stats;
-
-    // 更新帧时间
-    stats.frameTime = deltaTime * 1000; // 转换为毫秒
-
-    // 更新帧数
-    stats.frames++;
-
-    // 每秒更新一次FPS计数
-    if (time - stats.lastUpdateTime >= 1000) {
-      stats.fps = stats.frames * 1000 / (time - stats.lastUpdateTime);
-      stats.lastUpdateTime = time;
-      stats.frames = 0;
-
-      // 重置绘制统计
-      stats.drawCalls = 0;
-      stats.triangles = 0;
-    }
-  }
-
-  /**
-   * 内部销毁方法
-   */
-  private _destroy(): void {
+    // 停止主循环
     this.pause();
 
-    // 取消事件监听
-    this.removeAllEventListeners();
-
-    // 销毁场景管理器
-    this._sceneManager.destroy();
-
-    // 销毁资源管理器
-    this._resourceManager.destroy();
-
-    // 销毁硬件渲染器
-    this._hardwareRenderer.destroy();
-
-    // 停用对象池管理器
-    if (this._enableObjectPoolManager) {
-      this.objectPoolManager.enableAutoAnalysis(false);
-      this.objectPoolManager.clearAllPools();
+    // 销毁渲染器
+    if (this.renderer) {
+      this.renderer.destroy();
     }
 
-    this._destroyed = true;
-  }
-  
-  /**
-   * 设备丢失回调
-   */
-  private _onDeviceLost(): void {
-    this._isDeviceLost = true;
-    // 发送设备丢失事件
-    this.dispatchEvent(EngineEventType.DeviceLost);
+    // 销毁场景管理器
+    if (this.sceneManager) {
+      this.sceneManager.destroy();
+    }
+
+    // 销毁资源管理器
+    if (this.resourceManager) {
+      this.resourceManager.destroy();
+    }
+
+    // 清空IOC容器
+    this.container.clear();
+
+    this.state = EngineState.DESTROYED;
+    
+    // 触发销毁事件
+    this.dispatchEvent('destroyed');
+    
+    // 调用父类销毁方法
+    super.destroy();
   }
 
   /**
-   * 设备恢复回调
+   * 获取当前引擎状态
    */
-  private _onDeviceRestored(): void {
-    this._isDeviceLost = false;
-    // 发送设备恢复事件
-    this.dispatchEvent(EngineEventType.DeviceRestored);
+  getState(): EngineState {
+    return this.state;
   }
-}
+
+  /**
+   * 获取场景管理器
+   */
+  getSceneManager(): SceneManager {
+    return this.sceneManager;
+  }
+
+  /**
+   * 获取资源管理器
+   */
+  getResourceManager(): ResourceManager {
+    return this.resourceManager;
+  }
+
+  /**
+   * 获取输入管理器
+   */
+  getInputManager(): InputManager {
+    return this.inputManager;
+  }
+
+  /**
+   * 获取时间管理器
+   */
+  getTime(): Time {
+    return this.time;
+  }
+
+  /**
+   * 获取渲染器
+   */
+  getRenderer(): IRenderer {
+    return this.renderer;
+  }
+
+  /**
+   * 获取渲染上下文
+   */
+  getRenderContext(): RenderContext {
+    return this.renderContext;
+  }
+
+  /**
+   * 是否处于调试模式
+   */
+  isDebugMode(): boolean {
+    return this.debugMode;
+  }
+
+  /**
+   * 设置调试模式
+   * @param enabled 是否启用
+   */
+  setDebugMode(enabled: boolean): void {
+    this.debugMode = enabled;
+  }
+} 

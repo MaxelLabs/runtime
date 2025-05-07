@@ -52,7 +52,7 @@ export class EventDispatcher extends MaxObject {
    * @param type 事件类型
    * @param listener 回调函数
    */
-  on(type: string, listener: Function): void {
+  on (type: string, listener: Function): void {
     if (!this.listeners.has(type)) {
       this.listeners.set(type, new Set());
     }
@@ -60,12 +60,27 @@ export class EventDispatcher extends MaxObject {
   }
 
   /**
+   * 添加只执行一次的事件监听器
+   * @param type 事件类型
+   * @param listener 回调函数
+   */
+  once (type: string, listener: Function): void {
+    const onceWrapper = (event: Event) => {
+      this.off(type, onceWrapper);
+      listener(event);
+    };
+
+    this.on(type, onceWrapper);
+  }
+
+  /**
    * 移除事件监听器
    * @param type 事件类型
    * @param listener 回调函数
    */
-  off(type: string, listener: Function): void {
+  off (type: string, listener: Function): void {
     const listeners = this.listeners.get(type);
+
     if (listeners) {
       listeners.delete(listener);
       if (listeners.size === 0) {
@@ -75,17 +90,15 @@ export class EventDispatcher extends MaxObject {
   }
 
   /**
-   * 触发事件
+   * 触发事件 (简化方法)
    * @param type 事件类型
-   * @param event 事件对象
+   * @param data 事件数据
+   * @param bubbles 是否允许冒泡
    */
-  emit(type: string, event: Event): void {
-    const listeners = this.listeners.get(type);
-    if (listeners) {
-      for (const listener of listeners) {
-        listener(event);
-      }
-    }
+  emit (type: string, data?: any, bubbles: boolean = false): boolean {
+    const event = new Event(type, bubbles, data);
+
+    return this.dispatchEvent(event);
   }
 
   /**
@@ -142,6 +155,7 @@ export class EventDispatcher extends MaxObject {
 
       if (listeners) {
         const remainingListeners = new Set(listeners);
+
         remainingListeners.forEach(listener => {
           if (listener instanceof Function) {
             try {
@@ -184,6 +198,7 @@ export class EventDispatcher extends MaxObject {
 
     if (listeners) {
       const remainingListeners = new Set(listeners);
+
       remainingListeners.forEach(listener => {
         if (listener instanceof Function) {
           try {
@@ -230,6 +245,7 @@ export class EventDispatcher extends MaxObject {
 
         if (captureListeners) {
           const remainingListeners = new Set(captureListeners);
+
           remainingListeners.forEach(listener => {
             if (listener instanceof Function) {
               try {
@@ -390,7 +406,7 @@ export class EventDispatcher extends MaxObject {
    * 销毁事件分发器
    */
   override destroy (): void {
-    if (this.destroyed) return;
+    if (this.destroyed) {return;}
     // 移除所有监听器
     this.listeners.clear();
 

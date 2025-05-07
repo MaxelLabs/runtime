@@ -9,16 +9,38 @@ import type { Vector4Like } from './type';
  * 四元数
  */
 export class Quaternion {
-  static multiply(worldRotation: Quaternion, _localRotation: Quaternion): Quaternion {
-    throw new Error('Method not implemented.');
+  /**
+   * 四元数相乘，返回一个新的四元数
+   * @param a - 四元数 a
+   * @param b - 四元数 b
+   * @returns 相乘结果
+   */
+  static multiply (a: Quaternion, b: Quaternion): Quaternion {
+    const ax = a.x, ay = a.y, az = a.z, aw = a.w;
+    const bx = b.x, by = b.y, bz = b.z, bw = b.w;
+
+    const result = new Quaternion();
+
+    result.x = ax * bw + aw * bx + ay * bz - az * by;
+    result.y = ay * bw + aw * by + az * bx - ax * bz;
+    result.z = az * bw + aw * bz + ax * by - ay * bx;
+    result.w = aw * bw - ax * bx - ay * by - az * bz;
+
+    return result;
   }
-  static invert(worldRotation: Quaternion) {
-    throw new Error('Method not implemented.');
+
+  /**
+   * 返回一个四元数的逆
+   * @param q - 四元数
+   * @returns 逆四元数
+   */
+  static invert (q: Quaternion): Quaternion {
+    const result = q.clone();
+
+    return result.invert();
   }
-  static fromMatrix(rotationMatrix: Matrix4) {
-    throw new Error('Method not implemented.');
-  }
-  transformVector(arg0: Vector3) {
+
+  static fromMatrix (rotationMatrix: Matrix4) {
     throw new Error('Method not implemented.');
   }
   private static readonly tempVec0: Vector3 = new Vector3();
@@ -337,11 +359,26 @@ export class Quaternion {
   }
 
   /**
-   * 四元数求逆
-   * @returns 四元数的逆
+   * 求四元数的逆
+   * @returns 返回自身，用于链式调用
    */
   invert (): this {
-    return this.conjugate();
+    // 四元数求逆: q^-1 = q* / |q|^2
+    // 对于单位四元数，求逆等于求共轭: q^-1 = q*
+    // 我们这里假设是单位四元数，所以仅需取负x,y,z即可
+
+    this.x = -this.x;
+    this.y = -this.y;
+    this.z = -this.z;
+
+    // 更新elements数组
+    if (this.elements) {
+      this.elements[0] = this.x;
+      this.elements[1] = this.y;
+      this.elements[2] = this.z;
+    }
+
+    return this;
   }
 
   /**
@@ -522,27 +559,44 @@ export class Quaternion {
   }
 
   /**
-   * 通过四元数旋转向量
-   * @param v - 待旋转向量
-   * @param [out] - 旋转结果，如果没有传入直接覆盖输入值
-   * @returns
+   * 旋转向量
+   * @param arg0 - 要旋转的向量
+   * @returns 旋转后的向量
    */
   rotateVector3 (v: Vector3, out?: Vector3): Vector3 {
-    const { x: qx, y: qy, z: qz, w: qw } = this;
-    const { x: vx, y: vy, z: vz } = v;
+    if (out) {
+      out.copyFrom(v);
 
-    const ix = qw * vx + qy * vz - qz * vy;
-    const iy = qw * vy + qz * vx - qx * vz;
-    const iz = qw * vz + qx * vy - qy * vx;
-    const iw = - qx * vx - qy * vy - qz * vz;
+      return this.transformVector(out);
+    }
 
-    const res = out ?? v;
+    return this.transformVector(v.clone());
+  }
 
-    res.x = ix * qw + iw * -qx + iy * -qz - iz * -qy;
-    res.y = iy * qw + iw * -qy + iz * -qx - ix * -qz;
-    res.z = iz * qw + iw * -qz + ix * -qy - iy * -qx;
+  /**
+   * 变换一个向量 (将旋转应用到向量)
+   * @param v - 要变换的向量
+   * @returns 变换后的向量
+   */
+  transformVector (v: Vector3): Vector3 {
+    // 基于四元数旋转公式: v' = q * v * q^-1
+    // 为效率实现的直接计算方式
 
-    return res;
+    const x = v.x, y = v.y, z = v.z;
+    const qx = this.x, qy = this.y, qz = this.z, qw = this.w;
+
+    // 计算 q * v (四元数乘以向量，将向量视为纯四元数)
+    const ix = qw * x + qy * z - qz * y;
+    const iy = qw * y + qz * x - qx * z;
+    const iz = qw * z + qx * y - qy * x;
+    const iw = -qx * x - qy * y - qz * z;
+
+    // 计算 (q * v) * q^-1
+    v.x = ix * qw + iw * -qx + iy * -qz - iz * -qy;
+    v.y = iy * qw + iw * -qy + iz * -qx - ix * -qz;
+    v.z = iz * qw + iw * -qz + ix * -qy - iy * -qx;
+
+    return v;
   }
 
   /**
@@ -650,5 +704,43 @@ export class Quaternion {
    */
   static fromUnitVectors (from: Vector3, to: Vector3): Quaternion {
     return new Quaternion().setFromUnitVectors(from, to);
+  }
+
+  /**
+   * 从欧拉角创建四元数
+   * @param x - X轴旋转角度(弧度)
+   * @param y - Y轴旋转角度(弧度)
+   * @param z - Z轴旋转角度(弧度)
+   * @returns 返回自身，用于链式调用
+   */
+  fromEulerAngles (x: number, y: number, z: number): this {
+    // 半角
+    const halfX = x * 0.5;
+    const halfY = y * 0.5;
+    const halfZ = z * 0.5;
+
+    // 计算各个角度的sin和cos值
+    const sx = Math.sin(halfX);
+    const cx = Math.cos(halfX);
+    const sy = Math.sin(halfY);
+    const cy = Math.cos(halfY);
+    const sz = Math.sin(halfZ);
+    const cz = Math.cos(halfZ);
+
+    // 计算四元数的各个分量
+    this.x = sx * cy * cz - cx * sy * sz;
+    this.y = cx * sy * cz + sx * cy * sz;
+    this.z = cx * cy * sz - sx * sy * cz;
+    this.w = cx * cy * cz + sx * sy * sz;
+
+    // 更新elements数组
+    if (this.elements) {
+      this.elements[0] = this.x;
+      this.elements[1] = this.y;
+      this.elements[2] = this.z;
+      this.elements[3] = this.w;
+    }
+
+    return this;
   }
 }

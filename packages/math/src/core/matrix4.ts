@@ -476,4 +476,140 @@ export class Matrix4 {
   getElements (): Float32Array {
     return this.elements;
   }
+
+  /**
+   * 矩阵乘法，将两个矩阵相乘并将结果存储在目标矩阵中
+   * @param a - 第一个矩阵
+   * @param b - 第二个矩阵
+   * @param target - 目标矩阵，用于存储结果
+   * @returns 目标矩阵
+   */
+  static multiply (a: Matrix4, b: Matrix4, target: Matrix4): Matrix4 {
+    const ae = a.getElements();
+    const be = b.getElements();
+    const te = target.getElements();
+
+    const a11 = ae[0], a12 = ae[4], a13 = ae[8], a14 = ae[12];
+    const a21 = ae[1], a22 = ae[5], a23 = ae[9], a24 = ae[13];
+    const a31 = ae[2], a32 = ae[6], a33 = ae[10], a34 = ae[14];
+    const a41 = ae[3], a42 = ae[7], a43 = ae[11], a44 = ae[15];
+
+    const b11 = be[0], b12 = be[4], b13 = be[8], b14 = be[12];
+    const b21 = be[1], b22 = be[5], b23 = be[9], b24 = be[13];
+    const b31 = be[2], b32 = be[6], b33 = be[10], b34 = be[14];
+    const b41 = be[3], b42 = be[7], b43 = be[11], b44 = be[15];
+
+    te[0] = a11 * b11 + a12 * b21 + a13 * b31 + a14 * b41;
+    te[1] = a21 * b11 + a22 * b21 + a23 * b31 + a24 * b41;
+    te[2] = a31 * b11 + a32 * b21 + a33 * b31 + a34 * b41;
+    te[3] = a41 * b11 + a42 * b21 + a43 * b31 + a44 * b41;
+
+    te[4] = a11 * b12 + a12 * b22 + a13 * b32 + a14 * b42;
+    te[5] = a21 * b12 + a22 * b22 + a23 * b32 + a24 * b42;
+    te[6] = a31 * b12 + a32 * b22 + a33 * b32 + a34 * b42;
+    te[7] = a41 * b12 + a42 * b22 + a43 * b32 + a44 * b42;
+
+    te[8] = a11 * b13 + a12 * b23 + a13 * b33 + a14 * b43;
+    te[9] = a21 * b13 + a22 * b23 + a23 * b33 + a24 * b43;
+    te[10] = a31 * b13 + a32 * b23 + a33 * b33 + a34 * b43;
+    te[11] = a41 * b13 + a42 * b23 + a43 * b33 + a44 * b43;
+
+    te[12] = a11 * b14 + a12 * b24 + a13 * b34 + a14 * b44;
+    te[13] = a21 * b14 + a22 * b24 + a23 * b34 + a24 * b44;
+    te[14] = a31 * b14 + a32 * b24 + a33 * b34 + a34 * b44;
+    te[15] = a41 * b14 + a42 * b24 + a43 * b34 + a44 * b44;
+
+    return target;
+  }
+
+  /**
+   * 分解矩阵为位置、旋转和缩放
+   * @param position - 用于存储位置的向量
+   * @param rotation - 用于存储旋转的四元数
+   * @param scale - 用于存储缩放的向量
+   * @returns 返回自身，用于链式调用
+   */
+  decompose (position: Vector3, rotation: Quaternion, scale: Vector3): this {
+    const e = this.elements;
+
+    // 提取位置
+    position.x = e[12];
+    position.y = e[13];
+    position.z = e[14];
+
+    // 创建临时变量用于计算
+    const matrix = this.clone();
+    const me = matrix.elements;
+
+    // 移除平移部分
+    me[12] = 0;
+    me[13] = 0;
+    me[14] = 0;
+    me[15] = 1;
+
+    // 提取缩放
+    // 计算矩阵各列的长度
+    const sx = new Vector3(me[0], me[1], me[2]).length();
+    const sy = new Vector3(me[4], me[5], me[6]).length();
+    const sz = new Vector3(me[8], me[9], me[10]).length();
+
+    scale.x = sx;
+    scale.y = sy;
+    scale.z = sz;
+
+    // 移除缩放
+    if (sx !== 0) {
+      me[0] /= sx;
+      me[1] /= sx;
+      me[2] /= sx;
+    }
+    if (sy !== 0) {
+      me[4] /= sy;
+      me[5] /= sy;
+      me[6] /= sy;
+    }
+    if (sz !== 0) {
+      me[8] /= sz;
+      me[9] /= sz;
+      me[10] /= sz;
+    }
+
+    // 此时矩阵只包含旋转信息，提取旋转四元数
+    rotation.setFromRotationMatrix(matrix);
+
+    return this;
+  }
+
+  /**
+   * 创建一个朝向指定方向的旋转矩阵
+   * @param forward - 前方向向量
+   * @param up - 上方向向量
+   * @returns 返回自身，用于链式调用
+   */
+  setLookRotation (forward: Vector3, up: Vector3): this {
+    // 确保前方向是单位向量
+    const f = forward.normalized();
+
+    // 计算右方向（确保与上方向垂直）
+    const r = Vector3.cross(up, f).normalized();
+
+    // 重新计算上方向（确保三个方向互相垂直）
+    const u = Vector3.cross(f, r).normalized();
+
+    const e = this.elements;
+
+    // 构建旋转矩阵
+    e[0] = r.x;
+    e[4] = r.y;
+    e[8] = r.z;
+    e[1] = u.x;
+    e[5] = u.y;
+    e[9] = u.z;
+    e[2] = f.x;
+    e[6] = f.y;
+    e[10] = f.z;
+
+    // 保持平移和缩放不变
+    return this;
+  }
 }

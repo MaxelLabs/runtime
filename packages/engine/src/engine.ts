@@ -14,6 +14,7 @@ import {
   ShaderMacro,
   ShaderMacroCollection,
   Time,
+  Event,
 } from '@maxellabs/core';
 
 /**
@@ -80,7 +81,7 @@ export class Engine extends EventDispatcher {
   /** @internal 硬件渲染器 */
   _hardwareRenderer: IRHIDevice;
   /** @internal 渲染上下文 */
-  _renderContext: RenderContext = new RenderContext(this);
+  _renderContext: RenderContext;
   /** @internal 全局着色器宏集合 */
   _globalShaderMacro: ShaderMacroCollection = new ShaderMacroCollection();
   /** @internal 渲染次数统计 */
@@ -108,8 +109,6 @@ export class Engine extends EventDispatcher {
   private _targetFrameRate: number = 60;
   /** 目标帧间隔（毫秒） */
   private _targetFrameInterval: number = 1000 / 60;
-  /** 是否已销毁 */
-  private _destroyed: boolean = false;
   /** 帧处理中标志 */
   private _frameInProcess: boolean = false;
   /** 等待销毁标志 */
@@ -226,13 +225,6 @@ export class Engine extends EventDispatcher {
   }
 
   /**
-   * 引擎是否已销毁
-   */
-  override get destroyed (): boolean {
-    return this._destroyed;
-  }
-
-  /**
    * 获取性能统计信息
    */
   get stats () {
@@ -249,8 +241,8 @@ export class Engine extends EventDispatcher {
     // 创建画布
     this._canvas = new Canvas(options.canvas);
 
-    // 创建渲染上下文
-    this._renderContext = new RenderContext();
+    // 创建渲染上下文 - 由于循环依赖，需要特殊处理
+    this._renderContext = new RenderContext(this as any);
 
     // 创建硬件渲染器（从RHI包中导入相应的渲染器）
     this._hardwareRenderer = this._createRenderer(options);
@@ -278,10 +270,7 @@ export class Engine extends EventDispatcher {
       // 监听对象池性能分析事件
       this.objectPoolManager.on(ObjectPoolManagerEventType.PERFORMANCE_ANALYSIS, (e: any) => {
         // 转发到引擎事件
-        this.dispatchEvent({
-          type: EngineEventType.ObjectPoolAnalysis,
-          data: e,
-        });
+        this.dispatchEvent(new Event(EngineEventType.ObjectPoolAnalysis, false, e));
       });
     }
 
@@ -294,9 +283,7 @@ export class Engine extends EventDispatcher {
     }
 
     // 派发就绪事件
-    this.dispatchEvent({
-      type: EngineEventType.Ready,
-    });
+    this.dispatchEvent(new Event(EngineEventType.Ready));
   }
 
   /**
@@ -312,21 +299,21 @@ export class Engine extends EventDispatcher {
     const rendererType = options.rendererType ?? RendererType.WebGL2;
 
     // 在实际环境中，应该从RHI包导入相应的渲染器类
-    let renderer: IRHIDevice;
+    let _renderer: IRHIDevice;
 
     switch (rendererType) {
       case RendererType.WebGL:
         // 导入WebGL渲染器
-        // renderer = new WebGLRenderer();
+        // _renderer = new WebGLRenderer();
         break;
       case RendererType.WebGPU:
         // 导入WebGPU渲染器
-        // renderer = new WebGPURenderer();
+        // _renderer = new WebGPURenderer();
         break;
       case RendererType.WebGL2:
       default:
         // 导入WebGL2渲染器
-        // renderer = new WebGL2Renderer();
+        // _renderer = new WebGL2Renderer();
         break;
     }
 
@@ -394,7 +381,7 @@ export class Engine extends EventDispatcher {
    */
   update (): void {
     // 如果帧正在处理中或已销毁，则跳过
-    if (this._frameInProcess || this._destroyed) {
+    if (this._frameInProcess || this.destroyed) {
       return;
     }
 
@@ -407,9 +394,7 @@ export class Engine extends EventDispatcher {
     const deltaTime = this._time.deltaTime;
 
     // 派发帧开始事件
-    this.dispatchEvent({
-      type: EngineEventType.BeforeUpdate,
-    });
+    this.dispatchEvent(new Event(EngineEventType.BeforeUpdate));
 
     // 更新对象池管理器
     if (this._enableObjectPoolManager) {
@@ -420,9 +405,7 @@ export class Engine extends EventDispatcher {
     this._sceneManager.update(deltaTime);
 
     // 派发帧更新完成事件
-    this.dispatchEvent({
-      type: EngineEventType.AfterUpdate,
-    });
+    this.dispatchEvent(new Event(EngineEventType.AfterUpdate));
 
     // 执行渲染
     this._render();
@@ -470,13 +453,12 @@ export class Engine extends EventDispatcher {
    * 销毁引擎
    */
   override destroy (): void {
-    if (this._destroyed) {
+    if (this.destroyed) {
       return;
     }
 
     if (this._frameInProcess) {
       this._waitingDestroy = true;
-
       return;
     }
 
@@ -490,9 +472,7 @@ export class Engine extends EventDispatcher {
    */
   resize (width: number, height: number): void {
     this._canvas.resizeByClientSize(width, height);
-    this.dispatchEvent({
-      type: EngineEventType.Resize,
-    });
+    this.dispatchEvent(new Event(EngineEventType.Resize));
   }
 
   /**
@@ -502,23 +482,18 @@ export class Engine extends EventDispatcher {
     this._renderCount++;
 
     // 派发渲染开始事件
-    this.dispatchEvent({
-      type: EngineEventType.BeforeRender,
-    });
+    this.dispatchEvent(new Event(EngineEventType.BeforeRender));
 
     const scenes = this._sceneManager.activeScenes;
 
     for (let i = 0, len = scenes.length; i < len; i++) {
       const scene = scenes[i];
-
       // 渲染场景
       scene.render();
     }
 
     // 派发渲染完成事件
-    this.dispatchEvent({
-      type: EngineEventType.AfterRender,
-    });
+    this.dispatchEvent(new Event(EngineEventType.AfterRender));
   }
 
   /**
@@ -572,8 +547,6 @@ export class Engine extends EventDispatcher {
       this.objectPoolManager.enableAutoAnalysis(false);
       this.objectPoolManager.clearAllPools();
     }
-
-    this._destroyed = true;
   }
 
   /**
@@ -582,9 +555,7 @@ export class Engine extends EventDispatcher {
   private _onDeviceLost (): void {
     this._isDeviceLost = true;
     // 发送设备丢失事件
-    this.dispatchEvent({
-      type: EngineEventType.DeviceLost,
-    });
+    this.dispatchEvent(new Event(EngineEventType.DeviceLost));
   }
 
   /**
@@ -593,8 +564,6 @@ export class Engine extends EventDispatcher {
   private _onDeviceRestored (): void {
     this._isDeviceLost = false;
     // 发送设备恢复事件
-    this.dispatchEvent({
-      type: EngineEventType.DeviceRestored,
-    });
+    this.dispatchEvent(new Event(EngineEventType.DeviceRestored));
   }
 }
