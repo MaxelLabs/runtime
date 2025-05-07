@@ -33,14 +33,14 @@ export * from './interface';
 // 基础组件
 export * from './base/event';
 export * from './base/eventDispatcher';
-export * from './base/Canvas';
+export * from './base/canvas';
 export * from './base/Time';
 export * from './base/ObjectPool';
 export * from './base/ObjectPoolManager';
 export * from './base/eventDispatcher';
 
 // 引擎核心
-export * from './Engine';
+export * from './engine';
 
 // 场景组件
 export * from './scene/Scene';
