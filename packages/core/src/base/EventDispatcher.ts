@@ -1,3 +1,4 @@
+import { MaxObject } from './maxObject';
 import { Event } from './event';
 /**
  * 事件监听器接口
@@ -17,9 +18,9 @@ export interface EventListener {
  * 事件分发器
  * 支持事件优先级、一次性事件、事件冒泡和捕获
  */
-export class EventDispatcher {
-  /** 事件映射表 */
-  private listeners: Map<string, EventListener[]> = new Map();
+export class EventDispatcher extends MaxObject {
+  /** 事件监听器映射表 */
+  private listeners: Map<string, Set<Function>> = new Map();
   /** 正在派发中的事件类型 */
   private dispatchingEvents: Set<string> = new Set();
   /** 父事件分发器 */
@@ -43,6 +44,7 @@ export class EventDispatcher {
    * @param tag 派发器标签
    */
   constructor (id?: string, tag?: string) {
+    super();
     this.id = id || `dispatcher-${Math.floor(Math.random() * 10000)}`;
     this.tag = tag || '';
   }
@@ -50,148 +52,42 @@ export class EventDispatcher {
   /**
    * 添加事件监听器
    * @param type 事件类型
-   * @param callback 回调函数
-   * @param target 上下文对象
-   * @param priority 优先级，数值越大越先执行
-   * @param once 是否只执行一次
-   * @returns 当前实例，支持链式调用
+   * @param listener 回调函数
    */
-  on (type: string, callback: Function, target?: any, priority: number = 0, once: boolean = false): this {
-    if (!type || !callback) {
-      return this;
-    }
-
-    // 确保有该类型的监听器数组
+  on(type: string, listener: Function): void {
     if (!this.listeners.has(type)) {
-      this.listeners.set(type, []);
+      this.listeners.set(type, new Set());
     }
-
-    const listeners = this.listeners.get(type) as EventListener[];
-
-    // 检查是否已存在相同的监听器
-    for (const listener of listeners) {
-      if (listener.callback === callback && listener.target === target) {
-        // 更新现有监听器
-        listener.priority = priority;
-        listener.once = once;
-
-        return this;
-      }
-    }
-
-    // 添加新监听器
-    listeners.push({
-      callback,
-      target,
-      priority,
-      once,
-    });
-
-    // 如果不在派发中，则立即排序
-    if (!this.dispatchingEvents.has(type)) {
-      this.sortListeners(type);
-    }
-
-    return this;
-  }
-
-  /**
-   * 添加一次性事件监听器
-   * @param type 事件类型
-   * @param callback 回调函数
-   * @param target 上下文对象
-   * @param priority 优先级
-   * @returns 当前实例，支持链式调用
-   */
-  once (type: string, callback: Function, target?: any, priority: number = 0): this {
-    return this.on(type, callback, target, priority, true);
+    this.listeners.get(type)!.add(listener);
   }
 
   /**
    * 移除事件监听器
-   * @param type 事件类型，如果为空则移除所有类型
-   * @param callback 回调函数，如果为空则移除该类型的所有监听器
-   * @param target 上下文对象
-   * @returns 当前实例，支持链式调用
+   * @param type 事件类型
+   * @param listener 回调函数
    */
-  off (type?: string, callback?: Function, target?: any): this {
-    if (!type) {
-      // 移除所有监听器
-      this.listeners.clear();
-
-      return this;
-    }
-
-    if (!this.listeners.has(type)) {
-      return this;
-    }
-
-    const listeners = this.listeners.get(type) as EventListener[];
-
-    // 如果没有指定回调，则移除该类型的所有监听器
-    if (!callback) {
-      if (this.dispatchingEvents.has(type)) {
-        // 如果正在派发该类型事件，则将所有监听器标记为一次性
-        for (const listener of listeners) {
-          listener.once = true;
-        }
-      } else {
-        // 否则直接移除所有监听器
+  off(type: string, listener: Function): void {
+    const listeners = this.listeners.get(type);
+    if (listeners) {
+      listeners.delete(listener);
+      if (listeners.size === 0) {
         this.listeners.delete(type);
       }
-
-      return this;
     }
-
-    // 如果正在派发该类型事件，不能直接修改数组
-    if (this.dispatchingEvents.has(type)) {
-      for (const listener of listeners) {
-        if (listener.callback === callback && (!target || listener.target === target)) {
-          listener.once = true;
-        }
-      }
-    } else {
-      // 过滤出不匹配的监听器
-      const filteredListeners = listeners.filter(listener =>
-        listener.callback !== callback || (target && listener.target !== target)
-      );
-
-      if (filteredListeners.length === 0) {
-        // 如果没有剩余监听器，则删除类型
-        this.listeners.delete(type);
-      } else {
-        // 否则更新监听器数组
-        this.listeners.set(type, filteredListeners);
-      }
-    }
-
-    return this;
   }
 
   /**
-   * 移除所有事件监听器
-   * @returns 当前实例，支持链式调用
+   * 触发事件
+   * @param type 事件类型
+   * @param event 事件对象
    */
-  removeAllEventListeners (): this {
-    // 如果有正在派发的事件，将这些事件的所有监听器设为一次性
-    for (const type of this.dispatchingEvents) {
-      const listeners = this.listeners.get(type);
-
-      if (listeners) {
-        for (const listener of listeners) {
-          listener.once = true;
-        }
+  emit(type: string, event: Event): void {
+    const listeners = this.listeners.get(type);
+    if (listeners) {
+      for (const listener of listeners) {
+        listener(event);
       }
     }
-
-    // 清空其他未派发的事件监听器
-    for (const [type] of this.listeners.entries()) {
-      if (!this.dispatchingEvents.has(type)) {
-        this.listeners.delete(type);
-      }
-    }
-
-    return this;
   }
 
   /**
@@ -246,12 +142,21 @@ export class EventDispatcher {
     if (this.listeners.has(type) && !this.dispatchingEvents.has(type)) {
       const listeners = this.listeners.get(type);
 
-      const remainingListeners = listeners?.filter(listener => !listener.once) || [];
+      if (listeners) {
+        const remainingListeners = new Set(listeners);
+        remainingListeners.forEach(listener => {
+          if (listener instanceof Function) {
+            try {
+              listener(event);
+            } catch (e) {
+              console.error(`Error in event handler for ${type}:`, e);
+            }
+          }
+        });
 
-      if (remainingListeners.length === 0) {
-        this.listeners.delete(type);
-      } else {
-        this.listeners.set(type, remainingListeners);
+        if (remainingListeners.size === 0) {
+          this.listeners.delete(type);
+        }
       }
     }
 
@@ -276,19 +181,24 @@ export class EventDispatcher {
       return false;
     }
 
-    const listeners = this.listeners.get(type) || [];
+    const listeners = this.listeners.get(type);
     let processed = false;
 
-    for (const listener of listeners) {
-      if (event.isImmediatelyStopped()) {
-        break;
-      }
+    if (listeners) {
+      const remainingListeners = new Set(listeners);
+      remainingListeners.forEach(listener => {
+        if (listener instanceof Function) {
+          try {
+            listener(event);
+            processed = true;
+          } catch (e) {
+            console.error(`Error in event handler for ${type}:`, e);
+          }
+        }
+      });
 
-      try {
-        listener.callback.call(listener.target || this, event);
-        processed = true;
-      } catch (e) {
-        console.error(`Error in event handler for ${type}:`, e);
+      if (remainingListeners.size === 0) {
+        this.listeners.delete(type);
       }
     }
 
@@ -318,18 +228,23 @@ export class EventDispatcher {
 
       if (this.listeners.has(captureType)) {
         event.currentTarget = this;
-        const listeners = this.listeners.get(captureType) || [];
+        const captureListeners = this.listeners.get(captureType);
 
-        for (const listener of listeners) {
-          if (event.isImmediatelyStopped()) {
-            break;
-          }
+        if (captureListeners) {
+          const remainingListeners = new Set(captureListeners);
+          remainingListeners.forEach(listener => {
+            if (listener instanceof Function) {
+              try {
+                listener(event);
+                success = true;
+              } catch (e) {
+                console.error(`Error in capture event handler for ${captureType}:`, e);
+              }
+            }
+          });
 
-          try {
-            listener.callback.call(listener.target || this, event);
-            success = true;
-          } catch (e) {
-            console.error(`Error in capture event handler for ${captureType}:`, e);
+          if (remainingListeners.size === 0) {
+            this.listeners.delete(captureType);
           }
         }
       }
@@ -367,7 +282,7 @@ export class EventDispatcher {
    * @returns 是否有该类型的监听器
    */
   hasEventListener (type: string): boolean {
-    return this.listeners.has(type) && (this.listeners.get(type) ?? []).length > 0;
+    return this.listeners.has(type) && (this.listeners.get(type) ?? new Set()).size > 0;
   }
 
   /**
@@ -380,7 +295,7 @@ export class EventDispatcher {
       let count = 0;
 
       for (const listeners of this.listeners.values()) {
-        count += listeners.length;
+        count += listeners.size;
       }
 
       return count;
@@ -390,7 +305,7 @@ export class EventDispatcher {
       return 0;
     }
 
-    return (this.listeners.get(type) ?? []).length;
+    return (this.listeners.get(type) ?? new Set()).size;
   }
 
   /**
@@ -444,20 +359,6 @@ export class EventDispatcher {
   }
 
   /**
-   * 排序事件监听器，按优先级降序排序
-   * @param type 事件类型
-   */
-  private sortListeners (type: string): void {
-    if (!this.listeners.has(type)) {
-      return;
-    }
-
-    const listeners = this.listeners.get(type) || [];
-
-    listeners.sort((a, b) => b.priority - a.priority);
-  }
-
-  /**
    * 暂停事件分发
    */
   pauseEvents (): void {
@@ -491,8 +392,9 @@ export class EventDispatcher {
    * 销毁事件分发器
    */
   destroy (): void {
+    if (this.destroyed) return;
     // 移除所有监听器
-    this.removeAllEventListeners();
+    this.listeners.clear();
 
     // 移除自己与父级的关联
     if (this.parent) {
@@ -508,6 +410,6 @@ export class EventDispatcher {
 
     // 清空其他属性
     this.dispatchingEvents.clear();
-    this.listeners.clear();
+    super.destroy();
   }
 }

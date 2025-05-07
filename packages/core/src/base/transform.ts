@@ -1,21 +1,40 @@
-import { Component } from './component';
-import type { Entity } from './entity';
-import { Vector3, Quaternion, Matrix4 } from '@maxellabs/math';
+import { MaxObject } from './maxObject';
+import { Entity } from './entity';
+import { Vector3 } from '../math/Vector3';
+import { Quaternion } from '../math/Quaternion';
+import { Matrix4 } from '@maxellabs/math';
 
 /**
  * 变换组件，处理实体在3D空间中的位置、旋转和缩放
  */
-export class Transform extends Component {
+export class Transform extends MaxObject {
+  /** 所属实体 */
+  entity: Entity;
+
+  /** 父变换 */
+  parent: Transform | null = null;
+
+  /** 子变换列表 */
+  children: Transform[] = [];
+
   /** 本地位置 */
-  private _localPosition: Vector3 = new Vector3();
-  /** 本地旋转（四元数） */
-  private _localRotation: Quaternion = new Quaternion();
+  position: Vector3 = new Vector3();
+
+  /** 本地旋转 */
+  rotation: Quaternion = new Quaternion();
+
   /** 本地缩放 */
-  private _localScale: Vector3 = new Vector3(1, 1, 1);
-  /** 本地变换矩阵 */
-  private _localMatrix: Matrix4 = new Matrix4();
-  /** 世界变换矩阵 */
-  private _worldMatrix: Matrix4 = new Matrix4();
+  scale: Vector3 = new Vector3(1, 1, 1);
+
+  /** 世界位置 */
+  worldPosition: Vector3 = new Vector3();
+
+  /** 世界旋转 */
+  worldRotation: Quaternion = new Quaternion();
+
+  /** 世界缩放 */
+  worldScale: Vector3 = new Vector3(1, 1, 1);
+
   /** 本地矩阵是否需要更新 */
   private _localMatrixDirty: boolean = true;
   /** 世界矩阵是否需要更新 */
@@ -39,19 +58,88 @@ export class Transform extends Component {
    * 创建一个新的变换组件
    * @param entity 组件所属的实体
    */
-  constructor (entity: Entity) {
-    super(entity);
+  constructor(entity: Entity) {
+    super();
+    this.entity = entity;
+  }
+
+  /** 设置父变换 */
+  setParent(parent: Transform | null): void {
+    if (this.parent === parent) return;
+
+    // 从原父节点移除
+    if (this.parent) {
+      const index = this.parent.children.indexOf(this);
+      if (index !== -1) {
+        this.parent.children.splice(index, 1);
+      }
+    }
+
+    // 设置新父节点
+    this.parent = parent;
+    if (parent) {
+      parent.children.push(this);
+    }
+
+    // 更新世界变换
+    this.updateWorldTransform();
+  }
+
+  /** 更新世界变换 */
+  updateWorldTransform(): void {
+    if (this.parent) {
+      // 计算世界位置
+      this.worldPosition.copy(this.position).applyQuaternion(this.parent.worldRotation)
+        .multiply(this.parent.worldScale).add(this.parent.worldPosition);
+
+      // 计算世界旋转
+      this.worldRotation.copy(this.parent.worldRotation).multiply(this.rotation);
+
+      // 计算世界缩放
+      this.worldScale.copy(this.parent.worldScale).multiply(this.scale);
+    } else {
+      this.worldPosition.copy(this.position);
+      this.worldRotation.copy(this.rotation);
+      this.worldScale.copy(this.scale);
+    }
+
+    // 更新子节点
+    for (const child of this.children) {
+      child.updateWorldTransform();
+    }
+  }
+
+  /** 销毁变换 */
+  destroy(): void {
+    if (this.destroyed) return;
+    
+    // 移除所有子节点
+    for (const child of this.children) {
+      child.destroy();
+    }
+    this.children = [];
+
+    // 从父节点移除
+    if (this.parent) {
+      const index = this.parent.children.indexOf(this);
+      if (index !== -1) {
+        this.parent.children.splice(index, 1);
+      }
+      this.parent = null;
+    }
+
+    super.destroy();
   }
 
   /** 获取本地位置 */
   get localPosition (): Vector3 {
-    return this._localPosition.clone();
+    return this.position.clone();
   }
 
   /** 设置本地位置 */
   set localPosition (value: Vector3) {
-    if (!this._localPosition.equals(value)) {
-      this._localPosition.copyFrom(value);
+    if (!this.position.equals(value)) {
+      this.position.copyFrom(value);
       this._localMatrixDirty = true;
       this._worldMatrixDirty = true;
     }
@@ -59,22 +147,22 @@ export class Transform extends Component {
 
   /** 设置本地位置的x、y、z分量 */
   setLocalPosition (x: number, y: number, z: number): void {
-    if (this._localPosition.x !== x || this._localPosition.y !== y || this._localPosition.z !== z) {
-      this._localPosition.set(x, y, z);
+    if (this.position.x !== x || this.position.y !== y || this.position.z !== z) {
+      this.position.set(x, y, z);
       this._localMatrixDirty = true;
       this._worldMatrixDirty = true;
     }
   }
 
-  /** 获取本地旋转（四元数） */
+  /** 获取本地旋转 */
   get localRotation (): Quaternion {
-    return this._localRotation.clone();
+    return this.rotation.clone();
   }
 
-  /** 设置本地旋转（四元数） */
+  /** 设置本地旋转 */
   set localRotation (value: Quaternion) {
-    if (!this._localRotation.equals(value)) {
-      this._localRotation.copyFrom(value);
+    if (!this.rotation.equals(value)) {
+      this.rotation.copyFrom(value);
       this._localMatrixDirty = true;
       this._worldMatrixDirty = true;
       this._directionsDirty = true;
@@ -83,9 +171,9 @@ export class Transform extends Component {
 
   /** 设置本地旋转的x、y、z、w分量 */
   setLocalRotation (x: number, y: number, z: number, w: number): void {
-    if (this._localRotation.x !== x || this._localRotation.y !== y ||
-        this._localRotation.z !== z || this._localRotation.w !== w) {
-      this._localRotation.set(x, y, z, w);
+    if (this.rotation.x !== x || this.rotation.y !== y ||
+        this.rotation.z !== z || this.rotation.w !== w) {
+      this.rotation.set(x, y, z, w);
       this._localMatrixDirty = true;
       this._worldMatrixDirty = true;
       this._directionsDirty = true;
@@ -94,7 +182,7 @@ export class Transform extends Component {
 
   /** 设置本地旋转（欧拉角，以弧度为单位） */
   setLocalRotationFromEuler (x: number, y: number, z: number): void {
-    this._localRotation.setFromEuler(x, y, z);
+    this.rotation.setFromEuler(x, y, z);
     this._localMatrixDirty = true;
     this._worldMatrixDirty = true;
     this._directionsDirty = true;
@@ -102,13 +190,13 @@ export class Transform extends Component {
 
   /** 获取本地缩放 */
   get localScale (): Vector3 {
-    return this._localScale.clone();
+    return this.scale.clone();
   }
 
   /** 设置本地缩放 */
   set localScale (value: Vector3) {
-    if (!this._localScale.equals(value)) {
-      this._localScale.copyFrom(value);
+    if (!this.scale.equals(value)) {
+      this.scale.copyFrom(value);
       this._localMatrixDirty = true;
       this._worldMatrixDirty = true;
     }
@@ -116,8 +204,8 @@ export class Transform extends Component {
 
   /** 设置本地缩放的x、y、z分量 */
   setLocalScale (x: number, y: number, z: number): void {
-    if (this._localScale.x !== x || this._localScale.y !== y || this._localScale.z !== z) {
-      this._localScale.set(x, y, z);
+    if (this.scale.x !== x || this.scale.y !== y || this.scale.z !== z) {
+      this.scale.set(x, y, z);
       this._localMatrixDirty = true;
       this._worldMatrixDirty = true;
     }
@@ -198,10 +286,10 @@ export class Transform extends Component {
       // 如果有父级，需要将本地旋转与父级的世界旋转组合
       const parentTransform = this.entity.parent.transform;
 
-      return Quaternion.multiply(parentTransform.worldRotation, this._localRotation);
+      return Quaternion.multiply(parentTransform.worldRotation, this.rotation);
     } else {
       // 没有父级，世界旋转等于本地旋转
-      return this._localRotation.clone();
+      return this.rotation.clone();
     }
   }
 
@@ -230,13 +318,13 @@ export class Transform extends Component {
       const parentWorldScale = parentTransform.worldScale;
 
       return new Vector3(
-        this._localScale.x * parentWorldScale.x,
-        this._localScale.y * parentWorldScale.y,
-        this._localScale.z * parentWorldScale.z
+        this.scale.x * parentWorldScale.x,
+        this.scale.y * parentWorldScale.y,
+        this.scale.z * parentWorldScale.z
       );
     } else {
       // 没有父级，世界缩放等于本地缩放
-      return this._localScale.clone();
+      return this.scale.clone();
     }
   }
 
@@ -260,7 +348,7 @@ export class Transform extends Component {
 
   /** 更新本地变换矩阵 */
   private _updateLocalMatrix (): void {
-    this._localMatrix.compose(this._localPosition, this._localRotation, this._localScale);
+    this._localMatrix.compose(this.position, this.rotation, this.scale);
     this._localMatrixDirty = false;
   }
 
@@ -337,7 +425,7 @@ export class Transform extends Component {
     const q = Quaternion.fromAxisAngle(axis, angle);
 
     // 将此旋转应用到当前旋转
-    this.localRotation = Quaternion.multiply(this._localRotation, q);
+    this.localRotation = Quaternion.multiply(this.rotation, q);
   }
 
   /** 沿世界坐标系的X轴旋转 */
@@ -366,7 +454,7 @@ export class Transform extends Component {
 
   /** 平移指定的距离 */
   translate (translation: Vector3): void {
-    this._localPosition.add(translation);
+    this.position.add(translation);
     this._localMatrixDirty = true;
     this._worldMatrixDirty = true;
   }
