@@ -1,11 +1,9 @@
-import {
+import type {
   IRHITexture,
   IRHITextureView,
   RHITextureDescriptor,
   RHITextureFormat,
-  RHITextureUsage,
-  RHITextureViewDescriptor
-} from '@maxellabs/core';
+  RHITextureUsage } from '@maxellabs/core';
 import { WebGLUtils } from '../utils/WebGLUtils';
 import { WebGLTextureView } from './WebGLTextureView';
 
@@ -33,11 +31,11 @@ export class WebGLTexture implements IRHITexture {
 
   /**
    * 创建WebGL纹理
-   * 
+   *
    * @param gl WebGL上下文
    * @param descriptor 纹理描述符
    */
-  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHITextureDescriptor) {
+  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHITextureDescriptor) {
     this.gl = gl;
     this.utils = new WebGLUtils(gl);
     this.width = descriptor.width;
@@ -49,12 +47,13 @@ export class WebGLTexture implements IRHITexture {
     this.dimension = descriptor.dimension || '2d';
     this.sampleCount = descriptor.sampleCount || 1;
     this.label = descriptor.label;
-    
+
     // 确定纹理目标
     this.target = this.getGLTextureTarget(this.dimension);
-    
+
     // 确定内部格式、格式和类型
     const formatInfo = this.utils.textureFormatToGL(this.format);
+
     this.glInternalFormat = formatInfo.internalFormat;
     this.glFormat = formatInfo.format;
     this.glType = formatInfo.type;
@@ -72,8 +71,9 @@ export class WebGLTexture implements IRHITexture {
   /**
    * 初始化纹理
    */
-  private initializeTexture(): void {
+  private initializeTexture (): void {
     const gl = this.gl;
+
     gl.bindTexture(this.target, this.glTexture);
 
     // 默认纹理参数
@@ -81,12 +81,13 @@ export class WebGLTexture implements IRHITexture {
     gl.texParameteri(this.target, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(this.target, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(this.target, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    
+
     // 根据纹理维度初始化
     if (this.dimension === 'cube') {
       // 立方体贴图
       for (let i = 0; i < 6; i++) {
         const target = gl.TEXTURE_CUBE_MAP_POSITIVE_X + i;
+
         gl.texImage2D(target, 0, this.glInternalFormat, this.width, this.height, 0, this.glFormat, this.glType, null);
       }
     } else if (this.dimension === '3d') {
@@ -112,12 +113,12 @@ export class WebGLTexture implements IRHITexture {
       // 2D纹理
       gl.texImage2D(this.target, 0, this.glInternalFormat, this.width, this.height, 0, this.glFormat, this.glType, null);
     }
-    
+
     // 如果需要mipmap，生成mipmap
     if (this.mipLevelCount > 1) {
       gl.generateMipmap(this.target);
     }
-    
+
     // 解绑纹理
     gl.bindTexture(this.target, null);
   }
@@ -125,8 +126,9 @@ export class WebGLTexture implements IRHITexture {
   /**
    * 获取WebGL纹理目标
    */
-  private getGLTextureTarget(dimension: '1d' | '2d' | '3d' | 'cube'): number {
+  private getGLTextureTarget (dimension: '1d' | '2d' | '3d' | 'cube'): number {
     const gl = this.gl;
+
     switch (dimension) {
       case '1d':
       case '2d':
@@ -143,7 +145,7 @@ export class WebGLTexture implements IRHITexture {
   /**
    * 更新纹理数据
    */
-  update(
+  update (
     data: BufferSource | ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement,
     x = 0,
     y = 0,
@@ -156,25 +158,28 @@ export class WebGLTexture implements IRHITexture {
   ): void {
     if (this.isDestroyed) {
       console.warn('试图更新已销毁的纹理');
+
       return;
     }
 
     const gl = this.gl;
+
     gl.bindTexture(this.target, this.glTexture);
 
     if (this.dimension === 'cube') {
       // 更新立方体贴图的一个面
       const target = gl.TEXTURE_CUBE_MAP_POSITIVE_X + (arrayLayer % 6);
-      
-      if (data instanceof HTMLImageElement || 
-          data instanceof HTMLCanvasElement || 
+
+      if (data instanceof HTMLImageElement ||
+          data instanceof HTMLCanvasElement ||
           data instanceof HTMLVideoElement ||
-          data instanceof ImageBitmap || 
+          data instanceof ImageBitmap ||
           data instanceof ImageData) {
         gl.texSubImage2D(target, mipLevel, x, y, this.glFormat, this.glType, data);
       } else {
         const actualWidth = width || (this.width - x);
         const actualHeight = height || (this.height - y);
+
         gl.texSubImage2D(target, mipLevel, x, y, actualWidth, actualHeight, this.glFormat, this.glType, data);
       }
     } else if (this.dimension === '3d') {
@@ -183,11 +188,11 @@ export class WebGLTexture implements IRHITexture {
         const actualWidth = width || (this.width - x);
         const actualHeight = height || (this.height - y);
         const actualDepth = depth || (this.depthOrArrayLayers - z);
-        
-        if (data instanceof HTMLImageElement || 
-            data instanceof HTMLCanvasElement || 
+
+        if (data instanceof HTMLImageElement ||
+            data instanceof HTMLCanvasElement ||
             data instanceof HTMLVideoElement ||
-            data instanceof ImageBitmap || 
+            data instanceof ImageBitmap ||
             data instanceof ImageData) {
           throw new Error('不支持将DOM元素直接更新到3D纹理');
         } else {
@@ -206,24 +211,25 @@ export class WebGLTexture implements IRHITexture {
       }
     } else {
       // 更新2D纹理
-      if (data instanceof HTMLImageElement || 
-          data instanceof HTMLCanvasElement || 
+      if (data instanceof HTMLImageElement ||
+          data instanceof HTMLCanvasElement ||
           data instanceof HTMLVideoElement ||
-          data instanceof ImageBitmap || 
+          data instanceof ImageBitmap ||
           data instanceof ImageData) {
         gl.texSubImage2D(this.target, mipLevel, x, y, this.glFormat, this.glType, data);
       } else {
         const actualWidth = width || (this.width - x);
         const actualHeight = height || (this.height - y);
+
         gl.texSubImage2D(target, mipLevel, x, y, actualWidth, actualHeight, this.glFormat, this.glType, data as ArrayBufferView);
       }
     }
-    
+
     // 如果更新的是第0级mip且纹理配置为生成mipmap，则重新生成
     if (mipLevel === 0 && this.mipLevelCount > 1) {
       gl.generateMipmap(this.target);
     }
-    
+
     // 解绑纹理
     gl.bindTexture(this.target, null);
   }
@@ -231,7 +237,7 @@ export class WebGLTexture implements IRHITexture {
   /**
    * 创建纹理视图
    */
-  createView(
+  createView (
     format?: RHITextureFormat,
     dimension?: '1d' | '2d' | '3d' | 'cube' | '2d-array' | 'cube-array',
     baseMipLevel = 0,
@@ -242,7 +248,7 @@ export class WebGLTexture implements IRHITexture {
     if (this.isDestroyed) {
       throw new Error('试图从已销毁的纹理创建视图');
     }
-    
+
     // 创建纹理视图描述符
     const viewDescriptor = {
       texture: this,
@@ -253,7 +259,7 @@ export class WebGLTexture implements IRHITexture {
       baseArrayLayer,
       arrayLayerCount: arrayLayerCount !== undefined ? arrayLayerCount : (this.depthOrArrayLayers - baseArrayLayer),
     };
-    
+
     // 创建并返回纹理视图
     return new WebGLTextureView(this.gl, viewDescriptor);
   }
@@ -261,93 +267,93 @@ export class WebGLTexture implements IRHITexture {
   /**
    * 获取WebGL原生纹理
    */
-  getGLTexture(): WebGLTexture | null {
+  getGLTexture (): WebGLTexture | null {
     return this.glTexture;
   }
 
   /**
    * 获取WebGL纹理目标
    */
-  getTarget(): number {
+  getTarget (): number {
     return this.target;
   }
 
   /**
    * 销毁资源
    */
-  destroy(): void {
+  destroy (): void {
     if (this.isDestroyed) {
       return;
     }
-    
+
     if (this.glTexture) {
       this.gl.deleteTexture(this.glTexture);
       this.glTexture = null;
     }
-    
+
     this.isDestroyed = true;
   }
 
   /**
    * 获取纹理宽度
    */
-  getWidth(): number {
+  getWidth (): number {
     return this.width;
   }
 
   /**
    * 获取纹理高度
    */
-  getHeight(): number {
+  getHeight (): number {
     return this.height;
   }
 
   /**
    * 获取纹理深度或数组层数
    */
-  getDepthOrArrayLayers(): number {
+  getDepthOrArrayLayers (): number {
     return this.depthOrArrayLayers;
   }
 
   /**
    * 获取MIP等级数
    */
-  getMipLevelCount(): number {
+  getMipLevelCount (): number {
     return this.mipLevelCount;
   }
 
   /**
    * 获取纹理格式
    */
-  getFormat(): RHITextureFormat {
+  getFormat (): RHITextureFormat {
     return this.format;
   }
 
   /**
    * 获取纹理用途
    */
-  getUsage(): RHITextureUsage {
+  getUsage (): RHITextureUsage {
     return this.usage;
   }
 
   /**
    * 获取纹理维度
    */
-  getDimension(): '1d' | '2d' | '3d' | 'cube' {
+  getDimension (): '1d' | '2d' | '3d' | 'cube' {
     return this.dimension;
   }
 
   /**
    * 获取采样数量
    */
-  getSampleCount(): number {
+  getSampleCount (): number {
     return this.sampleCount;
   }
 
   /**
    * 获取纹理标签
    */
-  getLabel(): string | undefined {
+  getLabel (): string | undefined {
     return this.label;
   }
-} 
+}

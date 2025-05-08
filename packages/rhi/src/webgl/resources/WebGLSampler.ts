@@ -1,4 +1,5 @@
-import { IRHISampler, RHIAddressMode, RHICompareFunction, RHIFilterMode, RHISamplerDescriptor } from '@maxellabs/core';
+import type { IRHISampler, RHISamplerDescriptor } from '@maxellabs/core';
+import { RHIAddressMode, RHICompareFunction, RHIFilterMode } from '@maxellabs/core';
 import { WebGLUtils } from '../utils/WebGLUtils';
 
 /**
@@ -28,7 +29,7 @@ export class WebGLSampler implements IRHISampler {
    * @param gl WebGL上下文
    * @param descriptor 采样器描述符
    */
-  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHISamplerDescriptor = {}) {
+  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHISamplerDescriptor = {}) {
     this.gl = gl;
     this.isWebGL2 = gl instanceof WebGL2RenderingContext;
     this.utils = new WebGLUtils(gl);
@@ -42,11 +43,11 @@ export class WebGLSampler implements IRHISampler {
     this.mipmapFilter = this.getFilterMode(descriptor.mipmapFilter);
     this.lodMinClamp = descriptor.lodMinClamp !== undefined ? descriptor.lodMinClamp : 0;
     this.lodMaxClamp = descriptor.lodMaxClamp !== undefined ? descriptor.lodMaxClamp : 1000;
-    
+
     if (descriptor.compareFunction) {
       this.compareFunction = this.getCompareFunction(descriptor.compareFunction);
     }
-    
+
     this.maxAnisotropy = descriptor.maxAnisotropy || 1;
     this.label = descriptor.label;
 
@@ -61,9 +62,9 @@ export class WebGLSampler implements IRHISampler {
   /**
    * 将字符串寻址模式转换为枚举值
    */
-  private getAddressMode(mode?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border'): RHIAddressMode {
-    if (!mode) return RHIAddressMode.CLAMP_TO_EDGE;
-    
+  private getAddressMode (mode?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border'): RHIAddressMode {
+    if (!mode) {return RHIAddressMode.CLAMP_TO_EDGE;}
+
     switch (mode) {
       case 'repeat': return RHIAddressMode.REPEAT;
       case 'mirror-repeat': return RHIAddressMode.MIRROR_REPEAT;
@@ -76,9 +77,9 @@ export class WebGLSampler implements IRHISampler {
   /**
    * 将字符串过滤模式转换为枚举值
    */
-  private getFilterMode(mode?: 'nearest' | 'linear'): RHIFilterMode {
-    if (!mode) return RHIFilterMode.LINEAR;
-    
+  private getFilterMode (mode?: 'nearest' | 'linear'): RHIFilterMode {
+    if (!mode) {return RHIFilterMode.LINEAR;}
+
     switch (mode) {
       case 'nearest': return RHIFilterMode.NEAREST;
       case 'linear': return RHIFilterMode.LINEAR;
@@ -89,7 +90,7 @@ export class WebGLSampler implements IRHISampler {
   /**
    * 将字符串比较函数转换为枚举值
    */
-  private getCompareFunction(func: 'never' | 'less' | 'equal' | 'less-equal' | 'greater' | 'not-equal' | 'greater-equal' | 'always'): RHICompareFunction {
+  private getCompareFunction (func: 'never' | 'less' | 'equal' | 'less-equal' | 'greater' | 'not-equal' | 'greater-equal' | 'always'): RHICompareFunction {
     switch (func) {
       case 'never': return RHICompareFunction.NEVER;
       case 'less': return RHICompareFunction.LESS;
@@ -106,16 +107,17 @@ export class WebGLSampler implements IRHISampler {
   /**
    * 创建WebGL2采样器对象
    */
-  private createWebGL2Sampler(): WebGLSampler | null {
+  private createWebGL2Sampler (): WebGLSampler | null {
     if (!this.isWebGL2) {
       return null;
     }
 
     const gl2 = this.gl as WebGL2RenderingContext;
     const sampler = gl2.createSampler();
-    
+
     if (!sampler) {
       console.warn('创建WebGL2采样器对象失败');
+
       return null;
     }
 
@@ -129,6 +131,7 @@ export class WebGLSampler implements IRHISampler {
 
     // 设置MIN过滤和Mipmap过滤的组合
     let minFilter = gl2.LINEAR;
+
     if (this.minFilter === RHIFilterMode.NEAREST) {
       minFilter = this.mipmapFilter === RHIFilterMode.NEAREST ? gl2.NEAREST_MIPMAP_NEAREST : gl2.NEAREST_MIPMAP_LINEAR;
     } else {
@@ -148,11 +151,13 @@ export class WebGLSampler implements IRHISampler {
 
     // 设置各向异性过滤
     const ext = gl2.getExtension('EXT_texture_filter_anisotropic');
+
     if (ext && this.maxAnisotropy > 1) {
       const maxAniso = Math.min(
         this.maxAnisotropy,
         gl2.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT)
       );
+
       gl2.samplerParameterf(sampler, ext.TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
     }
 
@@ -162,77 +167,77 @@ export class WebGLSampler implements IRHISampler {
   /**
    * 获取寻址模式U
    */
-  getAddressModeU(): RHIAddressMode {
+  getAddressModeU (): RHIAddressMode {
     return this.addressModeU;
   }
 
   /**
    * 获取寻址模式V
    */
-  getAddressModeV(): RHIAddressMode {
+  getAddressModeV (): RHIAddressMode {
     return this.addressModeV;
   }
 
   /**
    * 获取寻址模式W
    */
-  getAddressModeW(): RHIAddressMode {
+  getAddressModeW (): RHIAddressMode {
     return this.addressModeW;
   }
 
   /**
    * 获取放大过滤模式
    */
-  getMagFilter(): RHIFilterMode {
+  getMagFilter (): RHIFilterMode {
     return this.magFilter;
   }
 
   /**
    * 获取缩小过滤模式
    */
-  getMinFilter(): RHIFilterMode {
+  getMinFilter (): RHIFilterMode {
     return this.minFilter;
   }
 
   /**
    * 获取Mipmap过滤模式
    */
-  getMipmapFilter(): RHIFilterMode {
+  getMipmapFilter (): RHIFilterMode {
     return this.mipmapFilter;
   }
 
   /**
    * 获取LOD最小值
    */
-  getLodMinClamp(): number {
+  getLodMinClamp (): number {
     return this.lodMinClamp;
   }
 
   /**
    * 获取LOD最大值
    */
-  getLodMaxClamp(): number {
+  getLodMaxClamp (): number {
     return this.lodMaxClamp;
   }
 
   /**
    * 获取比较函数
    */
-  getCompareFunction(): RHICompareFunction | undefined {
+  getCompareFunction (): RHICompareFunction | undefined {
     return this.compareFunction;
   }
 
   /**
    * 获取最大各向异性值
    */
-  getMaxAnisotropy(): number {
+  getMaxAnisotropy (): number {
     return this.maxAnisotropy;
   }
 
   /**
    * 获取标签
    */
-  getLabel(): string | undefined {
+  getLabel (): string | undefined {
     return this.label;
   }
 
@@ -240,7 +245,7 @@ export class WebGLSampler implements IRHISampler {
    * 获取WebGL采样器对象
    * WebGL1不支持采样器对象，将返回null
    */
-  getGLSampler(): WebGLSampler | null {
+  getGLSampler (): WebGLSampler | null {
     return this.sampler;
   }
 
@@ -249,17 +254,17 @@ export class WebGLSampler implements IRHISampler {
    * WebGL1必须使用此方法来应用采样器设置
    * @param textureTarget WebGL纹理目标
    */
-  applyToTexture(textureTarget: number): void {
+  applyToTexture (textureTarget: number): void {
     const gl = this.gl;
 
     // 设置寻址模式
     gl.texParameteri(textureTarget, gl.TEXTURE_WRAP_S, this.utils.addressModeToGL(this.addressModeU));
     gl.texParameteri(textureTarget, gl.TEXTURE_WRAP_T, this.utils.addressModeToGL(this.addressModeV));
-    
+
     if (this.isWebGL2) {
       (gl as WebGL2RenderingContext).texParameteri(
-        textureTarget, 
-        (gl as WebGL2RenderingContext).TEXTURE_WRAP_R, 
+        textureTarget,
+        (gl as WebGL2RenderingContext).TEXTURE_WRAP_R,
         this.utils.addressModeToGL(this.addressModeW)
       );
     }
@@ -269,6 +274,7 @@ export class WebGLSampler implements IRHISampler {
 
     // 设置MIN过滤和Mipmap过滤的组合
     let minFilter: number;
+
     if (this.minFilter === RHIFilterMode.NEAREST) {
       minFilter = this.mipmapFilter === RHIFilterMode.NEAREST ? gl.NEAREST_MIPMAP_NEAREST : gl.NEAREST_MIPMAP_LINEAR;
     } else {
@@ -279,13 +285,13 @@ export class WebGLSampler implements IRHISampler {
     // 设置LOD范围 (仅WebGL2)
     if (this.isWebGL2) {
       (gl as WebGL2RenderingContext).texParameterf(
-        textureTarget, 
-        (gl as WebGL2RenderingContext).TEXTURE_MIN_LOD, 
+        textureTarget,
+        (gl as WebGL2RenderingContext).TEXTURE_MIN_LOD,
         this.lodMinClamp
       );
       (gl as WebGL2RenderingContext).texParameterf(
-        textureTarget, 
-        (gl as WebGL2RenderingContext).TEXTURE_MAX_LOD, 
+        textureTarget,
+        (gl as WebGL2RenderingContext).TEXTURE_MAX_LOD,
         this.lodMaxClamp
       );
     }
@@ -294,10 +300,12 @@ export class WebGLSampler implements IRHISampler {
     if (this.compareFunction !== undefined) {
       if (this.isWebGL2) {
         const gl2 = gl as WebGL2RenderingContext;
+
         gl2.texParameteri(textureTarget, gl2.TEXTURE_COMPARE_MODE, gl2.COMPARE_REF_TO_TEXTURE);
         gl2.texParameteri(textureTarget, gl2.TEXTURE_COMPARE_FUNC, this.utils.compareFunctionToGL(this.compareFunction));
       } else {
         const ext = gl.getExtension('WEBGL_depth_texture');
+
         if (ext) {
           gl.texParameteri(textureTarget, ext.TEXTURE_COMPARE_MODE_WEBGL, ext.COMPARE_REF_TO_TEXTURE_WEBGL);
           gl.texParameteri(textureTarget, ext.TEXTURE_COMPARE_FUNC_WEBGL, this.utils.compareFunctionToGL(this.compareFunction));
@@ -307,11 +315,13 @@ export class WebGLSampler implements IRHISampler {
 
     // 设置各向异性过滤
     const ext = gl.getExtension('EXT_texture_filter_anisotropic');
+
     if (ext && this.maxAnisotropy > 1) {
       const maxAniso = Math.min(
         this.maxAnisotropy,
         gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT)
       );
+
       gl.texParameterf(textureTarget, ext.TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
     }
   }
@@ -321,7 +331,7 @@ export class WebGLSampler implements IRHISampler {
    * 仅WebGL2支持
    * @param unit 纹理单元索引
    */
-  bind(unit: number): void {
+  bind (unit: number): void {
     if (this.isWebGL2 && this.sampler) {
       (this.gl as WebGL2RenderingContext).bindSampler(unit, this.sampler);
     }
@@ -330,16 +340,16 @@ export class WebGLSampler implements IRHISampler {
   /**
    * 销毁资源
    */
-  destroy(): void {
+  destroy (): void {
     if (this.isDestroyed) {
       return;
     }
-    
+
     if (this.isWebGL2 && this.sampler) {
       (this.gl as WebGL2RenderingContext).deleteSampler(this.sampler);
       this.sampler = null;
     }
-    
+
     this.isDestroyed = true;
   }
-} 
+}
