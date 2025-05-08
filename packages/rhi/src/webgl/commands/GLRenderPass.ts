@@ -1,12 +1,12 @@
 import type { IRHIBuffer, IRHIBindGroup, IRHIRenderPass, IRHIRenderPipeline } from '@maxellabs/core';
 import { RHIIndexFormat } from '@maxellabs/core';
-import type { WebGLTexture } from '../resources/WebGLTexture';
-import type { WebGLTextureView } from '../resources/WebGLTextureView';
-import type { GLBuffer } from '../resources/WebGLBuffer';
-import type { WebGLRenderPipeline } from '../pipeline/WebGLRenderPipeline';
-import type { WebGLBindGroup } from '../bindings/WebGLBindGroup';
-import type { WebGLCommandEncoder } from './WebGLCommandEncoder';
-import { WebGLUtils } from '../utils/WebGLUtils';
+import type { WebGLTexture } from '../resources/GLTexture';
+import type { WebGLTextureView } from '../resources/GLTextureView';
+import type { GLBuffer } from '../resources/GLBuffer';
+import type { WebGLRenderPipeline } from '../pipeline/GLRenderPipeline';
+import type { WebGLBindGroup } from '../bindings/GLBindGroup';
+import type { WebGLCommandEncoder } from './GLCommandEncoder';
+import { WebGLUtils } from '../utils/GLUtils';
 
 /**
  * WebGL渲染通道实现
@@ -108,7 +108,8 @@ export class WebGLRenderPass implements IRHIRenderPass {
 
     for (let i = 0; i < this.colorAttachments.length; i++) {
       const attachment = this.colorAttachments[i];
-      const texture = attachment.view.texture as WebGLTexture;
+      const textureView = attachment.view;
+      const texture = textureView.getTexture();
 
       // 附加纹理到帧缓冲
       const attachmentPoint = this.isWebGL2
@@ -118,9 +119,9 @@ export class WebGLRenderPass implements IRHIRenderPass {
       gl.framebufferTexture2D(
         gl.FRAMEBUFFER,
         attachmentPoint,
-        texture.getGLTextureTarget(),
-        texture.getGLTexture(),
-        attachment.view.baseMipLevel
+        gl.TEXTURE_2D,
+        textureView.getGLTexture(),
+        0
       );
 
       drawBuffers.push(attachmentPoint);
@@ -142,25 +143,32 @@ export class WebGLRenderPass implements IRHIRenderPass {
     // 设置深度/模板附件
     if (this.depthStencilAttachment) {
       const depthAttachment = this.depthStencilAttachment;
-      const depthTexture = depthAttachment.view.texture as WebGLTexture;
+      const depthTextureView = depthAttachment.view;
+      const depthTexture = depthTextureView.getTexture();
+
+      // 检查纹理格式是否包含深度和模板
+      const hasDepth = this.hasDepthComponent(depthTexture.getFormat());
+      const hasStencil = this.hasStencilComponent(depthTexture.getFormat());
 
       // 附加深度纹理
-      gl.framebufferTexture2D(
-        gl.FRAMEBUFFER,
-        gl.DEPTH_ATTACHMENT,
-        depthTexture.getGLTextureTarget(),
-        depthTexture.getGLTexture(),
-        depthAttachment.view.baseMipLevel
-      );
+      if (hasDepth) {
+        gl.framebufferTexture2D(
+          gl.FRAMEBUFFER,
+          gl.DEPTH_ATTACHMENT,
+          gl.TEXTURE_2D,
+          depthTextureView.getGLTexture(),
+          0
+        );
+      }
 
       // 附加模板纹理 (如果是深度模板组合格式)
-      if (this.hasStencilComponent(depthTexture.format)) {
+      if (hasStencil) {
         gl.framebufferTexture2D(
           gl.FRAMEBUFFER,
           gl.STENCIL_ATTACHMENT,
-          depthTexture.getGLTextureTarget(),
-          depthTexture.getGLTexture(),
-          depthAttachment.view.baseMipLevel
+          gl.TEXTURE_2D,
+          depthTextureView.getGLTexture(),
+          0
         );
       }
 
@@ -264,11 +272,15 @@ export class WebGLRenderPass implements IRHIRenderPass {
     }
 
     this.currentPipeline = pipeline as WebGLRenderPipeline;
+    console.log('设置渲染管线:', pipeline);
 
     // 添加设置渲染管线的命令
     this.encoder.addCommand(() => {
       if (this.currentPipeline) {
+        console.log('应用渲染管线');
         this.currentPipeline.apply();
+      } else {
+        console.error('渲染管线为空，无法应用');
       }
     });
   }
@@ -281,7 +293,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
       throw new Error('渲染通道已结束，无法设置索引缓冲区');
     }
 
-    this.currentIndexBuffer = buffer as GLBuffer;
+    this.currentIndexBuffer = buffer;
     this.currentIndexFormat = indexFormat;
     this.currentIndexOffset = offset;
 
@@ -296,15 +308,82 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 设置顶点缓冲区
    */
-  setVertexBuffer (slot: number, buffer: IRHIBuffer, offset: number = 0, size?: number): void {
-    if (!this.isActive) {
-      throw new Error('渲染通道已结束，无法设置顶点缓冲区');
+  setVertexBuffer (slot: number, buffer: IRHIBuffer, offset: number = 0): void {
+    if (!this.currentPipeline) {
+      console.error('没有设置渲染管线，无法设置顶点缓冲区');
+
+      return;
+    }
+
+    this.encoder.addCommand(() => {
+      try {
+        // 添加调试信息
+        // console.log(`设置顶点缓冲区: 槽位 ${slot}, 缓冲区类型:`, buffer.constructor.name);
+
+        // 检查缓冲区是否有getGLBuffer方法
+        if (typeof (buffer as any).getGLBuffer !== 'function') {
+          console.error('顶点缓冲区对象没有getGLBuffer方法');
+
+          return;
+        }
+
+        const glBuffer = (buffer as any).getGLBuffer();
+
+        if (!glBuffer) {
+          console.error('获取WebGL缓冲区对象失败');
+
+          return;
+        }
+
+        this.currentPipeline.applyVertexBufferLayout(slot, buffer, offset);
+        // console.log(`设置顶点缓冲区: 槽位 ${slot}, 偏移 ${offset}`);
+      } catch (e) {
+        console.error('设置顶点缓冲区时出错:', e);
+      }
+    });
+  }
+
+  setVertexBuffers (
+    firstSlot: number,
+    buffers: Array<{
+      buffer: IRHIBuffer,
+      offset?: number,
+    }>
+  ): void {
+    if (!this.currentPipeline) {
+      console.error('没有设置渲染管线，无法设置顶点缓冲区');
+
+      return;
     }
 
     // 添加设置顶点缓冲区的命令
+    this.encoder.addCommand({
+      type: 'setVertexBuffers',
+      params: {
+        startSlot: firstSlot,
+        buffers: buffers,
+        pipeline: this.currentPipeline,
+      },
+    });
+
+    // 同时添加一个自定义命令来确保设置生效
     this.encoder.addCommand(() => {
       if (this.currentPipeline) {
-        this.currentPipeline.setVertexBuffer(slot, buffer as GLBuffer, offset);
+        for (let i = 0; i < buffers.length; i++) {
+          const slot = firstSlot + i;
+          const buffer = buffers[i].buffer;
+          const offset = buffers[i].offset || 0;
+
+          try {
+            // 尝试直接设置顶点缓冲区
+            const glBuffer = buffer.getGLBuffer();
+
+            this.currentPipeline.applyVertexBufferLayout(slot, glBuffer, offset);
+            // console.log(`手动设置顶点缓冲区: 槽位 ${slot}, 偏移 ${offset}`);
+          } catch (e) {
+            console.error('设置顶点缓冲区失败:', e);
+          }
+        }
       }
     });
   }
@@ -313,64 +392,62 @@ export class WebGLRenderPass implements IRHIRenderPass {
    * 设置绑定组
    */
   setBindGroup (slot: number, bindGroup: IRHIBindGroup, dynamicOffsets?: number[]): void {
-    if (!this.isActive) {
-      throw new Error('渲染通道已结束，无法设置绑定组');
+    if (!this.currentPipeline) {
+      console.error('没有设置渲染管线，无法设置绑定组');
+
+      return;
     }
 
-    // 添加设置绑定组的命令
     this.encoder.addCommand(() => {
       if (this.currentPipeline) {
-        const webglBindGroup = bindGroup as WebGLBindGroup;
-        const program = this.currentPipeline.getProgram();
+        try {
+          const webglBindGroup = bindGroup as any;
+          const program = this.currentPipeline.getProgram();
 
-        if (program) {
-          webglBindGroup.apply(program, slot * 16); // 假设每个绑定组最多使用16个纹理单元
+          if (program && webglBindGroup.applyBindings) {
+            webglBindGroup.applyBindings(program, dynamicOffsets);
+            // console.log('成功应用绑定组');
+          } else {
+            console.error('无法应用绑定组：程序无效或绑定组不支持applyBindings');
+          }
+        } catch (e) {
+          console.error('应用绑定组时出错:', e);
         }
       }
     });
   }
 
   /**
-   * 绘制几何体
+   * 绘制图元
    */
-  draw (vertexCount: number, instanceCount: number = 1, firstVertex: number = 0, firstInstance: number = 0): void {
-    if (!this.isActive) {
-      throw new Error('渲染通道已结束，无法执行绘制');
+  draw (
+    vertexCount: number,
+    instanceCount: number = 1,
+    firstVertex: number = 0,
+    firstInstance: number = 0
+  ): void {
+    if (this.isEnded) {
+      throw new Error('渲染通道已结束，无法执行绘制命令');
+    }
+
+    if (!this.currentPipeline) {
+      console.error('没有设置渲染管线，无法执行绘制命令');
+
+      return;
     }
 
     // 添加绘制命令
-    this.encoder.addCommand(() => {
-      const gl = this.gl;
-
-      if (!this.currentPipeline) {
-        console.error('尝试在未设置渲染管线的情况下绘制');
-
-        return;
-      }
-
-      const primitiveType = this.utils.primitiveTopologyToGL(this.currentPipeline.primitiveTopology);
-
-      if (instanceCount > 1) {
-        // 实例化绘制
-        if (this.isWebGL2) {
-          // WebGL2原生支持
-          (gl as WebGL2RenderingContext).drawArraysInstanced(primitiveType, firstVertex, vertexCount, instanceCount);
-        } else {
-          // WebGL1需要扩展
-          const ext = gl.getExtension('ANGLE_instanced_arrays');
-
-          if (ext) {
-            ext.drawArraysInstancedANGLE(primitiveType, firstVertex, vertexCount, instanceCount);
-          } else {
-            console.error('当前WebGL环境不支持实例化绘制');
-            gl.drawArrays(primitiveType, firstVertex, vertexCount);
-          }
-        }
-      } else {
-        // 普通绘制
-        gl.drawArrays(primitiveType, firstVertex, vertexCount);
-      }
+    this.encoder.addCommand({
+      type: 'draw',
+      params: {
+        vertexCount,
+        instanceCount,
+        firstVertex,
+        firstInstance,
+      },
     });
+
+    // console.log(`添加绘制命令: 顶点数=${vertexCount}, 实例数=${instanceCount}, 起始顶点=${firstVertex}`);
   }
 
   /**

@@ -9,9 +9,9 @@ export class GLBuffer implements IRHIBuffer {
   private glBuffer: WebGLBuffer | null;
   protected bufferTarget: number;
   private bufferUsage: number;
-  private size: number;
-  private usage: RHIBufferUsage;
-  private label?: string;
+  size: number;
+  usage: RHIBufferUsage;
+  label?: string;
   private isDestroyed = false;
 
   /**
@@ -166,5 +166,56 @@ export class GLBuffer implements IRHIBuffer {
     }
 
     this.isDestroyed = true;
+  }
+
+  /**
+   * 获取缓冲区数据（同步方法）
+   * 注意：此方法仅用于读取uniform数据，不适用于大型缓冲区
+   * @param offset 偏移量（字节）
+   * @param size 大小（字节）
+   * @returns 缓冲区数据
+   */
+  getData (offset: number = 0, size?: number): ArrayBuffer | null {
+    if (this.isDestroyed) {
+      console.warn('试图从已销毁的缓冲区获取数据');
+
+      return null;
+    }
+
+    const actualSize = size || (this.size - offset);
+
+    if (actualSize <= 0 || offset >= this.size) {
+      console.warn('无效的缓冲区访问范围');
+
+      return null;
+    }
+
+    try {
+      // 创建临时缓冲区
+      const tempBuffer = new ArrayBuffer(actualSize);
+      const tempView = new Uint8Array(tempBuffer);
+
+      // 绑定缓冲区
+      this.gl.bindBuffer(this.bufferTarget, this.glBuffer);
+
+      // 对于WebGL2，使用getBufferSubData
+      if (this.gl instanceof WebGL2RenderingContext) {
+        this.gl.getBufferSubData(this.bufferTarget, offset, tempView);
+        this.gl.bindBuffer(this.bufferTarget, null);
+
+        return tempBuffer;
+      } else {
+        // WebGL1不支持直接读取，返回null
+        this.gl.bindBuffer(this.bufferTarget, null);
+        console.warn('WebGL1不支持直接读取缓冲区数据');
+
+        return null;
+      }
+    } catch (e) {
+      console.error('获取缓冲区数据失败:', e);
+      this.gl.bindBuffer(this.bufferTarget, null);
+
+      return null;
+    }
   }
 }

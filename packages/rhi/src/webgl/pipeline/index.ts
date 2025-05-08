@@ -1,2 +1,2 @@
-export * from './WebGLPipelineLayout';
-export * from './WebGLRenderPipeline';
+export * from './GLPipelineLayout';
+export * from './GLRenderPipeline';

@@ -1,18 +1,18 @@
+import type {
+  RHIVertexLayout } from '@maxellabs/core';
 import {
-  RHIAddressMode,
-  RHIBackend,
   RHIBufferUsage,
   RHICompareFunction,
-  RHIFilterMode,
   RHIPrimitiveTopology,
   RHIShaderStage,
   RHITextureFormat,
   RHITextureUsage,
   RHIVertexFormat,
-  RHIVertexLayout,
+  RHIBlendFactor,
+  RHIBlendOperation,
 } from '@maxellabs/core';
-import { WebGLDevice } from '../../src/webgl/WebGLDevice';
-import { Color, Matrix4, Vector3 } from '@maxellabs/math';
+import { WebGLDevice } from '../../src/webgl/GLDevice';
+import { Matrix4, Vector3 } from '@maxellabs/math';
 
 // 获取画布并调整大小
 const canvas = document.getElementById('J-canvas') as HTMLCanvasElement;
@@ -23,11 +23,9 @@ canvas.height = window.innerHeight;
 // 创建设备
 const device = new WebGLDevice(canvas);
 
-console.log('设备信息:', device.getInfo());
-
 // 顶点着色器源码
-const vertexShaderSource = `
-  in vec3 aPosition;
+const vertexShaderSource = `#version 300 es
+in vec3 aPosition;
 in vec2 aTexCoord;
 in vec4 aColor;
 
@@ -77,7 +75,7 @@ const fragmentShader = device.createShaderModule({
   label: 'Basic Fragment Shader',
 });
 
-// 创建顶点数据
+// 创建顶点数据 - 简单三角形
 const vertices = new Float32Array([
   // Position(x,y,z)  // Texture coords(u,v)  // Color(r,g,b,a)
   -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
@@ -95,11 +93,10 @@ const vertexBuffer = device.createBuffer({
 });
 
 // 定义顶点布局
-const vertexLayout: RHIVertexLayout = {
-
+const vertexLayout = {
   buffers: [
     {
-      stride: 36, // 9个float每顶点
+      stride: 36, // 9个float每顶点 (3+2+4)*4
       stepMode: 'vertex',
       attributes: [
         {
@@ -112,96 +109,19 @@ const vertexLayout: RHIVertexLayout = {
           name: 'aTexCoord',
           format: RHIVertexFormat.FLOAT32X2,
           offset: 12, // 3个float后的偏移
-          shaderLocation: 0,
+          shaderLocation: 1,
         },
         {
           name: 'aColor',
           format: RHIVertexFormat.FLOAT32X4,
-          offset: 20, // 3个float + 2个float后的偏移
-          shaderLocation: 0,
+          offset: 20, // 3+2个float后的偏移
+          shaderLocation: 2,
         },
       ],
       index: 0,
     },
   ],
 };
-
-// 创建绑定组布局
-const bindGroupLayout = device.createBindGroupLayout([
-  {
-    binding: 0,
-    type: 'uniform-buffer',
-    visibility: RHIShaderStage.VERTEX,
-    name: 'uModelViewMatrix',
-  },
-  {
-    binding: 1,
-    type: 'uniform-buffer',
-    visibility: RHIShaderStage.VERTEX,
-    name: 'uProjectionMatrix',
-  },
-  {
-    binding: 2,
-    type: 'texture',
-    visibility: RHIShaderStage.FRAGMENT,
-    name: 'uTexture',
-  },
-  {
-    binding: 3,
-    type: 'sampler',
-    visibility: RHIShaderStage.FRAGMENT,
-    name: 'uTextureSampler',
-  },
-  {
-    binding: 4,
-    type: 'uniform-buffer',
-    visibility: RHIShaderStage.FRAGMENT,
-    name: 'uTime',
-  },
-], 'Main Bind Group Layout');
-
-// 创建管线布局
-const pipelineLayout = device.createPipelineLayout([bindGroupLayout], 'Main Pipeline Layout');
-
-// 创建渲染管线
-const renderPipeline = device.createRenderPipeline({
-  vertexShader,
-  fragmentShader,
-  vertexLayout,
-  primitiveTopology: RHIPrimitiveTopology.TRIANGLE_LIST,
-  layout: pipelineLayout,
-  depthStencilState: {
-    depthTestEnabled: true,
-    depthWriteEnabled: true,
-    depthCompareFunction: RHICompareFunction.LESS_EQUAL,
-    stencilTestEnabled: false,
-    stencilReadMask: 0xff,
-    stencilWriteMask: 0xff,
-    stencilFront: {
-      compareFunction: RHICompareFunction.ALWAYS,
-      failOperation: 'keep',
-      depthFailOperation: 'keep',
-      passOperation: 'keep',
-    },
-    stencilBack: {
-      compareFunction: RHICompareFunction.ALWAYS,
-      failOperation: 'keep',
-      depthFailOperation: 'keep',
-      passOperation: 'keep',
-    },
-  },
-  colorBlendState: {
-    blendEnabled: true,
-    srcColorFactor: 'src-alpha',
-    dstColorFactor: 'one-minus-src-alpha',
-    colorBlendOperation: 'add',
-    srcAlphaFactor: 'one',
-    dstAlphaFactor: 'one-minus-src-alpha',
-    alphaBlendOperation: 'add',
-    colorWriteMask: [true, true, true, true],
-  },
-  label: 'Main Render Pipeline',
-});
 
 // 创建棋盘格纹理数据
 const textureSize = 256;
@@ -235,6 +155,16 @@ texture.update(textureData);
 // 创建纹理视图
 const textureView = texture.createView();
 
+// 创建渲染目标纹理
+let renderTargetTexture = device.createTexture({
+  width: canvas.width,
+  height: canvas.height,
+  format: RHITextureFormat.RGBA8_UNORM,
+  usage: RHITextureUsage.RENDER_TARGET | RHITextureUsage.SAMPLED,
+  dimension: '2d',
+  label: 'Render Target Texture',
+});
+
 // 创建采样器
 const sampler = device.createSampler({
   magFilter: 'linear',
@@ -242,11 +172,12 @@ const sampler = device.createSampler({
   mipmapFilter: 'linear',
   addressModeU: 'repeat',
   addressModeV: 'repeat',
-  maxAnisotropy: 1,
   label: 'Texture Sampler',
 });
 
-// 创建变换矩阵
+// 变换矩阵
+let rotationX = 0;
+let rotationY = 0;
 const modelViewMatrix = new Matrix4();
 const projectionMatrix = new Matrix4();
 
@@ -279,6 +210,90 @@ const timeBuffer = device.createBuffer({
 modelViewMatrixBuffer.update(new Float32Array(modelViewMatrix.getElements()));
 projectionMatrixBuffer.update(new Float32Array(projectionMatrix.getElements()));
 
+// 创建绑定组布局
+const bindGroupLayout = device.createBindGroupLayout([
+  { // Binding 0: Uniform Buffer
+    binding: 0,
+    visibility: RHIShaderStage.VERTEX,
+    buffer: {
+      type: 'uniform', // 使用 'uniform' 并嵌套在 buffer 对象内
+      // hasDynamicOffset: false, // 可选
+      // minBindingSize: 64, // 可选
+    },
+    name: 'uModelViewMatrix', // name 作为我们内部扩展添加，用于查找 uniform location
+  },
+  { // Binding 1: Uniform Buffer
+    binding: 1,
+    visibility: RHIShaderStage.VERTEX,
+    buffer: {
+      type: 'uniform',
+    },
+    name: 'uProjectionMatrix',
+  },
+  { // Binding 2: Texture
+    binding: 2,
+    visibility: RHIShaderStage.FRAGMENT,
+    texture: {
+      sampleType: 'float', // 需要指定 sampleType
+      viewDimension: '2d', // 需要指定 viewDimension
+      // multisampled: false, // 可选
+    },
+    name: 'uTexture', // 对应 shader 中的 sampler2D uniform
+  },
+  { // Binding 3: Sampler
+    binding: 3,
+    visibility: RHIShaderStage.FRAGMENT,
+    sampler: {
+      type: 'filtering', // 需要指定 sampler 类型 (filtering, non-filtering, comparison)
+      // comparison: false, // 可选
+    },
+    name: 'uTextureSampler', // 这个 name 可能在 WebGL 中不直接用于 getUniformLocation，但可以保留用于调试或特殊逻辑
+    // sampler uniform 的值通常是 texture unit index
+  },
+  { // Binding 4: Uniform Buffer
+    binding: 4,
+    visibility: RHIShaderStage.FRAGMENT,
+    buffer: {
+      type: 'uniform',
+    },
+    name: 'uTime',
+  },
+], 'Main Bind Group Layout');
+
+// 创建管线布局
+const pipelineLayout = device.createPipelineLayout([bindGroupLayout], 'Main Pipeline Layout');
+
+// 创建渲染管线
+const pipeline = device.createRenderPipeline({
+  vertexShader,
+  fragmentShader,
+  vertexLayout: vertexLayout as RHIVertexLayout,
+  primitiveTopology: RHIPrimitiveTopology.TRIANGLE_LIST,
+  layout: pipelineLayout,
+  depthStencilState: {
+    depthWriteEnabled: true,
+    depthCompare: RHICompareFunction.LESS,
+    format: RHITextureFormat.DEPTH24_UNORM_STENCIL8,
+  },
+  colorBlendState: {
+    attachments: [{
+      color: {
+        enable: true,
+        srcFactor: RHIBlendFactor.SRC_ALPHA,
+        dstFactor: RHIBlendFactor.ONE_MINUS_SRC_ALPHA,
+        operation: RHIBlendOperation.ADD,
+      },
+      alpha: {
+        enable: true,
+        srcFactor: RHIBlendFactor.ONE,
+        dstFactor: RHIBlendFactor.ONE_MINUS_SRC_ALPHA,
+        operation: RHIBlendOperation.ADD,
+      },
+    }],
+  },
+  label: 'Main Render Pipeline',
+});
+
 // 创建绑定组
 const bindGroup = device.createBindGroup(bindGroupLayout, [
   {
@@ -310,62 +325,47 @@ function render () {
   time += 0.01;
 
   // 更新旋转
+  rotationX += 0.01;
+  rotationY += 0.02;
+
+  // 更新模型视图矩阵
   modelViewMatrix.identity();
   modelViewMatrix.translate(new Vector3(0, 0, -2));
-  // modelViewMatrix.rotate(time * 0.5, new Vector3(1, 0, 0));
-  // modelViewMatrix.rotate(Math.sin(time * 0.3) * 0.2, new Vector3(0, 1, 0));
+  // modelViewMatrix.rotateX(rotationX);
+  // modelViewMatrix.rotateY(rotationY);
 
   // 更新uniform缓冲区
   modelViewMatrixBuffer.update(new Float32Array(modelViewMatrix.getElements()));
   timeBuffer.update(new Float32Array([time]));
 
-  // 创建命令编码器
-  const encoder = device.createCommandEncoder('Main Encoder');
-
-  // 开始渲染通道
-  const renderPass = encoder.beginRenderPass({
+  const commandEncoder = device.createCommandEncoder();
+  const renderPassDescriptor = {
     colorAttachments: [
       {
-        view: texture.createView(), // 使用一个临时纹理作为渲染目标
-        loadOp: 'clear',
-        storeOp: 'store',
-        clearColor: [0.1, 0.1, 0.1, 1.0],
+        view: renderTargetTexture.createView(),
+        loadOp: 'clear' as 'clear' | 'load' | 'none',
+        storeOp: 'store' as 'store' | 'discard',
+        clearColor: [0.1, 0.1, 0.1, 1.0] as [number, number, number, number],
       },
     ],
-    depthStencilAttachment: {
-      view: texture.createView(), // 在实际应用中，这应该是深度纹理
-      depthLoadOp: 'clear',
-      depthStoreOp: 'store',
-      clearDepth: 1.0,
-      depthWriteEnabled: true,
-    },
-  });
+  };
+  const renderPass = commandEncoder.beginRenderPass(renderPassDescriptor);
 
-  // 设置视口
-  renderPass.setViewport(0, 0, canvas.width, canvas.height, 0, 1);
-
-  // 设置渲染管线
-  renderPass.setPipeline(renderPipeline);
-
-  // 设置绑定组
+  renderPass.setPipeline(pipeline);
   renderPass.setBindGroup(0, bindGroup);
 
-  // 设置顶点缓冲区
   renderPass.setVertexBuffer(0, vertexBuffer);
 
-  // 绘制
-  renderPass.draw(3);
-
-  // 结束渲染通道
+  renderPass.draw(3, 1, 0, 0);
   renderPass.end();
 
-  // 完成命令编码
-  const commandBuffer = encoder.finish();
+  commandEncoder.copyTextureToCanvas({
+    source: renderTargetTexture.createView(),
+    destination: canvas,
+  });
 
-  // 提交命令
-  device.submit([commandBuffer]);
+  device.submit([commandEncoder.finish()]);
 
-  // 请求下一帧
   requestAnimationFrame(render);
 }
 
@@ -373,6 +373,19 @@ function render () {
 window.addEventListener('resize', () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+
+  // 销毁之前的纹理
+  renderTargetTexture.destroy();
+
+  // 创建新的渲染目标纹理
+  renderTargetTexture = device.createTexture({
+    width: canvas.width,
+    height: canvas.height,
+    format: RHITextureFormat.RGBA8_UNORM,
+    usage: RHITextureUsage.RENDER_TARGET | RHITextureUsage.SAMPLED,
+    dimension: '2d',
+    label: 'Render Target Texture',
+  });
 
   // 更新投影矩阵
   projectionMatrix.perspective(45, canvas.width / canvas.height, 0.1, 100.0);
