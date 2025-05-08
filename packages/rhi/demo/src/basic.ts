@@ -1,19 +1,26 @@
-import { GLRenderer, GLShader, GLBuffer, GLConstants, GLTexture, GLFramebuffer, GLVertexArray } from '@maxellabs/rhi';
+import { 
+  RHIAddressMode, 
+  RHIBackend, 
+  RHIBufferUsage, 
+  RHICompareFunction,
+  RHIFilterMode, 
+  RHIPrimitiveTopology, 
+  RHIShaderStage, 
+  RHITextureFormat, 
+  RHITextureUsage, 
+  RHIVertexFormat 
+} from '@maxellabs/core';
+import { WebGLDevice } from '../../src/webgl/WebGLDevice';
 import { Color, Matrix4, Vector3 } from '@maxellabs/math';
 
-// Get canvas and resize it to fill the window
+// 获取画布并调整大小
 const canvas = document.getElementById('J-canvas') as HTMLCanvasElement;
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Create renderer
-const renderer = new GLRenderer();
-renderer.create(canvas);
-renderer.setViewport(canvas.width, canvas.height);
-renderer.setClearColor(new Color(0.1, 0.1, 0.1, 1));
-renderer.clear();
-
-const gl = renderer.getGL();
+// 创建设备
+const device = new WebGLDevice(canvas);
+console.log('设备信息:', device.getInfo());
 
 // 顶点着色器源码
 const vertexShaderSource = `
@@ -50,207 +57,322 @@ const fragmentShaderSource = `
   }
 `;
 
-// Create shader program
-const shader = new GLShader(gl);
-shader.create(vertexShaderSource, fragmentShaderSource);
-
-// Create vertex data
-const vertices = new Float32Array([
-  // Position(x,y,z)  // Texture coords(u,v)  // Color(r,g,b,a)
-  -0.5, -0.5, 0.0,    0.0, 0.0,               1.0, 0.0, 0.0, 1.0,
-   0.5, -0.5, 0.0,    1.0, 0.0,               0.0, 1.0, 0.0, 1.0,
-   0.0,  0.5, 0.0,    0.5, 1.0,               0.0, 0.0, 1.0, 1.0,
-]);
-
-// Create vertex buffer
-const vertexBuffer = new GLBuffer(gl, GLConstants.BUFFER_TYPE.ARRAY_BUFFER, GLConstants.BUFFER_USAGE.STATIC_DRAW, vertices.byteLength);
-vertexBuffer.create();
-vertexBuffer.bind();
-vertexBuffer.update(vertices);
-
-// 创建顶点数组对象来存储属性绑定
-const vao = new GLVertexArray(gl);
-vao.create();
-vao.bind();
-
-// 使用着色器程序以便能够获取属性位置
-shader.use();
-
-// 使用GLVertexArray的setAttribute方法设置顶点属性
-const stride = 9 * 4; // 9个浮点数每顶点 (3位置 + 2纹理坐标 + 4颜色) * 4字节每浮点数
-vao.setAttribute('aPosition', vertexBuffer, 3, GLConstants.DATA_TYPE.FLOAT, false, stride, 0);
-vao.setAttribute('aTexCoord', vertexBuffer, 2, GLConstants.DATA_TYPE.FLOAT, false, stride, 12);
-vao.setAttribute('aColor', vertexBuffer, 4, GLConstants.DATA_TYPE.FLOAT, false, stride, 20);
-
-// 完成属性设置后解绑VAO和着色器
-vao.unbind();
-gl.useProgram(null);
-
-// 创建棋盘格纹理
-const texture = new GLTexture(gl);
-texture.create(256, 256, gl.RGBA, gl.UNSIGNED_BYTE, {
-  minFilter: gl.LINEAR,
-  magFilter: gl.LINEAR,
-  wrapS: gl.CLAMP_TO_EDGE,
-  wrapT: gl.CLAMP_TO_EDGE,
-  generateMipmaps: false // 禁用mipmap生成，避免某些WebGL实现的兼容性问题
+// 创建着色器模块
+const vertexShader = device.createShaderModule({
+  code: vertexShaderSource,
+  language: 'glsl',
+  stage: 'vertex',
+  label: 'Basic Vertex Shader'
 });
 
-// Generate checkerboard pattern
-const textureData = new Uint8Array(256 * 256 * 4);
-for (let y = 0; y < 256; y++) {
-  for (let x = 0; x < 256; x++) {
-    const index = (y * 256 + x) * 4;
+const fragmentShader = device.createShaderModule({
+  code: fragmentShaderSource,
+  language: 'glsl',
+  stage: 'fragment',
+  label: 'Basic Fragment Shader'
+});
+
+// 创建顶点数据
+const vertices = new Float32Array([
+  // Position(x,y,z)  // Texture coords(u,v)  // Color(r,g,b,a)
+  -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
+  0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0,
+  0.0, 0.5, 0.0, 0.5, 1.0, 0.0, 0.0, 1.0, 1.0,
+]);
+
+// 创建顶点缓冲区
+const vertexBuffer = device.createBuffer({
+  size: vertices.byteLength,
+  usage: RHIBufferUsage.VERTEX,
+  hint: 'static',
+  initialData: vertices,
+  label: 'Vertex Buffer'
+});
+
+// 定义顶点布局
+const vertexLayout = {
+  attributes: [
+    {
+      name: 'aPosition',
+      format: RHIVertexFormat.FLOAT32X3,
+      offset: 0,
+      bufferIndex: 0,
+      stepMode: 'vertex'
+    },
+    {
+      name: 'aTexCoord',
+      format: RHIVertexFormat.FLOAT32X2,
+      offset: 12, // 3个float后的偏移
+      bufferIndex: 0,
+      stepMode: 'vertex'
+    },
+    {
+      name: 'aColor',
+      format: RHIVertexFormat.FLOAT32X4,
+      offset: 20, // 3个float + 2个float后的偏移
+      bufferIndex: 0,
+      stepMode: 'vertex'
+    }
+  ],
+  buffers: [
+    {
+      stride: 36, // 9个float每顶点
+      stepMode: 'vertex'
+    }
+  ]
+};
+
+// 创建绑定组布局
+const bindGroupLayout = device.createBindGroupLayout([
+  {
+    binding: 0,
+    type: 'uniform-buffer',
+    visibility: RHIShaderStage.VERTEX,
+    name: 'uModelViewMatrix'
+  },
+  {
+    binding: 1,
+    type: 'uniform-buffer',
+    visibility: RHIShaderStage.VERTEX,
+    name: 'uProjectionMatrix'
+  },
+  {
+    binding: 2,
+    type: 'texture',
+    visibility: RHIShaderStage.FRAGMENT,
+    name: 'uTexture'
+  },
+  {
+    binding: 3,
+    type: 'sampler',
+    visibility: RHIShaderStage.FRAGMENT,
+    name: 'uTextureSampler'
+  },
+  {
+    binding: 4,
+    type: 'uniform-buffer',
+    visibility: RHIShaderStage.FRAGMENT,
+    name: 'uTime'
+  }
+], 'Main Bind Group Layout');
+
+// 创建管线布局
+const pipelineLayout = device.createPipelineLayout([bindGroupLayout], 'Main Pipeline Layout');
+
+// 创建渲染管线
+const renderPipeline = device.createRenderPipeline({
+  vertexShader,
+  fragmentShader,
+  vertexLayout,
+  primitiveTopology: RHIPrimitiveTopology.TRIANGLE_LIST,
+  layout: pipelineLayout,
+  depthStencilState: {
+    depthTestEnabled: true,
+    depthWriteEnabled: true,
+    depthCompareFunction: RHICompareFunction.LESS_EQUAL,
+    stencilTestEnabled: false,
+    stencilReadMask: 0xff,
+    stencilWriteMask: 0xff,
+    stencilFront: {
+      compareFunction: RHICompareFunction.ALWAYS,
+      failOperation: 'keep',
+      depthFailOperation: 'keep',
+      passOperation: 'keep'
+    },
+    stencilBack: {
+      compareFunction: RHICompareFunction.ALWAYS,
+      failOperation: 'keep',
+      depthFailOperation: 'keep',
+      passOperation: 'keep'
+    }
+  },
+  colorBlendState: {
+    blendEnabled: true,
+    srcColorFactor: 'src-alpha',
+    dstColorFactor: 'one-minus-src-alpha',
+    colorBlendOperation: 'add',
+    srcAlphaFactor: 'one',
+    dstAlphaFactor: 'one-minus-src-alpha',
+    alphaBlendOperation: 'add',
+    colorWriteMask: [true, true, true, true]
+  },
+  label: 'Main Render Pipeline'
+});
+
+// 创建棋盘格纹理数据
+const textureSize = 256;
+const textureData = new Uint8Array(textureSize * textureSize * 4);
+
+for (let y = 0; y < textureSize; y++) {
+  for (let x = 0; x < textureSize; x++) {
+    const index = (y * textureSize + x) * 4;
     const isCheckerboard = (Math.floor(x / 32) % 2 === 0) !== (Math.floor(y / 32) % 2 === 0);
+    
     textureData[index] = isCheckerboard ? 255 : 0;     // R
     textureData[index + 1] = isCheckerboard ? 255 : 0; // G
     textureData[index + 2] = isCheckerboard ? 255 : 0; // B
     textureData[index + 3] = 255;                     // A
   }
 }
-texture.upload(textureData);
 
-// Create framebuffer for offscreen rendering
-const framebuffer = new GLFramebuffer(gl);
-framebuffer.create(canvas.width, canvas.height, {
-  samples: 0, // Disable multisampling for compatibility
-  colorAttachments: 1,
-  depthStencil: false // 禁用深度模板附件，避免格式不兼容问题
+// 创建纹理
+const texture = device.createTexture({
+  width: textureSize,
+  height: textureSize,
+  format: RHITextureFormat.RGBA8_UNORM,
+  usage: RHITextureUsage.SAMPLED | RHITextureUsage.COPY_DST,
+  dimension: '2d',
+  label: 'Checkerboard Texture'
 });
 
-// 变换矩阵已经在上面设置好了，这里不需要重复设置顶点属性
+// 更新纹理数据
+texture.update(textureData);
 
-// 创建全屏四边形着色器
-const fsQuadVS = `
-  attribute vec2 aPosition;
-  varying vec2 vTexCoord;
-  void main() {
-    vTexCoord = aPosition * 0.5 + 0.5;
-    gl_Position = vec4(aPosition, 0.0, 1.0);
-  }
-`;
+// 创建纹理视图
+const textureView = texture.createView();
 
-const fsQuadFS = `
-  precision mediump float;
-  varying vec2 vTexCoord;
-  uniform sampler2D uTexture;
-  void main() {
-    gl_FragColor = texture2D(uTexture, vTexCoord);
-  }
-`;
-
-const fsQuadShader = new GLShader(gl);
-fsQuadShader.create(fsQuadVS, fsQuadFS);
-
-// 创建全屏四边形顶点数据和VAO
-const fsQuadVertices = new Float32Array([
-  -1.0, -1.0,
-   1.0, -1.0,
-  -1.0,  1.0,
-   1.0,  1.0
-]);
-
-const fsQuadBuffer = new GLBuffer(gl, gl.ARRAY_BUFFER, gl.STATIC_DRAW, fsQuadVertices.byteLength);
-fsQuadBuffer.create();
-fsQuadBuffer.bind();
-fsQuadBuffer.update(fsQuadVertices);
-
-const fsQuadVAO = new GLVertexArray(gl);
-fsQuadVAO.create();
-fsQuadVAO.bind();
-
-// 使用全屏四边形着色器以便能够获取属性位置
-fsQuadShader.use();
-
-// 设置顶点属性
-fsQuadVAO.setAttribute('aPosition', fsQuadBuffer, 2, GLConstants.DATA_TYPE.FLOAT, false, 0, 0);
-
-// 完成设置后解绑VAO和着色器
-fsQuadVAO.unbind();
-gl.useProgram(null);
+// 创建采样器
+const sampler = device.createSampler({
+  magFilter: 'linear',
+  minFilter: 'linear',
+  mipmapFilter: 'linear',
+  addressModeU: 'repeat',
+  addressModeV: 'repeat',
+  maxAnisotropy: 1,
+  label: 'Texture Sampler'
+});
 
 // 创建变换矩阵
 const modelViewMatrix = new Matrix4();
 const projectionMatrix = new Matrix4();
+
 projectionMatrix.perspective(45, canvas.width / canvas.height, 0.1, 100.0);
 modelViewMatrix.translate(new Vector3(0, 0, -2));
 
+// 创建uniform缓冲区
+const modelViewMatrixBuffer = device.createBuffer({
+  size: 64, // 4x4矩阵，每个元素4字节
+  usage: RHIBufferUsage.UNIFORM,
+  hint: 'dynamic',
+  label: 'ModelView Matrix Buffer'
+});
+
+const projectionMatrixBuffer = device.createBuffer({
+  size: 64, // 4x4矩阵，每个元素4字节
+  usage: RHIBufferUsage.UNIFORM,
+  hint: 'static',
+  label: 'Projection Matrix Buffer'
+});
+
+const timeBuffer = device.createBuffer({
+  size: 4, // 单个float
+  usage: RHIBufferUsage.UNIFORM,
+  hint: 'dynamic',
+  label: 'Time Buffer'
+});
+
+// 更新矩阵缓冲区
+modelViewMatrixBuffer.update(new Float32Array(modelViewMatrix.getElements()));
+projectionMatrixBuffer.update(new Float32Array(projectionMatrix.getElements()));
+
+// 创建绑定组
+const bindGroup = device.createBindGroup(bindGroupLayout, [
+  {
+    binding: 0,
+    resource: modelViewMatrixBuffer
+  },
+  {
+    binding: 1,
+    resource: projectionMatrixBuffer
+  },
+  {
+    binding: 2,
+    resource: textureView
+  },
+  {
+    binding: 3,
+    resource: sampler
+  },
+  {
+    binding: 4,
+    resource: timeBuffer
+  }
+], 'Main Bind Group');
+
 // 渲染循环
 let time = 0;
+
 function render() {
   time += 0.01;
   
-  // 确保没有活动的着色器
-  gl.useProgram(null);
+  // 更新旋转
+  modelViewMatrix.identity();
+  modelViewMatrix.translate(new Vector3(0, 0, -2));
+  modelViewMatrix.rotateY(time * 0.5);
+  modelViewMatrix.rotateX(Math.sin(time * 0.3) * 0.2);
   
-  // First pass: Render to framebuffer
-  framebuffer.bind();
-  renderer.setViewport(canvas.width, canvas.height);
-  renderer.clear();
+  // 更新uniform缓冲区
+  modelViewMatrixBuffer.update(new Float32Array(modelViewMatrix.getElements()));
+  timeBuffer.update(new Float32Array([time]));
   
-  // 使用着色器
-  shader.use();
+  // 创建命令编码器
+  const encoder = device.createCommandEncoder('Main Encoder');
   
-  // 设置uniform变量 - 直接使用GLShader的方法
-  const mvMatrix = modelViewMatrix.getElements();
-  const projMatrix = projectionMatrix.getElements();
+  // 开始渲染通道
+  const renderPass = encoder.beginRenderPass({
+    colorAttachments: [
+      {
+        view: texture.createView(), // 使用一个临时纹理作为渲染目标
+        loadOp: 'clear',
+        storeOp: 'store',
+        clearColor: [0.1, 0.1, 0.1, 1.0]
+      }
+    ],
+    depthStencilAttachment: {
+      view: texture.createView(), // 在实际应用中，这应该是深度纹理
+      depthLoadOp: 'clear',
+      depthStoreOp: 'store',
+      clearDepth: 1.0,
+      depthWriteEnabled: true
+    }
+  });
   
-  // 使用GLShader提供的方法设置uniform
-  shader.setUniformMatrix4fv('uModelViewMatrix', mvMatrix);
-  shader.setUniformMatrix4fv('uProjectionMatrix', projMatrix);
-  shader.setUniform1f('uTime', time);
+  // 设置视口
+  renderPass.setViewport(0, 0, canvas.width, canvas.height, 0, 1);
   
-  // 绑定纹理到纹理单元0
-  texture.bind(0);
+  // 设置渲染管线
+  renderPass.setPipeline(renderPipeline);
   
-  // 设置纹理采样器uniform
-  shader.setUniform1i('uTexture', 0);
+  // 设置绑定组
+  renderPass.setBindGroup(0, bindGroup);
   
-  // Bind VAO and draw
-  vao.bind();
-  gl.drawArrays(GLConstants.DRAW_MODE.TRIANGLES, 0, 3);
-  vao.unbind();
+  // 设置顶点缓冲区
+  renderPass.setVertexBuffer(0, vertexBuffer);
   
-  // Second pass: Render framebuffer to screen
-  framebuffer.unbind();
-  renderer.setViewport(canvas.width, canvas.height);
-  renderer.clear();
+  // 绘制
+  renderPass.draw(3);
   
-  // Draw the framebuffer's color attachment to the screen
-  const colorTexture = framebuffer.getColorAttachment(0);
-  if (colorTexture) {
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, colorTexture);
-    
-    // 使用全屏四边形着色器
-    fsQuadShader.use();
-    
-    // 设置纹理采样器uniform
-    fsQuadShader.setUniform1i('uTexture', 0);
-    
-    // 绑定VAO并绘制
-    fsQuadVAO.bind();
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    fsQuadVAO.unbind();
-  }
+  // 结束渲染通道
+  renderPass.end();
   
+  // 完成命令编码
+  const commandBuffer = encoder.finish();
+  
+  // 提交命令
+  device.submit([commandBuffer]);
+  
+  // 请求下一帧
   requestAnimationFrame(render);
 }
 
-// Handle window resize
+// 处理窗口大小变化
 window.addEventListener('resize', () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  renderer.setViewport(canvas.width, canvas.height);
-  projectionMatrix.perspective(45, canvas.width / canvas.height, 0.1, 100.0);
   
-  // Recreate framebuffer with new size
-  framebuffer.destroy();
-  framebuffer.create(canvas.width, canvas.height, {
-    samples: 0,
-    colorAttachments: 1,
-    depthStencil: false // 保持与上面相同的配置
-  });
+  // 更新投影矩阵
+  projectionMatrix.perspective(45, canvas.width / canvas.height, 0.1, 100.0);
+  projectionMatrixBuffer.update(new Float32Array(projectionMatrix.getElements()));
 });
 
 // 开始渲染
