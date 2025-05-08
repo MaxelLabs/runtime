@@ -7,7 +7,7 @@ import type {
   RHIBlendOperation,
   RHIBlendFactor,
   RHICompareFunction,
-  RHISStencilOperation,
+  RHIStencilOperation,
   RHIFrontFace,
   RHICullMode,
   RHIVertexFormat,
@@ -186,17 +186,17 @@ export interface RHIStencilFaceState {
   /**
    * 失败操作
    */
-  failOp?: RHISStencilOperation,
+  failOp?: RHIStencilOperation,
 
   /**
    * 深度失败操作
    */
-  depthFailOp?: RHISStencilOperation,
+  depthFailOp?: RHIStencilOperation,
 
   /**
    * 通过操作
    */
-  passOp?: RHISStencilOperation,
+  passOp?: RHIStencilOperation,
 }
 
 /**

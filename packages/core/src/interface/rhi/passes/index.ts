@@ -4,4 +4,4 @@
  */
 
 export * from './renderPass';
-export * from './computePass'; 
+export * from './computePass';
