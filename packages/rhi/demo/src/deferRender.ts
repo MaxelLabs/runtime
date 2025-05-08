@@ -9,6 +9,7 @@ import {
   RHIVertexFormat,
   RHIBlendFactor,
   RHIBlendOperation,
+  RHIIndexFormat,
 } from '@maxellabs/core';
 import { WebGLDevice } from '../../src/webgl/GLDevice';
 import { Matrix4, Vector3 } from '@maxellabs/math';
@@ -345,7 +346,7 @@ let albedoBuffer = device.createTexture({
 let depthBuffer = device.createTexture({
   width: canvas.width,
   height: canvas.height,
-  format: RHITextureFormat.DEPTH24_UNORM_STENCIL8,
+  format: RHITextureFormat.DEPTH16_UNORM,
   usage: RHITextureUsage.RENDER_TARGET | RHITextureUsage.SAMPLED,
   dimension: '2d',
   label: 'Depth Buffer',
@@ -596,7 +597,7 @@ const gbufferPipeline = device.createRenderPipeline({
   depthStencilState: {
     depthWriteEnabled: true,
     depthCompare: RHICompareFunction.LESS,
-    format: RHITextureFormat.DEPTH24_UNORM_STENCIL8,
+    format: RHITextureFormat.DEPTH16_UNORM,
   },
   // 多个颜色附件对应G-Buffer中的各个缓冲区
   colorBlendState: {
@@ -643,6 +644,7 @@ const lightingPipeline = device.createRenderPipeline({
   depthStencilState: {
     depthWriteEnabled: false, // 不写入深度
     depthCompare: RHICompareFunction.ALWAYS,
+    format: RHITextureFormat.DEPTH16_UNORM,
   },
   colorBlendState: {
     attachments: [{
@@ -723,8 +725,8 @@ function render () {
 
   // 更新模型矩阵
   modelMatrix.identity();
-//   modelMatrix.rotateY(rotation);
-//   modelMatrix.rotateX(rotation * 0.5);
+  //   modelMatrix.rotateY(rotation);
+  //   modelMatrix.rotateX(rotation * 0.5);
   modelMatrixBuffer.update(new Float32Array(modelMatrix.getElements()));
 
   // 更新光源位置 - 让光源围绕场景移动
@@ -740,30 +742,31 @@ function render () {
     colorAttachments: [
       {
         view: positionBuffer.createView(),
-        loadOp: 'clear',
-        storeOp: 'store',
-        clearColor: [0.0, 0.0, 0.0, 1.0],
+        loadOp: 'clear' as const,
+        storeOp: 'store' as const,
+        clearColor: [0.0, 0.0, 0.0, 1.0] as [number, number, number, number],
       },
       {
         view: normalBuffer.createView(),
-        loadOp: 'clear',
-        storeOp: 'store',
-        clearColor: [0.0, 0.0, 0.0, 1.0],
+        loadOp: 'clear' as const,
+        storeOp: 'store' as const,
+        clearColor: [0.0, 0.0, 0.0, 1.0] as [number, number, number, number],
       },
       {
         view: albedoBuffer.createView(),
-        loadOp: 'clear',
-        storeOp: 'store',
-        clearColor: [0.0, 0.0, 0.0, 1.0],
+        loadOp: 'clear' as const,
+        storeOp: 'store' as const,
+        clearColor: [0.0, 0.0, 0.0, 1.0] as [number, number, number, number],
       },
     ],
     depthStencilAttachment: {
       view: depthBuffer.createView(),
-      depthLoadOp: 'clear',
-      depthStoreOp: 'store',
+      depthLoadOp: 'clear' as const,
+      depthStoreOp: 'store' as const,
       clearDepth: 1.0,
       depthWriteEnabled: true,
     },
+    label: 'GBuffer Render Pass',
   };
 
   const gbufferPass = commandEncoder.beginRenderPass(gbufferPassDescriptor);
@@ -771,7 +774,7 @@ function render () {
   gbufferPass.setPipeline(gbufferPipeline);
   gbufferPass.setBindGroup(0, gbufferBindGroup);
   gbufferPass.setVertexBuffer(0, cubeVertexBuffer);
-  gbufferPass.setIndexBuffer(cubeIndexBuffer, 'uint16');
+  gbufferPass.setIndexBuffer(cubeIndexBuffer, RHIIndexFormat.UINT16);
   gbufferPass.drawIndexed(36);
   gbufferPass.end();
 
@@ -780,11 +783,13 @@ function render () {
     colorAttachments: [
       {
         view: finalRenderTarget.createView(),
-        loadOp: 'clear',
-        storeOp: 'store',
-        clearColor: [0.05, 0.05, 0.05, 1.0],
+        loadOp: 'clear' as const,
+        storeOp: 'store' as const,
+        clearColor: [0.05, 0.05, 0.05, 1.0] as [number, number, number, number],
       },
     ],
+    depthStencilAttachment: null, // 光照处理通道不需要深度缓冲区
+    label: 'Lighting Render Pass',
   };
 
   const lightingPass = commandEncoder.beginRenderPass(lightingPassDescriptor);
@@ -792,7 +797,7 @@ function render () {
   lightingPass.setPipeline(lightingPipeline);
   lightingPass.setBindGroup(0, lightingBindGroup);
   lightingPass.setVertexBuffer(0, quadVertexBuffer);
-  lightingPass.setIndexBuffer(quadIndexBuffer, 'uint16');
+  lightingPass.setIndexBuffer(quadIndexBuffer, RHIIndexFormat.UINT16);
   lightingPass.drawIndexed(6);
   lightingPass.end();
 
@@ -849,7 +854,7 @@ window.addEventListener('resize', () => {
   depthBuffer = device.createTexture({
     width: canvas.width,
     height: canvas.height,
-    format: RHITextureFormat.DEPTH24_UNORM_STENCIL8,
+    format: RHITextureFormat.DEPTH16_UNORM,
     usage: RHITextureUsage.RENDER_TARGET | RHITextureUsage.SAMPLED,
     dimension: '2d',
     label: 'Depth Buffer',
