@@ -1,8 +1,8 @@
 import type { IRHIBindGroup, IRHIBindGroupLayout, IRHIBindGroupEntry } from '@maxellabs/core';
-import { GLBuffer } from '../resources/WebGLBuffer';
-import { WebGLSampler } from '../resources/WebGLSampler';
-import { WebGLTextureView } from '../resources/WebGLTextureView';
-import { WebGLBindGroupLayout } from './WebGLBindGroupLayout';
+import { GLBuffer } from '../resources/GLBuffer';
+import { WebGLSampler } from '../resources/GLSampler';
+import { WebGLTextureView } from '../resources/GLTextureView';
+import { WebGLBindGroupLayout } from './GLBindGroupLayout';
 
 // Helper function to apply uniform data based on name (temporary solution)
 function applyKnownUniformFromBufferData (gl: WebGLRenderingContext | WebGL2RenderingContext, location: WebGLUniformLocation | null, data: ArrayBuffer, uniformName: string) {

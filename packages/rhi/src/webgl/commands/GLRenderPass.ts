@@ -1,12 +1,12 @@
 import type { IRHIBuffer, IRHIBindGroup, IRHIRenderPass, IRHIRenderPipeline } from '@maxellabs/core';
 import { RHIIndexFormat } from '@maxellabs/core';
-import type { WebGLTexture } from '../resources/WebGLTexture';
-import type { WebGLTextureView } from '../resources/WebGLTextureView';
-import type { GLBuffer } from '../resources/WebGLBuffer';
-import type { WebGLRenderPipeline } from '../pipeline/WebGLRenderPipeline';
-import type { WebGLBindGroup } from '../bindings/WebGLBindGroup';
-import type { WebGLCommandEncoder } from './WebGLCommandEncoder';
-import { WebGLUtils } from '../utils/WebGLUtils';
+import type { WebGLTexture } from '../resources/GLTexture';
+import type { WebGLTextureView } from '../resources/GLTextureView';
+import type { GLBuffer } from '../resources/GLBuffer';
+import type { WebGLRenderPipeline } from '../pipeline/GLRenderPipeline';
+import type { WebGLBindGroup } from '../bindings/GLBindGroup';
+import type { WebGLCommandEncoder } from './GLCommandEncoder';
+import { WebGLUtils } from '../utils/GLUtils';
 
 /**
  * WebGL渲染通道实现
@@ -311,28 +311,32 @@ export class WebGLRenderPass implements IRHIRenderPass {
   setVertexBuffer (slot: number, buffer: IRHIBuffer, offset: number = 0): void {
     if (!this.currentPipeline) {
       console.error('没有设置渲染管线，无法设置顶点缓冲区');
+
       return;
     }
 
     this.encoder.addCommand(() => {
       try {
         // 添加调试信息
-        console.log(`设置顶点缓冲区: 槽位 ${slot}, 缓冲区类型:`, buffer.constructor.name);
-        
+        // console.log(`设置顶点缓冲区: 槽位 ${slot}, 缓冲区类型:`, buffer.constructor.name);
+
         // 检查缓冲区是否有getGLBuffer方法
         if (typeof (buffer as any).getGLBuffer !== 'function') {
           console.error('顶点缓冲区对象没有getGLBuffer方法');
+
           return;
         }
-        
+
         const glBuffer = (buffer as any).getGLBuffer();
+
         if (!glBuffer) {
           console.error('获取WebGL缓冲区对象失败');
+
           return;
         }
 
         this.currentPipeline.applyVertexBufferLayout(slot, buffer, offset);
-        console.log(`设置顶点缓冲区: 槽位 ${slot}, 偏移 ${offset}`);
+        // console.log(`设置顶点缓冲区: 槽位 ${slot}, 偏移 ${offset}`);
       } catch (e) {
         console.error('设置顶点缓冲区时出错:', e);
       }
@@ -375,7 +379,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
             const glBuffer = buffer.getGLBuffer();
 
             this.currentPipeline.applyVertexBufferLayout(slot, glBuffer, offset);
-            console.log(`手动设置顶点缓冲区: 槽位 ${slot}, 偏移 ${offset}`);
+            // console.log(`手动设置顶点缓冲区: 槽位 ${slot}, 偏移 ${offset}`);
           } catch (e) {
             console.error('设置顶点缓冲区失败:', e);
           }
@@ -402,7 +406,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
 
           if (program && webglBindGroup.applyBindings) {
             webglBindGroup.applyBindings(program, dynamicOffsets);
-            console.log('成功应用绑定组');
+            // console.log('成功应用绑定组');
           } else {
             console.error('无法应用绑定组：程序无效或绑定组不支持applyBindings');
           }
@@ -443,7 +447,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
       },
     });
 
-    console.log(`添加绘制命令: 顶点数=${vertexCount}, 实例数=${instanceCount}, 起始顶点=${firstVertex}`);
+    // console.log(`添加绘制命令: 顶点数=${vertexCount}, 实例数=${instanceCount}, 起始顶点=${firstVertex}`);
   }
 
   /**

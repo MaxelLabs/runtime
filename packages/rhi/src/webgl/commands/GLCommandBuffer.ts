@@ -1,6 +1,6 @@
 import type { IRHICommandBuffer } from '@maxellabs/core';
-import type { GLBuffer } from '../resources/WebGLBuffer';
-import type { WebGLTexture } from '../resources/WebGLTexture';
+import type { GLBuffer } from '../resources/GLBuffer';
+import type { WebGLTexture } from '../resources/GLTexture';
 
 /**
  * WebGL命令缓冲区实现

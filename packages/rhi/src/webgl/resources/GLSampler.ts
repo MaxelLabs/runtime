@@ -1,6 +1,6 @@
 import type { IRHISampler, RHISamplerDescriptor } from '@maxellabs/core';
 import { RHIAddressMode, RHICompareFunction, RHIFilterMode } from '@maxellabs/core';
-import { WebGLUtils } from '../utils/WebGLUtils';
+import { WebGLUtils } from '../utils/GLUtils';
 
 /**
  * WebGL采样器实现

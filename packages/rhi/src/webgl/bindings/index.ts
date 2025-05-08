@@ -1,2 +1,2 @@
-export * from './WebGLBindGroup';
-export * from './WebGLBindGroupLayout';
+export * from './GLBindGroup';
+export * from './GLBindGroupLayout';

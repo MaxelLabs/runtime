@@ -4,8 +4,8 @@ import type {
   RHITextureDescriptor,
   RHITextureFormat,
   RHITextureUsage } from '@maxellabs/core';
-import { WebGLUtils } from '../utils/WebGLUtils';
-import { WebGLTextureView } from './WebGLTextureView';
+import { WebGLUtils } from '../utils/GLUtils';
+import { WebGLTextureView } from './GLTextureView';
 
 /**
  * WebGL纹理实现

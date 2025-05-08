@@ -18,8 +18,8 @@ import {
   RHIBlendFactor,
   RHIBlendOperation,
 } from '@maxellabs/core';
-import type { WebGLShader } from '../resources/WebGLShader';
-import { WebGLUtils } from '../utils/WebGLUtils';
+import type { WebGLShader } from '../resources/GLShader';
+import { WebGLUtils } from '../utils/GLUtils';
 import type { GLBuffer } from '../resources';
 
 /**

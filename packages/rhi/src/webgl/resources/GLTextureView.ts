@@ -1,5 +1,5 @@
 import type { IRHITexture, IRHITextureView, RHITextureFormat } from '@maxellabs/core';
-import type { WebGLTexture } from './WebGLTexture';
+import type { WebGLTexture } from './GLTexture';
 
 /**
  * WebGL纹理视图实现

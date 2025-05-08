@@ -22,18 +22,18 @@ import {
   RHIBackend,
   RHIFeatureFlags,
 } from '@maxellabs/core';
-import { GLBuffer } from './resources/WebGLBuffer';
-import { WebGLTexture } from './resources/WebGLTexture';
-import { WebGLSampler } from './resources/WebGLSampler';
-import { WebGLShader } from './resources/WebGLShader';
-import { WebGLBindGroupLayout } from './bindings/WebGLBindGroupLayout';
-import { WebGLBindGroup } from './bindings/WebGLBindGroup';
-import { WebGLPipelineLayout } from './pipeline/WebGLPipelineLayout';
-import { WebGLRenderPipeline } from './pipeline/WebGLRenderPipeline';
-import { WebGLComputePipeline } from './pipeline/WebGLComputePipeline';
-import { WebGLCommandEncoder } from './commands/WebGLCommandEncoder';
-import { WebGLCommandBuffer } from './commands/WebGLCommandBuffer';
-import { WebGLUtils } from './utils/WebGLUtils';
+import { GLBuffer } from './resources/GLBuffer';
+import { WebGLTexture } from './resources/GLTexture';
+import { WebGLSampler } from './resources/GLSampler';
+import { WebGLShader } from './resources/GLShader';
+import { WebGLBindGroupLayout } from './bindings/GLBindGroupLayout';
+import { WebGLBindGroup } from './bindings/GLBindGroup';
+import { WebGLPipelineLayout } from './pipeline/GLPipelineLayout';
+import { WebGLRenderPipeline } from './pipeline/GLRenderPipeline';
+import { WebGLComputePipeline } from './pipeline/GLComputePipeline';
+import { WebGLCommandEncoder } from './commands/GLCommandEncoder';
+import { WebGLCommandBuffer } from './commands/GLCommandBuffer';
+import { WebGLUtils } from './utils/GLUtils';
 
 /**
  * WebGL设备实现

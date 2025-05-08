@@ -4,7 +4,7 @@ import {
   RHIBackend,
   RHIFeatureFlags,
 } from '@maxellabs/core';
-import { WebGLDevice } from '../../src/webgl/WebGLDevice';
+import { WebGLDevice } from '../../src/webgl/GLDevice';
 
 /**
  * 基础初始化演示

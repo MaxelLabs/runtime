@@ -1,6 +1,6 @@
 import type { IRHIBuffer, IRHICommandBuffer, IRHICommandEncoder, IRHIComputePass, IRHIRenderPass, IRHITexture, IRHITextureView } from '@maxellabs/core';
-import { WebGLRenderPass } from './WebGLRenderPass';
-import { WebGLCommandBuffer } from './WebGLCommandBuffer';
+import { WebGLRenderPass } from './GLRenderPass';
+import { WebGLCommandBuffer } from './GLCommandBuffer';
 
 /**
  * WebGL命令编码器实现
