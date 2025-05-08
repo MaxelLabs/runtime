@@ -29,6 +29,17 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
   }
 
   /**
+    * 添加自定义命令
+    * 仅供内部使用，由RenderPass等组件调用
+    */
+  addCommand (command: () => void): void {
+    this.commands.push({
+      type: 'custom',
+      params: { execute: command },
+    });
+  }
+
+  /**
    * 开始渲染通道
    */
   beginRenderPass (options: {
@@ -221,6 +232,13 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
    * 仅供内部使用，由WebGLRenderPass调用
    */
   addEndRenderPassCommand (): void {
+    // this.addCommand(() => {
+    //   // 处理渲染通道结束逻辑
+    //   const gl = this.gl;
+
+    //   // 清理帧缓冲等操作...
+    //   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    // });
     this.commands.push({
       type: 'endRenderPass',
       params: {},

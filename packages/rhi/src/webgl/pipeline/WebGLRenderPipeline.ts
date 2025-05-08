@@ -8,9 +8,11 @@ import type {
   RHIDepthStencilState,
   RHIColorBlendState,
   RHIRenderPipelineDescriptor,
+  RHIVertexBufferLayout,
 } from '@maxellabs/core';
 import type { WebGLShader } from '../resources/WebGLShader';
 import { WebGLUtils } from '../utils/WebGLUtils';
+import type { GLBuffer } from '../resources';
 
 /**
  * WebGL渲染管线实现
@@ -30,7 +32,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   private _layout: IRHIPipelineLayout;
   private _label?: string;
   private attributeLocations: Map<string, number> = new Map();
-  private attributeBufferLayouts: Map<number, { stride: number, offset: number, format: any }[]> = new Map();
+  private attributeBufferLayouts: Map<number, { index: number, stride: number, offset: number, format: { type: number, size: number, normalized: boolean }, name: string }[]> = new Map();
   private isDestroyed: boolean = false;
   private utils: WebGLUtils;
 
@@ -142,7 +144,6 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
    * 准备顶点布局信息
    */
   private prepareVertexLayout (): void {
-    // 处理顶点布局，将其映射到WebGL格式
     for (const bufferLayout of this._vertexLayout.buffers) {
       const { index, stride, attributes } = bufferLayout;
 
@@ -150,6 +151,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
         const format = this.utils.vertexFormatToGL(attr.format);
 
         return {
+          name: attr.name, // 添加名称
           stride,
           offset: attr.offset,
           format,
@@ -382,19 +384,27 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
    * @param buffer WebGL缓冲区
    * @param offset 偏移量（字节）
    */
-  setVertexBuffer (slot: number, buffer: WebGLBuffer, offset: number = 0): void {
+  setVertexBuffer (slot: number, buffer: GLBuffer, offset: number = 0): void {
     const gl = this.gl;
     const layouts = this.attributeBufferLayouts.get(slot);
+    const bufferLayout = this._vertexLayout.buffers[slot];
 
-    if (!layouts) {
+    if (!layouts || !bufferLayout) {
       return;
     }
 
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer.getGLBuffer());
 
-    for (const layout of layouts) {
-      const { stride, offset: attrOffset, format } = layout;
-      const attributeLocation = gl.getAttribLocation(this.program, `a_position${slot}`); // 实际应该根据语义映射
+    // 遍历每个属性
+    for (let i = 0; i < bufferLayout.attributes.length; i++) {
+      const { name, offset: attrOffset } = bufferLayout.attributes[i];
+      const layout = layouts[i];
+      const { stride, format } = layout;
+      console.log('setVertexBuffer', name, attrOffset, stride, format);
+      
+
+      // 使用属性名获取位置
+      const attributeLocation = this.attributeLocations.get(name) ?? -1;
 
       if (attributeLocation >= 0) {
         gl.enableVertexAttribArray(attributeLocation);

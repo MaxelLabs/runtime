@@ -177,17 +177,17 @@ export class WebGLTexture implements IRHITexture {
           data instanceof ImageData) {
         gl.texSubImage2D(target, mipLevel, x, y, this.glFormat, this.glType, data);
       } else {
-        const actualWidth = width || (this.width - x);
-        const actualHeight = height || (this.height - y);
+        const actualWidth = width ?? (this.width - x);
+        const actualHeight = height ?? (this.height - y);
 
         gl.texSubImage2D(target, mipLevel, x, y, actualWidth, actualHeight, this.glFormat, this.glType, data);
       }
     } else if (this.dimension === '3d') {
       // 更新3D纹理
       if (gl instanceof WebGL2RenderingContext) {
-        const actualWidth = width || (this.width - x);
-        const actualHeight = height || (this.height - y);
-        const actualDepth = depth || (this.depthOrArrayLayers - z);
+        const actualWidth = width ?? (this.width - x);
+        const actualHeight = height ?? (this.height - y);
+        const actualDepth = depth ?? (this.depthOrArrayLayers - z);
 
         if (data instanceof HTMLImageElement ||
             data instanceof HTMLCanvasElement ||
@@ -218,10 +218,10 @@ export class WebGLTexture implements IRHITexture {
           data instanceof ImageData) {
         gl.texSubImage2D(this.target, mipLevel, x, y, this.glFormat, this.glType, data);
       } else {
-        const actualWidth = width || (this.width - x);
-        const actualHeight = height || (this.height - y);
+        const actualWidth = width ?? (this.width - x);
+        const actualHeight = height ?? (this.height - y);
 
-        gl.texSubImage2D(target, mipLevel, x, y, actualWidth, actualHeight, this.glFormat, this.glType, data as ArrayBufferView);
+        gl.texSubImage2D(this.target, mipLevel, x, y, actualWidth, actualHeight, this.glFormat, this.glType, data as ArrayBufferView);
       }
     }
 

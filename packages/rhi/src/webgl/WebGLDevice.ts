@@ -1,4 +1,4 @@
-import {
+import type {
   IRHIDevice,
   IRHIDeviceInfo,
   IRHICommandEncoder,
@@ -12,16 +12,17 @@ import {
   IRHIBindGroup,
   IRHIRenderPipeline,
   IRHIComputePipeline,
-  RHIBackend,
-  RHIFeatureFlags,
   RHIBufferDescriptor,
   RHITextureDescriptor,
   RHISamplerDescriptor,
   RHIShaderModuleDescriptor,
   RHIRenderPipelineDescriptor,
-  RHIComputePipelineDescriptor,
+  RHIComputePipelineDescriptor } from '@maxellabs/core';
+import {
+  RHIBackend,
+  RHIFeatureFlags,
 } from '@maxellabs/core';
-import { WebGLBuffer } from './resources/WebGLBuffer';
+import { GLBuffer } from './resources/WebGLBuffer';
 import { WebGLTexture } from './resources/WebGLTexture';
 import { WebGLSampler } from './resources/WebGLSampler';
 import { WebGLShader } from './resources/WebGLShader';
@@ -50,40 +51,11 @@ export class WebGLDevice implements IRHIDevice {
   private contextRestoredListener: (event: Event) => void;
 
   /**
-   * 创建WebGL设备
-   * 
-   * @param canvas 画布元素
-   * @param options WebGL上下文选项
-   */
-  constructor(canvas: HTMLCanvasElement, options: WebGLContextAttributes = {}) {
-    this.canvas = canvas;
-    
-    // 尝试创建WebGL2上下文
-    this.gl = canvas.getContext('webgl2', options) as WebGL2RenderingContext;
-    this.isWebGL2 = !!this.gl;
-    
-    // 如果WebGL2不可用，回退到WebGL1
-    if (!this.gl) {
-      this.gl = canvas.getContext('webgl', options) as WebGLRenderingContext;
-      this.isWebGL2 = false;
-      
-      if (!this.gl) {
-        throw new Error('无法创建WebGL上下文');
-      }
-    }
-    
-    // 获取环境信息
-    this.info = this.createDeviceInfo();
-    
-    // 设置上下文丢失和恢复事件处理
-    this.setupContextEvents();
-    
-    // 尝试获取丢失上下文扩展
    * 构造函数
    * @param canvas 渲染目标画布
    * @param options 初始化选项
    */
-  constructor(canvas: HTMLCanvasElement, options: {
+  constructor (canvas: HTMLCanvasElement, options: {
     antialias?: boolean,
     alpha?: boolean,
     depth?: boolean,
@@ -105,7 +77,7 @@ export class WebGLDevice implements IRHIDevice {
   /**
    * 初始化WebGL上下文
    */
-  private initWebGL(canvas: HTMLCanvasElement, options: any): WebGLRenderingContext | WebGL2RenderingContext {
+  private initWebGL (canvas: HTMLCanvasElement, options: any): WebGLRenderingContext | WebGL2RenderingContext {
     const contextOptions: WebGLContextAttributes = {
       alpha: options.alpha !== undefined ? options.alpha : true,
       antialias: options.antialias !== undefined ? options.antialias : true,
@@ -120,6 +92,7 @@ export class WebGLDevice implements IRHIDevice {
 
     // 首先尝试WebGL2
     let gl: WebGLRenderingContext | WebGL2RenderingContext | null = canvas.getContext('webgl2', contextOptions);
+
     if (!gl) {
       // 回退到WebGL1
       gl = canvas.getContext('webgl', contextOptions) || canvas.getContext('experimental-webgl', contextOptions);
@@ -135,7 +108,7 @@ export class WebGLDevice implements IRHIDevice {
   /**
    * 初始化设备信息
    */
-  private initDeviceInfo(): IRHIDeviceInfo {
+  private initDeviceInfo (): IRHIDeviceInfo {
     const gl = this.gl;
     const isWebGL2 = this.isWebGL2;
     const vendor = gl.getParameter(gl.VENDOR);
@@ -146,7 +119,7 @@ export class WebGLDevice implements IRHIDevice {
 
     // 计算功能标志
     let features = RHIFeatureFlags.DEPTH_TEXTURE | RHIFeatureFlags.VERTEX_ARRAY_OBJECT;
-    
+
     if (isWebGL2) {
       features |= RHIFeatureFlags.FLOAT_TEXTURE |
                  RHIFeatureFlags.HALF_FLOAT_TEXTURE |
@@ -196,7 +169,7 @@ export class WebGLDevice implements IRHIDevice {
   /**
    * 初始化WebGL扩展
    */
-  private initExtensions(): void {
+  private initExtensions (): void {
     // 基本WebGL1扩展
     const requiredExtensions = [
       'OES_vertex_array_object',
@@ -228,6 +201,7 @@ export class WebGLDevice implements IRHIDevice {
     [...requiredExtensions, ...compressionExtensions].forEach(extName => {
       try {
         const ext = this.gl.getExtension(extName);
+
         if (ext) {
           this.extensions[extName] = ext;
         }
@@ -240,70 +214,70 @@ export class WebGLDevice implements IRHIDevice {
   /**
    * 获取原始WebGL上下文
    */
-  getGL(): WebGLRenderingContext | WebGL2RenderingContext {
+  getGL (): WebGLRenderingContext | WebGL2RenderingContext {
     return this.gl;
   }
 
   /**
    * 获取设备信息
    */
-  get info(): IRHIDeviceInfo {
+  getInfo (): IRHIDeviceInfo {
     return this.info;
   }
 
   /**
    * 创建缓冲区
    */
-  createBuffer(descriptor: RHIBufferDescriptor): IRHIBuffer {
-    return new WebGLBuffer(this.gl, descriptor);
+  createBuffer (descriptor: RHIBufferDescriptor): IRHIBuffer {
+    return new GLBuffer(this.gl, descriptor);
   }
 
   /**
    * 创建纹理
    */
-  createTexture(descriptor: RHITextureDescriptor): IRHITexture {
+  createTexture (descriptor: RHITextureDescriptor): IRHITexture {
     return new WebGLTexture(this.gl, descriptor);
   }
 
   /**
    * 创建采样器
    */
-  createSampler(descriptor?: RHISamplerDescriptor): IRHISampler {
+  createSampler (descriptor?: RHISamplerDescriptor): IRHISampler {
     return new WebGLSampler(this.gl, descriptor);
   }
 
   /**
    * 创建着色器模块
    */
-  createShaderModule(descriptor: RHIShaderModuleDescriptor): IRHIShaderModule {
+  createShaderModule (descriptor: RHIShaderModuleDescriptor): IRHIShaderModule {
     return new WebGLShader(this.gl, descriptor);
   }
 
   /**
    * 创建绑定组布局
    */
-  createBindGroupLayout(entries: any[], label?: string): IRHIBindGroupLayout {
+  createBindGroupLayout (entries: any[], label?: string): IRHIBindGroupLayout {
     return new WebGLBindGroupLayout(this.gl, entries, label);
   }
 
   /**
    * 创建管线布局
    */
-  createPipelineLayout(bindGroupLayouts: IRHIBindGroupLayout[], label?: string): IRHIPipelineLayout {
+  createPipelineLayout (bindGroupLayouts: IRHIBindGroupLayout[], label?: string): IRHIPipelineLayout {
     return new WebGLPipelineLayout(this.gl, bindGroupLayouts, label);
   }
 
   /**
    * 创建绑定组
    */
-  createBindGroup(layout: IRHIBindGroupLayout, entries: any[], label?: string): IRHIBindGroup {
+  createBindGroup (layout: IRHIBindGroupLayout, entries: any[], label?: string): IRHIBindGroup {
     return new WebGLBindGroup(this.gl, layout, entries, label);
   }
 
   /**
    * 创建渲染管线
    */
-  createRenderPipeline(descriptor: RHIRenderPipelineDescriptor): IRHIRenderPipeline {
+  createRenderPipeline (descriptor: RHIRenderPipelineDescriptor): IRHIRenderPipeline {
     return new WebGLRenderPipeline(this.gl, descriptor);
   }
 
@@ -311,22 +285,23 @@ export class WebGLDevice implements IRHIDevice {
    * 创建计算管线
    * 注意：WebGL1/2不支持计算着色器，这里仅为接口兼容性
    */
-  createComputePipeline(descriptor: RHIComputePipelineDescriptor): IRHIComputePipeline {
+  createComputePipeline (descriptor: RHIComputePipelineDescriptor): IRHIComputePipeline {
     console.warn('WebGL不支持计算着色器，创建的计算管线将不起作用');
+
     return new WebGLComputePipeline(this.gl, descriptor);
   }
 
   /**
    * 创建命令编码器
    */
-  createCommandEncoder(label?: string): IRHICommandEncoder {
+  createCommandEncoder (label?: string): IRHICommandEncoder {
     return new WebGLCommandEncoder(this.gl, label);
   }
 
   /**
    * 提交命令
    */
-  submit(commandBuffers: IRHICommandBuffer[]): void {
+  submit (commandBuffers: IRHICommandBuffer[]): void {
     // WebGL命令是立即执行的，这里实际上只需要确保所有命令都已完成
     this.gl.flush();
   }
@@ -334,8 +309,9 @@ export class WebGLDevice implements IRHIDevice {
   /**
    * 检查设备丢失
    */
-  async checkDeviceLost(): Promise<void> {
+  async checkDeviceLost (): Promise<void> {
     const isLost = this.gl.isContextLost();
+
     if (isLost) {
       throw new Error('WebGL上下文已丢失');
     }
@@ -344,11 +320,12 @@ export class WebGLDevice implements IRHIDevice {
   /**
    * 销毁设备
    */
-  destroy(): void {
+  destroy (): void {
     // 在WebGL中，我们只能通过失去上下文来释放资源
     const loseContext = this.gl.getExtension('WEBGL_lose_context');
+
     if (loseContext) {
       loseContext.loseContext();
     }
   }
-} 
+}

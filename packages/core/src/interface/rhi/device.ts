@@ -252,6 +252,13 @@ export interface IRHICommandEncoder {
      */
     label?: string,
   }): IRHICommandBuffer,
+
+  /**
+   * 添加自定义命令
+   * 仅供内部使用，由RenderPass等组件调用
+   * @param command 要执行的命令函数
+   */
+  addCommand(command: () => void): void,
 }
 
 /**

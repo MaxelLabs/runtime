@@ -1,8 +1,9 @@
 import type { IRHIBindGroup, IRHIBindGroupLayout } from '@maxellabs/core';
-import { WebGLBuffer } from '../resources/WebGLBuffer';
+import { GLBuffer } from '../resources/WebGLBuffer';
 import { WebGLTexture } from '../resources/WebGLTexture';
 import { WebGLSampler } from '../resources/WebGLSampler';
 import type { WebGLBindGroupLayout } from './WebGLBindGroupLayout';
+import { WebGLTextureView } from '../resources';
 
 /**
  * WebGL绑定组实现
@@ -68,7 +69,7 @@ export class WebGLBindGroup implements IRHIBindGroup {
   private validateResourceTypeCompatibility (resource: any, layoutType: string): void {
     // 检查资源类型与布局类型的兼容性
     if (layoutType === 'uniform-buffer' || layoutType === 'storage-buffer' || layoutType === 'readonly-storage-buffer') {
-      if (!(resource instanceof WebGLBuffer)) {
+      if (!(resource instanceof GLBuffer)) {
         throw new Error(`绑定类型 ${layoutType} 需要缓冲区资源`);
       }
     } else if (layoutType === 'sampler') {
@@ -76,7 +77,8 @@ export class WebGLBindGroup implements IRHIBindGroup {
         throw new Error('采样器绑定需要采样器资源');
       }
     } else if (layoutType === 'texture' || layoutType === 'storage-texture') {
-      if (!(resource instanceof WebGLTexture)) {
+      // if (!(resource instanceof WebGLTexture)) {
+      if (!(resource instanceof WebGLTextureView)) {
         throw new Error(`${layoutType} 绑定需要纹理资源`);
       }
     }
@@ -130,7 +132,7 @@ export class WebGLBindGroup implements IRHIBindGroup {
       if (!layoutEntry) {continue;}
 
       // 根据资源类型执行不同的绑定操作
-      if (resource instanceof WebGLBuffer) {
+      if (resource instanceof GLBuffer) {
         this.bindBuffer(program, resource, layoutEntry);
       } else if (resource instanceof WebGLTexture) {
         this.bindTexture(program, resource, layoutEntry, binding);
@@ -147,7 +149,7 @@ export class WebGLBindGroup implements IRHIBindGroup {
   /**
    * 绑定缓冲区资源
    */
-  private bindBuffer (program: WebGLProgram, buffer: WebGLBuffer, layoutEntry: any): void {
+  private bindBuffer (program: WebGLProgram, buffer: GLBuffer, layoutEntry: any): void {
     const gl = this.gl;
 
     if (layoutEntry.type === 'uniform-buffer' && this.isWebGL2) {

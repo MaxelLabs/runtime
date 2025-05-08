@@ -2,7 +2,7 @@ import type { IRHIBuffer, IRHIBindGroup, IRHIRenderPass, IRHIRenderPipeline } fr
 import { RHIIndexFormat } from '@maxellabs/core';
 import type { WebGLTexture } from '../resources/WebGLTexture';
 import type { WebGLTextureView } from '../resources/WebGLTextureView';
-import type { WebGLBuffer } from '../resources/WebGLBuffer';
+import type { GLBuffer } from '../resources/WebGLBuffer';
 import type { WebGLRenderPipeline } from '../pipeline/WebGLRenderPipeline';
 import type { WebGLBindGroup } from '../bindings/WebGLBindGroup';
 import type { WebGLCommandEncoder } from './WebGLCommandEncoder';
@@ -35,7 +35,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   };
   private _label?: string;
   private currentPipeline: WebGLRenderPipeline | null = null;
-  private currentIndexBuffer: WebGLBuffer | null = null;
+  private currentIndexBuffer: GLBuffer | null = null;
   private currentIndexFormat: RHIIndexFormat = RHIIndexFormat.UINT16;
   private currentIndexOffset: number = 0;
   private viewport: { x: number, y: number, width: number, height: number, minDepth: number, maxDepth: number };
@@ -281,7 +281,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
       throw new Error('渲染通道已结束，无法设置索引缓冲区');
     }
 
-    this.currentIndexBuffer = buffer as WebGLBuffer;
+    this.currentIndexBuffer = buffer as GLBuffer;
     this.currentIndexFormat = indexFormat;
     this.currentIndexOffset = offset;
 
@@ -304,7 +304,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
     // 添加设置顶点缓冲区的命令
     this.encoder.addCommand(() => {
       if (this.currentPipeline) {
-        this.currentPipeline.setVertexBuffer(slot, buffer as WebGLBuffer, offset);
+        this.currentPipeline.setVertexBuffer(slot, buffer as GLBuffer, offset);
       }
     });
   }

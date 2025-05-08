@@ -1,5 +1,5 @@
 import type { IRHICommandBuffer } from '@maxellabs/core';
-import type { WebGLBuffer } from '../resources/WebGLBuffer';
+import type { GLBuffer } from '../resources/WebGLBuffer';
 import type { WebGLTexture } from '../resources/WebGLTexture';
 
 /**
@@ -111,6 +111,12 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
         this.executeSetIndexBuffer(command.params);
 
         break;
+      case 'custom':
+        if (command.params.execute) {
+          command.params.execute();
+        }
+
+        break;
       default:
         console.warn(`未知的命令类型: ${command.type}`);
     }
@@ -203,8 +209,8 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
     const { source, sourceOffset, destination, destinationOffset, size } = params;
 
     // WebGL不直接支持缓冲区间复制，需要通过CPU执行
-    const sourceBuffer = source as WebGLBuffer;
-    const destBuffer = destination as WebGLBuffer;
+    const sourceBuffer = source as GLBuffer;
+    const destBuffer = destination as GLBuffer;
 
     // 从源缓冲区读取数据
     sourceBuffer.map('read', sourceOffset, size)
@@ -223,7 +229,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   private executeCopyBufferToTexture (params: any): void {
     const { source, destination, copySize } = params;
 
-    const sourceBuffer = source.buffer as WebGLBuffer;
+    const sourceBuffer = source.buffer as GLBuffer;
     const destTexture = destination.texture as WebGLTexture;
     const mipLevel = destination.mipLevel || 0;
     const origin = destination.origin || [0, 0, 0];
@@ -258,7 +264,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
     const { source, destination, copySize } = params;
 
     const sourceTexture = source.texture as WebGLTexture;
-    const destBuffer = destination.buffer as WebGLBuffer;
+    const destBuffer = destination.buffer as GLBuffer;
     const mipLevel = source.mipLevel || 0;
     const origin = source.origin || [0, 0, 0];
     const offset = destination.offset || 0;

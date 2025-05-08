@@ -4,10 +4,10 @@ import { RHIBufferUsage } from '@maxellabs/core';
 /**
  * WebGL缓冲区实现
  */
-export class WebGLBuffer implements IRHIBuffer {
+export class GLBuffer implements IRHIBuffer {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private glBuffer: WebGLBuffer | null;
-  private bufferTarget: number;
+  protected bufferTarget: number;
   private bufferUsage: number;
   private size: number;
   private usage: RHIBufferUsage;
@@ -150,13 +150,6 @@ export class WebGLBuffer implements IRHIBuffer {
    */
   getGLBuffer (): WebGLBuffer | null {
     return this.glBuffer;
-  }
-
-  /**
-   * 获取WebGL缓冲区目标类型
-   */
-  getGLBufferTarget (): number {
-    return this.bufferTarget;
   }
 
   /**
