@@ -468,7 +468,7 @@ export enum RHICullMode {
 /**
    * 模板操作
    */
-export enum RHISStencilOperation {
+export enum RHIStencilOperation {
   /** 保持当前值 */
   KEEP = 0,
   /** 设置为零 */
