@@ -29,14 +29,31 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
   }
 
   /**
-    * 添加自定义命令
-    * 仅供内部使用，由RenderPass等组件调用
-    */
-  addCommand (command: () => void): void {
-    this.commands.push({
-      type: 'custom',
-      params: { execute: command },
-    });
+   * 添加命令到编码器
+   * @param command 命令对象或函数
+   */
+  addCommand (command: any): void {
+    if (this.isDestroyed) {
+      console.error('尝试向已销毁的命令编码器添加命令');
+      return;
+    }
+
+    if (typeof command === 'function') {
+      // 如果是函数，包装为custom类型命令
+      this.commands.push({
+        type: 'custom',
+        params: {
+          execute: command
+        }
+      });
+      console.log('添加自定义函数命令');
+    } else if (typeof command === 'object' && command.type) {
+      // 如果已经是命令对象，直接添加
+      this.commands.push(command);
+      console.log(`添加命令: ${command.type}`);
+    } else {
+      console.error('无效的命令格式，必须是函数或具有type属性的对象', command);
+    }
   }
 
   /**
@@ -187,6 +204,23 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
         destination,
         copySize,
       },
+    });
+  }
+
+  /**
+   * 复制纹理到画布
+   * 这是为了兼容WebGPU的渲染架构，在WebGL中提供类似功能
+   */
+  copyTextureToCanvas (options: {
+    source: IRHITextureView,
+    destination: HTMLCanvasElement,
+    origin?: [number, number],
+    extent?: [number, number],
+  }): void {
+    // 记录复制纹理到画布的命令
+    this.commands.push({
+      type: 'copyTextureToCanvas',
+      params: options,
     });
   }
 

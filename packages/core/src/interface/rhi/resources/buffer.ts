@@ -31,6 +31,8 @@ export interface IRHIBuffer {
    */
   update(data: BufferSource, offset?: number): void,
 
+  getGLBuffer():any,
+
   /**
    * 映射缓冲区以进行CPU访问
    * @param mode 访问模式

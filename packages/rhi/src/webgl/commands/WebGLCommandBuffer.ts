@@ -11,8 +11,9 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
     type: string,
     params: any,
   }>;
-  private label?: string;
+  label?: string;
   private isDestroyed = false;
+  private isWebGL2: boolean;
 
   /**
    * 创建WebGL命令缓冲区
@@ -32,6 +33,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
     this.gl = gl;
     this.commands = [...commands]; // 复制命令列表
     this.label = label;
+    this.isWebGL2 = gl instanceof WebGL2RenderingContext;
   }
 
   /**
@@ -54,71 +56,92 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
    * 执行单个命令
    */
   private executeCommand (command: { type: string, params: any }): void {
-    switch (command.type) {
-      case 'beginRenderPass':
-        this.executeBeginRenderPass(command.params);
+    if (!command || typeof command !== 'object') {
+      console.error('无效的命令对象', command);
 
-        break;
-      case 'endRenderPass':
-        this.executeEndRenderPass();
+      return;
+    }
 
-        break;
-      case 'copyBufferToBuffer':
-        this.executeCopyBufferToBuffer(command.params);
+    if (!command.type || typeof command.type !== 'string') {
+      console.error('命令缺少有效的类型', command);
 
-        break;
-      case 'copyBufferToTexture':
-        this.executeCopyBufferToTexture(command.params);
+      return;
+    }
+    try {
+      switch (command.type) {
+        case 'beginRenderPass':
+          this.executeBeginRenderPass(command.params);
 
-        break;
-      case 'copyTextureToBuffer':
-        this.executeCopyTextureToBuffer(command.params);
+          break;
+        case 'endRenderPass':
+          this.executeEndRenderPass();
 
-        break;
-      case 'copyTextureToTexture':
-        this.executeCopyTextureToTexture(command.params);
+          break;
+        case 'copyBufferToBuffer':
+          this.executeCopyBufferToBuffer(command.params);
 
-        break;
-      case 'draw':
-        this.executeDraw(command.params);
+          break;
+        case 'copyBufferToTexture':
+          this.executeCopyBufferToTexture(command.params);
 
-        break;
-      case 'drawIndexed':
-        this.executeDrawIndexed(command.params);
+          break;
+        case 'copyTextureToBuffer':
+          this.executeCopyTextureToBuffer(command.params);
 
-        break;
-      case 'setViewport':
-        this.executeSetViewport(command.params);
+          break;
+        case 'copyTextureToTexture':
+          this.executeCopyTextureToTexture(command.params);
 
-        break;
-      case 'setScissor':
-        this.executeSetScissor(command.params);
+          break;
+        case 'copyTextureToCanvas':
+          this.executeCopyTextureToCanvas(command.params);
 
-        break;
-      case 'setPipeline':
-        this.executeSetPipeline(command.params);
+          break;
+        case 'draw':
+          this.executeDraw(command.params);
 
-        break;
-      case 'setBindGroup':
-        this.executeSetBindGroup(command.params);
+          break;
+        case 'drawIndexed':
+          this.executeDrawIndexed(command.params);
 
-        break;
-      case 'setVertexBuffers':
-        this.executeSetVertexBuffers(command.params);
+          break;
+        case 'setViewport':
+          this.executeSetViewport(command.params);
 
-        break;
-      case 'setIndexBuffer':
-        this.executeSetIndexBuffer(command.params);
+          break;
+        case 'setScissor':
+          this.executeSetScissor(command.params);
 
-        break;
-      case 'custom':
-        if (command.params.execute) {
-          command.params.execute();
-        }
+          break;
+        case 'setPipeline':
+          this.executeSetPipeline(command.params);
 
-        break;
-      default:
-        console.warn(`未知的命令类型: ${command.type}`);
+          break;
+        case 'setBindGroup':
+          this.executeSetBindGroup(command.params);
+
+          break;
+        case 'setVertexBuffers':
+          this.executeSetVertexBuffers(command.params);
+
+          break;
+        case 'setIndexBuffer':
+          this.executeSetIndexBuffer(command.params);
+
+          break;
+        case 'custom':
+          if (command.params && typeof command.params.execute === 'function') {
+            command.params.execute();
+          } else {
+            console.error('自定义命令缺少有效的execute函数', command.params);
+          }
+
+          break;
+        default:
+          console.warn(`未知的命令类型: ${command.type}`);
+      }
+    } catch (error) {
+      console.error(`执行命令 ${command.type} 时出错:`, error);
     }
   }
 
@@ -128,13 +151,49 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   private executeBeginRenderPass (params: any): void {
     const gl = this.gl;
 
-    // 清除颜色和深度缓冲
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    // 如果要渲染到画布，不使用帧缓冲区
+    if (!params.colorAttachments && !params.depthStencilAttachment) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-    // 设置清除颜色
+      return;
+    }
+
+    // 创建临时帧缓冲区对象
+    const framebuffer = gl.createFramebuffer();
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+
+    // 处理颜色附件
     if (params.colorAttachments && params.colorAttachments.length > 0) {
       const colorAttachment = params.colorAttachments[0];
+      const textureView = colorAttachment.view;
 
+      // 确保纹理视图有效
+      if (!textureView) {
+        console.error('颜色附件没有有效的纹理视图');
+
+        return;
+      }
+
+      // 获取WebGL纹理对象
+      const glTexture = textureView.getGLTexture();
+
+      if (!glTexture) {
+        console.error('无法获取WebGL纹理对象');
+
+        return;
+      }
+
+      // 将纹理附加到帧缓冲区的颜色附件点
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        glTexture,
+        0 // mipmap级别
+      );
+
+      // 设置清除颜色
       if (colorAttachment.loadOp === 'clear' && colorAttachment.clearColor) {
         gl.clearColor(
           colorAttachment.clearColor[0],
@@ -145,19 +204,168 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
       }
     }
 
-    // 设置清除深度
+    // 处理深度模板附件
     if (params.depthStencilAttachment) {
-      if (params.depthStencilAttachment.depthLoadOp === 'clear') {
-        const clearDepth = params.depthStencilAttachment.clearDepth !== undefined ? params.depthStencilAttachment.clearDepth : 1.0;
+      const depthAttachment = params.depthStencilAttachment;
+      const depthTextureView = depthAttachment.view;
+
+      // 确保深度纹理视图有效
+      if (!depthTextureView) {
+        console.error('深度附件没有有效的纹理视图');
+
+        return;
+      }
+
+      // 获取WebGL纹理对象
+      const glDepthTexture = depthTextureView.getGLTexture();
+
+      if (!glDepthTexture) {
+        console.error('无法获取WebGL深度纹理对象');
+
+        return;
+      }
+
+      // WebGL中使用DEPTH_COMPONENT16类型的深度纹理
+      // 将深度纹理附加到帧缓冲区的深度附件点
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.DEPTH_ATTACHMENT,
+        gl.TEXTURE_2D,
+        glDepthTexture,
+        0 // mipmap级别
+      );
+
+      // 设置深度测试
+      gl.enable(gl.DEPTH_TEST);
+
+      // 设置深度写入
+      gl.depthMask(true);
+
+      // 设置深度比较函数
+      gl.depthFunc(gl.LEQUAL);
+
+      // 设置清除深度
+      if (depthAttachment.depthLoadOp === 'clear') {
+        const clearDepth = depthAttachment.clearDepth !== undefined ? depthAttachment.clearDepth : 1.0;
 
         gl.clearDepth(clearDepth);
       }
+    }
 
-      if (params.depthStencilAttachment.stencilLoadOp === 'clear') {
-        const clearStencil = params.depthStencilAttachment.clearStencil !== undefined ? params.depthStencilAttachment.clearStencil : 0;
+    // 检查帧缓冲区是否完整
+    const frameBufferStatus = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
 
-        gl.clearStencil(clearStencil);
+    if (frameBufferStatus !== gl.FRAMEBUFFER_COMPLETE) {
+      console.error('帧缓冲区不完整:', this.getFramebufferStatusMessage(frameBufferStatus));
+
+      // 详细诊断信息
+      // console.log('颜色附件信息:', params.colorAttachments);
+      // console.log('深度附件信息:', params.depthStencilAttachment);
+
+      if (params.depthStencilAttachment) {
+        // 测试使用仅深度缓冲区（无模板）的设置方式
+        const depthAttachment = params.depthStencilAttachment;
+        const depthTextureView = depthAttachment.view;
+        const glDepthTexture = depthTextureView.getGLTexture();
+
+        // 创建新的帧缓冲区和仅深度缓冲区尝试
+        const testFramebuffer = gl.createFramebuffer();
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, testFramebuffer);
+
+        // 先附加颜色缓冲区
+        if (params.colorAttachments && params.colorAttachments.length > 0) {
+          const colorAttachment = params.colorAttachments[0];
+          const textureView = colorAttachment.view;
+          const glTexture = textureView.getGLTexture();
+
+          gl.framebufferTexture2D(
+            gl.FRAMEBUFFER,
+            gl.COLOR_ATTACHMENT0,
+            gl.TEXTURE_2D,
+            glTexture,
+            0
+          );
+        }
+
+        // 使用深度渲染缓冲区而不是深度纹理
+        const depthRenderBuffer = gl.createRenderbuffer();
+
+        gl.bindRenderbuffer(gl.RENDERBUFFER, depthRenderBuffer);
+        gl.renderbufferStorage(
+          gl.RENDERBUFFER,
+          gl.DEPTH_COMPONENT16,
+          depthTextureView.texture.width,
+          depthTextureView.texture.height
+        );
+        gl.framebufferRenderbuffer(
+          gl.FRAMEBUFFER,
+          gl.DEPTH_ATTACHMENT,
+          gl.RENDERBUFFER,
+          depthRenderBuffer
+        );
+
+        // 检查是否成功
+        // const newStatus = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+
+        // console.log('使用深度渲染缓冲区的帧缓冲区状态:', this.getFramebufferStatusMessage(newStatus));
+
+        // 清理测试资源
+        gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+        gl.deleteFramebuffer(testFramebuffer);
+        gl.deleteRenderbuffer(depthRenderBuffer);
       }
+
+      // 尝试不使用深度缓冲区，只使用颜色缓冲区
+      if (params.colorAttachments && params.colorAttachments.length > 0) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+
+        const colorAttachment = params.colorAttachments[0];
+        const textureView = colorAttachment.view;
+        const glTexture = textureView.getGLTexture();
+
+        gl.framebufferTexture2D(
+          gl.FRAMEBUFFER,
+          gl.COLOR_ATTACHMENT0,
+          gl.TEXTURE_2D,
+          glTexture,
+          0
+        );
+
+        // 检查这种简化配置是否可行
+        const colorOnlyStatus = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+
+       //  console.log('仅颜色附件的帧缓冲区状态:', this.getFramebufferStatusMessage(colorOnlyStatus));
+
+        if (colorOnlyStatus === gl.FRAMEBUFFER_COMPLETE) {
+          // console.log('使用仅颜色附件的配置继续渲染');
+
+          // 设置清除颜色
+          if (colorAttachment.loadOp === 'clear' && colorAttachment.clearColor) {
+            gl.clearColor(
+              colorAttachment.clearColor[0],
+              colorAttachment.clearColor[1],
+              colorAttachment.clearColor[2],
+              colorAttachment.clearColor[3]
+            );
+
+            // 清除仅颜色缓冲区
+            gl.clear(gl.COLOR_BUFFER_BIT);
+          }
+
+          // 存储此帧缓冲区
+          this.currentFramebuffer = framebuffer;
+
+          return;
+        }
+      }
+
+      // 如果所有尝试都失败，清理并返回
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.deleteFramebuffer(framebuffer);
+
+      return;
     }
 
     // 清除缓冲区
@@ -172,19 +380,49 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
     }
 
     if (params.depthStencilAttachment) {
-      if (params.depthStencilAttachment.depthLoadOp === 'clear') {
-        clearMask |= gl.DEPTH_BUFFER_BIT;
-      }
+      const depthAttachment = params.depthStencilAttachment;
 
-      if (params.depthStencilAttachment.stencilLoadOp === 'clear') {
-        clearMask |= gl.STENCIL_BUFFER_BIT;
+      if (depthAttachment.depthLoadOp === 'clear') {
+        clearMask |= gl.DEPTH_BUFFER_BIT;
       }
     }
 
     if (clearMask !== 0) {
+      // 清除指定缓冲区
       gl.clear(clearMask);
     }
+
+    // 存储此帧缓冲区以便在endRenderPass中使用
+    this.currentFramebuffer = framebuffer;
+
+    // 输出调试信息
+    // console.log('帧缓冲区已创建和配置', frameBufferStatus === gl.FRAMEBUFFER_COMPLETE);
   }
+
+  /**
+   * 获取帧缓冲区状态的描述信息
+   */
+  private getFramebufferStatusMessage (status: number): string {
+    const gl = this.gl;
+
+    switch (status) {
+      case gl.FRAMEBUFFER_COMPLETE:
+        return 'FRAMEBUFFER_COMPLETE';
+      case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+        return 'FRAMEBUFFER_INCOMPLETE_ATTACHMENT';
+      case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+        return 'FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT';
+      case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+        return 'FRAMEBUFFER_INCOMPLETE_DIMENSIONS';
+      case gl.FRAMEBUFFER_UNSUPPORTED:
+        return 'FRAMEBUFFER_UNSUPPORTED';
+      default:
+        return `Unknown status: ${status}`;
+    }
+  }
+
+  // 当前帧缓冲区
+  private currentFramebuffer: WebGLFramebuffer | null = null;
 
   /**
    * 执行结束渲染通道命令
@@ -195,6 +433,12 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
     // 重置状态
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.useProgram(null);
+
+    // 删除临时帧缓冲区
+    if (this.currentFramebuffer) {
+      gl.deleteFramebuffer(this.currentFramebuffer);
+      this.currentFramebuffer = null;
+    }
 
     // 禁用顶点属性数组
     for (let i = 0; i < 16; i++) {
@@ -220,6 +464,8 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
 
         // 取消映射
         sourceBuffer.unmap();
+      }).catch(error => {
+        console.error('缓冲区复制失败:', error);
       });
   }
 
@@ -254,6 +500,8 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
 
         // 取消映射
         sourceBuffer.unmap();
+      }).catch(error => {
+        console.error('纹理复制失败:', error);
       });
   }
 
@@ -427,29 +675,233 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   }
 
   /**
+   * 复制纹理到画布
+   */
+  private executeCopyTextureToCanvas (params: any): void {
+    const { source, destination } = params;
+    const canvas = destination as HTMLCanvasElement;
+
+    // console.log('复制纹理到画布, 源:', source, '目标:', canvas);
+
+    const gl = this.gl;
+
+    // 绑定到默认帧缓冲区（画布）
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    // 清除屏幕
+    gl.clearColor(0.1, 0.1, 0.1, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    // 创建一个简单的着色器程序来显示纹理
+    const vertexShaderSource = `
+      attribute vec2 a_position;
+      attribute vec2 a_texcoord;
+      varying vec2 v_texcoord;
+      void main() {
+        gl_Position = vec4(a_position, 0.0, 1.0);
+        v_texcoord = a_texcoord;
+      }
+    `;
+
+    const fragmentShaderSource = `
+      precision mediump float;
+      uniform sampler2D u_texture;
+      varying vec2 v_texcoord;
+      void main() {
+        gl_FragColor = texture2D(u_texture, v_texcoord);
+      }
+    `;
+
+    // 创建着色器
+    const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+
+    gl.shaderSource(vertexShader, vertexShaderSource);
+    gl.compileShader(vertexShader);
+
+    const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+
+    gl.shaderSource(fragmentShader, fragmentShaderSource);
+    gl.compileShader(fragmentShader);
+
+    // 创建程序
+    const program = gl.createProgram();
+
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+
+    // 使用程序
+    gl.useProgram(program);
+
+    // 创建顶点数据
+    const vertexData = new Float32Array([
+      // x, y,   u, v
+      -1, -1, 0, 0,   // 左下
+      1, -1, 1, 0,   // 右下
+      -1, 1, 0, 1,   // 左上
+      1, 1, 1, 1,    // 右上
+    ]);
+
+    // 创建缓冲区
+    const vertexBuffer = gl.createBuffer();
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
+
+    // 位置属性
+    const positionLoc = gl.getAttribLocation(program, 'a_position');
+
+    gl.enableVertexAttribArray(positionLoc);
+    gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 16, 0);
+
+    // 纹理坐标属性
+    const texcoordLoc = gl.getAttribLocation(program, 'a_texcoord');
+
+    gl.enableVertexAttribArray(texcoordLoc);
+    gl.vertexAttribPointer(texcoordLoc, 2, gl.FLOAT, false, 16, 8);
+
+    // 设置纹理
+    const texture = gl.createTexture();
+
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    // 绑定源纹理
+    const sourceTexture = source.getGLTexture();
+
+    gl.bindTexture(gl.TEXTURE_2D, sourceTexture);
+
+    // 绘制四边形
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+    // 清理资源
+    gl.deleteBuffer(vertexBuffer);
+    gl.deleteProgram(program);
+    gl.deleteShader(vertexShader);
+    gl.deleteShader(fragmentShader);
+
+    console.log('已复制纹理到画布');
+  }
+
+  /**
    * 执行绘制命令
    */
   private executeDraw (params: any): void {
     const gl = this.gl;
-
     const { vertexCount, instanceCount, firstVertex, firstInstance } = params;
 
-    if (instanceCount && instanceCount > 1) {
-      // 实例化绘制
-      if (gl instanceof WebGL2RenderingContext) {
-        gl.drawArraysInstanced(params.primitiveType, firstVertex, vertexCount, instanceCount);
-      } else {
-        const ext = gl.getExtension('ANGLE_instanced_arrays');
+    // console.log(`执行绘制命令: 顶点数=${vertexCount}, 实例数=${instanceCount}, 起始顶点=${firstVertex}`);
 
-        if (ext) {
-          ext.drawArraysInstancedANGLE(params.primitiveType, firstVertex, vertexCount, instanceCount);
-        } else {
-          throw new Error('当前WebGL环境不支持实例化绘制');
+    try {
+      // 检查WebGL状态
+      const currentProgram = gl.getParameter(gl.CURRENT_PROGRAM);
+
+      if (!currentProgram) {
+        console.error('绘制失败: 没有激活的着色器程序');
+
+        return;
+      }
+
+      // 获取当前绑定的顶点缓冲区
+      const vertexBuffer = gl.getParameter(gl.ARRAY_BUFFER_BINDING);
+
+      if (!vertexBuffer) {
+        console.error('绘制失败: 没有绑定顶点缓冲区');
+
+        return;
+      }
+
+      // 获取活跃的顶点属性
+      const maxAttribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
+      const enabledAttribs = [];
+
+      for (let i = 0; i < maxAttribs; i++) {
+        if (gl.getVertexAttrib(i, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
+          enabledAttribs.push(i);
         }
       }
-    } else {
-      // 普通绘制
-      gl.drawArrays(params.primitiveType, firstVertex, vertexCount);
+
+      if (enabledAttribs.length === 0) {
+        console.error('绘制失败: 没有启用顶点属性');
+
+        return;
+      }
+
+       // console.log('活跃的顶点属性:', enabledAttribs);
+
+      // 检查帧缓冲区状态
+      const currentFramebuffer = gl.getParameter(gl.FRAMEBUFFER_BINDING);
+
+      if (currentFramebuffer) {
+        const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+
+        if (status !== gl.FRAMEBUFFER_COMPLETE) {
+          console.error('绘制前帧缓冲区不完整:', this.getFramebufferStatusString(status));
+
+          return;
+        }
+      }
+
+      // 执行绘制
+      gl.drawArrays(gl.TRIANGLES, firstVertex, vertexCount);
+
+      // 检查错误
+      const error = gl.getError();
+
+      if (error !== gl.NO_ERROR) {
+        console.error('绘制执行错误:', this.getGLErrorString(error));
+
+        // 尝试清除错误状态
+        while (gl.getError() !== gl.NO_ERROR) {
+          // 清除所有待处理的错误
+        }
+      } else {
+        // console.log('绘制成功');
+      }
+    } catch (error) {
+      console.error('执行绘制命令时发生异常:', error);
+    }
+  }
+
+  /**
+   * 获取帧缓冲区状态的字符串描述
+   */
+  private getFramebufferStatusString (status: number): string {
+    const gl = this.gl;
+
+    switch (status) {
+      case gl.FRAMEBUFFER_COMPLETE:
+        return 'FRAMEBUFFER_COMPLETE';
+      case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+        return 'FRAMEBUFFER_INCOMPLETE_ATTACHMENT';
+      case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+        return 'FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT';
+      case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+        return 'FRAMEBUFFER_INCOMPLETE_DIMENSIONS';
+      case gl.FRAMEBUFFER_UNSUPPORTED:
+        return 'FRAMEBUFFER_UNSUPPORTED';
+      default:
+        return `未知状态(${status})`;
+    }
+  }
+
+  /**
+   * 获取WebGL错误代码的字符串描述
+   */
+  private getGLErrorString (errorCode: number): string {
+    const gl = this.gl;
+
+    switch (errorCode) {
+      case gl.INVALID_ENUM: return 'INVALID_ENUM';
+      case gl.INVALID_VALUE: return 'INVALID_VALUE';
+      case gl.INVALID_OPERATION: return 'INVALID_OPERATION';
+      case gl.OUT_OF_MEMORY: return 'OUT_OF_MEMORY';
+      case gl.CONTEXT_LOST_WEBGL: return 'CONTEXT_LOST_WEBGL';
+      case gl.INVALID_FRAMEBUFFER_OPERATION: return 'INVALID_FRAMEBUFFER_OPERATION';
+      default: return `未知错误(${errorCode})`;
     }
   }
 
@@ -536,10 +988,53 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
    * 执行设置顶点缓冲区命令
    */
   private executeSetVertexBuffers (params: any): void {
-    const { pipeline, buffers } = params;
+    const { startSlot, buffers, pipeline } = params;
 
-    // 设置顶点缓冲区
-    pipeline.setVertexBuffers(buffers);
+    if (!pipeline) {
+      console.error('设置顶点缓冲区时没有有效的渲染管线');
+
+      return;
+    }
+
+    const gl = this.gl;
+
+    // console.log('执行设置顶点缓冲区命令', params);
+
+    try {
+      // 确保顶点数组对象 (VAO) 已绑定
+      const vao = pipeline.getVertexArrayObject();
+
+      if (vao && this.isWebGL2) {
+        (gl as WebGL2RenderingContext).bindVertexArray(vao);
+      }
+
+      // 对每个需要设置的缓冲区
+      for (let i = 0; i < buffers.length; i++) {
+        const bufferInfo = buffers[i];
+        const buffer = bufferInfo.buffer;
+        const offset = bufferInfo.offset || 0;
+
+        if (!buffer) {
+          console.error(`缓冲区为空: slot ${startSlot + i}`);
+          continue;
+        }
+
+        // 尝试获取WebGL缓冲区对象
+        const glBuffer = buffer.getGLBuffer();
+
+        if (!glBuffer) {
+          console.error('获取WebGL缓冲区对象失败');
+          continue;
+        }
+
+        // 如果渲染管线有顶点缓冲区布局，应用它
+        pipeline.applyVertexBufferLayout(startSlot + i, glBuffer, offset);
+
+        // console.log(`成功设置槽位 ${startSlot + i} 的顶点缓冲区`, buffer);
+      }
+    } catch (error) {
+      console.error('设置顶点缓冲区时出错:', error);
+    }
   }
 
   /**

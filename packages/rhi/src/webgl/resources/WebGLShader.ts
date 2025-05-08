@@ -85,12 +85,28 @@ export class WebGLShader implements IRHIShaderModule {
     // 预处理着色器代码 - 添加版本信息
     let processedCode = this.code;
 
-    if (this.isWebGL2 && !processedCode.includes('#version')) {
-      processedCode = '#version 300 es\n' + processedCode;
-    } else if (!this.isWebGL2 && !processedCode.includes('#version')) {
-      // 对WebGL1的GLSL ES 1.0，不需要显式添加版本信息
+    // WebGL2需要使用GLSL ES 3.00语法，指定版本为300 es
+    // WebGL1需要使用GLSL ES 1.00语法，不需要显式指定版本
+    if (this.isWebGL2) {
+      if (!processedCode.includes('#version 300 es')) {
+        if (processedCode.includes('#version')) {
+          console.warn('着色器代码包含非WebGL2兼容的版本声明，可能导致编译错误');
+        } else {
+          // 添加版本声明到代码开头
+          processedCode = '#version 300 es\n' + processedCode;
+        }
+      }
+    } else {
+      // WebGL1 - 如果包含WebGL2特有的版本声明，会导致编译错误
+      if (processedCode.includes('#version 300 es')) {
+        console.warn('WebGL1环境不支持GLSL ES 3.00语法，正在移除版本声明');
+        processedCode = processedCode.replace(/#version\s+300\s+es/, '');
+      }
     }
 
+    // 添加调试信息
+    console.log(`编译${this.stage === RHIShaderStage.VERTEX ? '顶点' : '片段'}着色器:`, this.label || 'unnamed');
+    
     // 编译着色器
     gl.shaderSource(shader, processedCode);
     gl.compileShader(shader);
@@ -98,9 +114,22 @@ export class WebGLShader implements IRHIShaderModule {
     // 检查编译状态
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
       const infoLog = gl.getShaderInfoLog(shader);
-
+      
+      // 输出详细的错误信息和源码
+      console.error(`着色器编译失败:`);
+      console.error(infoLog);
+      console.error('源码:');
+      
+      // 添加行号并显示源码
+      const lines = processedCode.split('\n');
+      lines.forEach((line, index) => {
+        console.error(`${index + 1}: ${line}`);
+      });
+      
       gl.deleteShader(shader);
-      throw new Error(`着色器编译失败: ${infoLog}\n源码:\n${processedCode}`);
+      throw new Error(`着色器编译失败: ${infoLog}`);
+    } else {
+      console.log('着色器编译成功');
     }
 
     return shader;

@@ -1,118 +1,141 @@
-import type { IRHIBindGroup, IRHIBindGroupLayout } from '@maxellabs/core';
+import type { IRHIBindGroup, IRHIBindGroupLayout, IRHIBindGroupEntry } from '@maxellabs/core';
 import { GLBuffer } from '../resources/WebGLBuffer';
-import { WebGLTexture } from '../resources/WebGLTexture';
 import { WebGLSampler } from '../resources/WebGLSampler';
-import type { WebGLBindGroupLayout } from './WebGLBindGroupLayout';
-import { WebGLTextureView } from '../resources';
+import { WebGLTextureView } from '../resources/WebGLTextureView';
+import { WebGLBindGroupLayout } from './WebGLBindGroupLayout';
+
+// Helper function to apply uniform data based on name (temporary solution)
+function applyKnownUniformFromBufferData (gl: WebGLRenderingContext | WebGL2RenderingContext, location: WebGLUniformLocation | null, data: ArrayBuffer, uniformName: string) {
+  if (!location) {
+    console.warn(`无法设置uniform ${uniformName}：location为null`);
+
+    return;
+  }
+
+  if (data.byteLength === 0) {
+    console.warn(`无法设置uniform ${uniformName}：数据为空`);
+
+    return;
+  }
+
+  try {
+    // This is a HACK based on names in basic.ts. A real solution needs type info.
+    if (uniformName === 'uModelViewMatrix' || uniformName === 'uProjectionMatrix') {
+      if (data.byteLength >= 64) {
+        // 创建视图时要确保引用的是正确的内存区域
+        const matrixData = new Float32Array(data, 0, 16);
+
+        // 打印矩阵数据以调试
+        console.debug(`设置${uniformName}矩阵:`, Array.from(matrixData).slice(0, 4) + '...');
+
+        try {
+          gl.uniformMatrix4fv(location, false, matrixData);
+        } catch (error) {
+          console.error(`设置矩阵uniform失败 ${uniformName}:`, error);
+        }
+      } else {
+        console.error(`矩阵${uniformName}的缓冲区数据过小: ${data.byteLength} 字节`);
+      }
+    } else if (uniformName === 'uTime') {
+      if (data.byteLength >= 4) {
+        const timeData = new Float32Array(data, 0, 1);
+
+        console.debug(`设置${uniformName}:`, timeData[0]);
+
+        try {
+          gl.uniform1f(location, timeData[0]);
+        } catch (error) {
+          console.error(`设置浮点uniform失败 ${uniformName}:`, error);
+        }
+      } else {
+        console.error(`浮点数${uniformName}的缓冲区数据过小: ${data.byteLength} 字节`);
+      }
+    } else {
+      console.warn(`无法从缓冲区应用uniform: 未知的uniform名称 '${uniformName}'。需要类型信息`);
+    }
+  } catch (e) {
+    console.error(`设置uniform ${uniformName} 时出错:`, e);
+  }
+}
 
 /**
  * WebGL绑定组实现
  */
 export class WebGLBindGroup implements IRHIBindGroup {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
-  private isWebGL2: boolean;
-  private layout: IRHIBindGroupLayout;
-  private entries: any[];
-  private resources: Map<number, any>; // 资源映射，以绑定点为键
-  private label?: string;
+  private webglLayout: WebGLBindGroupLayout;
+  private bindGroupEntries: IRHIBindGroupEntry[];
+  private _label?: string;
   private isDestroyed = false;
 
   /**
    * 创建WebGL绑定组
    *
    * @param gl WebGL上下文
-   * @param layout 绑定组布局
-   * @param entries 绑定资源条目
+   * @param layout 绑定组布局 (expected to be an instance of WebGLBindGroupLayout)
+   * @param entries 绑定资源条目 (IRHIBindGroupEntry[])
    * @param label 可选标签
    */
-  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, layout: IRHIBindGroupLayout, entries: any[], label?: string) {
+  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, layout: IRHIBindGroupLayout, entries: IRHIBindGroupEntry[], label?: string) {
     this.gl = gl;
-    this.isWebGL2 = gl instanceof WebGL2RenderingContext;
-    this.layout = layout;
-    this.entries = entries;
-    this.label = label;
-    this.resources = new Map();
+    if (!(layout instanceof WebGLBindGroupLayout)) {
+      throw new Error(`[${label || 'WebGLBindGroup'}] Constructor expects layout to be an instance of WebGLBindGroupLayout.`);
+    }
+    this.webglLayout = layout;
+    this.bindGroupEntries = entries;
+    this._label = label;
 
-    // 验证和处理绑定资源
-    this.validateAndProcessEntries();
+    this.validateResourcesAgainstLayout();
+  }
+
+  getLayout (): IRHIBindGroupLayout {
+    return this.webglLayout;
+  }
+
+  getEntries (): IRHIBindGroupEntry[] {
+    return this.bindGroupEntries;
+  }
+
+  get label (): string | undefined {
+    return this._label;
   }
 
   /**
-   * 验证绑定资源条目与布局的兼容性，并处理为内部格式
+   * 验证绑定资源条目与布局的兼容性
    */
-  private validateAndProcessEntries (): void {
-    // 遍历所有条目
-    for (const entry of this.entries) {
-      // 验证绑定条目有效性
-      if (entry.binding === undefined || entry.resource === undefined) {
-        throw new Error('绑定条目必须包含binding和resource字段');
-      }
-
-      // 获取对应的布局条目
-      const layoutEntry = (this.layout as WebGLBindGroupLayout).getBindingEntry(entry.binding);
+  private validateResourcesAgainstLayout (): void {
+    for (const entry of this.bindGroupEntries) {
+      const layoutEntry = this.webglLayout.getDetailedBindingEntry(entry.binding);
 
       if (!layoutEntry) {
-        throw new Error(`找不到绑定点 ${entry.binding} 的布局条目`);
+        throw new Error(`[${this._label || 'WebGLBindGroup'}] Binding ${entry.binding}: No layout definition found.`);
       }
 
-      // 验证资源类型与布局类型兼容
-      this.validateResourceTypeCompatibility(entry.resource, layoutEntry.type);
+      const resource = entry.resource;
+      let actualResourceObject = resource;
 
-      // 存储资源
-      this.resources.set(entry.binding, entry.resource);
-    }
-  }
+      if (resource && (resource as any).buffer instanceof GLBuffer) {
+        actualResourceObject = (resource as any).buffer;
+      }
 
-  /**
-   * 验证资源与布局类型的兼容性
-   */
-  private validateResourceTypeCompatibility (resource: any, layoutType: string): void {
-    // 检查资源类型与布局类型的兼容性
-    if (layoutType === 'uniform-buffer' || layoutType === 'storage-buffer' || layoutType === 'readonly-storage-buffer') {
-      if (!(resource instanceof GLBuffer)) {
-        throw new Error(`绑定类型 ${layoutType} 需要缓冲区资源`);
-      }
-    } else if (layoutType === 'sampler') {
-      if (!(resource instanceof WebGLSampler)) {
-        throw new Error('采样器绑定需要采样器资源');
-      }
-    } else if (layoutType === 'texture' || layoutType === 'storage-texture') {
-      // if (!(resource instanceof WebGLTexture)) {
-      if (!(resource instanceof WebGLTextureView)) {
-        throw new Error(`${layoutType} 绑定需要纹理资源`);
+      if (layoutEntry.buffer) {
+        if (!(actualResourceObject instanceof GLBuffer)) {
+          throw new Error(`[${this._label || 'WebGLBindGroup'}] Binding ${entry.binding} (${layoutEntry.name || 'Buffer'}): Layout expects a Buffer, but got ${actualResourceObject?.constructor?.name}.`);
+        }
+      } else if (layoutEntry.texture) {
+        if (!(actualResourceObject instanceof WebGLTextureView)) {
+          throw new Error(`[${this._label || 'WebGLBindGroup'}] Binding ${entry.binding} (${layoutEntry.name || 'Texture'}): Layout expects a TextureView, but got ${actualResourceObject?.constructor?.name}.`);
+        }
+      } else if (layoutEntry.sampler) {
+        if (!(actualResourceObject instanceof WebGLSampler)) {
+          throw new Error(`[${this._label || 'WebGLBindGroup'}] Binding ${entry.binding} (${layoutEntry.name || 'Sampler'}): Layout expects a Sampler, but got ${actualResourceObject?.constructor?.name}.`);
+        }
+      } else if (layoutEntry.storageTexture) {
+        console.warn(`[${this._label || 'WebGLBindGroup'}] Binding ${entry.binding} (${layoutEntry.name || 'StorageTexture'}): 'storageTexture' validation is minimal as it's not standard in WebGL.`);
+      } else {
+        throw new Error(`[${this._label || 'WebGLBindGroup'}] Binding ${entry.binding}: Layout definition is unclear (no buffer, texture, or sampler specified).`);
       }
     }
-  }
-
-  /**
-   * 获取绑定组布局
-   */
-  getLayout (): IRHIBindGroupLayout {
-    return this.layout;
-  }
-
-  /**
-   * 获取绑定条目
-   */
-  getEntries (): any[] {
-    return this.entries;
-  }
-
-  /**
-   * 获取绑定组标签
-   */
-  getLabel (): string | undefined {
-    return this.label;
-  }
-
-  /**
-   * 获取特定绑定点的资源
-   *
-   * @param binding 绑定点
-   * @returns 关联的资源或undefined
-   */
-  getResource (binding: number): any | undefined {
-    return this.resources.get(binding);
   }
 
   /**
@@ -120,73 +143,176 @@ export class WebGLBindGroup implements IRHIBindGroup {
    * 在WebGL渲染通道中使用
    *
    * @param program WebGL程序对象
+   * @param dynamicOffsets (Currently not fully implemented for UBO dynamic offsets here)
    */
-  applyBindings (program: WebGLProgram): void {
+  public applyBindings (program: WebGLProgram, dynamicOffsets?: Uint32Array | number[]): void {
+    if (this.isDestroyed) {
+      console.error(`[${this._label || 'WebGLBindGroup'}] Attempting to use a destroyed bind group.`);
+
+      return;
+    }
+
     const gl = this.gl;
 
-    // 遍历所有资源
-    for (const [binding, resource] of this.resources.entries()) {
-      // 获取布局条目
-      const layoutEntry = (this.layout as WebGLBindGroupLayout).getBindingEntry(binding);
+    for (const entry of this.bindGroupEntries) {
+      const binding = entry.binding;
+      const layoutEntry = this.webglLayout.getDetailedBindingEntry(binding);
 
-      if (!layoutEntry) {continue;}
+      if (!layoutEntry) {
+        console.warn(`[${this._label || 'WebGLBindGroup'}] Binding ${binding}: No detailed layout entry found. Skipping.`);
+        continue;
+      }
 
-      // 根据资源类型执行不同的绑定操作
-      if (resource instanceof GLBuffer) {
-        this.bindBuffer(program, resource, layoutEntry);
-      } else if (resource instanceof WebGLTexture) {
-        this.bindTexture(program, resource, layoutEntry, binding);
-      } else if (resource instanceof WebGLSampler) {
-        // 采样器的绑定通常与纹理一起进行
-        // 在WebGL2中直接绑定，在WebGL1中应用到纹理
-        if (this.isWebGL2) {
-          resource.bind(binding);
+      const uniformName = layoutEntry.name;
+      let uniformLocation: WebGLUniformLocation | null = null;
+
+      if (uniformName) {
+        uniformLocation = gl.getUniformLocation(program, uniformName);
+      }
+
+      const boundResourceItem = entry.resource;
+      let actualResource: any = boundResourceItem;
+      let bufferBindOffset: number = 0;
+      let bufferBindSize: number | undefined;
+
+      if (boundResourceItem && (boundResourceItem as any).buffer && (boundResourceItem as any).buffer instanceof GLBuffer) {
+        actualResource = (boundResourceItem as any).buffer as GLBuffer;
+        bufferBindOffset = (boundResourceItem as any).offset || 0;
+        bufferBindSize = (boundResourceItem as any).size;
+      }
+
+      if (layoutEntry.buffer && actualResource instanceof GLBuffer) {
+        if (!uniformName) {
+          console.warn(`[${this._label || 'WebGLBindGroup'}] Binding ${binding} (Buffer): Layout entry missing 'name' for uniform/UBO. Skipping.`);
+          continue;
         }
+        const glBuffer = actualResource;
+
+        let uboPathSuccess = false;
+
+        // Try WebGL2 UBO Path first if applicable
+        if (gl instanceof WebGL2RenderingContext && layoutEntry.buffer.type === 'uniform') {
+          const blockIndex = gl.getUniformBlockIndex(program, uniformName);
+
+          if (blockIndex !== gl.INVALID_INDEX) {
+            // This IS a UBO block
+            gl.uniformBlockBinding(program, blockIndex, binding);
+            const bufferActualSize = glBuffer.getSize() ? glBuffer.getSize() : glBuffer.size; // Adapt based on GLBuffer API
+
+            if (typeof bufferActualSize !== 'number') {throw new Error ('Cannot get buffer size for UBO binding');}
+            const effectiveSize = bufferBindSize !== undefined ? bufferBindSize : (bufferActualSize - bufferBindOffset);
+
+            if (bufferBindOffset !== 0 || bufferBindSize !== undefined) {
+              gl.bindBufferRange(gl.UNIFORM_BUFFER, binding, glBuffer.getGLBuffer(), bufferBindOffset, effectiveSize);
+            } else {
+              gl.bindBufferBase(gl.UNIFORM_BUFFER, binding, glBuffer.getGLBuffer());
+            }
+            uboPathSuccess = true; // Mark UBO path as successful
+          } else {
+            // Not a UBO block, warning was already printed by previous check or will be handled below
+          }
+        }
+
+        // Fallback: If not a successful UBO path, treat as source for standard uniform(s)
+        if (!uboPathSuccess) {
+          if (!uniformLocation) {
+            console.warn(`[${this._label || 'WebGLBindGroup'}] Binding ${binding} (Buffer '${uniformName}'): Could not find location for standard uniform. Skipping manual update.`);
+            continue; // Skip if we can't find the uniform location
+          }
+          console.warn(`[${this._label || 'WebGLBindGroup'}] Binding ${binding} (Buffer '${uniformName}'): Applying as standard uniform(s). Mapping buffer to read data. Consider using UBOs if possible.`);
+
+          // Determine size to map
+          const bufferActualSize = glBuffer.getSize ? glBuffer.getSize() : glBuffer.size;
+
+          if (typeof bufferActualSize !== 'number') {
+            console.error(`[${this._label || 'WebGLBindGroup'}] Cannot get buffer size for uniform '${uniformName}'. Skipping manual update.`);
+            continue;
+          }
+          const sizeToMap = bufferBindSize !== undefined ? bufferBindSize : (bufferActualSize - bufferBindOffset);
+
+          if (sizeToMap <= 0) {
+            console.warn(`[${this._label || 'WebGLBindGroup'}] Calculated size to map for uniform '${uniformName}' is <= 0. Skipping.`);
+            continue;
+          }
+
+          // 尝试直接从GLBuffer获取数据
+          try {
+            // 直接映射缓冲区（不使用异步API）
+            if (typeof glBuffer.getData === 'function') {
+              // 如果GLBuffer有getData方法，直接用它
+              const data = glBuffer.getData(bufferBindOffset, sizeToMap);
+
+              if (data) {
+                applyKnownUniformFromBufferData(gl, uniformLocation, data, uniformName);
+              }
+            } else {
+              // 如果没有getData方法，回退到异步map（但可能会导致时序问题）
+              console.warn(`[${this._label || 'WebGLBindGroup'}] Binding ${binding} (Buffer '${uniformName}'): 使用异步map方法，这可能导致uniform设置时序问题。`);
+              glBuffer.map('read', bufferBindOffset, sizeToMap)
+                .then(mappedData => {
+                  applyKnownUniformFromBufferData(gl, uniformLocation, mappedData, uniformName);
+                  glBuffer.unmap();
+                })
+                .catch(err => {
+                  console.error(`[${this._label || 'WebGLBindGroup'}] Failed to map buffer for uniform '${uniformName}':`, err);
+                  glBuffer.unmap(); // Ensure unmap is called even on error if needed
+                });
+            }
+          } catch (err) {
+            console.error(`[${this._label || 'WebGLBindGroup'}] 无法访问uniform缓冲区数据 '${uniformName}':`, err);
+          }
+        }
+
+      } else if (layoutEntry.texture && actualResource instanceof WebGLTextureView) {
+        if (!uniformName || !uniformLocation) {
+          console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Texture '${uniformName || 'Unnamed'}'): Missing uniform name in layout or location not found. Skipping.`);
+          continue;
+        }
+        const textureView = actualResource;
+        const textureUnit = this.webglLayout.getTextureUnitForBinding(binding);
+
+        if (textureUnit !== undefined) {
+          gl.activeTexture(gl.TEXTURE0 + textureUnit);
+          gl.bindTexture(textureView.getGLTextureTarget(), textureView.getGLTexture());
+          gl.uniform1i(uniformLocation, textureUnit);
+        } else {
+          console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Texture '${uniformName}'): No texture unit assigned in layout.`);
+        }
+      } else if (layoutEntry.sampler && actualResource instanceof WebGLSampler) {
+        const sampler = actualResource;
+        const associatedTextureBinding = this.webglLayout.getAssociatedTextureBindingForSampler(binding);
+
+        if (associatedTextureBinding !== undefined) {
+          const textureUnitForSampler = this.webglLayout.getTextureUnitForBinding(associatedTextureBinding);
+
+          if (textureUnitForSampler !== undefined) {
+            const associatedTextureEntry = this.bindGroupEntries.find(e => e.binding === associatedTextureBinding);
+
+            if (associatedTextureEntry?.resource instanceof WebGLTextureView) {
+              const associatedTextureView = associatedTextureEntry.resource as WebGLTextureView;
+
+              gl.activeTexture(gl.TEXTURE0 + textureUnitForSampler);
+              if (typeof sampler.applyToTexture === 'function') {
+                sampler.applyToTexture(associatedTextureView.getGLTextureTarget());
+              } else {
+                console.error(`[${this._label || 'WebGLBindGroup'}] Sampler@${binding}: Missing 'applyToTexture' method on WebGLSampler instance.`);
+              }
+            } else {
+              console.warn(`[${this._label || 'WebGLBindGroup'}] Sampler@${binding}: Could not find associated TextureView for binding ${associatedTextureBinding} to apply sampler parameters.`);
+            }
+
+            if (uniformName && uniformLocation) {
+              gl.uniform1i(uniformLocation, textureUnitForSampler);
+            }
+          } else {
+            console.warn(`[${this._label || 'WebGLBindGroup'}] Binding ${binding} (Sampler '${uniformName || 'Unnamed'}'): Could not get texture unit for associated texture binding ${associatedTextureBinding}.`);
+          }
+        } else {
+          console.warn(`[${this._label || 'WebGLBindGroup'}] Binding ${binding} (Sampler '${uniformName || 'Unnamed'}'): No associated texture binding found in layout. Sampler parameters may not be applied correctly.`);
+        }
+      } else if (layoutEntry.storageTexture) {
+        console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding}: 'storageTexture' is not standard in WebGL and its binding behavior is undefined here.`);
       }
-    }
-  }
-
-  /**
-   * 绑定缓冲区资源
-   */
-  private bindBuffer (program: WebGLProgram, buffer: GLBuffer, layoutEntry: any): void {
-    const gl = this.gl;
-
-    if (layoutEntry.type === 'uniform-buffer' && this.isWebGL2) {
-      // WebGL2支持uniform缓冲区
-      const blockIndex = (gl as WebGL2RenderingContext).getUniformBlockIndex(program, layoutEntry.name);
-
-      if (blockIndex !== (gl as WebGL2RenderingContext).INVALID_INDEX) {
-        (gl as WebGL2RenderingContext).uniformBlockBinding(program, blockIndex, layoutEntry.binding);
-        (gl as WebGL2RenderingContext).bindBufferBase(
-          (gl as WebGL2RenderingContext).UNIFORM_BUFFER,
-          layoutEntry.binding,
-          buffer.getGLBuffer()
-        );
-      }
-    } else {
-      // WebGL1回退或storage-buffer - 需要在着色器程序中手动处理
-      // 这里需要其他逻辑来处理uniform值的设置或手动进行缓冲区读写
-    }
-  }
-
-  /**
-   * 绑定纹理资源
-   */
-  private bindTexture (program: WebGLProgram, texture: WebGLTexture, layoutEntry: any, textureUnit: number): void {
-    const gl = this.gl;
-
-    // 激活纹理单元
-    gl.activeTexture(gl.TEXTURE0 + textureUnit);
-
-    // 绑定纹理
-    gl.bindTexture(texture.getTarget(), texture.getGLTexture());
-
-    // 设置uniform采样器值
-    const location = gl.getUniformLocation(program, layoutEntry.name);
-
-    if (location) {
-      gl.uniform1i(location, textureUnit);
     }
   }
 
@@ -197,11 +323,7 @@ export class WebGLBindGroup implements IRHIBindGroup {
     if (this.isDestroyed) {
       return;
     }
-
-    // WebGL绑定组只是资源的引用，所以不需要直接销毁资源
-    // 资源应由各自的所有者销毁
-
-    this.resources.clear();
+    this.bindGroupEntries = [];
     this.isDestroyed = true;
   }
 }

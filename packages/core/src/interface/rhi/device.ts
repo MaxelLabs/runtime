@@ -244,6 +244,32 @@ export interface IRHICommandEncoder {
   ): void,
 
   /**
+   * 复制纹理到画布
+   * 这是为了兼容不同后端（如WebGPU）的渲染架构
+   */
+  copyTextureToCanvas(options: {
+    /**
+     * 源纹理视图
+     */
+    source: IRHITextureView,
+    
+    /**
+     * 目标画布
+     */
+    destination: HTMLCanvasElement,
+    
+    /**
+     * 源纹理起始位置
+     */
+    origin?: [number, number],
+    
+    /**
+     * 复制区域大小
+     */
+    extent?: [number, number],
+  }): void,
+
+  /**
    * 结束命令编码
    */
   finish(options?: {
