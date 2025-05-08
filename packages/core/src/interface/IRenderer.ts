@@ -1,7 +1,7 @@
 import type { Color } from '@maxellabs/math';
 import type { Scene } from '../scene/Scene';
-import type { Camera } from '../camera/camera';
-import type { IGraphicsDevice } from './IGraphicsDevice';
+import type { Camera } from '../camera/Camera';
+import type { IRHIDevice } from './rhi';
 import type { IRenderStats } from './IRenderStats';
 
 /**
@@ -141,7 +141,7 @@ export interface RendererPipelineOptions {
   /**
    * 可选的，外部传入已初始化的Device实例
    */
-  graphicsDevice?: IGraphicsDevice,
+  graphicsDevice?: IRHIDevice,
 
   /**
    * 渲染宽度
@@ -192,7 +192,7 @@ export interface IRenderer {
   /**
    * 底层图形设备实例
    */
-  readonly graphicsDevice: IGraphicsDevice,
+  readonly graphicsDevice: IRHIDevice,
 
   /**
    * 当前渲染宽度
@@ -256,7 +256,7 @@ export interface IRenderer {
 
   /**
    * 截取当前渲染结果。
-   * 具体实现会依赖 IGraphicsDevice。
+   * 具体实现会依赖 IRHIDevice。
    * @returns 包含渲染结果的ImageData对象 Promise。
    */
   captureFrame(): Promise<ImageData>,
