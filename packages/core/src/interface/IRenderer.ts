@@ -1,10 +1,8 @@
-import type { IRenderTarget } from './IRenderTarget';
-import type { IRenderState } from './IRenderState';
-import type { Matrix4, Color } from '@maxellabs/math';
-import type { Scene } from '../scene/scene';
+import type { Color } from '@maxellabs/math';
+import type { Scene } from '../scene/Scene';
 import type { Camera } from '../camera/camera';
+import type { IGraphicsDevice } from './IGraphicsDevice';
 import type { IRenderStats } from './IRenderStats';
-import type { PrimitiveType } from './constants';
 
 /**
  * 渲染器能力标志
@@ -132,195 +130,134 @@ export interface RendererOptions {
 }
 
 /**
- * 渲染器接口 - 定义渲染器的基本渲染操作
+ * 渲染器（管线）配置选项
  */
-export interface IRenderer {
+export interface RendererPipelineOptions {
   /**
-   * 画布宽度
+   * 目标画布
    */
-  width: number,
+  canvas: HTMLCanvasElement,
 
   /**
-   * 画布高度
+   * 可选的，外部传入已初始化的Device实例
    */
-  height: number,
+  graphicsDevice?: IGraphicsDevice,
+
+  /**
+   * 渲染宽度
+   */
+  width?: number,
+
+  /**
+   * 渲染高度
+   */
+  height?: number,
 
   /**
    * 像素比率
    */
-  pixelRatio: number,
+  pixelRatio?: number,
+
+  /**
+   * 是否启用抗锯齿 (传递给 GraphicsDevice 初始化)
+   */
+  antialias?: boolean,
+
+  /**
+   * 是否开启Alpha透明 (传递给 GraphicsDevice 初始化)
+   */
+  alpha?: boolean,
+
+  /**
+   * 是否启用深度测试 (传递给 GraphicsDevice 初始化)
+   */
+  depth?: boolean,
+
+  /**
+   * 是否启用模板测试 (传递给 GraphicsDevice 初始化)
+   */
+  stencil?: boolean,
+
+  /**
+   * 是否使用高性能模式 (传递给 GraphicsDevice 初始化)
+   */
+  powerPreference?: 'default' | 'high-performance' | 'low-power',
+}
+
+/**
+ * 高层渲染管线接口
+ * 负责协调整个场景的渲染流程。
+ */
+export interface IRenderer {
+  /**
+   * 底层图形设备实例
+   */
+  readonly graphicsDevice: IGraphicsDevice,
+
+  /**
+   * 当前渲染宽度
+   */
+  readonly width: number,
+
+  /**
+   * 当前渲染高度
+   */
+  readonly height: number,
+
+  /**
+   * 当前像素比率
+   */
+  readonly pixelRatio: number,
 
   /**
    * 是否已初始化
    */
-  isInitialized: boolean,
+  readonly isInitialized: boolean,
 
   /**
-   * 默认清屏颜色
+   * 初始化渲染管线和底层图形设备（如果未提供）。
+   * @param options - 初始化选项
+   * @returns 返回一个 Promise，表示初始化是否成功。
    */
-  clearColor: Color,
+  initialize(options: RendererPipelineOptions): Promise<boolean>,
 
   /**
-   * 初始化渲染器
-   * @param canvas - WebGL画布
-   * @param options - 渲染器选项
-   */
-  create(canvas: HTMLCanvasElement, options?: RendererOptions): void,
-
-  /**
-   * 销毁渲染器
+   * 销毁渲染管线及管理的资源，包括底层图形设备（如果是由本管线创建的）。
    */
   destroy(): void,
 
   /**
-   * 设置视口大小
-   * @param width - 宽度
-   * @param height - 高度
+   * 渲染指定的场景和相机。
+   * 这是渲染管线的主要入口点。
+   * @param scene - 需要渲染的场景。
+   * @param camera - 用于渲染的相机。
    */
-  setViewport(width: number, height: number): void,
+  render(scene: Scene, camera: Camera): void,
 
   /**
-   * 设置剪裁区域
-   * @param x - 左上角x坐标
-   * @param y - 左上角y坐标
-   * @param width - 宽度
-   * @param height - 高度
+   * 当渲染目标（如画布）的尺寸发生变化时调用。
+   * @param width - 新的宽度。
+   * @param height - 新的高度。
    */
-  setScissor(x: number, y: number, width: number, height: number): void,
+  resize(width: number, height: number): void,
 
   /**
-   * 清除画布
-   * @param color - 清除颜色
+   * 设置默认的清屏颜色。
+   * 这个颜色会在调用 graphicsDevice.clear() 且未指定特定颜色时使用。
+   * @param color - 清屏颜色。
+   * @param alpha - 透明度。
    */
-  clear(color?: Color): void,
+  setClearColor(color: Color, alpha?: number): void,
 
   /**
-   * 设置变换矩阵
-   * @param matrix - 变换矩阵
-   */
-  setTransform(matrix: Matrix4): void,
-
-  /**
-   * 绘制
-   * @param primitiveType - 图元类型
-   * @param count - 顶点数量
-   * @param offset - 偏移量
-   */
-  draw(primitiveType: PrimitiveType, count: number, offset?: number): void,
-
-  /**
-   * 使用索引绘制
-   * @param primitiveType - 图元类型
-   * @param count - 索引数量
-   * @param offset - 偏移量
-   */
-  drawIndexed(primitiveType: PrimitiveType, count: number, offset?: number): void,
-
-  /**
-   * 实例化绘制
-   * @param primitiveType - 图元类型
-   * @param count - 顶点数量
-   * @param instanceCount - 实例数量
-   * @param offset - 偏移量
-   */
-  drawInstanced(primitiveType: PrimitiveType, count: number, instanceCount: number, offset?: number): void,
-
-  /**
-   * 实例化索引绘制
-   * @param primitiveType - 图元类型
-   * @param count - 索引数量
-   * @param instanceCount - 实例数量
-   * @param offset - 偏移量
-   */
-  drawIndexedInstanced(primitiveType: PrimitiveType, count: number, instanceCount: number, offset?: number): void,
-
-  /**
-   * 设置当前渲染目标
-   * @param renderTarget - 渲染目标，null表示默认帧缓冲
-   */
-  setRenderTarget(renderTarget: IRenderTarget | null): void,
-
-  /**
-   * 获取渲染状态管理对象
-   */
-  getRenderState(): IRenderState,
-
-  /**
-   * 渲染场景
-   * @param scene - 场景对象
-   * @param camera - 相机对象
-   */
-  renderScene(scene: Scene, camera: Camera): void,
-
-  /**
-   * 获取渲染统计信息
+   * 获取当前的渲染统计信息。
    */
   getStats(): IRenderStats,
 
   /**
-   * 检查是否支持某项渲染特性
-   * @param feature - 特性标志
+   * 截取当前渲染结果。
+   * 具体实现会依赖 IGraphicsDevice。
+   * @returns 包含渲染结果的ImageData对象 Promise。
    */
-  isFeatureSupported(feature: RendererFeature): boolean,
-
-  /**
-   * 截取当前渲染结果
-   * @returns 包含渲染结果的ImageData对象
-   */
-  captureFrame(): ImageData,
-
-  /**
-   * 重置渲染器内部状态
-   */
-  resetState(): void,
-
-  /**
-   * 重设渲染器大小
-   * @param width - 新宽度
-   * @param height - 新高度
-   * @param updateStyle - 是否同时更新画布样式
-   */
-  resize(width: number, height: number, updateStyle?: boolean): void,
-
-  /**
-   * 绘制单个直线
-   * @param x1 - 起点x
-   * @param y1 - 起点y
-   * @param x2 - 终点x
-   * @param y2 - 终点y
-   * @param color - 线条颜色
-   * @param lineWidth - 线条宽度
-   */
-  drawLine(x1: number, y1: number, x2: number, y2: number, color: Color, lineWidth?: number): void,
-
-  /**
-   * 绘制矩形
-   * @param x - 左上角x
-   * @param y - 左上角y
-   * @param width - 宽度
-   * @param height - 高度
-   * @param color - 颜色
-   * @param filled - 是否填充
-   */
-  drawRect(x: number, y: number, width: number, height: number, color: Color, filled?: boolean): void,
-
-  /**
-   * 绘制圆形
-   * @param x - 中心x
-   * @param y - 中心y
-   * @param radius - 半径
-   * @param color - 颜色
-   * @param filled - 是否填充
-   * @param segments - 分段数
-   */
-  drawCircle(x: number, y: number, radius: number, color: Color, filled?: boolean, segments?: number): void,
-
-  /**
-   * 绘制文本
-   * @param text - 文本内容
-   * @param x - 位置x
-   * @param y - 位置y
-   * @param options - 文本选项(字体、颜色等)
-   */
-  drawText(text: string, x: number, y: number, options?: any): void,
+  captureFrame(): Promise<ImageData>,
 }

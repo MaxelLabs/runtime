@@ -1,15 +1,15 @@
-import type { IRHICapabilities, IRHIDevice, RHIDeviceOptions } from '@maxellabs/core';
+import type { IRHICapabilities, RHIDeviceOptions } from '@maxellabs/core';
 import type { RenderAPIType } from '@maxellabs/core';
 import type { GLRenderer } from '@maxellabs/rhi';
 import { GLDevice } from '@maxellabs/rhi';
 
 export class DeviceManager {
   private static instance: DeviceManager;
-  private device: IRHIDevice | null = null;
+  private device: GLDevice | null = null;
 
   private constructor () {}
 
-  public static getInstance (): DeviceManager {
+  static getInstance (): DeviceManager {
     if (!DeviceManager.instance) {
       DeviceManager.instance = new DeviceManager();
     }
@@ -17,7 +17,7 @@ export class DeviceManager {
     return DeviceManager.instance;
   }
 
-  public createDevice (canvas: HTMLCanvasElement, options: RHIDeviceOptions): IRHIDevice {
+  createDevice (canvas: HTMLCanvasElement, options: RHIDeviceOptions): GLDevice {
     if (this.device) {
       return this.device;
     }
@@ -26,42 +26,42 @@ export class DeviceManager {
     return this.device;
   }
 
-  public getDevice (): IRHIDevice | null {
+  getDevice (): GLDevice | null {
     return this.device;
   }
 
-  public resetDevice (): void {
+  resetDevice (): void {
     this.device = null;
   }
-  public getCapabilities (): IRHICapabilities | null {
+  getCapabilities (): IRHICapabilities | null {
     if (!this.device) {
       return null;
     }
 
     return this.device.getCapabilities();
   }
-  public getRenderAPIType (): RenderAPIType {
+  getRenderAPIType (): RenderAPIType {
     if (!this.device) {
       throw new Error('Device not created yet');
     }
 
     return this.device.getRenderAPIType();
   }
-  public getRenderer (): GLRenderer | null {
+  getRenderer (): GLRenderer | null {
     if (!this.device) {
       return null;
     }
 
     return this.device.getRenderer();
   }
-  public getGLContext (): WebGLRenderingContext | WebGL2RenderingContext | null {
+  getGLContext (): WebGLRenderingContext | WebGL2RenderingContext | null {
     if (!this.device) {
       return null;
     }
 
     return this.device.getGLContext();
   }
-  public getGLCapabilities (): IRHICapabilities | null {
+  getGLCapabilities (): IRHICapabilities | null {
     if (!this.device) {
       return null;
     }

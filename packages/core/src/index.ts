@@ -31,13 +31,7 @@ export * from './utils';
 export * from './interface';
 
 // 基础组件
-export * from './base/event';
-export * from './base/eventDispatcher';
-export * from './base/canvas';
-export * from './base/Time';
-export * from './base/ObjectPool';
-export * from './base/ObjectPoolManager';
-export * from './base/eventDispatcher';
+export * from './base';
 
 // 场景组件
 export * from './scene/Scene';
@@ -84,9 +78,6 @@ export * from './camera/Camera';
 // 光照系统
 export * from './light/Light';
 
-// 接口定义
-export * from './interface/IHardwareRenderer';
-
 // 序列化系统
 export * from './serialization/Serialization';
 
@@ -99,4 +90,6 @@ export * from './input/InputCode';
 export * from './input/InputState';
 
 // 导出数学库类型
-export type { Vector2, Vector3, Vector4, Matrix3, Matrix4, Quaternion, Color } from '@maxellabs/math';
+export * from '@maxellabs/math';
+// 导出规范库
+export * from '@maxellabs/specification';

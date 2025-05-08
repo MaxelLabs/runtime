@@ -1,5 +1,5 @@
 import { ObjectPool } from './ObjectPool';
-import { Time } from './Time';
+import { Time } from './time';
 import { EventDispatcher } from './eventDispatcher';
 
 /**
