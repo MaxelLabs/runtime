@@ -19,6 +19,11 @@ import type {
  */
 export interface RHIVertexAttribute {
   /**
+   * 属性名称
+   */
+  name?: string,
+
+  /**
    * 属性格式
    */
   format: RHIVertexFormat,
@@ -29,7 +34,9 @@ export interface RHIVertexAttribute {
   offset: number,
 
   /**
-   * 属性的语义索引
+   * 属性的语义索引(在着色器中的位置)
+   * WebGL中会尝试通过name找到，如果找不到则使用此值
+   * WebGPU中直接使用此值
    */
   shaderLocation: number,
 }
@@ -38,6 +45,11 @@ export interface RHIVertexAttribute {
  * 顶点缓冲区布局
  */
 export interface RHIVertexBufferLayout {
+  /**
+   * 顶点缓冲区的索引
+   */
+  index: number,
+
   /**
    * 顶点缓冲区的属性列表
    */

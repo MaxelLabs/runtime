@@ -4,6 +4,7 @@
  */
 
 import type { IRHIBindGroupLayout } from '../bindings';
+import { IRHIPipelineLayout } from '../pipeline';
 import type { IRHIShaderModule } from '../resources';
 import type {
   RHIBufferUsage,
@@ -200,9 +201,9 @@ export interface RHIRenderPipelineDescriptor {
   colorBlendState?: RHIColorBlendState,
 
   /**
-   * 绑定组布局
+   * 管线布局
    */
-  bindGroupLayouts: IRHIBindGroupLayout[],
+  layout: IRHIPipelineLayout,
 
   /**
    * 可选标签，用于调试
