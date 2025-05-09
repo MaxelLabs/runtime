@@ -18,10 +18,16 @@ import {
 export class WebGLUtils {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private isWebGL2: boolean;
+  /**
+   * webgl扩展
+   * @see https://registry.khronos.org/webgl/extensions/
+   */
+  extension: Record<string, any>;
 
-  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext) {
+  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, extension?: Record<string, any>) {
     this.gl = gl;
     this.isWebGL2 = gl instanceof WebGL2RenderingContext;
+    this.extension = extension || {};
   }
 
   /**
@@ -35,11 +41,22 @@ export class WebGLUtils {
     const gl = this.gl;
 
     // 默认值
-    let result = {
+    let result: {
+      internalFormat: number,
+      format: number,
+      type: number,
+    } = {
       internalFormat: gl.RGBA,
       format: gl.RGBA,
       type: gl.UNSIGNED_BYTE,
     };
+
+    // 检查无效输入
+    if (format === undefined || format === null) {
+      console.warn('textureFormatToGL: 无效的纹理格式，使用默认RGBA格式');
+
+      return result;
+    }
 
     switch (format) {
       case RHITextureFormat.R8_UNORM:
@@ -67,45 +84,210 @@ export class WebGLUtils {
 
         break;
       case RHITextureFormat.RGBA16_FLOAT:
-        result = {
-          internalFormat: this.isWebGL2 ? (gl as WebGL2RenderingContext).RGBA16F : gl.RGBA,
-          format: gl.RGBA,
-          type: this.isWebGL2 ? (gl as WebGL2RenderingContext).HALF_FLOAT :
-            gl.getExtension('OES_texture_half_float')?.HALF_FLOAT_OES || gl.UNSIGNED_BYTE,
-        };
+        if (this.isWebGL2) {
+          result = {
+            internalFormat: (gl as WebGL2RenderingContext).RGBA16F,
+            format: gl.RGBA,
+            type: (gl as WebGL2RenderingContext).HALF_FLOAT,
+          };
+        } else {
+          // WebGL1需要扩展支持
+          const halfFloatExt = this.extension['OES_texture_half_float'];
+
+          if (halfFloatExt) {
+            result = {
+              internalFormat: gl.RGBA,
+              format: gl.RGBA,
+              type: halfFloatExt.HALF_FLOAT_OES,
+            };
+          } else {
+            console.warn('OES_texture_half_float扩展不可用，降级为UNSIGNED_BYTE');
+            // 降级为8位RGBA
+            result = {
+              internalFormat: gl.RGBA,
+              format: gl.RGBA,
+              type: gl.UNSIGNED_BYTE,
+            };
+          }
+        }
 
         break;
       case RHITextureFormat.RGBA32_FLOAT:
-        result = {
-          internalFormat: this.isWebGL2 ? (gl as WebGL2RenderingContext).RGBA32F : gl.RGBA,
-          format: gl.RGBA,
-          type: gl.FLOAT,
-        };
+        if (this.isWebGL2) {
+          result = {
+            internalFormat: (gl as WebGL2RenderingContext).RGBA32F,
+            format: gl.RGBA,
+            type: gl.FLOAT,
+          };
+        } else {
+          // WebGL1需要扩展支持
+          const floatTextureExt = this.extension['OES_texture_float'];
+
+          if (floatTextureExt) {
+            result = {
+              internalFormat: gl.RGBA,
+              format: gl.RGBA,
+              type: gl.FLOAT,
+            };
+          } else {
+            console.warn('OES_texture_float扩展不可用，降级为UNSIGNED_BYTE');
+            // 降级为8位RGBA
+            result = {
+              internalFormat: gl.RGBA,
+              format: gl.RGBA,
+              type: gl.UNSIGNED_BYTE,
+            };
+          }
+        }
 
         break;
       case RHITextureFormat.DEPTH16_UNORM:
-        result = {
-          internalFormat: this.isWebGL2 ? (gl as WebGL2RenderingContext).DEPTH_COMPONENT16 : gl.DEPTH_COMPONENT,
-          format: gl.DEPTH_COMPONENT,
-          type: gl.UNSIGNED_SHORT,
-        };
+        if (this.isWebGL2) {
+          result = {
+            internalFormat: (gl as WebGL2RenderingContext).DEPTH_COMPONENT16,
+            format: gl.DEPTH_COMPONENT,
+            type: gl.UNSIGNED_SHORT,
+          };
+        } else {
+          // WebGL1需要深度纹理扩展
+          const depthTextureExt = this.extension['WEBGL_depth_texture'];
+
+          if (depthTextureExt) {
+            result = {
+              internalFormat: gl.DEPTH_COMPONENT,
+              format: gl.DEPTH_COMPONENT,
+              type: gl.UNSIGNED_SHORT,
+            };
+          } else {
+            console.warn('WEBGL_depth_texture扩展不可用，无法使用深度纹理');
+            // 无法降级深度纹理，返回错误的格式以便调用者可以检测
+            result = {
+              internalFormat: gl.RGBA,
+              format: gl.RGBA,
+              type: gl.UNSIGNED_BYTE,
+            };
+          }
+        }
 
         break;
       case RHITextureFormat.DEPTH24_UNORM:
-        result = {
-          internalFormat: this.isWebGL2 ? (gl as WebGL2RenderingContext).DEPTH_COMPONENT24 : gl.DEPTH_COMPONENT,
-          format: gl.DEPTH_COMPONENT,
-          type: gl.UNSIGNED_INT,
-        };
+        if (this.isWebGL2) {
+          result = {
+            internalFormat: (gl as WebGL2RenderingContext).DEPTH_COMPONENT24,
+            format: gl.DEPTH_COMPONENT,
+            type: gl.UNSIGNED_INT,
+          };
+        } else {
+          // WebGL1需要深度纹理扩展
+          const depthTextureExt = this.extension['WEBGL_depth_texture'];
+
+          if (depthTextureExt) {
+            result = {
+              internalFormat: gl.DEPTH_COMPONENT,
+              format: gl.DEPTH_COMPONENT,
+              type: gl.UNSIGNED_INT,
+            };
+          } else {
+            console.warn('WEBGL_depth_texture扩展不可用，无法使用深度纹理');
+            result = {
+              internalFormat: gl.RGBA,
+              format: gl.RGBA,
+              type: gl.UNSIGNED_BYTE,
+            };
+          }
+        }
 
         break;
       case RHITextureFormat.DEPTH32_FLOAT:
-        result = {
-          internalFormat: this.isWebGL2 ? (gl as WebGL2RenderingContext).DEPTH_COMPONENT32F : gl.DEPTH_COMPONENT,
-          format: gl.DEPTH_COMPONENT,
-          type: gl.FLOAT,
-        };
+        if (this.isWebGL2) {
+          result = {
+            internalFormat: (gl as WebGL2RenderingContext).DEPTH_COMPONENT32F,
+            format: gl.DEPTH_COMPONENT,
+            type: gl.FLOAT,
+          };
+        } else {
+          // WebGL1需要深度纹理和浮点纹理扩展
+          const depthTextureExt = this.extension['WEBGL_depth_texture'];
+          const floatTextureExt = this.extension['OES_texture_float'];
 
+          if (depthTextureExt && floatTextureExt) {
+            result = {
+              internalFormat: gl.DEPTH_COMPONENT,
+              format: gl.DEPTH_COMPONENT,
+              type: gl.FLOAT,
+            };
+          } else {
+            console.warn('WEBGL_depth_texture或OES_texture_float扩展不可用，无法使用浮点深度纹理');
+            result = {
+              internalFormat: gl.RGBA,
+              format: gl.RGBA,
+              type: gl.UNSIGNED_BYTE,
+            };
+          }
+        }
+
+        break;
+      case RHITextureFormat.DEPTH24_UNORM_STENCIL8:
+        if (this.isWebGL2) {
+          result = {
+            internalFormat: (gl as WebGL2RenderingContext).DEPTH24_STENCIL8,
+            format: (gl as WebGL2RenderingContext).DEPTH_STENCIL,
+            type: (gl as WebGL2RenderingContext).UNSIGNED_INT_24_8,
+          };
+        } else {
+          // WebGL1需要深度纹理扩展
+          const depthTextureExt = this.extension['WEBGL_depth_texture'];
+
+          if (depthTextureExt) {
+            result = {
+              internalFormat: depthTextureExt.DEPTH_STENCIL,
+              format: depthTextureExt.DEPTH_STENCIL,
+              type: depthTextureExt.UNSIGNED_INT_24_8_WEBGL,
+            };
+          } else {
+            console.warn('WEBGL_depth_texture扩展不可用，无法使用深度模板纹理');
+            result = {
+              internalFormat: gl.RGBA,
+              format: gl.RGBA,
+              type: gl.UNSIGNED_BYTE,
+            };
+          }
+        }
+
+        break;
+      case RHITextureFormat.DEPTH32_FLOAT_STENCIL8:
+        if (this.isWebGL2) {
+          result = {
+            internalFormat: (gl as WebGL2RenderingContext).DEPTH32F_STENCIL8,
+            format: (gl as WebGL2RenderingContext).DEPTH_STENCIL,
+            type: (gl as WebGL2RenderingContext).FLOAT_32_UNSIGNED_INT_24_8_REV,
+          };
+        } else {
+          // WebGL1不支持这个格式，使用DEPTH24_STENCIL8作为降级选项
+          console.warn('WebGL1不支持DEPTH32F_STENCIL8格式，尝试降级为DEPTH24_STENCIL8');
+          const depthTextureExt = this.extension['WEBGL_depth_texture'];
+
+          if (depthTextureExt) {
+            result = {
+              internalFormat: depthTextureExt.DEPTH_STENCIL,
+              format: depthTextureExt.DEPTH_STENCIL,
+              type: depthTextureExt.UNSIGNED_INT_24_8_WEBGL,
+            };
+          } else {
+            console.warn('WEBGL_depth_texture扩展不可用，无法使用深度模板纹理');
+            result = {
+              internalFormat: gl.RGBA,
+              format: gl.RGBA,
+              type: gl.UNSIGNED_BYTE,
+            };
+          }
+        }
+
+        break;
+      default:
+        console.warn(`未知或不支持的纹理格式: ${format}，使用默认RGBA格式`);
+
+        // 使用默认值
         break;
     }
 
@@ -115,7 +297,7 @@ export class WebGLUtils {
   /**
    * 转换RHI寻址模式到WebGL寻址模式
    */
-  addressModeToGL (mode: RHIAddressMode): number {
+  addressModeToGL (mode: RHIAddressMode): GLenum {
     const gl = this.gl;
 
     switch (mode) {
@@ -124,7 +306,7 @@ export class WebGLUtils {
       case RHIAddressMode.CLAMP_TO_EDGE: return gl.CLAMP_TO_EDGE;
       case RHIAddressMode.CLAMP_TO_BORDER:
       {
-        const ext = gl.getExtension('EXT_texture_border_clamp');
+        const ext = this.extension['EXT_texture_border_clamp'];
 
         return ext ? ext.CLAMP_TO_BORDER_EXT : gl.CLAMP_TO_EDGE;
       }
@@ -246,14 +428,14 @@ export class WebGLUtils {
       case RHIBlendOperation.REVERSE_SUBTRACT: return gl.FUNC_REVERSE_SUBTRACT;
       case RHIBlendOperation.MIN:
       {
-        const minExt = gl.getExtension('EXT_blend_minmax');
+        const minExt = this.extension['EXT_blend_minmax'];
 
         return minExt ? minExt.MIN_EXT : gl.FUNC_ADD;
 
       }
       case RHIBlendOperation.MAX:
       {
-        const maxExt = gl.getExtension('EXT_blend_minmax');
+        const maxExt = this.extension['EXT_blend_minmax'];
 
         return maxExt ? maxExt.MAX_EXT : gl.FUNC_ADD;
       }

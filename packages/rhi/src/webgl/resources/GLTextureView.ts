@@ -7,13 +7,13 @@ import type { GLTexture } from './GLTexture';
 export class WebGLTextureView implements IRHITextureView {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   readonly texture: IRHITexture;
-  private format: RHITextureFormat;
-  private dimension: '1d' | '2d' | '3d' | 'cube' | '2d-array' | 'cube-array';
-  private baseMipLevel: number;
-  private mipLevelCount: number;
-  private baseArrayLayer: number;
-  private arrayLayerCount: number;
-  private label?: string;
+  format: RHITextureFormat;
+  dimension: '1d' | '2d' | '3d' | 'cube' | '2d-array' | 'cube-array';
+  baseMipLevel: number;
+  mipLevelCount: number;
+  baseArrayLayer: number;
+  arrayLayerCount: number;
+  label?: string;
   private isDestroyed = false;
 
   /**
@@ -34,13 +34,16 @@ export class WebGLTextureView implements IRHITextureView {
   }) {
     this.gl = gl;
     this.texture = descriptor.texture;
-    this.format = descriptor.format || this.texture.getFormat();
-    this.dimension = descriptor.dimension || this.texture.getDimension();
-    this.baseMipLevel = descriptor.baseMipLevel || 0;
-    this.mipLevelCount = descriptor.mipLevelCount || (this.texture.getMipLevelCount() - this.baseMipLevel);
-    this.baseArrayLayer = descriptor.baseArrayLayer || 0;
-    this.arrayLayerCount = descriptor.arrayLayerCount || (this.texture.getDepthOrArrayLayers() - this.baseArrayLayer);
-    this.label = descriptor.label;
+    const { format, dimension, baseMipLevel, mipLevelCount, baseArrayLayer, arrayLayerCount, label } = descriptor;
+    const { format :tFormat, dimension: tDimension, mipLevelCount: tMipLevelCount, depthOrArrayLayers: tDepthOrArrayLayers } = this.texture;
+
+    this.format = format || tFormat;
+    this.dimension = dimension || tDimension;
+    this.baseMipLevel = baseMipLevel || 0;
+    this.mipLevelCount = mipLevelCount || (tMipLevelCount - this.baseMipLevel);
+    this.baseArrayLayer = baseArrayLayer || 0;
+    this.arrayLayerCount = arrayLayerCount || (tDepthOrArrayLayers - this.baseArrayLayer);
+    this.label = label;
 
     // 验证视图参数
     this.validateParameters();
@@ -50,22 +53,24 @@ export class WebGLTextureView implements IRHITextureView {
    * 验证视图参数
    */
   private validateParameters (): void {
+    const { mipLevelCount, baseMipLevel, arrayLayerCount } = this;
+
     // 检查mip级别范围
-    if (this.baseMipLevel < 0 || this.baseMipLevel >= this.texture.getMipLevelCount()) {
-      throw new Error(`基础MIP级别 ${this.baseMipLevel} 超出有效范围 [0, ${this.texture.getMipLevelCount() - 1}]`);
+    if (baseMipLevel < 0 || baseMipLevel >= mipLevelCount) {
+      throw new Error(`基础MIP级别 ${baseMipLevel} 超出有效范围 [0, ${mipLevelCount - 1}]`);
     }
 
-    if (this.baseMipLevel + this.mipLevelCount > this.texture.getMipLevelCount()) {
-      throw new Error(`MIP级别范围 [${this.baseMipLevel}, ${this.baseMipLevel + this.mipLevelCount - 1}] 超出纹理的MIP级别范围 [0, ${this.texture.getMipLevelCount() - 1}]`);
+    if (baseMipLevel + mipLevelCount > mipLevelCount) {
+      throw new Error(`MIP级别范围 [${baseMipLevel}, ${baseMipLevel + mipLevelCount - 1}] 超出纹理的MIP级别范围 [0, ${mipLevelCount - 1}]`);
     }
 
     // 检查数组层范围
-    if (this.baseArrayLayer < 0 || this.baseArrayLayer >= this.texture.getDepthOrArrayLayers()) {
-      throw new Error(`基础数组层 ${this.baseArrayLayer} 超出有效范围 [0, ${this.texture.getDepthOrArrayLayers() - 1}]`);
+    if (this.baseArrayLayer < 0 || this.baseArrayLayer >= arrayLayerCount) {
+      throw new Error(`基础数组层 ${this.baseArrayLayer} 超出有效范围 [0, ${arrayLayerCount - 1}]`);
     }
 
-    if (this.baseArrayLayer + this.arrayLayerCount > this.texture.getDepthOrArrayLayers()) {
-      throw new Error(`数组层范围 [${this.baseArrayLayer}, ${this.baseArrayLayer + this.arrayLayerCount - 1}] 超出纹理的数组层范围 [0, ${this.texture.getDepthOrArrayLayers() - 1}]`);
+    if (this.baseArrayLayer + this.arrayLayerCount > arrayLayerCount) {
+      throw new Error(`数组层范围 [${this.baseArrayLayer}, ${this.baseArrayLayer + this.arrayLayerCount - 1}] 超出纹理的数组层范围 [0, ${arrayLayerCount - 1}]`);
     }
   }
 
@@ -128,7 +133,7 @@ export class WebGLTextureView implements IRHITextureView {
   /**
    * WebGL没有单独的纹理视图概念，返回原始纹理
    */
-  getGLTexture (): GLTexture | null {
+  getGLTexture (): WebGLTexture | null {
     return (this.texture as GLTexture).getGLTexture();
   }
 

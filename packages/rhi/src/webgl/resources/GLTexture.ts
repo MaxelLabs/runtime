@@ -13,21 +13,22 @@ import { WebGLTextureView } from './GLTextureView';
 export class GLTexture implements IRHITexture {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private glTexture: WebGLTexture | null;
-  private width: number;
-  private height: number;
-  private depthOrArrayLayers: number;
-  private mipLevelCount: number;
-  private format: RHITextureFormat;
-  private usage: RHITextureUsage;
-  private dimension: '1d' | '2d' | '3d' | 'cube';
-  private sampleCount: number;
-  private label?: string;
-  private target: number;
+  width: number;
+  height: number;
+  depthOrArrayLayers: number;
+  mipLevelCount: number;
+  format: RHITextureFormat;
+  usage: RHITextureUsage;
+  dimension: '1d' | '2d' | '3d' | 'cube';
+  sampleCount: number;
+  label?: string;
+  target: number;
   private glInternalFormat: number;
   private glFormat: number;
   private glType: number;
   private isDestroyed = false;
   private utils: WebGLUtils;
+  private extension: Record<string, any> | null = null;
 
   /**
    * 创建WebGL纹理
@@ -37,6 +38,8 @@ export class GLTexture implements IRHITexture {
    */
   constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHITextureDescriptor) {
     this.gl = gl;
+    this.extension = descriptor.extension || {};
+
     this.utils = new WebGLUtils(gl);
     this.width = descriptor.width;
     this.height = descriptor.height;
@@ -180,7 +183,7 @@ export class GLTexture implements IRHITexture {
         const actualWidth = width ?? (this.width - x);
         const actualHeight = height ?? (this.height - y);
 
-        gl.texSubImage2D(target, mipLevel, x, y, actualWidth, actualHeight, this.glFormat, this.glType, data);
+        gl.texSubImage2D(target, mipLevel, x, y, actualWidth, actualHeight, this.glFormat, this.glType, data as ArrayBufferView);
       }
     } else if (this.dimension === '3d') {
       // 更新3D纹理
