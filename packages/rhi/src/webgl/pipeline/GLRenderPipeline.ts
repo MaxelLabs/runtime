@@ -52,7 +52,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHIRenderPipelineDescriptor) {
     this.gl = gl;
     this.isWebGL2 = gl instanceof WebGL2RenderingContext;
-    this.utils = new WebGLUtils(gl);
+    this.utils = new WebGLUtils(gl, { 'EXT_blend_minmax': this.gl.getExtension('EXT_blend_minmax') });
     this._vertexShader = descriptor.vertexShader;
     this._fragmentShader = descriptor.fragmentShader;
     this._vertexLayout = descriptor.vertexLayout;
@@ -103,6 +103,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
 
     if (!vertexGLShader || !fragmentGLShader) {
       console.error('Create program failed: Invalid shader module type or getGLShader method missing.');
+
       return null;
     }
 
@@ -175,8 +176,8 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
       const { index, stride, attributes } = bufferLayout;
 
       if (typeof index !== 'number') {
-         console.error(`[${this._label || 'WebGLRenderPipeline'}] bufferLayout is missing a valid 'index' (slot). Received:`, bufferLayout);
-         continue;
+        console.error(`[${this._label || 'WebGLRenderPipeline'}] bufferLayout is missing a valid 'index' (slot). Received:`, bufferLayout);
+        continue;
       }
       if (!attributes || !Array.isArray(attributes)) {
         console.error(`[${this._label || 'WebGLRenderPipeline'}] RHIVertexBufferLayout.attributes for slot ${index} is undefined, null, or not an array. Received:`, attributes);
@@ -317,13 +318,13 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
    */
   private applyRasterizationState (): void {
     const gl = this.gl;
-    const state = this._rasterizationState || {}; 
-    const cullMode = state.cullMode ?? RHICullMode.NONE; 
+    const state = this._rasterizationState || {};
+    const cullMode = state.cullMode ?? RHICullMode.NONE;
     const frontFace = state.frontFace ?? RHIFrontFace.CCW;
     const lineWidth = state.lineWidth ?? 1;
     // Cast to any to access potentially missing properties, then use nullish coalescing
-    const depthBias = (state as any).depthBias ?? 0;
-    const depthBiasSlopeScale = (state as any).depthBiasSlopeScale ?? 0;
+    const depthBias = (state).depthBias ?? 0;
+    const depthBiasSlopeScale = (state).depthBiasSlopeScale ?? 0;
 
     const cullResult = this.utils.cullModeToGL(cullMode);
 
@@ -350,7 +351,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
    */
   private applyDepthStencilState (state: RHIDepthStencilState): void {
     const gl = this.gl;
-    
+
     // Use optional chaining and defaults for potentially missing properties
     const depthCompare = state.depthCompare ?? RHICompareFunction.ALWAYS;
     const depthTestEnabled = (state as any).depthTestEnabled ?? (depthCompare !== RHICompareFunction.ALWAYS);
@@ -374,12 +375,12 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
 
       if (front) {
         const compare = front.compare ?? RHICompareFunction.ALWAYS;
-        const reference = (front as any).reference ?? 0;
-        const readMask = (front as any).readMask ?? 0xFF;
+        const reference = (front).reference ?? 0;
+        const readMask = (front).readMask ?? 0xFF;
         const failOp = front.failOp ?? RHIStencilOperation.KEEP;
         const depthFailOp = front.depthFailOp ?? RHIStencilOperation.KEEP;
         const passOp = front.passOp ?? RHIStencilOperation.KEEP;
-        const writeMask = (front as any).writeMask ?? 0xFF;
+        const writeMask = (front).writeMask ?? 0xFF;
 
         gl.stencilFuncSeparate(
           gl.FRONT,
@@ -398,12 +399,12 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
 
       if (back) {
         const compare = back.compare ?? RHICompareFunction.ALWAYS;
-        const reference = (back as any).reference ?? 0;
-        const readMask = (back as any).readMask ?? 0xFF;
+        const reference = (back).reference ?? 0;
+        const readMask = (back).readMask ?? 0xFF;
         const failOp = back.failOp ?? RHIStencilOperation.KEEP;
         const depthFailOp = back.depthFailOp ?? RHIStencilOperation.KEEP;
         const passOp = back.passOp ?? RHIStencilOperation.KEEP;
-        const writeMask = (back as any).writeMask ?? 0xFF;
+        const writeMask = (back).writeMask ?? 0xFF;
 
         gl.stencilFuncSeparate(
           gl.BACK,
@@ -497,16 +498,18 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
     if (this.isDestroyed) {
       return null;
     }
+
     return this.program;
   }
 
   /**
    * 获取顶点数组对象
    */
-  getVertexArrayObject(): WebGLVertexArrayObject | null {
+  getVertexArrayObject (): WebGLVertexArrayObject | null {
     if (this.isDestroyed) {
       return null;
     }
+
     return this.vertexArrayObject;
   }
 
@@ -516,40 +519,44 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
    * @param buffer WebGL缓冲区
    * @param offset 偏移量
    */
-  applyVertexBufferLayout(slot: number, buffer: IRHIBuffer, bufferOffsetInBytes: number = 0): void {
+  applyVertexBufferLayout (slot: number, buffer: IRHIBuffer, bufferOffsetInBytes: number = 0): void {
     const gl = this.gl;
     const layoutsForSlot = this.attributeBufferLayouts.get(slot);
 
-    // --- Start Debugging --- 
+    // --- Start Debugging ---
     console.log(`[${this._label || 'WebGLRenderPipeline'}] applyVertexBufferLayout called for slot ${slot}`);
-    console.log(`  - Buffer object received:`, buffer);
-    console.log(`  - Buffer constructor name:`, buffer?.constructor?.name);
-    
-    // --- End Debugging --- 
+    console.log('  - Buffer object received:', buffer);
+    console.log('  - Buffer constructor name:', buffer?.constructor?.name);
+
+    // --- End Debugging ---
 
     if (!layoutsForSlot) {
       console.error(`[${this._label || 'WebGLRenderPipeline'}] No layout for slot ${slot}.`);
+
       return;
     }
-    
+
     if (!Array.isArray(layoutsForSlot)) {
       console.error(`[${this._label || 'WebGLRenderPipeline'}] Layout for slot ${slot} is not array.`);
+
       return;
     }
 
     // 获取WebGL缓冲区对象
     let nativeBuffer: WebGLBuffer | null = null;
-    
+
     // 尝试调用getGLBuffer方法获取原生缓冲区
     if (typeof (buffer as any).getGLBuffer === 'function') {
       nativeBuffer = (buffer as any).getGLBuffer();
     } else {
       console.error(`[${this._label || 'WebGLRenderPipeline'}] Buffer object doesn't have getGLBuffer method`);
+
       return;
     }
-    
+
     if (!nativeBuffer) {
       console.error(`[${this._label || 'WebGLRenderPipeline'}] Failed to get native WebGLBuffer from buffer object for slot ${slot}.`);
+
       return; // Cannot proceed without native buffer
     }
 
@@ -561,16 +568,16 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
         console.warn(`[${this._label || 'WebGLRenderPipeline'}] Skipping invalid layout in slot ${slot}.`, attrLayout);
         continue;
       }
-      
+
       const location = this.attributeLocations.get(attrLayout.name);
 
       if (location === undefined || location === -1) {
         console.warn(`[${this._label || 'WebGLRenderPipeline'}] Attribute '${attrLayout.name}' location not found.`);
         continue;
       }
-      
+
       console.log(`[${this._label || 'WebGLRenderPipeline'}] Enabling attribute: ${attrLayout.name} at location: ${location}`);
-      
+
       gl.enableVertexAttribArray(location);
       gl.vertexAttribPointer(
         location,

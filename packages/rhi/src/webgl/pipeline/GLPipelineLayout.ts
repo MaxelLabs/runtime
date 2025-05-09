@@ -35,7 +35,7 @@ export class WebGLPipelineLayout implements IRHIPipelineLayout {
     const bindingSet = new Set<number>();
 
     for (const layout of this.bindGroupLayouts) {
-      const entries = layout.getEntries();
+      const entries = layout.entries;
 
       for (const entry of entries) {
         // 检查binding是否唯一
