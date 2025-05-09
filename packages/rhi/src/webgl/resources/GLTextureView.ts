@@ -6,7 +6,7 @@ import type { WebGLTexture } from './GLTexture';
  */
 export class WebGLTextureView implements IRHITextureView {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
-  private texture: IRHITexture;
+  readonly texture: IRHITexture;
   private format: RHITextureFormat;
   private dimension: '1d' | '2d' | '3d' | 'cube' | '2d-array' | 'cube-array';
   private baseMipLevel: number;
