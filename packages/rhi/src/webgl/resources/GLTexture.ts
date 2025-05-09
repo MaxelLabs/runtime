@@ -10,7 +10,7 @@ import { WebGLTextureView } from './GLTextureView';
 /**
  * WebGL纹理实现
  */
-export class WebGLTexture implements IRHITexture {
+export class GLTexture implements IRHITexture {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private glTexture: WebGLTexture | null;
   private width: number;

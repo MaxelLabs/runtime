@@ -1,6 +1,6 @@
 import type { IRHIBuffer, IRHIBindGroup, IRHIRenderPass, IRHIRenderPipeline } from '@maxellabs/core';
 import { RHIIndexFormat, RHITextureFormat } from '@maxellabs/core';
-import type { WebGLTexture } from '../resources/GLTexture';
+import type { GLTexture } from '../resources/GLTexture';
 import type { WebGLTextureView } from '../resources/GLTextureView';
 import type { GLBuffer } from '../resources/GLBuffer';
 import type { WebGLRenderPipeline } from '../pipeline/GLRenderPipeline';

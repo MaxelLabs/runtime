@@ -1,5 +1,5 @@
 import type { IRHITexture, IRHITextureView, RHITextureFormat } from '@maxellabs/core';
-import type { WebGLTexture } from './GLTexture';
+import type { GLTexture } from './GLTexture';
 
 /**
  * WebGL纹理视图实现
@@ -128,15 +128,15 @@ export class WebGLTextureView implements IRHITextureView {
   /**
    * WebGL没有单独的纹理视图概念，返回原始纹理
    */
-  getGLTexture (): WebGLTexture | null {
-    return (this.texture as WebGLTexture).getGLTexture();
+  getGLTexture (): GLTexture | null {
+    return (this.texture as GLTexture).getGLTexture();
   }
 
   /**
    * 获取WebGL纹理目标
    */
   getGLTextureTarget (): number {
-    return (this.texture as WebGLTexture).getTarget();
+    return (this.texture as GLTexture).getTarget();
   }
 
   /**

@@ -1,6 +1,6 @@
 import type { IRHICommandBuffer } from '@maxellabs/core';
 import type { GLBuffer } from '../resources/GLBuffer';
-import type { WebGLTexture } from '../resources/GLTexture';
+import type { GLTexture } from '../resources/GLTexture';
 
 /**
  * WebGL命令缓冲区实现
@@ -476,7 +476,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
     const { source, destination, copySize } = params;
 
     const sourceBuffer = source.buffer as GLBuffer;
-    const destTexture = destination.texture as WebGLTexture;
+    const destTexture = destination.texture as GLTexture;
     const mipLevel = destination.mipLevel || 0;
     const origin = destination.origin || [0, 0, 0];
 
@@ -511,7 +511,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   private executeCopyTextureToBuffer (params: any): void {
     const { source, destination, copySize } = params;
 
-    const sourceTexture = source.texture as WebGLTexture;
+    const sourceTexture = source.texture as GLTexture;
     const destBuffer = destination.buffer as GLBuffer;
     const mipLevel = source.mipLevel || 0;
     const origin = source.origin || [0, 0, 0];
@@ -572,8 +572,8 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   private executeCopyTextureToTexture (params: any): void {
     const { source, destination, copySize } = params;
 
-    const sourceTexture = source.texture as WebGLTexture;
-    const destTexture = destination.texture as WebGLTexture;
+    const sourceTexture = source.texture as GLTexture;
+    const destTexture = destination.texture as GLTexture;
     const sourceMipLevel = source.mipLevel || 0;
     const destMipLevel = destination.mipLevel || 0;
     const sourceOrigin = source.origin || [0, 0, 0];

@@ -91,6 +91,15 @@ export interface RHITextureDescriptor {
   dimension?: '1d' | '2d' | '3d' | 'cube',
 
   /**
+   * 硬件API兼容性选项
+   * 在WebGPU中被忽略
+   * @deprecated
+   * @remarks
+   * 该属性在未来的版本中可能会被移除，请使用其他选项替代。
+   */
+  extension?: Record<string, any>,
+
+  /**
    * 可选标签，用于调试
    */
   label?: string,

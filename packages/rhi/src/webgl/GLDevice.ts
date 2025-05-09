@@ -23,7 +23,7 @@ import {
   RHIFeatureFlags,
 } from '@maxellabs/core';
 import { GLBuffer } from './resources/GLBuffer';
-import { WebGLTexture } from './resources/GLTexture';
+import { GLTexture } from './resources/GLTexture';
 import { WebGLSampler } from './resources/GLSampler';
 import { WebGLShader } from './resources/GLShader';
 import { WebGLBindGroupLayout } from './bindings/GLBindGroupLayout';
@@ -236,7 +236,7 @@ export class WebGLDevice implements IRHIDevice {
    * 创建纹理
    */
   createTexture (descriptor: RHITextureDescriptor): IRHITexture {
-    return new WebGLTexture(this.gl, descriptor);
+    return new GLTexture(this.gl, descriptor);
   }
 
   /**
