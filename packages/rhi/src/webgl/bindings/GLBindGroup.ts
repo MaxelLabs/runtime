@@ -215,7 +215,7 @@ export class WebGLBindGroup implements IRHIBindGroup {
             console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Buffer '${uniformName}'): Could not find location for standard uniform. Skipping manual update.`);
             continue; // Skip if we can't find the uniform location
           }
-          console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Buffer '${uniformName}'): Applying as standard uniform(s). Mapping buffer to read data. Consider using UBOs if possible.`);
+          // console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Buffer '${uniformName}'): Applying as standard uniform(s). Mapping buffer to read data. Consider using UBOs if possible.`);
 
           // Determine size to map
           const bufferActualSize = glBuffer.getSize ? glBuffer.getSize() : glBuffer.size;
