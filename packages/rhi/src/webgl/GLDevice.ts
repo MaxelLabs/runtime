@@ -23,7 +23,7 @@ import {
   RHIFeatureFlags,
 } from '@maxellabs/core';
 import { GLBuffer } from './resources/GLBuffer';
-import { WebGLTexture } from './resources/GLTexture';
+import { GLTexture } from './resources/GLTexture';
 import { WebGLSampler } from './resources/GLSampler';
 import { WebGLShader } from './resources/GLShader';
 import { WebGLBindGroupLayout } from './bindings/GLBindGroupLayout';
@@ -32,7 +32,7 @@ import { WebGLPipelineLayout } from './pipeline/GLPipelineLayout';
 import { WebGLRenderPipeline } from './pipeline/GLRenderPipeline';
 import { WebGLComputePipeline } from './pipeline/GLComputePipeline';
 import { WebGLCommandEncoder } from './commands/GLCommandEncoder';
-import { WebGLCommandBuffer } from './commands/GLCommandBuffer';
+import type { WebGLCommandBuffer } from './commands/GLCommandBuffer';
 import { WebGLUtils } from './utils/GLUtils';
 
 /**
@@ -236,7 +236,7 @@ export class WebGLDevice implements IRHIDevice {
    * 创建纹理
    */
   createTexture (descriptor: RHITextureDescriptor): IRHITexture {
-    return new WebGLTexture(this.gl, descriptor);
+    return new GLTexture(this.gl, descriptor);
   }
 
   /**
@@ -314,7 +314,8 @@ export class WebGLDevice implements IRHIDevice {
       for (const buffer of commands) {
         try {
           // 使用dynamic cast转换为WebGLCommandBuffer
-          const webglBuffer = buffer as any;
+          const webglBuffer = buffer as WebGLCommandBuffer;
+
           if (webglBuffer && typeof webglBuffer.execute === 'function') {
             webglBuffer.execute();
           } else {
@@ -327,8 +328,10 @@ export class WebGLDevice implements IRHIDevice {
 
       // 检查帧缓冲区状态
       const currentFramebuffer = this.gl.getParameter(this.gl.FRAMEBUFFER_BINDING);
+
       if (currentFramebuffer) {
         const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
+
         if (status !== this.gl.FRAMEBUFFER_COMPLETE) {
           console.error('提交命令后帧缓冲区不完整:', this.getGLErrorString(status));
         }
@@ -336,9 +339,10 @@ export class WebGLDevice implements IRHIDevice {
 
       // 确保命令完成
       this.gl.flush();
-      
+
       // 检查WebGL错误
       const error = this.gl.getError();
+
       if (error !== this.gl.NO_ERROR) {
         console.error('WebGL错误:', this.getGLErrorString(error));
       }
@@ -351,8 +355,9 @@ export class WebGLDevice implements IRHIDevice {
   /**
    * 获取WebGL错误字符串
    */
-  private getGLErrorString(error: number): string {
+  private getGLErrorString (error: number): string {
     const gl = this.gl;
+
     switch (error) {
       case gl.INVALID_ENUM: return 'INVALID_ENUM';
       case gl.INVALID_VALUE: return 'INVALID_VALUE';

@@ -106,7 +106,7 @@ export class WebGLShader implements IRHIShaderModule {
 
     // 添加调试信息
     console.log(`编译${this.stage === RHIShaderStage.VERTEX ? '顶点' : '片段'}着色器:`, this.label || 'unnamed');
-    
+
     // 编译着色器
     gl.shaderSource(shader, processedCode);
     gl.compileShader(shader);
@@ -114,18 +114,19 @@ export class WebGLShader implements IRHIShaderModule {
     // 检查编译状态
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
       const infoLog = gl.getShaderInfoLog(shader);
-      
+
       // 输出详细的错误信息和源码
-      console.error(`着色器编译失败:`);
+      console.error('着色器编译失败:');
       console.error(infoLog);
       console.error('源码:');
-      
+
       // 添加行号并显示源码
       const lines = processedCode.split('\n');
+
       lines.forEach((line, index) => {
         console.error(`${index + 1}: ${line}`);
       });
-      
+
       gl.deleteShader(shader);
       throw new Error(`着色器编译失败: ${infoLog}`);
     } else {

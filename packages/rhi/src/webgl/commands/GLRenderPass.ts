@@ -1,6 +1,6 @@
 import type { IRHIBuffer, IRHIBindGroup, IRHIRenderPass, IRHIRenderPipeline } from '@maxellabs/core';
-import { RHIIndexFormat } from '@maxellabs/core';
-import type { WebGLTexture } from '../resources/GLTexture';
+import { RHIIndexFormat, RHITextureFormat } from '@maxellabs/core';
+import type { GLTexture } from '../resources/GLTexture';
 import type { WebGLTextureView } from '../resources/GLTextureView';
 import type { GLBuffer } from '../resources/GLBuffer';
 import type { WebGLRenderPipeline } from '../pipeline/GLRenderPipeline';
@@ -150,26 +150,37 @@ export class WebGLRenderPass implements IRHIRenderPass {
       const hasDepth = this.hasDepthComponent(depthTexture.getFormat());
       const hasStencil = this.hasStencilComponent(depthTexture.getFormat());
 
-      // 附加深度纹理
-      if (hasDepth) {
+      // 对于组合深度/模板格式，在WebGL中需要使用DEPTH_STENCIL_ATTACHMENT
+      if (hasDepth && hasStencil) {
+        // 使用组合附件点
         gl.framebufferTexture2D(
           gl.FRAMEBUFFER,
-          gl.DEPTH_ATTACHMENT,
+          gl.DEPTH_STENCIL_ATTACHMENT,
           gl.TEXTURE_2D,
           depthTextureView.getGLTexture(),
           0
         );
-      }
+      } else {
+        // 分别处理深度和模板
+        if (hasDepth) {
+          gl.framebufferTexture2D(
+            gl.FRAMEBUFFER,
+            gl.DEPTH_ATTACHMENT,
+            gl.TEXTURE_2D,
+            depthTextureView.getGLTexture(),
+            0
+          );
+        }
 
-      // 附加模板纹理 (如果是深度模板组合格式)
-      if (hasStencil) {
-        gl.framebufferTexture2D(
-          gl.FRAMEBUFFER,
-          gl.STENCIL_ATTACHMENT,
-          gl.TEXTURE_2D,
-          depthTextureView.getGLTexture(),
-          0
-        );
+        if (hasStencil) {
+          gl.framebufferTexture2D(
+            gl.FRAMEBUFFER,
+            gl.STENCIL_ATTACHMENT,
+            gl.TEXTURE_2D,
+            depthTextureView.getGLTexture(),
+            0
+          );
+        }
       }
 
       // 处理深度loadOp
@@ -211,11 +222,24 @@ export class WebGLRenderPass implements IRHIRenderPass {
   }
 
   /**
-   * 判断纹理格式是否包含模板部分
-   */
+ * 判断纹理格式是否包含模板部分
+ */
   private hasStencilComponent (format: number): boolean {
-    // 简化实现，需要根据具体的RHI格式定义来确定
-    return format === 35 || format === 36; // 35/36是假设的深度模板组合格式
+  // 根据RHITextureFormat枚举检查是否是带有模板部分的格式
+    return format === RHITextureFormat.DEPTH24_UNORM_STENCIL8 || // 36
+         format === RHITextureFormat.DEPTH32_FLOAT_STENCIL8;   // 37
+  }
+
+  /**
+ * 判断纹理格式是否包含深度部分
+ */
+  private hasDepthComponent (format: number): boolean {
+  // 根据RHITextureFormat枚举检查是否是深度格式
+    return format === RHITextureFormat.DEPTH16_UNORM ||         // 33
+         format === RHITextureFormat.DEPTH24_UNORM ||         // 34
+         format === RHITextureFormat.DEPTH32_FLOAT ||         // 35
+         format === RHITextureFormat.DEPTH24_UNORM_STENCIL8 || // 36
+         format === RHITextureFormat.DEPTH32_FLOAT_STENCIL8;   // 37
   }
 
   /**
