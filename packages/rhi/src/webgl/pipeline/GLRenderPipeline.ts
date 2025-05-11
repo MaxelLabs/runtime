@@ -18,7 +18,7 @@ import {
   RHIBlendFactor,
   RHIBlendOperation,
 } from '@maxellabs/core';
-import type { WebGLShader } from '../resources/GLShader';
+import type { GLShader } from '../resources/GLShader';
 import { WebGLUtils } from '../utils/GLUtils';
 import type { GLBuffer } from '../resources';
 
@@ -95,8 +95,8 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
    */
   private createProgram (): WebGLProgram | null {
     const gl = this.gl;
-    const vertexShaderInstance = this._vertexShader as any as WebGLShader;
-    const fragmentShaderInstance = this._fragmentShader as any as WebGLShader;
+    const vertexShaderInstance = this._vertexShader as any as GLShader;
+    const fragmentShaderInstance = this._fragmentShader as any as GLShader;
 
     const vertexGLShader = vertexShaderInstance?.getGLShader ? vertexShaderInstance.getGLShader() : null;
     const fragmentGLShader = fragmentShaderInstance?.getGLShader ? fragmentShaderInstance.getGLShader() : null;
