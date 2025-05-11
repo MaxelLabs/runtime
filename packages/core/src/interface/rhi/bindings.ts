@@ -155,6 +155,11 @@ export interface IRHIBindGroupLayout {
    * 销毁资源
    */
   destroy(): void,
+
+  /**
+   * 获取绑定组布局入口项
+   */
+  getEntries(): IRHIBindGroupLayoutEntry[],
 }
 
 /**

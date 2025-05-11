@@ -1113,39 +1113,41 @@ function render () {
         source: finalRenderTarget.createView(),
         destination: canvas,
       });
-      
+
       // 更新调试信息
       const finalInfo = document.getElementById('gbuffer-debug-info');
+
       if (finalInfo) {
         finalInfo.textContent = `调试模式: ${debugModes[currentDebugMode]}`;
       }
+
       break;
-      
     case 1: // 位置缓冲
       debugRenderPass(
-        commandEncoder, 
-        positionBuffer.createView(), 
-        canvas, 
+        commandEncoder,
+        positionBuffer.createView(),
+        canvas,
         `${debugModes[currentDebugMode]} - 世界空间位置`
       );
+
       break;
-      
     case 2: // 法线缓冲
       debugRenderPass(
-        commandEncoder, 
-        normalBuffer.createView(), 
-        canvas, 
+        commandEncoder,
+        normalBuffer.createView(),
+        canvas,
         `${debugModes[currentDebugMode]} - 表面法线`
       );
+
       break;
-      
     case 3: // 反照率缓冲
       debugRenderPass(
-        commandEncoder, 
-        albedoBuffer.createView(), 
-        canvas, 
+        commandEncoder,
+        albedoBuffer.createView(),
+        canvas,
         `${debugModes[currentDebugMode]} - 材质颜色`
       );
+
       break;
   }
 
@@ -1270,6 +1272,7 @@ function debugRenderPass (commandEncoder, gbufferView, targetView, label) {
 
   // 放到屏幕右上角的调试信息
   const debugInfo = document.createElement('div');
+
   debugInfo.style.position = 'absolute';
   debugInfo.style.top = '100px';
   debugInfo.style.right = '10px';
@@ -1284,6 +1287,7 @@ function debugRenderPass (commandEncoder, gbufferView, targetView, label) {
 
   // 如果已存在则更新，否则添加
   const existingInfo = document.getElementById('gbuffer-debug-info');
+
   if (existingInfo) {
     existingInfo.textContent = debugInfo.textContent;
   } else {

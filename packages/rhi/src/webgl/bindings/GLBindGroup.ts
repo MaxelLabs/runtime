@@ -176,8 +176,8 @@ function applyKnownUniformFromBufferData (gl: WebGLRenderingContext | WebGL2Rend
  */
 export class WebGLBindGroup implements IRHIBindGroup {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
-  private webglLayout: WebGLBindGroupLayout;
-  private bindGroupEntries: IRHIBindGroupEntry[];
+  layout: WebGLBindGroupLayout;
+  entries: IRHIBindGroupEntry[];
   label?: string;
   private isDestroyed = false;
 
@@ -194,27 +194,27 @@ export class WebGLBindGroup implements IRHIBindGroup {
     if (!(layout instanceof WebGLBindGroupLayout)) {
       throw new Error(`[${label || 'WebGLBindGroup'}] Constructor expects layout to be an instance of WebGLBindGroupLayout.`);
     }
-    this.webglLayout = layout;
-    this.bindGroupEntries = entries;
+    this.layout = layout;
+    this.entries = entries;
     this.label = label;
 
     this.validateResourcesAgainstLayout();
   }
 
   getLayout (): IRHIBindGroupLayout {
-    return this.webglLayout;
+    return this.layout;
   }
 
   getEntries (): IRHIBindGroupEntry[] {
-    return this.bindGroupEntries;
+    return this.entries;
   }
 
   /**
    * 验证绑定资源条目与布局的兼容性
    */
   private validateResourcesAgainstLayout (): void {
-    for (const entry of this.bindGroupEntries) {
-      const layoutEntry = this.webglLayout.getDetailedBindingEntry(entry.binding);
+    for (const entry of this.entries) {
+      const layoutEntry = this.layout.getDetailedBindingEntry(entry.binding);
 
       if (!layoutEntry) {
         throw new Error(`[${this.label || 'WebGLBindGroup'}] Binding ${entry.binding}: No layout definition found.`);
@@ -263,9 +263,9 @@ export class WebGLBindGroup implements IRHIBindGroup {
 
     const gl = this.gl;
 
-    for (const entry of this.bindGroupEntries) {
+    for (const entry of this.entries) {
       const binding = entry.binding;
-      const layoutEntry = this.webglLayout.getDetailedBindingEntry(binding);
+      const layoutEntry = this.layout.getDetailedBindingEntry(binding);
 
       if (!layoutEntry) {
         console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding}: No detailed layout entry found. Skipping.`);
@@ -377,7 +377,7 @@ export class WebGLBindGroup implements IRHIBindGroup {
           continue;
         }
         const textureView = actualResource;
-        const textureUnit = this.webglLayout.getTextureUnitForBinding(binding);
+        const textureUnit = this.layout.getTextureUnitForBinding(binding);
 
         if (textureUnit !== undefined) {
           gl.activeTexture(gl.TEXTURE0 + textureUnit);
@@ -388,13 +388,13 @@ export class WebGLBindGroup implements IRHIBindGroup {
         }
       } else if (layoutEntry.sampler && actualResource instanceof GLSampler) {
         const sampler = actualResource;
-        const associatedTextureBinding = this.webglLayout.getAssociatedTextureBindingForSampler(binding);
+        const associatedTextureBinding = this.layout.getAssociatedTextureBindingForSampler(binding);
 
         if (associatedTextureBinding !== undefined) {
-          const textureUnitForSampler = this.webglLayout.getTextureUnitForBinding(associatedTextureBinding);
+          const textureUnitForSampler = this.layout.getTextureUnitForBinding(associatedTextureBinding);
 
           if (textureUnitForSampler !== undefined) {
-            const associatedTextureEntry = this.bindGroupEntries.find(e => e.binding === associatedTextureBinding);
+            const associatedTextureEntry = this.entries.find(e => e.binding === associatedTextureBinding);
 
             if (associatedTextureEntry?.resource instanceof WebGLTextureView) {
               const associatedTextureView = associatedTextureEntry.resource as WebGLTextureView;
@@ -431,7 +431,7 @@ export class WebGLBindGroup implements IRHIBindGroup {
     if (this.isDestroyed) {
       return;
     }
-    this.bindGroupEntries = [];
+    this.entries = [];
     this.isDestroyed = true;
   }
 }

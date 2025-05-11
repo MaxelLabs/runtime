@@ -5,8 +5,8 @@ import type { IRHIBindGroupLayout, IRHIPipelineLayout } from '@maxellabs/core';
  */
 export class WebGLPipelineLayout implements IRHIPipelineLayout {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
-  private bindGroupLayouts: IRHIBindGroupLayout[];
-  private label?: string;
+  bindGroupLayouts: IRHIBindGroupLayout[];
+  label?: string;
   private isDestroyed = false;
 
   /**
@@ -38,8 +38,6 @@ export class WebGLPipelineLayout implements IRHIPipelineLayout {
       const entries = layout.getEntries();
 
       for (const entry of entries) {
-        // 检查binding是否唯一
-        const bindingKey = `${entry.group || 0}-${entry.binding}`;
 
         if (bindingSet.has(entry.binding)) {
           throw new Error(`绑定点 ${entry.binding} 在多个绑定组布局中出现，这在WebGL中不被支持`);
