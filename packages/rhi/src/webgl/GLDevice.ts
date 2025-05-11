@@ -25,7 +25,7 @@ import {
 import { GLBuffer } from './resources/GLBuffer';
 import { GLTexture } from './resources/GLTexture';
 import { WebGLSampler } from './resources/GLSampler';
-import { WebGLShader } from './resources/GLShader';
+import { GLShader } from './resources/GLShader';
 import { WebGLBindGroupLayout } from './bindings/GLBindGroupLayout';
 import { WebGLBindGroup } from './bindings/GLBindGroup';
 import { WebGLPipelineLayout } from './pipeline/GLPipelineLayout';
@@ -250,7 +250,7 @@ export class WebGLDevice implements IRHIDevice {
    * 创建着色器模块
    */
   createShaderModule (descriptor: RHIShaderModuleDescriptor): IRHIShaderModule {
-    return new WebGLShader(this.gl, descriptor);
+    return new GLShader(this.gl, descriptor);
   }
 
   /**
