@@ -43,6 +43,11 @@ export interface RHIBufferDescriptor {
    * 可选标签，用于调试
    */
   label?: string,
+  
+  /**
+   * 扩展信息，用于存储平台或实现特定的额外信息
+   */
+  extension?: Record<string, any>,
 }
 
 /**
