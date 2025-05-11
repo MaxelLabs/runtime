@@ -35,6 +35,7 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
   addCommand (command: any): void {
     if (this.isDestroyed) {
       console.error('尝试向已销毁的命令编码器添加命令');
+
       return;
     }
 
@@ -43,14 +44,12 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
       this.commands.push({
         type: 'custom',
         params: {
-          execute: command
-        }
+          execute: command,
+        },
       });
-      console.log('添加自定义函数命令');
     } else if (typeof command === 'object' && command.type) {
       // 如果已经是命令对象，直接添加
       this.commands.push(command);
-      console.log(`添加命令: ${command.type}`);
     } else {
       console.error('无效的命令格式，必须是函数或具有type属性的对象', command);
     }

@@ -266,7 +266,6 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
         // 测试使用仅深度缓冲区（无模板）的设置方式
         const depthAttachment = params.depthStencilAttachment;
         const depthTextureView = depthAttachment.view;
-        const glDepthTexture = depthTextureView.getGLTexture();
 
         // 创建新的帧缓冲区和仅深度缓冲区尝试
         const testFramebuffer = gl.createFramebuffer();
@@ -335,8 +334,6 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
 
         // 检查这种简化配置是否可行
         const colorOnlyStatus = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-
-       //  console.log('仅颜色附件的帧缓冲区状态:', this.getFramebufferStatusMessage(colorOnlyStatus));
 
         if (colorOnlyStatus === gl.FRAMEBUFFER_COMPLETE) {
           // console.log('使用仅颜色附件的配置继续渲染');
@@ -678,11 +675,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
    * 复制纹理到画布
    */
   private executeCopyTextureToCanvas (params: any): void {
-    const { source, destination } = params;
-    const canvas = destination as HTMLCanvasElement;
-
-    // console.log('复制纹理到画布, 源:', source, '目标:', canvas);
-
+    const { source } = params;
     const gl = this.gl;
 
     // 绑定到默认帧缓冲区（画布）
@@ -783,7 +776,6 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
     gl.deleteShader(vertexShader);
     gl.deleteShader(fragmentShader);
 
-    console.log('已复制纹理到画布');
   }
 
   /**
@@ -791,9 +783,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
    */
   private executeDraw (params: any): void {
     const gl = this.gl;
-    const { vertexCount, instanceCount, firstVertex, firstInstance } = params;
-
-    // console.log(`执行绘制命令: 顶点数=${vertexCount}, 实例数=${instanceCount}, 起始顶点=${firstVertex}`);
+    const { vertexCount, firstVertex } = params;
 
     try {
       // 检查WebGL状态
@@ -829,8 +819,6 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
 
         return;
       }
-
-       // console.log('活跃的顶点属性:', enabledAttribs);
 
       // 检查帧缓冲区状态
       const currentFramebuffer = gl.getParameter(gl.FRAMEBUFFER_BINDING);
@@ -911,7 +899,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   private executeDrawIndexed (params: any): void {
     const gl = this.gl;
 
-    const { indexCount, instanceCount, firstIndex, baseVertex, firstInstance } = params;
+    const { indexCount, instanceCount, firstIndex } = params;
     const indexType = params.indexType || gl.UNSIGNED_SHORT;
     const offset = firstIndex * (indexType === gl.UNSIGNED_SHORT ? 2 : 4);
 
@@ -978,7 +966,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
    * 执行设置绑定组命令
    */
   private executeSetBindGroup (params: any): void {
-    const { index, bindGroup, program } = params;
+    const { bindGroup, program } = params;
 
     // 应用绑定
     bindGroup.applyBindings(program);
@@ -1042,7 +1030,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
    */
   private executeSetIndexBuffer (params: any): void {
     const gl = this.gl;
-    const { buffer, type } = params;
+    const { buffer } = params;
 
     // 绑定索引缓冲区
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.getGLBuffer());

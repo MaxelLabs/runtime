@@ -523,11 +523,6 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
     const gl = this.gl;
     const layoutsForSlot = this.attributeBufferLayouts.get(slot);
 
-    // --- Start Debugging ---
-    console.log(`[${this._label || 'WebGLRenderPipeline'}] applyVertexBufferLayout called for slot ${slot}`);
-    console.log('  - Buffer object received:', buffer);
-    console.log('  - Buffer constructor name:', buffer?.constructor?.name);
-
     // --- End Debugging ---
 
     if (!layoutsForSlot) {
@@ -575,9 +570,6 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
         console.warn(`[${this._label || 'WebGLRenderPipeline'}] Attribute '${attrLayout.name}' location not found.`);
         continue;
       }
-
-      console.log(`[${this._label || 'WebGLRenderPipeline'}] Enabling attribute: ${attrLayout.name} at location: ${location}`);
-
       gl.enableVertexAttribArray(location);
       gl.vertexAttribPointer(
         location,

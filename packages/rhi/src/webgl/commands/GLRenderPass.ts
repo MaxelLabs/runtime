@@ -4,7 +4,6 @@ import type { GLTexture } from '../resources/GLTexture';
 import type { WebGLTextureView } from '../resources/GLTextureView';
 import type { GLBuffer } from '../resources/GLBuffer';
 import type { WebGLRenderPipeline } from '../pipeline/GLRenderPipeline';
-import type { WebGLBindGroup } from '../bindings/GLBindGroup';
 import type { WebGLCommandEncoder } from './GLCommandEncoder';
 import { WebGLUtils } from '../utils/GLUtils';
 
@@ -109,8 +108,6 @@ export class WebGLRenderPass implements IRHIRenderPass {
     for (let i = 0; i < this.colorAttachments.length; i++) {
       const attachment = this.colorAttachments[i];
       const textureView = attachment.view;
-      const texture = textureView.getTexture();
-
       // 附加纹理到帧缓冲
       const attachmentPoint = this.isWebGL2
         ? (gl as WebGL2RenderingContext).COLOR_ATTACHMENT0 + i
@@ -144,7 +141,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
     if (this.depthStencilAttachment) {
       const depthAttachment = this.depthStencilAttachment;
       const depthTextureView = depthAttachment.view;
-      const depthTexture = depthTextureView.getTexture();
+      const depthTexture = depthTextureView.getTexture() as GLTexture;
 
       // 检查纹理格式是否包含深度和模板
       const hasDepth = this.hasDepthComponent(depthTexture.getFormat());
@@ -296,12 +293,10 @@ export class WebGLRenderPass implements IRHIRenderPass {
     }
 
     this.currentPipeline = pipeline as WebGLRenderPipeline;
-    console.log('设置渲染管线:', pipeline);
 
     // 添加设置渲染管线的命令
     this.encoder.addCommand(() => {
       if (this.currentPipeline) {
-        console.log('应用渲染管线');
         this.currentPipeline.apply();
       } else {
         console.error('渲染管线为空，无法应用');
@@ -317,7 +312,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
       throw new Error('渲染通道已结束，无法设置索引缓冲区');
     }
 
-    this.currentIndexBuffer = buffer;
+    this.currentIndexBuffer = buffer as GLBuffer;
     this.currentIndexFormat = indexFormat;
     this.currentIndexOffset = offset;
 

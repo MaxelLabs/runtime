@@ -252,17 +252,17 @@ export interface IRHICommandEncoder {
      * 源纹理视图
      */
     source: IRHITextureView,
-    
+
     /**
      * 目标画布
      */
     destination: HTMLCanvasElement,
-    
+
     /**
      * 源纹理起始位置
      */
     origin?: [number, number],
-    
+
     /**
      * 复制区域大小
      */

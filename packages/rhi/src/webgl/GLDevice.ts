@@ -41,7 +41,7 @@ import { WebGLUtils } from './utils/GLUtils';
 export class WebGLDevice implements IRHIDevice {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private canvas: HTMLCanvasElement;
-  private info: IRHIDeviceInfo;
+  info: IRHIDeviceInfo;
   private extensions: Record<string, any> = {};
   private isWebGL2: boolean;
   private utils: WebGLUtils;
@@ -95,7 +95,7 @@ export class WebGLDevice implements IRHIDevice {
 
     if (!gl) {
       // 回退到WebGL1
-      gl = canvas.getContext('webgl', contextOptions) || canvas.getContext('experimental-webgl', contextOptions);
+      gl = canvas.getContext('webgl', contextOptions) || canvas.getContext('experimental-webgl', contextOptions) as WebGLRenderingContext;
     }
 
     if (!gl) {
@@ -113,7 +113,6 @@ export class WebGLDevice implements IRHIDevice {
     const isWebGL2 = this.isWebGL2;
     const vendor = gl.getParameter(gl.VENDOR);
     const renderer = gl.getParameter(gl.RENDERER);
-    const version = gl.getParameter(gl.VERSION);
     const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
     const maxTextureUnits = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
 
@@ -206,7 +205,7 @@ export class WebGLDevice implements IRHIDevice {
           this.extensions[extName] = ext;
         }
       } catch (e) {
-        console.warn(`扩展${extName}不可用或加载失败`);
+        console.warn(`扩展${extName}不可用或加载失败,请检查浏览器支持.`, e);
       }
     });
   }
