@@ -1,11 +1,11 @@
 import type { IRHIBindGroup, IRHIBindGroupLayout, IRHIBindGroupEntry } from '@maxellabs/core';
-import { GLBuffer } from '../resources/GLBuffer';
+import { GLBuffer, UniformType } from '../resources/GLBuffer';
 import { GLSampler } from '../resources/GLSampler';
 import { WebGLTextureView } from '../resources/GLTextureView';
 import { WebGLBindGroupLayout } from './GLBindGroupLayout';
 
 // Helper function to apply uniform data based on name (temporary solution)
-function applyKnownUniformFromBufferData (gl: WebGLRenderingContext | WebGL2RenderingContext, location: WebGLUniformLocation | null, data: ArrayBuffer, uniformName: string) {
+function applyKnownUniformFromBufferData (gl: WebGLRenderingContext | WebGL2RenderingContext, location: WebGLUniformLocation | null, data: ArrayBuffer, uniformName: string, glBuffer?: GLBuffer) {
   if (!location) {
     console.warn(`无法设置uniform ${uniformName}：location为null`);
 
@@ -19,39 +19,152 @@ function applyKnownUniformFromBufferData (gl: WebGLRenderingContext | WebGL2Rend
   }
 
   try {
-    // This is a HACK based on names in basic.ts. A real solution needs type info.
-    if (uniformName === 'uModelViewMatrix' || uniformName === 'uProjectionMatrix') {
+    // 检查GLBuffer是否提供了类型信息
+    const typeInfo = glBuffer?.getTypeInfo?.();
+
+    if (typeInfo && (typeInfo.uniformName === uniformName || uniformName.endsWith(typeInfo.uniformName || ''))) {
+      // 使用类型信息设置uniform
+      const type = typeInfo.uniformType;
+
+      if (type) {
+        switch (type) {
+          // 矩阵类型
+          case UniformType.FLOAT_MAT2:
+            gl.uniformMatrix2fv(location, false, new Float32Array(data, 0, 4));
+
+            break;
+          case UniformType.FLOAT_MAT3:
+            gl.uniformMatrix3fv(location, false, new Float32Array(data, 0, 9));
+
+            break;
+          case UniformType.FLOAT_MAT4:
+            gl.uniformMatrix4fv(location, false, new Float32Array(data, 0, 16));
+
+            break;
+          // 向量类型
+          case UniformType.FLOAT:
+            gl.uniform1f(location, new Float32Array(data, 0, 1)[0]);
+
+            break;
+          case UniformType.FLOAT_VEC2:
+            gl.uniform2fv(location, new Float32Array(data, 0, 2));
+
+            break;
+          case UniformType.FLOAT_VEC3:
+            gl.uniform3fv(location, new Float32Array(data, 0, 3));
+
+            break;
+          case UniformType.FLOAT_VEC4:
+            gl.uniform4fv(location, new Float32Array(data, 0, 4));
+
+            break;
+          // 整数类型
+          case UniformType.INT:
+            gl.uniform1i(location, new Int32Array(data, 0, 1)[0]);
+
+            break;
+          case UniformType.INT_VEC2:
+            gl.uniform2iv(location, new Int32Array(data, 0, 2));
+
+            break;
+          case UniformType.INT_VEC3:
+            gl.uniform3iv(location, new Int32Array(data, 0, 3));
+
+            break;
+          case UniformType.INT_VEC4:
+            gl.uniform4iv(location, new Int32Array(data, 0, 4));
+
+            break;
+          default:
+            console.warn(`未处理的uniform类型: ${type} 用于 ${uniformName}`);
+        }
+
+        return;
+      }
+    }
+
+    // 基于名称的自动检测 (向后兼容)
+    const isMatrix = uniformName.includes('Matrix');
+    const isVector = uniformName.includes('Position') ||
+                    uniformName.includes('Direction') ||
+                    uniformName.includes('Color') ||
+                    uniformName.includes('Factor');
+
+    if (isMatrix) {
+      // 检查矩阵大小 - 假设是4x4矩阵
       if (data.byteLength >= 64) {
-        // 创建视图时要确保引用的是正确的内存区域
         const matrixData = new Float32Array(data, 0, 16);
 
-        // 打印矩阵数据以调试
         console.debug(`设置${uniformName}矩阵:`, Array.from(matrixData).slice(0, 4) + '...');
-
-        try {
-          gl.uniformMatrix4fv(location, false, matrixData);
-        } catch (error) {
-          console.error(`设置矩阵uniform失败 ${uniformName}:`, error);
-        }
+        gl.uniformMatrix4fv(location, false, matrixData);
       } else {
         console.error(`矩阵${uniformName}的缓冲区数据过小: ${data.byteLength} 字节`);
+      }
+    } else if (isVector) {
+      // 检测向量维度
+      if (data.byteLength >= 12) {
+        // 假设是vec3
+        const vecData = new Float32Array(data, 0, 3);
+
+        console.debug(`设置${uniformName}向量:`, Array.from(vecData));
+        gl.uniform3fv(location, vecData);
+      } else if (data.byteLength >= 8) {
+        // 假设是vec2
+        const vecData = new Float32Array(data, 0, 2);
+
+        console.debug(`设置${uniformName}向量:`, Array.from(vecData));
+        gl.uniform2fv(location, vecData);
+      } else if (data.byteLength >= 16) {
+        // 假设是vec4
+        const vecData = new Float32Array(data, 0, 4);
+
+        console.debug(`设置${uniformName}向量:`, Array.from(vecData));
+        gl.uniform4fv(location, vecData);
       }
     } else if (uniformName === 'uTime') {
       if (data.byteLength >= 4) {
         const timeData = new Float32Array(data, 0, 1);
 
         console.debug(`设置${uniformName}:`, timeData[0]);
-
-        try {
-          gl.uniform1f(location, timeData[0]);
-        } catch (error) {
-          console.error(`设置浮点uniform失败 ${uniformName}:`, error);
-        }
+        gl.uniform1f(location, timeData[0]);
       } else {
         console.error(`浮点数${uniformName}的缓冲区数据过小: ${data.byteLength} 字节`);
       }
     } else {
-      console.warn(`无法从缓冲区应用uniform: 未知的uniform名称 '${uniformName}'。需要类型信息`);
+      // 尝试基于数据大小猜测类型
+      if (data.byteLength >= 64) {
+        // 可能是矩阵
+        const matrixData = new Float32Array(data, 0, 16);
+
+        console.debug(`设置${uniformName}(推测为矩阵):`, Array.from(matrixData).slice(0, 4) + '...');
+        gl.uniformMatrix4fv(location, false, matrixData);
+      } else if (data.byteLength >= 12) {
+        // 可能是vec3
+        const vecData = new Float32Array(data, 0, 3);
+
+        console.debug(`设置${uniformName}(推测为vec3):`, Array.from(vecData));
+        gl.uniform3fv(location, vecData);
+      } else if (data.byteLength >= 8) {
+        // 可能是vec2
+        const vecData = new Float32Array(data, 0, 2);
+
+        console.debug(`设置${uniformName}(推测为vec2):`, Array.from(vecData));
+        gl.uniform2fv(location, vecData);
+      } else if (data.byteLength >= 16) {
+        // 可能是vec4
+        const vecData = new Float32Array(data, 0, 4);
+
+        console.debug(`设置${uniformName}(推测为vec4):`, Array.from(vecData));
+        gl.uniform4fv(location, vecData);
+      } else if (data.byteLength >= 4) {
+        // 可能是float
+        const floatData = new Float32Array(data, 0, 1);
+
+        console.debug(`设置${uniformName}(推测为float):`, floatData[0]);
+        gl.uniform1f(location, floatData[0]);
+      } else {
+        console.warn(`无法从缓冲区应用uniform: 未知的uniform名称 '${uniformName}'。提供类型信息可解决此问题`);
+      }
     }
   } catch (e) {
     console.error(`设置uniform ${uniformName} 时出错:`, e);
@@ -239,19 +352,18 @@ export class WebGLBindGroup implements IRHIBindGroup {
               const data = glBuffer.getData(bufferBindOffset, sizeToMap);
 
               if (data) {
-                applyKnownUniformFromBufferData(gl, uniformLocation, data, uniformName);
+                applyKnownUniformFromBufferData(gl, uniformLocation, data, uniformName, glBuffer);
               }
             } else {
               // 如果没有getData方法，回退到异步map（但可能会导致时序问题）
               console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Buffer '${uniformName}'): 使用异步map方法，这可能导致uniform设置时序问题。`);
               glBuffer.map('read', bufferBindOffset, sizeToMap)
                 .then(mappedData => {
-                  applyKnownUniformFromBufferData(gl, uniformLocation, mappedData, uniformName);
+                  applyKnownUniformFromBufferData(gl, uniformLocation, mappedData, uniformName, glBuffer);
                   glBuffer.unmap();
                 })
-                .catch(err => {
-                  console.error(`[${this.label || 'WebGLBindGroup'}] Failed to map buffer for uniform '${uniformName}':`, err);
-                  glBuffer.unmap(); // Ensure unmap is called even on error if needed
+                .catch(error => {
+                  console.error(`[${this.label || 'WebGLBindGroup'}] Failed to map buffer for uniform '${uniformName}':`, error);
                 });
             }
           } catch (err) {
