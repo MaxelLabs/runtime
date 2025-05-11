@@ -24,7 +24,7 @@ import {
 } from '@maxellabs/core';
 import { GLBuffer } from './resources/GLBuffer';
 import { GLTexture } from './resources/GLTexture';
-import { WebGLSampler } from './resources/GLSampler';
+import { GLSampler } from './resources/GLSampler';
 import { GLShader } from './resources/GLShader';
 import { WebGLBindGroupLayout } from './bindings/GLBindGroupLayout';
 import { WebGLBindGroup } from './bindings/GLBindGroup';
@@ -243,7 +243,7 @@ export class WebGLDevice implements IRHIDevice {
    * 创建采样器
    */
   createSampler (descriptor?: RHISamplerDescriptor): IRHISampler {
-    return new WebGLSampler(this.gl, descriptor);
+    return new GLSampler(this.gl, descriptor);
   }
 
   /**

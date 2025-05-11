@@ -1,6 +1,6 @@
 import type { IRHIBindGroup, IRHIBindGroupLayout, IRHIBindGroupEntry } from '@maxellabs/core';
 import { GLBuffer } from '../resources/GLBuffer';
-import { WebGLSampler } from '../resources/GLSampler';
+import { GLSampler } from '../resources/GLSampler';
 import { WebGLTextureView } from '../resources/GLTextureView';
 import { WebGLBindGroupLayout } from './GLBindGroupLayout';
 
@@ -123,7 +123,7 @@ export class WebGLBindGroup implements IRHIBindGroup {
           throw new Error(`[${this.label || 'WebGLBindGroup'}] Binding ${entry.binding} (${layoutEntry.name || 'Texture'}): Layout expects a TextureView, but got ${actualResourceObject?.constructor?.name}.`);
         }
       } else if (layoutEntry.sampler) {
-        if (!(actualResourceObject instanceof WebGLSampler)) {
+        if (!(actualResourceObject instanceof GLSampler)) {
           throw new Error(`[${this.label || 'WebGLBindGroup'}] Binding ${entry.binding} (${layoutEntry.name || 'Sampler'}): Layout expects a Sampler, but got ${actualResourceObject?.constructor?.name}.`);
         }
       } else if (layoutEntry.storageTexture) {
@@ -274,7 +274,7 @@ export class WebGLBindGroup implements IRHIBindGroup {
         } else {
           console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Texture '${uniformName}'): No texture unit assigned in layout.`);
         }
-      } else if (layoutEntry.sampler && actualResource instanceof WebGLSampler) {
+      } else if (layoutEntry.sampler && actualResource instanceof GLSampler) {
         const sampler = actualResource;
         const associatedTextureBinding = this.webglLayout.getAssociatedTextureBindingForSampler(binding);
 

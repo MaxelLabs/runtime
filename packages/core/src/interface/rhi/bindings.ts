@@ -3,7 +3,7 @@
  * 定义绑定组和绑定布局接口
  */
 
-import type { RHIShaderStage } from './types/enums';
+import type { RHIAddressMode, RHIFilterMode, RHIShaderStage } from './types/enums';
 import type { IRHIBuffer } from './resources/buffer';
 import type { IRHITextureView } from './resources/texture';
 
@@ -14,32 +14,32 @@ export interface IRHISampler {
   /**
    * 缩小过滤器
    */
-  readonly minFilter: 'nearest' | 'linear',
+  readonly minFilter: RHIFilterMode,
 
   /**
    * 放大过滤器
    */
-  readonly magFilter: 'nearest' | 'linear',
+  readonly magFilter: RHIFilterMode,
 
   /**
    * Mipmap过滤器
    */
-  readonly mipmapFilter: 'nearest' | 'linear',
+  readonly mipmapFilter: RHIFilterMode,
 
   /**
    * 寻址模式U
    */
-  readonly addressModeU: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border',
+  readonly addressModeU: RHIAddressMode,
 
   /**
    * 寻址模式V
    */
-  readonly addressModeV: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border',
+  readonly addressModeV: RHIAddressMode,
 
   /**
    * 寻址模式W
    */
-  readonly addressModeW: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border',
+  readonly addressModeW: RHIAddressMode,
 
   /**
    * 采样器标签
