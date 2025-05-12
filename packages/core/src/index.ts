@@ -93,3 +93,83 @@ export * from '@maxellabs/math';
 // // 导出规范库
 
 // // export * from '@maxellabs/specification';
+
+// 全局常量
+export * from './constants';
+
+// 基础类
+export * from './base/maxObject';
+export * from './base/component';
+export * from './base/entity';
+export * from './base/transform';
+export * from './base/eventDispatcher';
+export * from './base/IOC';
+export * from './base/ObjectPool';
+export * from './base/ReferResource';
+export * from './base/time';
+
+// 场景管理
+export * from './scene/Scene';
+export * from './scene/SceneManager';
+
+// 相机系统
+export * from './camera/Camera';
+export * from './camera/PerspectiveCamera';
+export * from './camera/OrthographicCamera';
+
+// 几何体系统
+export * from './geometry/geometry';
+export * from './geometry/GeometryUtils';
+
+// 材质系统
+export * from './material/Material';
+
+// 渲染系统
+export * from './renderer/mesh';
+export * from './renderer/RenderContext';
+export * from './renderer/RenderElement';
+export * from './renderer/SubRenderElement';
+export * from './renderer/RenderQueue';
+export * from './renderer/BatcherManager';
+export * from './renderer/CullingResults';
+export * from './renderer/RendererFactory';
+export * from './renderer/RendererType';
+
+// 纹理系统
+export * from './texture/Texture2D';
+
+// 光照系统
+export * from './light/Light';
+
+// 资源管理
+export * from './resource/ResourceManager';
+export * from './resource/EnhancedResourceManager';
+
+// 着色器系统
+export * from './shader/Shader';
+export * from './shader/ShaderData';
+
+// 动画系统
+export * from './animation';
+
+// 物理系统
+export * from './physics/PhysicsWorld';
+
+// 工具函数
+export * from './utils';
+
+// 接口定义
+export * from './interface';
+
+// 调试工具
+export * from './debug/Logger';
+export * from './debug/Stats';
+
+// 序列化系统
+export * from './serialization/Serialization';
+
+// 引擎核心
+export * from './Engine';
+
+// 重导出数学库
+export * from '@maxellabs/math';

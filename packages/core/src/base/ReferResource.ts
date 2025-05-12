@@ -1,4 +1,5 @@
 import { ResourceManager } from '../resource/ResourceManager';
+import { MaxObject } from './maxObject';
 
 // 全局资源管理器，所有资源共享
 let _globalResourceManager: ResourceManager | null = null;
@@ -35,149 +36,101 @@ export interface IReferable {
 }
 
 /**
- * 资源基类，提供引用计数功能
- * 所有需要引用计数管理的资源都应继承此类
+ * 引用计数资源基类
+ * 用于管理需要手动释放的资源，如纹理、网格等
  */
-export class ReferResource implements IReferable {
-  /** 是否忽略垃圾回收 */
-  isGCIgnored: boolean = false;
-
+export class ReferResource extends MaxObject {
   /** 引用计数 */
-  private _refCount: number = 0;
-
-  /** 父资源列表 */
-  private _superResources: ReferResource[] = [];
-
-  /** 是否已销毁 */
-  private _destroyed: boolean = false;
-
-  /** 资源管理器 */
-  private _resourceManager: ResourceManager;
-
-  /**
-   * 获取引用计数
-   */
-  get refCount (): number {
-    return this._refCount;
-  }
-
-  /**
-   * 构造函数
-   * @param resourceManager 自定义资源管理器，如果不传入则使用全局资源管理器
-   */
-  constructor (resourceManager?: ResourceManager) {
-    this._resourceManager = resourceManager || getResourceManager();
-    this._resourceManager._addReferResource(this);
-  }
+  protected refCount: number = 0;
+  /** 是否已加载 */
+  protected isLoaded: boolean = false;
+  /** 资源URL，如果从外部加载 */
+  protected url: string = '';
+  /** 资源大小（字节） */
+  protected size: number = 0;
 
   /**
    * 增加引用计数
+   * @returns 增加后的引用计数
    */
-  addRef (): void {
-    this._refCount++;
+  addRef(): number {
+    return ++this.refCount;
   }
 
   /**
-   * 减少引用计数
+   * 减少引用计数，当计数为0时销毁资源
+   * @returns 减少后的引用计数
    */
-  release (): void {
-    if (this._refCount > 0) {
-      this._refCount--;
+  subRef(): number {
+    this.refCount = Math.max(0, this.refCount - 1);
+    
+    if (this.refCount === 0 && this.isLoaded) {
+      this.destroy();
     }
-
-    // 当引用计数为0时尝试销毁
-    if (this._refCount === 0 && !this.isGCIgnored) {
-      this.dispose();
-    }
+    
+    return this.refCount;
   }
 
   /**
-   * 销毁资源
-   * @param force 是否强制销毁，忽略引用计数
-   * @returns 是否成功销毁
+   * 获取当前引用计数
    */
-  destroy (force: boolean = false): boolean {
-    if (this._destroyed) {
-      return true;
-    }
-
-    if (!force && this._refCount > 0) {
-      console.warn(`尝试销毁引用计数为 ${this._refCount} 的资源`);
-
-      return false;
-    }
-
-    // 如果存在父资源且非强制销毁，需要检查父资源
-    if (!force && this._superResources.length > 0) {
-      for (const superResource of this._superResources) {
-        if (superResource.refCount > 0) {
-          return false;
-        }
-      }
-    }
-
-    this.dispose();
-
-    return true;
+  getRefCount(): number {
+    return this.refCount;
   }
 
   /**
-   * 释放资源
-   * 子类应该重写此方法以实现特定资源的释放逻辑
+   * 设置资源URL
+   * @param url 资源URL
    */
-  protected dispose (): void {
-    if (this._destroyed) {
-      return;
-    }
-
-    this._destroyed = true;
-
-    // 释放所有相关资源
-    this.onDispose();
-
-    // 重置状态
-    this._refCount = 0;
-    this._superResources = [];
-
-    // 从资源管理器中移除
-    this._resourceManager._deleteReferResource(this);
+  setUrl(url: string): void {
+    this.url = url;
   }
 
   /**
-   * 资源释放时的回调
-   * 子类应该重写此方法以实现特定资源的释放逻辑
+   * 获取资源URL
    */
-  protected onDispose (): void {
-    // 子类实现具体释放逻辑
+  getUrl(): string {
+    return this.url;
   }
 
   /**
-   * 关联父资源
-   * @param superResource 父资源
+   * 设置资源大小
+   * @param size 资源大小（字节）
    */
-  associateSuperResource (superResource: ReferResource): void {
-    if (!this._superResources.includes(superResource)) {
-      this._superResources.push(superResource);
-    }
+  setSize(size: number): void {
+    this.size = size;
   }
 
   /**
-   * 解除父资源关联
-   * @param superResource 父资源
+   * 获取资源大小
    */
-  disassociateSuperResource (superResource: ReferResource): void {
-    const index = this._superResources.indexOf(superResource);
-
-    if (index !== -1) {
-      this._superResources.splice(index, 1);
-    }
+  getSize(): number {
+    return this.size;
   }
 
   /**
-   * 将资源添加到资源管理器的特定路径
-   * @param path 资源路径
+   * 资源是否已加载
    */
-  addToResourceManager (path: string): void {
-    this._resourceManager._addAsset(path, this);
+  loaded(): boolean {
+    return this.isLoaded;
+  }
+
+  /**
+   * 销毁资源，释放内存
+   * 子类需要重写此方法以实现特定资源的销毁逻辑
+   */
+  override destroy(): void {
+    if (this.destroyed) {return;}
+    
+    this.onResourceDestroy();
+    this.isLoaded = false;
+    super.destroy();
+  }
+
+  /**
+   * 资源销毁时调用，子类应重写此方法释放资源
+   */
+  protected onResourceDestroy(): void {
+    // 子类实现特定资源的释放逻辑
   }
 }
