@@ -1,15 +1,27 @@
-import type { IRHICapabilities, RHIDeviceOptions } from '@maxellabs/core';
+import type { IRHICapabilities } from '@maxellabs/core';
+import type { RHIDeviceOptions } from '@maxellabs/core';
 import type { RenderAPIType } from '@maxellabs/core';
-import type { GLRenderer } from '@maxellabs/rhi';
-import { GLDevice } from '@maxellabs/rhi';
+import { WebGLDevice } from '@maxellabs/rhi';
 
+/**
+ * 设备管理器
+ * 负责创建和管理渲染设备
+ */
 export class DeviceManager {
+  /** 单例实例 */
   private static instance: DeviceManager;
-  private device: GLDevice | null = null;
+  /** 当前设备 */
+  private device: WebGLDevice | null = null;
 
-  private constructor () {}
+  /**
+   * 私有构造函数，防止外部直接创建实例
+   */
+  private constructor() {}
 
-  static getInstance (): DeviceManager {
+  /**
+   * 获取设备管理器实例
+   */
+  static getInstance(): DeviceManager {
     if (!DeviceManager.instance) {
       DeviceManager.instance = new DeviceManager();
     }
@@ -17,55 +29,86 @@ export class DeviceManager {
     return DeviceManager.instance;
   }
 
-  createDevice (canvas: HTMLCanvasElement, options: RHIDeviceOptions): GLDevice {
+  /**
+   * 创建WebGL设备
+   * @param canvas 目标画布
+   * @param options 设备选项
+   */
+  createDevice(canvas: HTMLCanvasElement, options: RHIDeviceOptions): WebGLDevice {
     if (this.device) {
       return this.device;
     }
-    this.device = new GLDevice(canvas, options);
+    
+    this.device = new WebGLDevice(canvas, options);
 
     return this.device;
   }
 
-  getDevice (): GLDevice | null {
+  /**
+   * 获取当前设备
+   */
+  getDevice(): WebGLDevice | null {
     return this.device;
   }
 
-  resetDevice (): void {
-    this.device = null;
+  /**
+   * 重置设备
+   */
+  resetDevice(): void {
+    if (this.device) {
+      this.device.destroy();
+      this.device = null;
+    }
   }
-  getCapabilities (): IRHICapabilities | null {
+
+  /**
+   * 获取设备能力
+   */
+  getCapabilities(): IRHICapabilities | null {
     if (!this.device) {
       return null;
     }
 
-    return this.device.getCapabilities();
+    return {
+      maxTextureSize: this.device.info.maxTextureSize,
+      supportsMSAA: this.device.info.supportsMSAA,
+      maxSampleCount: this.device.info.maxSampleCount,
+      supportsAnisotropy: this.device.info.supportsAnisotropy,
+      backend: this.device.info.backend,
+      features: this.device.info.features,
+      vendor: this.device.info.vendorName,
+      renderer: this.device.info.deviceName,
+    };
   }
-  getRenderAPIType (): RenderAPIType {
+
+  /**
+   * 获取渲染API类型
+   */
+  getRenderAPIType(): RenderAPIType {
     if (!this.device) {
-      throw new Error('Device not created yet');
+      throw new Error('设备尚未创建');
     }
 
-    return this.device.getRenderAPIType();
+    switch (this.device.info.backend) {
+      case 1: // WebGL
+        return 'webgl';
+      case 2: // WebGL2
+        return 'webgl2';
+      case 3: // WebGPU
+        return 'webgpu';
+      default:
+        return 'unknown';
+    }
   }
-  getRenderer (): GLRenderer | null {
+
+  /**
+   * 获取WebGL上下文
+   */
+  getGLContext(): WebGLRenderingContext | WebGL2RenderingContext | null {
     if (!this.device) {
       return null;
     }
 
-    return this.device.getRenderer();
-  }
-  getGLContext (): WebGLRenderingContext | WebGL2RenderingContext | null {
-    if (!this.device) {
-      return null;
-    }
-
-    return this.device.getGLContext();
-  }
-  getGLCapabilities (): IRHICapabilities | null {
-    if (!this.device) {
-      return null;
-    }
-
-    return this.device.getGLCapabilities();
+    return this.device.getGL();
   }
 }
