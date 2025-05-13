@@ -4,7 +4,7 @@
  */
 
 import type { IRHIBindGroupLayout } from '../bindings';
-import { IRHIPipelineLayout } from '../pipeline';
+import type { IRHIPipelineLayout } from '../pipeline';
 import type { IRHIShaderModule } from '../resources';
 import type {
   RHIBufferUsage,
@@ -43,7 +43,7 @@ export interface RHIBufferDescriptor {
    * 可选标签，用于调试
    */
   label?: string,
-  
+
   /**
    * 扩展信息，用于存储平台或实现特定的额外信息
    */

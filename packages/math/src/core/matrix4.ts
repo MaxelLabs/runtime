@@ -430,6 +430,277 @@ export class Matrix4 {
   }
 
   /**
+   * 创建正交投影矩阵
+   * @param left - 左平面距离
+   * @param right - 右平面距离
+   * @param bottom - 底平面距离
+   * @param top - 顶平面距离
+   * @param near - 近平面距离
+   * @param far - 远平面距离
+   * @returns 正交投影矩阵
+   */
+  orthographic (left: number, right: number, bottom: number, top: number, near: number, far: number): this {
+    const e = this.elements;
+    const w = 1.0 / (right - left);
+    const h = 1.0 / (top - bottom);
+    const d = 1.0 / (far - near);
+
+    e[0] = 2 * w;
+    e[1] = 0;
+    e[2] = 0;
+    e[3] = 0;
+
+    e[4] = 0;
+    e[5] = 2 * h;
+    e[6] = 0;
+    e[7] = 0;
+
+    e[8] = 0;
+    e[9] = 0;
+    e[10] = -2 * d;
+    e[11] = 0;
+
+    e[12] = -(right + left) * w;
+    e[13] = -(top + bottom) * h;
+    e[14] = -(far + near) * d;
+    e[15] = 1;
+
+    return this;
+  }
+
+  /**
+   * 围绕指定轴旋转
+   * @param axis - 旋转轴（需要是单位向量）
+   * @param angle - 旋转角度（弧度）
+   * @returns 旋转后的矩阵
+   */
+  rotateOnAxis (axis: Vector3, angle: number): this {
+    // 确保轴是单位向量
+    const normalizedAxis = axis.normalized();
+    const x = normalizedAxis.x, y = normalizedAxis.y, z = normalizedAxis.z;
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    const t = 1 - c;
+    const tx = t * x, ty = t * y;
+
+    // 创建旋转矩阵
+    const rotationMatrix = Matrix4.create();
+    const re = rotationMatrix.elements;
+
+    re[0] = tx * x + c;
+    re[1] = tx * y + s * z;
+    re[2] = tx * z - s * y;
+    re[3] = 0;
+
+    re[4] = tx * y - s * z;
+    re[5] = ty * y + c;
+    re[6] = ty * z + s * x;
+    re[7] = 0;
+
+    re[8] = tx * z + s * y;
+    re[9] = ty * z - s * x;
+    re[10] = t * z * z + c;
+    re[11] = 0;
+
+    re[12] = 0;
+    re[13] = 0;
+    re[14] = 0;
+    re[15] = 1;
+
+    // 应用旋转
+    this.multiply(rotationMatrix);
+    Matrix4.release(rotationMatrix);
+
+    return this;
+  }
+
+  /**
+   * 绕X轴旋转
+   * @param angle - 旋转角度（弧度）
+   * @returns 旋转后的矩阵
+   */
+  rotateX (angle: number): this {
+    const e = this.elements;
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+
+    // 应用旋转变换
+    const a10 = e[4], a11 = e[5], a12 = e[6], a13 = e[7];
+    const a20 = e[8], a21 = e[9], a22 = e[10], a23 = e[11];
+
+    // 第二行
+    e[4] = a10 * c + a20 * s;
+    e[5] = a11 * c + a21 * s;
+    e[6] = a12 * c + a22 * s;
+    e[7] = a13 * c + a23 * s;
+
+    // 第三行
+    e[8] = a10 * -s + a20 * c;
+    e[9] = a11 * -s + a21 * c;
+    e[10] = a12 * -s + a22 * c;
+    e[11] = a13 * -s + a23 * c;
+
+    return this;
+  }
+
+  /**
+   * 绕Y轴旋转
+   * @param angle - 旋转角度（弧度）
+   * @returns 旋转后的矩阵
+   */
+  rotateY (angle: number): this {
+    const e = this.elements;
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+
+    // 应用旋转变换
+    const a00 = e[0], a01 = e[1], a02 = e[2], a03 = e[3];
+    const a20 = e[8], a21 = e[9], a22 = e[10], a23 = e[11];
+
+    // 第一行
+    e[0] = a00 * c - a20 * s;
+    e[1] = a01 * c - a21 * s;
+    e[2] = a02 * c - a22 * s;
+    e[3] = a03 * c - a23 * s;
+
+    // 第三行
+    e[8] = a00 * s + a20 * c;
+    e[9] = a01 * s + a21 * c;
+    e[10] = a02 * s + a22 * c;
+    e[11] = a03 * s + a23 * c;
+
+    return this;
+  }
+
+  /**
+   * 绕Z轴旋转
+   * @param angle - 旋转角度（弧度）
+   * @returns 旋转后的矩阵
+   */
+  rotateZ (angle: number): this {
+    const e = this.elements;
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+
+    // 应用旋转变换
+    const a00 = e[0], a01 = e[1], a02 = e[2], a03 = e[3];
+    const a10 = e[4], a11 = e[5], a12 = e[6], a13 = e[7];
+
+    // 第一行
+    e[0] = a00 * c + a10 * s;
+    e[1] = a01 * c + a11 * s;
+    e[2] = a02 * c + a12 * s;
+    e[3] = a03 * c + a13 * s;
+
+    // 第二行
+    e[4] = a10 * c - a00 * s;
+    e[5] = a11 * c - a01 * s;
+    e[6] = a12 * c - a02 * s;
+    e[7] = a13 * c - a03 * s;
+
+    return this;
+  }
+
+  /**
+   * 应用缩放变换
+   * @param v - 缩放向量
+   * @returns 缩放后的矩阵
+   */
+  scale (v: Vector3): this {
+    const e = this.elements;
+    const x = v.x, y = v.y, z = v.z;
+
+    e[0] *= x; e[4] *= y; e[8] *= z;
+    e[1] *= x; e[5] *= y; e[9] *= z;
+    e[2] *= x; e[6] *= y; e[10] *= z;
+    e[3] *= x; e[7] *= y; e[11] *= z;
+
+    return this;
+  }
+
+  /**
+   * 创建一个从指定位置朝向目标的视图矩阵
+   * @param eye - 摄像机位置
+   * @param target - 目标位置
+   * @param up - 上方向向量
+   * @returns 视图矩阵
+   */
+  lookAt (eye: Vector3, target: Vector3, up: Vector3): this {
+    const z = Vector3.subtract(eye, target).normalize();
+
+    if (z.lengthSquared() === 0) {
+      z.z = 1;
+    }
+
+    const x = Vector3.cross(up, z).normalize();
+
+    if (x.lengthSquared() === 0) {
+      z.x += 0.0001;
+      x.copyFrom(Vector3.cross(up, z).normalize());
+    }
+
+    const y = Vector3.cross(z, x);
+
+    const e = this.elements;
+
+    e[0] = x.x; e[4] = y.x; e[8] = z.x; e[12] = eye.x;
+    e[1] = x.y; e[5] = y.y; e[9] = z.y; e[13] = eye.y;
+    e[2] = x.z; e[6] = y.z; e[10] = z.z; e[14] = eye.z;
+    e[3] = 0; e[7] = 0; e[11] = 0; e[15] = 1;
+
+    return this.invert();
+  }
+
+  /**
+   * 矩阵转置
+   * @returns 转置后的矩阵
+   */
+  transpose (): this {
+    const e = this.elements;
+    let tmp;
+
+    tmp = e[1]; e[1] = e[4]; e[4] = tmp;
+    tmp = e[2]; e[2] = e[8]; e[8] = tmp;
+    tmp = e[3]; e[3] = e[12]; e[12] = tmp;
+    tmp = e[6]; e[6] = e[9]; e[9] = tmp;
+    tmp = e[7]; e[7] = e[13]; e[13] = tmp;
+    tmp = e[11]; e[11] = e[14]; e[14] = tmp;
+
+    return this;
+  }
+
+  /**
+   * 从欧拉角创建旋转矩阵
+   * @param x - X轴旋转角度（弧度）
+   * @param y - Y轴旋转角度（弧度）
+   * @param z - Z轴旋转角度（弧度）
+   * @param order - 旋转顺序，默认为'XYZ'
+   * @returns 旋转矩阵
+   */
+  setFromEuler (x: number, y: number, z: number, order = 'XYZ'): this {
+    this.identity();
+
+    switch (order) {
+      case 'XYZ':
+        return this.rotateX(x).rotateY(y).rotateZ(z);
+      case 'YXZ':
+        return this.rotateY(y).rotateX(x).rotateZ(z);
+      case 'ZXY':
+        return this.rotateZ(z).rotateX(x).rotateY(y);
+      case 'ZYX':
+        return this.rotateZ(z).rotateY(y).rotateX(x);
+      case 'YZX':
+        return this.rotateY(y).rotateZ(z).rotateX(x);
+      case 'XZY':
+        return this.rotateX(x).rotateZ(z).rotateY(y);
+      default:
+        console.warn(`Matrix4: Unsupported rotation order: ${order}, fallback to 'XYZ'`);
+
+        return this.rotateX(x).rotateY(y).rotateZ(z);
+    }
+  }
+
+  /**
    * 从对象池获取一个 Matrix4 实例
    */
   static create (): Matrix4 {
