@@ -129,6 +129,60 @@ export interface RHIColorBlendState {
    * 颜色混合常量
    */
   blendConstants?: [number, number, number, number],
+
+  /**
+   * 是否启用混合，WebGL中使用
+   */
+  blendEnabled?: boolean,
+
+  /**
+   * 颜色混合操作，WebGL中使用
+   * 在GL中用于blendEquationSeparate的第一个参数
+   */
+  colorBlendOperation?: RHIBlendOperation,
+
+  /**
+   * Alpha混合操作，WebGL中使用
+   * 在GL中用于blendEquationSeparate的第二个参数
+   */
+  alphaBlendOperation?: RHIBlendOperation,
+
+  /**
+   * 源颜色因子，WebGL中使用
+   * 在GL中用于blendFuncSeparate的第一个参数
+   */
+  srcColorFactor?: RHIBlendFactor,
+
+  /**
+   * 目标颜色因子，WebGL中使用
+   * 在GL中用于blendFuncSeparate的第二个参数
+   */
+  dstColorFactor?: RHIBlendFactor,
+
+  /**
+   * 源Alpha因子，WebGL中使用
+   * 在GL中用于blendFuncSeparate的第三个参数
+   */
+  srcAlphaFactor?: RHIBlendFactor,
+
+  /**
+   * 目标Alpha因子，WebGL中使用
+   * 在GL中用于blendFuncSeparate的第四个参数
+   */
+  dstAlphaFactor?: RHIBlendFactor,
+
+  /**
+   * 混合颜色，WebGL中使用
+   * 在GL中用于blendColor函数
+   */
+  blendColor?: [number, number, number, number],
+
+  /**
+   * 颜色写入掩码，WebGL中使用
+   * 在GL中用于colorMask函数
+   * 0x1: 红, 0x2: 绿, 0x4: 蓝, 0x8: Alpha
+   */
+  writeMask?: number,
 }
 
 /**
@@ -139,6 +193,12 @@ export interface RHIDepthStencilState {
    * 深度格式
    */
   format: RHITextureFormat,
+
+  /**
+   * 是否启用深度测试
+   * 在WebGL中决定是否调用gl.enable(gl.DEPTH_TEST)
+   */
+  depthTestEnabled?: boolean,
 
   /**
    * 是否启用深度写入
@@ -209,6 +269,24 @@ export interface RHIStencilFaceState {
    * 通过操作
    */
   passOp?: RHIStencilOperation,
+
+  /**
+   * 模板参考值，WebGL中使用
+   * 在GL中的glStencilFuncSeparate的第二个参数
+   */
+  reference?: number,
+
+  /**
+   * 模板读取掩码，WebGL中使用
+   * 在GL中的glStencilFuncSeparate的第三个参数
+   */
+  readMask?: number,
+
+  /**
+   * 模板写入掩码，WebGL中使用
+   * 在GL中用于glStencilMaskSeparate的第二个参数
+   */
+  writeMask?: number,
 }
 
 /**
@@ -239,4 +317,16 @@ export interface RHIRasterizationState {
    * 是否启用深度偏置
    */
   depthBiasEnabled?: boolean,
+
+  /**
+   * 深度偏移值，WebGL中使用
+   * 在GL中polygonOffset的第二个参数
+   */
+  depthBias?: number,
+
+  /**
+   * 深度偏移斜率缩放，WebGL中使用
+   * 在GL中polygonOffset的第一个参数
+   */
+  depthBiasSlopeScale?: number,
 }

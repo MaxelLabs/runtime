@@ -60,7 +60,7 @@ export class WebGLBindGroupLayout implements IRHIBindGroupLayout {
       }
       bindingSet.add(entry.binding);
 
-      // Validate structure based on IRHIBindGroupLayoutEntry
+      // 根据IRHIBindGroupLayoutEntry验证结构
       const hasBuffer = !!entry.buffer;
       const hasTexture = !!entry.texture;
       const hasSampler = !!entry.sampler;
@@ -70,7 +70,7 @@ export class WebGLBindGroupLayout implements IRHIBindGroupLayout {
         throw new Error(`[${this._label || 'WebGLBindGroupLayout'}] Binding ${entry.binding}: Entry must define one of buffer, texture, sampler, or storageTexture.`);
       }
 
-      // Further validation of sub-properties if needed (e.g., entry.buffer.type)
+      // 进一步验证子属性（例如，entry.buffer.type）
       if (hasBuffer && entry.buffer!.type === undefined) {
         throw new Error(`[${this._label || 'WebGLBindGroupLayout'}] Binding ${entry.binding}: Buffer entry missing 'type'.`);
       }

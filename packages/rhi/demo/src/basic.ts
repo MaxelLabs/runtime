@@ -331,8 +331,8 @@ function render () {
   // 更新模型视图矩阵
   modelViewMatrix.identity();
   modelViewMatrix.translate(new Vector3(0, 0, -2));
-  // modelViewMatrix.rotateX(rotationX);
-  // modelViewMatrix.rotateY(rotationY);
+  modelViewMatrix.rotateX(rotationX);
+  modelViewMatrix.rotateY(rotationY);
 
   // 更新uniform缓冲区
   modelViewMatrixBuffer.update(new Float32Array(modelViewMatrix.getElements()));

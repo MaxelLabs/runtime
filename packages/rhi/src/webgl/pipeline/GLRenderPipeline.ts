@@ -322,9 +322,8 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
     const cullMode = state.cullMode ?? RHICullMode.NONE;
     const frontFace = state.frontFace ?? RHIFrontFace.CCW;
     const lineWidth = state.lineWidth ?? 1;
-    // Cast to any to access potentially missing properties, then use nullish coalescing
-    const depthBias = (state).depthBias ?? 0;
-    const depthBiasSlopeScale = (state).depthBiasSlopeScale ?? 0;
+    const depthBias = state.depthBias ?? 0;
+    const depthBiasSlopeScale = state.depthBiasSlopeScale ?? 0;
 
     const cullResult = this.utils.cullModeToGL(cullMode);
 
@@ -354,7 +353,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
 
     // Use optional chaining and defaults for potentially missing properties
     const depthCompare = state.depthCompare ?? RHICompareFunction.ALWAYS;
-    const depthTestEnabled = (state as any).depthTestEnabled ?? (depthCompare !== RHICompareFunction.ALWAYS);
+    const depthTestEnabled = state.depthTestEnabled ?? (depthCompare !== RHICompareFunction.ALWAYS);
     const depthWriteEnabled = state.depthWriteEnabled ?? true;
     const stencilTestEnabled = !!(state.stencilFront || state.stencilBack);
 
@@ -375,12 +374,12 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
 
       if (front) {
         const compare = front.compare ?? RHICompareFunction.ALWAYS;
-        const reference = (front).reference ?? 0;
-        const readMask = (front).readMask ?? 0xFF;
+        const reference = front.reference ?? 0;
+        const readMask = front.readMask ?? 0xFF;
         const failOp = front.failOp ?? RHIStencilOperation.KEEP;
         const depthFailOp = front.depthFailOp ?? RHIStencilOperation.KEEP;
         const passOp = front.passOp ?? RHIStencilOperation.KEEP;
-        const writeMask = (front).writeMask ?? 0xFF;
+        const writeMask = front.writeMask ?? 0xFF;
 
         gl.stencilFuncSeparate(
           gl.FRONT,
@@ -399,12 +398,12 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
 
       if (back) {
         const compare = back.compare ?? RHICompareFunction.ALWAYS;
-        const reference = (back).reference ?? 0;
-        const readMask = (back).readMask ?? 0xFF;
+        const reference = back.reference ?? 0;
+        const readMask = back.readMask ?? 0xFF;
         const failOp = back.failOp ?? RHIStencilOperation.KEEP;
         const depthFailOp = back.depthFailOp ?? RHIStencilOperation.KEEP;
         const passOp = back.passOp ?? RHIStencilOperation.KEEP;
-        const writeMask = (back).writeMask ?? 0xFF;
+        const writeMask = back.writeMask ?? 0xFF;
 
         gl.stencilFuncSeparate(
           gl.BACK,
@@ -430,15 +429,15 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
    */
   private applyColorBlendState (state: RHIColorBlendState): void {
     const gl = this.gl;
-    const blendEnabled = (state as any).blendEnabled ?? false;
-    const colorOp = (state as any).colorBlendOperation ?? RHIBlendOperation.ADD;
-    const alphaOp = (state as any).alphaBlendOperation ?? RHIBlendOperation.ADD;
-    const srcColor = (state as any).srcColorFactor ?? RHIBlendFactor.ONE;
-    const dstColor = (state as any).dstColorFactor ?? RHIBlendFactor.ZERO;
-    const srcAlpha = (state as any).srcAlphaFactor ?? RHIBlendFactor.ONE;
-    const dstAlpha = (state as any).dstAlphaFactor ?? RHIBlendFactor.ZERO;
-    const blendColor = (state as any).blendColor;
-    const writeMask = (state as any).writeMask ?? 0xF;
+    const blendEnabled = state.blendEnabled ?? false;
+    const colorOp = state.colorBlendOperation ?? RHIBlendOperation.ADD;
+    const alphaOp = state.alphaBlendOperation ?? RHIBlendOperation.ADD;
+    const srcColor = state.srcColorFactor ?? RHIBlendFactor.ONE;
+    const dstColor = state.dstColorFactor ?? RHIBlendFactor.ZERO;
+    const srcAlpha = state.srcAlphaFactor ?? RHIBlendFactor.ONE;
+    const dstAlpha = state.dstAlphaFactor ?? RHIBlendFactor.ZERO;
+    const blendColor = state.blendColor;
+    const writeMask = state.writeMask ?? 0xF;
 
     if (blendEnabled) {
       gl.enable(gl.BLEND);

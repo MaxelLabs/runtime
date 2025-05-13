@@ -31,7 +31,7 @@ export class WebGLPipelineLayout implements IRHIPipelineLayout {
   private validateLayouts (): void {
     // 在WebGL中，需要验证绑定组布局的兼容性
     // 例如，检查绑定点是否重叠或冲突
-    const isWebGL2 = this.gl instanceof WebGL2RenderingContext;
+    // const isWebGL2 = this.gl instanceof WebGL2RenderingContext;
     const bindingSet = new Set<number>();
 
     for (const layout of this.bindGroupLayouts) {
@@ -45,12 +45,12 @@ export class WebGLPipelineLayout implements IRHIPipelineLayout {
         bindingSet.add(entry.binding);
 
         // 检查特定类型是否受支持
-        if (entry.type === 'storage-buffer' && !isWebGL2) {
-          throw new Error('WebGL1不支持存储缓冲区');
-        }
-        if (entry.type === 'storage-texture') {
-          throw new Error('WebGL不支持存储纹理');
-        }
+        // if (entry.storageTexture.format === 'storage-buffer' && !isWebGL2) {
+        //   throw new Error('WebGL1不支持存储缓冲区');
+        // }
+        // if (entry.storageTexture.type === 'storage-texture') {
+        //   throw new Error('WebGL不支持存储纹理');
+        // }
       }
     }
   }

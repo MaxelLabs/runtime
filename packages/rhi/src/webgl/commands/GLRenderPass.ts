@@ -1,4 +1,4 @@
-import type { IRHIBuffer, IRHIBindGroup, IRHIRenderPass, IRHIRenderPipeline } from '@maxellabs/core';
+import type { IRHIBuffer, IRHIBindGroup, IRHIRenderPass, IRHIRenderPipeline, IRHITextureView } from '@maxellabs/core';
 import { RHIIndexFormat, RHITextureFormat } from '@maxellabs/core';
 import type { GLTexture } from '../resources/GLTexture';
 import type { WebGLTextureView } from '../resources/GLTextureView';
@@ -16,14 +16,14 @@ export class WebGLRenderPass implements IRHIRenderPass {
   private encoder: WebGLCommandEncoder;
   private framebuffer: WebGLFramebuffer | null;
   private colorAttachments: Array<{
-    view: WebGLTextureView,
-    resolveTarget?: WebGLTextureView,
+    view: IRHITextureView,
+    resolveTarget?: IRHITextureView,
     loadOp: 'load' | 'clear' | 'none',
     storeOp: 'store' | 'discard',
     clearColor?: [number, number, number, number],
   }>;
   private depthStencilAttachment?: {
-    view: WebGLTextureView,
+    view: IRHITextureView,
     depthLoadOp: 'load' | 'clear' | 'none',
     depthStoreOp: 'store' | 'discard',
     clearDepth?: number,
@@ -53,14 +53,14 @@ export class WebGLRenderPass implements IRHIRenderPass {
    */
   constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, options: {
     colorAttachments: Array<{
-      view: WebGLTextureView,
-      resolveTarget?: WebGLTextureView,
+      view: IRHITextureView,
+      resolveTarget?: IRHITextureView,
       loadOp: 'load' | 'clear' | 'none',
       storeOp: 'store' | 'discard',
       clearColor?: [number, number, number, number],
     }>,
     depthStencilAttachment?: {
-      view: WebGLTextureView,
+      view: IRHITextureView,
       depthLoadOp: 'load' | 'clear' | 'none',
       depthStoreOp: 'store' | 'discard',
       clearDepth?: number,
@@ -107,7 +107,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
 
     for (let i = 0; i < this.colorAttachments.length; i++) {
       const attachment = this.colorAttachments[i];
-      const textureView = attachment.view;
+      const textureView = attachment.view as WebGLTextureView;
       // 附加纹理到帧缓冲
       const attachmentPoint = this.isWebGL2
         ? (gl as WebGL2RenderingContext).COLOR_ATTACHMENT0 + i
@@ -140,7 +140,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
     // 设置深度/模板附件
     if (this.depthStencilAttachment) {
       const depthAttachment = this.depthStencilAttachment;
-      const depthTextureView = depthAttachment.view;
+      const depthTextureView = depthAttachment.view as WebGLTextureView;
       const depthTexture = depthTextureView.getTexture() as GLTexture;
 
       // 检查纹理格式是否包含深度和模板
