@@ -14,7 +14,7 @@ export const RENDER_QUEUE = {
   GEOMETRY: 2000,    // 不透明几何体
   ALPHA_TEST: 2500,  // Alpha测试
   TRANSPARENT: 3000, // 透明物体
-  OVERLAY: 4000      // UI和覆盖物
+  OVERLAY: 4000,      // UI和覆盖物
 };
 
 // 着色器宏定义
@@ -23,7 +23,7 @@ export const SHADER_MACRO = {
   USE_PBR: 'USE_PBR',
   USE_SHADOWMAP: 'USE_SHADOWMAP',
   USE_SKINNING: 'USE_SKINNING',
-  USE_INSTANCING: 'USE_INSTANCING'
+  USE_INSTANCING: 'USE_INSTANCING',
 };
 
 // 资源类型
@@ -33,5 +33,5 @@ export const RESOURCE_TYPE = {
   MATERIAL: 'material',
   MESH: 'mesh',
   AUDIO: 'audio',
-  PREFAB: 'prefab'
-}; 
+  PREFAB: 'prefab',
+};
