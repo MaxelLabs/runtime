@@ -149,18 +149,18 @@ export class GLBuffer implements IRHIBuffer {
         : this.gl.ARRAY_BUFFER; // WebGL1 回退
     }
     // WebGL2 特有支持
-    if (this.gl instanceof WebGL2RenderingContext) {
-      if (usage & RHIBufferUsage.STORAGE) {
-        return this.gl.SHADER_STORAGE_BUFFER;
-      }
-      if (usage & RHIBufferUsage.INDIRECT) {
-        return this.gl.DRAW_INDIRECT_BUFFER;
-      }
-      // 添加对 TRANSFORM_FEEDBACK_BUFFER 和复制缓冲区的支持
-      if (usage & RHIBufferUsage.TRANSFORM_FEEDBACK) {
-        return this.gl.TRANSFORM_FEEDBACK_BUFFER;
-      }
-    }
+    // if (this.gl instanceof WebGL2RenderingContext) {
+    //   if (usage & RHIBufferUsage.STORAGE) {
+    //     return this.gl.SHADER_STORAGE_BUFFER;
+    //   }
+    //   if (usage & RHIBufferUsage.INDIRECT) {
+    //     return this.gl.DRAW_INDIRECT_BUFFER;
+    //   }
+    //   // 添加对 TRANSFORM_FEEDBACK_BUFFER 和复制缓冲区的支持
+    //   if (usage & RHIBufferUsage.TRANSFORM_FEEDBACK) {
+    //     return this.gl.TRANSFORM_FEEDBACK_BUFFER;
+    //   }
+    // }
 
     // 其他类型默认为ARRAY_BUFFER
     return this.gl.ARRAY_BUFFER;
