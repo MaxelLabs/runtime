@@ -23,13 +23,13 @@ export class Stats {
     triangles: 0,
     vertices: 0,
     uniforms: 0,
-    textures: 0
+    textures: 0,
   };
   /** 内存使用统计(如果可用) */
   private static memoryStats = {
     totalJSHeapSize: 0,
     usedJSHeapSize: 0,
-    jsHeapSizeLimit: 0
+    jsHeapSizeLimit: 0,
   };
   /** 性能标记数据 */
   private static markers: Map<string, { total: number, count: number, min: number, max: number }> = new Map();
@@ -37,7 +37,7 @@ export class Stats {
   /**
    * 启用性能统计
    */
-  static enable(): void {
+  static enable (): void {
     Stats.enabled = true;
     Stats.lastTime = performance.now();
   }
@@ -45,14 +45,14 @@ export class Stats {
   /**
    * 禁用性能统计
    */
-  static disable(): void {
+  static disable (): void {
     Stats.enabled = false;
   }
 
   /**
    * 是否已启用
    */
-  static isEnabled(): boolean {
+  static isEnabled (): boolean {
     return Stats.enabled;
   }
 
@@ -60,35 +60,36 @@ export class Stats {
    * 更新帧率计算
    * 每帧调用一次
    */
-  static update(): void {
+  static update (): void {
     if (!Stats.enabled) {return;}
 
     const now = performance.now();
     const elapsed = now - Stats.lastTime;
-    
+
     // 更新总帧数和总时间
     Stats.totalFrames++;
     Stats.totalTime += elapsed;
-    
+
     // 计算当前帧率
     if (elapsed > 0) {
       Stats.currentFPS = 1000 / elapsed;
       Stats.fpsHistory.push(Stats.currentFPS);
-      
+
       // 保持历史记录在指定长度
       if (Stats.fpsHistory.length > Stats.maxHistory) {
         Stats.fpsHistory.shift();
       }
     }
-    
+
     // 更新内存统计
     if (typeof performance !== 'undefined' && performance.memory) {
       const memory = performance.memory as any;
+
       Stats.memoryStats.totalJSHeapSize = memory.totalJSHeapSize || 0;
       Stats.memoryStats.usedJSHeapSize = memory.usedJSHeapSize || 0;
       Stats.memoryStats.jsHeapSizeLimit = memory.jsHeapSizeLimit || 0;
     }
-    
+
     Stats.lastTime = now;
   }
 
@@ -96,9 +97,9 @@ export class Stats {
    * 重置渲染统计数据
    * 每帧开始前调用
    */
-  static resetRenderStats(): void {
+  static resetRenderStats (): void {
     if (!Stats.enabled) {return;}
-    
+
     Stats.renderStats.drawCalls = 0;
     Stats.renderStats.triangles = 0;
     Stats.renderStats.vertices = 0;
@@ -110,7 +111,7 @@ export class Stats {
    * 增加绘制调用次数
    * @param count 增加数量，默认为1
    */
-  static addDrawCall(count: number = 1): void {
+  static addDrawCall (count: number = 1): void {
     if (!Stats.enabled) {return;}
     Stats.renderStats.drawCalls += count;
   }
@@ -119,7 +120,7 @@ export class Stats {
    * 增加三角形数量
    * @param count 增加数量
    */
-  static addTriangles(count: number): void {
+  static addTriangles (count: number): void {
     if (!Stats.enabled) {return;}
     Stats.renderStats.triangles += count;
   }
@@ -128,7 +129,7 @@ export class Stats {
    * 增加顶点数量
    * @param count 增加数量
    */
-  static addVertices(count: number): void {
+  static addVertices (count: number): void {
     if (!Stats.enabled) {return;}
     Stats.renderStats.vertices += count;
   }
@@ -138,14 +139,14 @@ export class Stats {
    * @param name 标记名称
    * @returns 开始时间戳
    */
-  static beginMarker(name: string): number {
+  static beginMarker (name: string): number {
     if (!Stats.enabled) {return 0;}
-    
+
     // 如果在浏览器环境且支持Performance API
     if (typeof performance !== 'undefined' && performance.mark) {
       performance.mark(`${name}_start`);
     }
-    
+
     return performance.now();
   }
 
@@ -154,12 +155,12 @@ export class Stats {
    * @param name 标记名称
    * @param startTime 开始时间戳
    */
-  static endMarker(name: string, startTime: number): void {
+  static endMarker (name: string, startTime: number): void {
     if (!Stats.enabled) {return;}
-    
+
     const endTime = performance.now();
     const duration = endTime - startTime;
-    
+
     // 在浏览器环境且支持Performance API
     if (typeof performance !== 'undefined' && performance.mark && performance.measure) {
       performance.mark(`${name}_end`);
@@ -169,14 +170,15 @@ export class Stats {
         // 可能因为标记不存在而失败，忽略错误
       }
     }
-    
+
     // 更新标记统计数据
     let markerStats = Stats.markers.get(name);
+
     if (!markerStats) {
       markerStats = { total: 0, count: 0, min: Number.MAX_VALUE, max: 0 };
       Stats.markers.set(name, markerStats);
     }
-    
+
     markerStats.total += duration;
     markerStats.count++;
     markerStats.min = Math.min(markerStats.min, duration);
@@ -186,72 +188,75 @@ export class Stats {
   /**
    * 获取当前FPS
    */
-  static getFPS(): number {
+  static getFPS (): number {
     return Stats.currentFPS;
   }
 
   /**
    * 获取平均FPS
    */
-  static getAverageFPS(): number {
+  static getAverageFPS (): number {
     if (Stats.fpsHistory.length === 0) {return 0;}
-    
+
     const sum = Stats.fpsHistory.reduce((a, b) => a + b, 0);
+
     return sum / Stats.fpsHistory.length;
   }
 
   /**
    * 获取最小FPS
    */
-  static getMinFPS(): number {
+  static getMinFPS (): number {
     if (Stats.fpsHistory.length === 0) {return 0;}
+
     return Math.min(...Stats.fpsHistory);
   }
 
   /**
    * 获取最大FPS
    */
-  static getMaxFPS(): number {
+  static getMaxFPS (): number {
     if (Stats.fpsHistory.length === 0) {return 0;}
+
     return Math.max(...Stats.fpsHistory);
   }
 
   /**
    * 获取渲染统计数据
    */
-  static getRenderStats(): Readonly<typeof Stats.renderStats> {
+  static getRenderStats (): Readonly<typeof Stats.renderStats> {
     return { ...Stats.renderStats };
   }
 
   /**
    * 获取内存使用统计
    */
-  static getMemoryStats(): Readonly<typeof Stats.memoryStats> {
+  static getMemoryStats (): Readonly<typeof Stats.memoryStats> {
     return { ...Stats.memoryStats };
   }
 
   /**
    * 获取性能标记统计数据
    */
-  static getMarkerStats(): Record<string, { average: number, min: number, max: number, count: number }> {
+  static getMarkerStats (): Record<string, { average: number, min: number, max: number, count: number }> {
     const result: Record<string, { average: number, min: number, max: number, count: number }> = {};
-    
+
     Stats.markers.forEach((value, key) => {
       result[key] = {
         average: value.count > 0 ? value.total / value.count : 0,
         min: value.min === Number.MAX_VALUE ? 0 : value.min,
         max: value.max,
-        count: value.count
+        count: value.count,
       };
     });
-    
+
     return result;
   }
 
   /**
    * 重置所有统计数据
    */
-  static reset(): void {
+  static reset (): void {
     Stats.fpsHistory = [];
     Stats.totalTime = 0;
     Stats.totalFrames = 0;
@@ -264,14 +269,14 @@ export class Stats {
   /**
    * 获取总运行时间(秒)
    */
-  static getTotalRunTime(): number {
+  static getTotalRunTime (): number {
     return Stats.totalTime / 1000;
   }
 
   /**
    * 获取总帧数
    */
-  static getTotalFrames(): number {
+  static getTotalFrames (): number {
     return Stats.totalFrames;
   }
-} 
+}
