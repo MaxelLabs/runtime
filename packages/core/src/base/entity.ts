@@ -1,14 +1,14 @@
-import { MaxObject } from './maxObject';
 import type { Component } from './component';
 import { Transform } from './transform';
 import type { Scene } from '../scene/';
+import { ReferResource } from './ReferResource';
 
 /**
  * 实体类，表示场景中的一个对象
  */
-export class Entity extends MaxObject {
+export class Entity extends ReferResource {
   /** 实体的标签 */
-  private _tag: string = '';
+  tag: string = '';
   /** 实体是否激活 */
   active: boolean = true;
   /** 实体的父级 */
@@ -16,7 +16,7 @@ export class Entity extends MaxObject {
   /** 实体的子级 */
   children: Entity[] = [];
   /** 实体所属的场景 */
-  private _scene: Scene | null = null;
+  scene: Scene | null = null;
   /** 实体上的组件列表 */
   components: Map<string, Component> = new Map();
   /** 实体的变换组件，每个实体都有一个变换组件 */
@@ -30,7 +30,7 @@ export class Entity extends MaxObject {
   constructor (name: string = 'Entity', scene: Scene | null = null) {
     super();
     this.name = name;
-    this._scene = scene;
+    this.scene = scene;
     this.transform = new Transform(this);
     this.components.set('Transform', this.transform);
   }
@@ -38,33 +38,8 @@ export class Entity extends MaxObject {
   /** 生成唯一ID */
   private static _idCounter: number = 0;
 
-  /** 获取实体标签 */
-  get tag (): string {
-    return this._tag;
-  }
-
-  /** 设置实体标签 */
-  set tag (value: string) {
-    this._tag = value;
-  }
-
-  /** 获取实体所属的场景 */
-  get scene (): Scene | null {
-    return this._scene;
-  }
-
-  /** 设置实体所属的场景 */
-  set scene (value: Scene | null) {
-    this._scene = value;
-  }
-
-  /** 获取实体的父级 */
-  get parent (): Entity | null {
-    return this.parent;
-  }
-
   /** 设置实体的父级 */
-  set parent (value: Entity | null) {
+  setParent (value: Entity | null) {
     if (this.parent === value) {return;}
 
     // 从原父级中移除
@@ -86,11 +61,6 @@ export class Entity extends MaxObject {
 
     // 更新世界变换
     this.transform.updateWorldMatrix();
-  }
-
-  /** 获取实体的子级列表 */
-  get children (): Entity[] {
-    return this.children.slice();
   }
 
   /** 添加子实体 */
@@ -177,7 +147,7 @@ export class Entity extends MaxObject {
   }
 
   /** 销毁实体 */
-  destroy (): void {
+  override destroy (): void {
     if (this.destroyed) {return;}
 
     // 销毁所有组件
@@ -198,11 +168,10 @@ export class Entity extends MaxObject {
     }
 
     // 从场景中移除
-    if (this._scene) {
-      this._scene.removeEntity(this);
-      this._scene = null;
+    if (this.scene) {
+      this.scene.removeEntity(this);
+      this.scene = null;
     }
-
     super.destroy();
   }
 }

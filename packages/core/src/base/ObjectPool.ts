@@ -23,7 +23,7 @@ export class ObjectPool<T> {
    * @param initialSize 初始池大小
    * @param maxSize 池最大容量
    */
-  constructor(name: string, factory: () => T, reset: (obj: T) => void, initialSize: number = 0, maxSize: number = 1000) {
+  constructor (name: string, factory: () => T, reset: (obj: T) => void, initialSize: number = 0, maxSize: number = 1000) {
     this.name = name;
     this.factory = factory;
     this.reset = reset;
@@ -37,7 +37,7 @@ export class ObjectPool<T> {
    * 预分配对象
    * @param count 预分配数量
    */
-  preAllocate(count: number): void {
+  preAllocate (count: number): void {
     for (let i = 0; i < count; i++) {
       this.pool.push(this.factory());
     }
@@ -47,7 +47,7 @@ export class ObjectPool<T> {
    * 从池中获取一个对象
    * @returns 池中的对象或新创建的对象
    */
-  get(): T {
+  get (): T {
     let obj: T;
 
     if (this.pool.length > 0) {
@@ -59,6 +59,7 @@ export class ObjectPool<T> {
     }
 
     this.activeCount++;
+
     return obj;
   }
 
@@ -66,7 +67,7 @@ export class ObjectPool<T> {
    * 将对象放回池中
    * @param obj 要放回的对象
    */
-  release(obj: T): void {
+  release (obj: T): void {
     if (!obj) {return;}
 
     // 重置对象状态
@@ -83,7 +84,7 @@ export class ObjectPool<T> {
   /**
    * 清空对象池
    */
-  clear(): void {
+  clear (): void {
     this.pool.length = 0;
     this.activeCount = 0;
   }
@@ -92,9 +93,9 @@ export class ObjectPool<T> {
    * 调整对象池最大容量
    * @param maxSize 新的最大容量
    */
-  setMaxSize(maxSize: number): void {
+  setMaxSize (maxSize: number): void {
     this.maxSize = maxSize;
-    
+
     // 如果当前池大小超过新的最大容量，裁剪掉多余对象
     if (this.pool.length > maxSize) {
       this.pool.length = maxSize;
@@ -104,21 +105,21 @@ export class ObjectPool<T> {
   /**
    * 获取池中当前空闲对象数量
    */
-  get size(): number {
+  get size (): number {
     return this.pool.length;
   }
 
   /**
    * 获取当前活跃对象数量
    */
-  get active(): number {
+  get active (): number {
     return this.activeCount;
   }
 
   /**
    * 获取对象池总容量（活跃+空闲）
    */
-  get capacity(): number {
+  get capacity (): number {
     return this.activeCount + this.pool.length;
   }
 }

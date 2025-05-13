@@ -1,10 +1,10 @@
-import { MaxObject } from './maxObject';
 import type { Entity } from './entity';
+import { ReferResource } from './ReferResource';
 
 /**
  * 组件基类，所有组件均继承自此类
  */
-export abstract class Component extends MaxObject {
+export abstract class Component extends ReferResource {
   /** 组件所属的实体 */
   entity: Entity;
 

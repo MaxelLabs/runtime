@@ -108,14 +108,13 @@ export class ObjectPoolManager extends EventDispatcher {
 
     // 创建对象池
     const pool = new ObjectPool<T>(
+      'object-pool',
       factory,
       resetFunc,
       {
-        identifier: fullId,
         initialCapacity: options.initialCapacity,
         maxSize: options.maxSize,
-        logStats: options.logStats,
-      }
+      },
     );
 
     // 注册对象池
@@ -229,7 +228,7 @@ export class ObjectPoolManager extends EventDispatcher {
    * @param force 是否强制执行，忽略时间间隔
    */
   analyzePerformance (force: boolean = false): void {
-    const currentTime = Time.now;
+    const currentTime = this.createTime;
 
     if (!force && currentTime - this.lastAnalysisTime < this.analysisInterval) {
       return;
