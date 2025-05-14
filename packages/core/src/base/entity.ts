@@ -110,7 +110,7 @@ export class Entity extends ReferResource {
    * 设置实体所属的场景
    * @internal 内部使用，不应直接调用
    */
-  _setScene (scene: Scene | null): void {
+  private setScene (scene: Scene | null): void {
     if (this.scene === scene) {
       return;
     }
@@ -124,7 +124,7 @@ export class Entity extends ReferResource {
 
     // 递归设置所有子实体的场景
     for (const child of this.children) {
-      child._setScene(scene);
+      child.setScene(scene);
     }
   }
 
@@ -139,10 +139,10 @@ export class Entity extends ReferResource {
     for (const component of this.components.values()) {
       if (isReallyActive && component.getEnabled()) {
         if (component.getLifecycleState() === ComponentLifecycleState.DISABLED) {
-          component._enable();
+          component.setEnabled(true);
         }
       } else if (component.getLifecycleState() === ComponentLifecycleState.ENABLED) {
-        component._disable();
+        component.setEnabled(false);
       }
     }
 
@@ -197,7 +197,7 @@ export class Entity extends ReferResource {
 
       // 继承场景
       if (parent.scene !== this.scene) {
-        this._setScene(parent.scene);
+        this.setScene(parent.scene);
       }
     }
 

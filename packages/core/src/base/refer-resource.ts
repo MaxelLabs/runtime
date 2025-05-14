@@ -1,4 +1,4 @@
-import { ResourceManager } from '../resource/ResourceManager';
+import { ResourceManager } from '../resource/resource-manager';
 import { MaxObject } from './max-object';
 
 // 全局资源管理器单例

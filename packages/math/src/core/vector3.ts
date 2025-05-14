@@ -1,4 +1,5 @@
 import type { Matrix4 } from './matrix4';
+import type { Quaternion } from './quaternion';
 import type { Vector3DataType, Vector3Like, vec3 } from './type';
 import { NumberEpsilon, fastInvSqrt } from './utils';
 import { Vector2 } from './vector2';
@@ -371,6 +372,44 @@ export class Vector3 {
     const e = this.elements;
 
     return e[0] * v.x + e[1] * v.y + e[2] * v.z;
+  }
+
+  /**
+ * 应用四元数旋转到向量
+ * @param q - 要应用的四元数
+ * @returns 返回this，用于链式调用
+ */
+  applyQuaternion (q: Quaternion): this {
+  // 保存当前值以便计算
+    const x = this.x;
+    const y = this.y;
+    const z = this.z;
+
+    // 获取四元数分量
+    const qx = q.x;
+    const qy = q.y;
+    const qz = q.z;
+    const qw = q.w;
+
+    // 基于公式: v' = q * v * q^-1 的优化计算
+    // 计算 q * v (其中v被视为纯四元数，w=0)
+    const ix = qw * x + qy * z - qz * y;
+    const iy = qw * y + qz * x - qx * z;
+    const iz = qw * z + qx * y - qy * x;
+    const iw = -qx * x - qy * y - qz * z;
+
+    // 计算 (q * v) * q^-1
+    this.x = ix * qw + iw * (-qx) + iy * (-qz) - iz * (-qy);
+    this.y = iy * qw + iw * (-qy) + iz * (-qx) - ix * (-qz);
+    this.z = iz * qw + iw * (-qz) + ix * (-qy) - iy * (-qx);
+
+    if (this.elements) {
+      this.elements[0] = this.x;
+      this.elements[1] = this.y;
+      this.elements[2] = this.z;
+    }
+
+    return this;
   }
 
   /**

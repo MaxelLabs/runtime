@@ -98,7 +98,7 @@ export abstract class Component extends ReferResource {
     this.onAwake();
 
     if (this.enabled) {
-      this._enable();
+      this.enable();
     }
   }
 
@@ -106,7 +106,7 @@ export abstract class Component extends ReferResource {
    * 内部启用方法
    * @internal
    */
-  _enable (): void {
+  private enable (): void {
     if (this.lifecycleState !== ComponentLifecycleState.INITIALIZED &&
         this.lifecycleState !== ComponentLifecycleState.DISABLED) {
       return;
@@ -120,7 +120,7 @@ export abstract class Component extends ReferResource {
    * 内部禁用方法
    * @internal
    */
-  _disable (): void {
+  private disable (): void {
     if (this.lifecycleState !== ComponentLifecycleState.ENABLED) {
       return;
     }
@@ -177,7 +177,7 @@ export abstract class Component extends ReferResource {
     }
 
     if (this.lifecycleState === ComponentLifecycleState.ENABLED) {
-      this._disable();
+      this.disable();
     }
 
     this.lifecycleState = ComponentLifecycleState.DESTROYED;

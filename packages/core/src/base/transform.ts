@@ -416,7 +416,7 @@ export class Transform extends Component {
    * @param z Z轴旋转（角度）
    */
   setRotationFromEuler (x: number, y: number, z: number): this {
-    this.rotation.fromEuler(x, y, z);
+    this.rotation.setFromEuler(x, y, z);
     this.localMatrixDirty = true;
     this.worldMatrixDirty = true;
     this.directionsDirty = true;
@@ -512,7 +512,7 @@ export class Transform extends Component {
 
       // 如果方向几乎为零向量，或者与上向量平行，我们无法创建有效的朝向
       const directionNorm = direction.length();
-      const upDot = Vector3.dot(upVector.normalize(), direction);
+      const upDot = upVector.normalize().dot(direction);
 
       if (directionNorm < 0.0001 || Math.abs(Math.abs(upDot) - 1) < 0.0001) {
         // 跳过无效朝向
@@ -535,7 +535,7 @@ export class Transform extends Component {
       // 从矩阵提取旋转
       const quaternion = new Quaternion();
 
-      quaternion.fromMatrix4(lookMatrix);
+      quaternion.setFromRotationMatrix(lookMatrix);
       this.setWorldRotation(quaternion);
     } else {
       // 直接设置本地旋转

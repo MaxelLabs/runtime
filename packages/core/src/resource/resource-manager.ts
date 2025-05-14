@@ -1,7 +1,65 @@
 import { EventDispatcher } from '../base/event-dispatcher';
-import type { Resource, ResourceType } from './ResourceManager';
-import { ResourceLoadState } from './ResourceManager';
 import type { Engine } from '../Engine';
+
+/**
+ * 资源加载状态枚举
+ */
+export enum ResourceLoadState {
+  /** 未加载 */
+  Unloaded,
+  /** 加载中 */
+  Loading,
+  /** 已加载 */
+  Loaded,
+  /** 加载失败 */
+  Failed
+}
+
+/**
+ * 资源接口
+ */
+export interface IResource {
+  /** 资源ID */
+  id: string,
+  /** 资源名称 */
+  name: string,
+  /** 资源类型 */
+  type: ResourceType,
+  /** 资源URL */
+  url: string,
+  /** 资源数据 */
+  data: any,
+  /** 是否已加载 */
+  loaded: boolean,
+  /** 引用计数 */
+  referenceCount: number,
+  /** 资源大小(字节) */
+  size: number,
+  /** 加载时间戳 */
+  loadTime: number,
+  /** 销毁资源 */
+  destroy(): void,
+}
+
+/**
+ * 资源加载选项
+ */
+export interface ResourceLoadOptions {
+  /** 是否异步加载 */
+  async?: boolean,
+  /** 超时时间(毫秒) */
+  timeout?: number,
+  /** 是否使用缓存 */
+  useCache?: boolean,
+  /** 重试次数 */
+  retries?: number,
+  /** 优先级 */
+  priority?: number,
+  /** 是否跨域 */
+  crossOrigin?: boolean,
+  /** 加载进度回调 */
+  onProgress?: (loaded: number, total: number) => void,
+}
 
 /**
  * 资源管理器事件类型
@@ -24,21 +82,37 @@ export enum ResourceManagerEventType {
 }
 
 /**
+ * 资源类型枚举
+ */
+export enum ResourceType {
+  TEXTURE = 'texture',
+  MODEL = 'model',
+  AUDIO = 'audio',
+  SHADER = 'shader',
+  MATERIAL = 'material',
+  FONT = 'font',
+  JSON = 'json',
+  TEXT = 'text',
+  BINARY = 'binary',
+  OTHER = 'other'
+}
+
+/**
  * 增强的资源管理器，提供更完善的资源生命周期管理和性能优化
  */
-export class EnhancedResourceManager extends EventDispatcher {
+export class ResourceManager extends EventDispatcher {
   /** 引擎实例 */
   private engine: Engine;
   /** 资源缓存 */
-  private cache: Map<string, Resource> = new Map();
+  private cache: Map<string, IResource> = new Map();
   /** 资源加载状态 */
-  private loadingPromises: Map<string, Promise<Resource>> = new Map();
+  private loadingPromises: Map<string, Promise<IResource>> = new Map();
   /** 资源加载计数 */
   private loadingCounter: number = 0;
   /** 内置资源 */
-  private builtins: Map<string, Resource> = new Map();
+  private builtins: Map<string, IResource> = new Map();
   /** 默认资源 */
-  private defaults: Map<ResourceType, Resource> = new Map();
+  private defaults: Map<ResourceType, IResource> = new Map();
   /** 资源别名映射 */
   private aliases: Map<string, string> = new Map();
   /** 资源依赖关系图 */
@@ -74,7 +148,7 @@ export class EnhancedResourceManager extends EventDispatcher {
    * @param path 资源路径
    * @returns 资源对象，如果不存在则返回null
    */
-  getResource (path: string): Resource | null {
+  getResource (path: string): IResource | null {
     // 检查路径别名
     const actualPath = this.aliases.get(path) || path;
 
@@ -98,7 +172,7 @@ export class EnhancedResourceManager extends EventDispatcher {
    * @param options 加载选项
    * @returns 资源加载Promise
    */
-  loadResource<T extends Resource>(
+  loadResource<T extends IResource>(
     type: ResourceType,
     path: string,
     options: {
@@ -182,7 +256,7 @@ export class EnhancedResourceManager extends EventDispatcher {
         // 从加载Promise映射中移除
         this.loadingPromises.delete(actualPath);
 
-      }).catch(error => {
+      }).catch((error: Error) => {
         // 清除超时计时器
         clearTimeout(timeoutId);
 
@@ -215,7 +289,7 @@ export class EnhancedResourceManager extends EventDispatcher {
    * @param path 资源路径
    * @returns 资源实例
    */
-  private createResourceInstance (type: ResourceType, path: string): Resource {
+  private createResourceInstance (type: ResourceType, path: string): IResource {
     // 此方法需要实现具体的资源创建逻辑
     // 简化示例，实际实现需根据不同类型创建不同资源
     return {
@@ -227,9 +301,9 @@ export class EnhancedResourceManager extends EventDispatcher {
       referenceCount: 0,
       isGCIgnored: false,
       load: () => Promise.resolve(null),
-      unload: () => {},
-      destroy: () => {},
-    } as Resource;
+      unload: () => { },
+      destroy: () => { },
+    } as IResource;
   }
 
   /**
@@ -237,7 +311,7 @@ export class EnhancedResourceManager extends EventDispatcher {
    * @param resource 资源
    * @param owner 引用资源的对象
    */
-  addReference (resource: Resource, owner: any): void {
+  addReference (resource: IResource, owner: any): void {
     if (!resource) {return;}
 
     // 增加资源引用计数
@@ -256,7 +330,7 @@ export class EnhancedResourceManager extends EventDispatcher {
    * @param resource 资源
    * @param owner 引用资源的对象
    */
-  removeReference (resource: Resource, owner: any): void {
+  removeReference (resource: IResource, owner: any): void {
     if (!resource) {return;}
 
     // 减少资源引用计数
@@ -280,7 +354,7 @@ export class EnhancedResourceManager extends EventDispatcher {
    * @param resource 要释放的资源
    * @param force 是否强制释放，即使引用计数大于0
    */
-  releaseResource (resource: Resource, force: boolean = false): void {
+  releaseResource (resource: IResource, force: boolean = false): void {
     if (!resource) {return;}
 
     // 内置资源不释放
@@ -344,10 +418,10 @@ export class EnhancedResourceManager extends EventDispatcher {
     this.dispatchEvent(ResourceManagerEventType.GC_START);
 
     // 收集要释放的资源
-    const toRelease: Resource[] = [];
+    const toRelease: IResource[] = [];
 
     // 检查所有缓存的资源
-    for (const [path, resource] of this.cache.entries()) {
+    for (const [resource] of this.cache.entries()) {
       // 跳过内置资源和GC忽略的资源
       if (resource.isInternal || resource.isGCIgnored) {continue;}
 
