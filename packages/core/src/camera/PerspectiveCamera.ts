@@ -1,4 +1,4 @@
-import { Camera, ProjectionType } from './Camera';
+import { Camera, ProjectionType, CameraEvent } from './Camera';
 import type { Entity } from '../base/entity';
 
 /**
@@ -14,17 +14,14 @@ export class PerspectiveCamera extends Camera {
    * @param near 近裁剪面（默认0.1）
    * @param far 远裁剪面（默认1000）
    */
-  constructor(entity: Entity, fov: number = 60, aspect: number = 16/9, near: number = 0.1, far: number = 1000) {
+  constructor (entity: Entity, fov: number = 60, aspect: number = 16 / 9, near: number = 0.1, far: number = 1000) {
     super(entity);
-    
+
     // 设置为透视投影类型
-    this.projectionType = ProjectionType.Perspective;
-    
+    this.setProjectionType(ProjectionType.Perspective);
+
     // 设置透视相机参数
-    this.fov = fov;
-    this.aspect = aspect;
-    this.near = near;
-    this.far = far;
+    this.setPerspective(fov, aspect, near, far);
   }
 
   /**
@@ -33,11 +30,23 @@ export class PerspectiveCamera extends Camera {
    * @param aspect 宽高比
    * @param near 近裁剪面
    * @param far 远裁剪面
+   * @returns 当前实例，用于链式调用
    */
-  setPerspective(fov: number, aspect: number, near: number, far: number): void {
-    this.fov = fov;
-    this.aspect = aspect;
-    this.near = near;
-    this.far = far;
+  setPerspective (fov: number, aspect: number, near: number, far: number): this {
+    this.setFov(fov);
+    this.setAspect(aspect);
+    this.setNear(near);
+    this.setFar(far);
+
+    // 派发事件通知参数已更新
+    this.dispatchEvent(CameraEvent.PROJECTION_MATRIX_UPDATED, { 
+      camera: this,
+      fov,
+      aspect,
+      near,
+      far
+    });
+
+    return this;
   }
-} 
+}

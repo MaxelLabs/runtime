@@ -38,14 +38,14 @@ export class Logger {
    * 设置日志级别
    * @param level 日志级别
    */
-  static setLevel(level: LogLevel): void {
+  static setLevel (level: LogLevel): void {
     Logger.level = level;
   }
 
   /**
    * 获取当前日志级别
    */
-  static getLevel(): LogLevel {
+  static getLevel (): LogLevel {
     return Logger.level;
   }
 
@@ -53,7 +53,7 @@ export class Logger {
    * 设置是否显示时间戳
    * @param show 是否显示
    */
-  static setShowTimestamp(show: boolean): void {
+  static setShowTimestamp (show: boolean): void {
     Logger.showTimestamp = show;
   }
 
@@ -61,7 +61,7 @@ export class Logger {
    * 设置是否启用堆栈追踪
    * @param enable 是否启用
    */
-  static setEnableStackTrace(enable: boolean): void {
+  static setEnableStackTrace (enable: boolean): void {
     Logger.enableStackTrace = enable;
   }
 
@@ -69,7 +69,7 @@ export class Logger {
    * 设置日志前缀
    * @param prefix 前缀字符串
    */
-  static setPrefix(prefix: string): void {
+  static setPrefix (prefix: string): void {
     Logger.prefix = prefix;
   }
 
@@ -77,7 +77,7 @@ export class Logger {
    * 设置是否将日志保存到存储
    * @param save 是否保存
    */
-  static setSaveToStorage(save: boolean): void {
+  static setSaveToStorage (save: boolean): void {
     Logger.saveToStorage = save;
   }
 
@@ -87,17 +87,18 @@ export class Logger {
    * @param level 日志级别
    * @returns 格式化后的消息
    */
-  private static formatMessage(message: string, level: LogLevel): string {
+  private static formatMessage (message: string, level: LogLevel): string {
     const levelName = LogLevel[level];
     let formattedMessage = `${Logger.prefix} [${levelName}]`;
-    
+
     if (Logger.showTimestamp) {
       const timestamp = new Date().toISOString();
+
       formattedMessage += ` [${timestamp}]`;
     }
-    
+
     formattedMessage += `: ${message}`;
-    
+
     return formattedMessage;
   }
 
@@ -105,14 +106,14 @@ export class Logger {
    * 保存日志到历史记录
    * @param message 消息内容
    */
-  private static saveToHistory(message: string): void {
+  private static saveToHistory (message: string): void {
     Logger.history.push(message);
-    
+
     // 限制历史记录大小
     if (Logger.history.length > Logger.maxHistorySize) {
       Logger.history.shift();
     }
-    
+
     // 保存到本地存储
     if (Logger.saveToStorage && typeof localStorage !== 'undefined') {
       try {
@@ -128,9 +129,10 @@ export class Logger {
    * @param message 日志消息
    * @param optionalParams 可选参数
    */
-  static debug(message: string, ...optionalParams: any[]): void {
+  static debug (message: string, ...optionalParams: any[]): void {
     if (Logger.level <= LogLevel.Debug) {
       const formattedMessage = Logger.formatMessage(message, LogLevel.Debug);
+
       console.debug(formattedMessage, ...optionalParams);
       Logger.saveToHistory(formattedMessage);
     }
@@ -141,9 +143,10 @@ export class Logger {
    * @param message 日志消息
    * @param optionalParams 可选参数
    */
-  static info(message: string, ...optionalParams: any[]): void {
+  static info (message: string, ...optionalParams: any[]): void {
     if (Logger.level <= LogLevel.Info) {
       const formattedMessage = Logger.formatMessage(message, LogLevel.Info);
+
       console.info(formattedMessage, ...optionalParams);
       Logger.saveToHistory(formattedMessage);
     }
@@ -154,9 +157,10 @@ export class Logger {
    * @param message 日志消息
    * @param optionalParams 可选参数
    */
-  static warn(message: string, ...optionalParams: any[]): void {
+  static warn (message: string, ...optionalParams: any[]): void {
     if (Logger.level <= LogLevel.Warning) {
       const formattedMessage = Logger.formatMessage(message, LogLevel.Warning);
+
       console.warn(formattedMessage, ...optionalParams);
       Logger.saveToHistory(formattedMessage);
     }
@@ -167,16 +171,16 @@ export class Logger {
    * @param message 日志消息
    * @param optionalParams 可选参数
    */
-  static error(message: string, ...optionalParams: any[]): void {
+  static error (message: string, ...optionalParams: any[]): void {
     if (Logger.level <= LogLevel.Error) {
       const formattedMessage = Logger.formatMessage(message, LogLevel.Error);
-      
+
       if (Logger.enableStackTrace) {
         console.error(formattedMessage, ...optionalParams, new Error().stack);
       } else {
         console.error(formattedMessage, ...optionalParams);
       }
-      
+
       Logger.saveToHistory(formattedMessage);
     }
   }
@@ -185,16 +189,16 @@ export class Logger {
    * 获取日志历史记录
    * @returns 日志历史记录数组
    */
-  static getHistory(): string[] {
+  static getHistory (): string[] {
     return [...Logger.history];
   }
 
   /**
    * 清除日志历史记录
    */
-  static clearHistory(): void {
+  static clearHistory (): void {
     Logger.history = [];
-    
+
     if (Logger.saveToStorage && typeof localStorage !== 'undefined') {
       try {
         localStorage.removeItem('max_engine_logs');
@@ -207,12 +211,14 @@ export class Logger {
   /**
    * 加载存储中的日志历史
    */
-  static loadHistoryFromStorage(): void {
+  static loadHistoryFromStorage (): void {
     if (typeof localStorage !== 'undefined') {
       try {
         const storedLogs = localStorage.getItem('max_engine_logs');
+
         if (storedLogs) {
           const parsedLogs = JSON.parse(storedLogs);
+
           if (Array.isArray(parsedLogs)) {
             Logger.history = parsedLogs;
           }
@@ -222,4 +228,4 @@ export class Logger {
       }
     }
   }
-} 
+}

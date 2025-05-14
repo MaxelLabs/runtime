@@ -1,6 +1,6 @@
-import { MaxObject } from '../base/maxObject';
+import { MaxObject } from '../base/max-object';
 import { Container, ServiceKeys } from '../base/IOC';
-import { EventDispatcher } from '../base/eventDispatcher';
+import { EventDispatcher } from '../base/event-dispatcher';
 import { Texture2D } from '../texture/Texture2D';
 import { Mesh } from '../geometry/Mesh';
 import { Material } from '../material/Material';

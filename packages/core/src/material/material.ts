@@ -1,5 +1,5 @@
 import { Vector4 } from '@maxellabs/math';
-import { ReferResource } from '../base/ReferResource';
+import { ReferResource } from '../base/refer-resource';
 import { CullFace, DepthFunc, BlendMode } from './constants';
 
 /**

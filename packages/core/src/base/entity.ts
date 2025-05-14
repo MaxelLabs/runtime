@@ -1,26 +1,39 @@
-import { MaxObject } from './maxObject';
 import type { Component } from './component';
+import { ComponentLifecycleState } from './component';
 import { Transform } from './transform';
 import type { Scene } from '../scene/';
+import { ReferResource } from './refer-resource';
 
 /**
  * 实体类，表示场景中的一个对象
+ *
+ * 特性:
+ * 1. 每个实体可以包含多个组件
+ * 2. 每个实体默认包含一个Transform组件
+ * 3. 实体可以组织成层级结构
+ * 4. 实体可以被激活/禁用，影响其所有组件和子实体
  */
-export class Entity extends MaxObject {
-  /** 实体的标签 */
-  private _tag: string = '';
+export class Entity extends ReferResource {
+  /** 实体的标签，用于快速查找 */
+  tag: string = '';
+
   /** 实体是否激活 */
-  active: boolean = true;
+  private active: boolean = true;
+
   /** 实体的父级 */
-  parent: Entity | null = null;
-  /** 实体的子级 */
-  children: Entity[] = [];
+  private parent: Entity | null = null;
+
+  /** 实体的子级列表 */
+  private children: Entity[] = [];
+
   /** 实体所属的场景 */
-  private _scene: Scene | null = null;
-  /** 实体上的组件列表 */
-  components: Map<string, Component> = new Map();
+  private scene: Scene | null = null;
+
+  /** 实体上的组件映射 */
+  private components: Map<string, Component> = new Map();
+
   /** 实体的变换组件，每个实体都有一个变换组件 */
-  transform: Transform;
+  readonly transform: Transform;
 
   /**
    * 创建一个新的实体
@@ -30,42 +43,138 @@ export class Entity extends MaxObject {
   constructor (name: string = 'Entity', scene: Scene | null = null) {
     super();
     this.name = name;
-    this._scene = scene;
+    this.scene = scene;
+
+    // 创建并初始化Transform组件
     this.transform = new Transform(this);
-    this.components.set('Transform', this.transform);
+    this.components.set(Transform.name, this.transform);
+    this.transform._awake();
   }
 
-  /** 生成唯一ID */
-  private static _idCounter: number = 0;
+  /**
+   * 获取实体激活状态
+   * 实体只有在自身和所有父级都激活时才真正激活
+   */
+  getActive (): boolean {
+    if (!this.active) {
+      return false;
+    }
 
-  /** 获取实体标签 */
-  get tag (): string {
-    return this._tag;
+    // 检查父级链上是否所有实体都激活
+    let currentParent = this.parent;
+
+    while (currentParent) {
+      if (!currentParent.active) {
+        return false;
+      }
+      currentParent = currentParent.parent;
+    }
+
+    return true;
   }
 
-  /** 设置实体标签 */
-  set tag (value: string) {
-    this._tag = value;
+  /**
+   * 设置实体的激活状态
+   */
+  setActive (value: boolean): void {
+    if (this.active === value) {
+      return;
+    }
+
+    this.active = value;
+    this.updateActiveState();
   }
 
-  /** 获取实体所属的场景 */
-  get scene (): Scene | null {
-    return this._scene;
-  }
-
-  /** 设置实体所属的场景 */
-  set scene (value: Scene | null) {
-    this._scene = value;
-  }
-
-  /** 获取实体的父级 */
-  get parent (): Entity | null {
+  /**
+   * 获取实体的父级
+   */
+  getParent (): Entity | null {
     return this.parent;
   }
 
-  /** 设置实体的父级 */
-  set parent (value: Entity | null) {
-    if (this.parent === value) {return;}
+  /**
+   * 获取实体的子级列表（只读）
+   */
+  getChildren (): ReadonlyArray<Entity> {
+    return this.children;
+  }
+
+  /**
+   * 获取实体所属的场景
+   */
+  getScene (): Scene | null {
+    return this.scene;
+  }
+
+  /**
+   * 设置实体所属的场景
+   * @internal 内部使用，不应直接调用
+   */
+  _setScene (scene: Scene | null): void {
+    if (this.scene === scene) {
+      return;
+    }
+
+    // 先从旧场景中移除
+    if (this.scene && scene === null) {
+      this.scene.removeEntity(this);
+    }
+
+    this.scene = scene;
+
+    // 递归设置所有子实体的场景
+    for (const child of this.children) {
+      child._setScene(scene);
+    }
+  }
+
+  /**
+   * 更新实体的激活状态
+   * @private
+   */
+  private updateActiveState (): void {
+    const isReallyActive = this.getActive();
+
+    // 更新所有组件状态
+    for (const component of this.components.values()) {
+      if (isReallyActive && component.getEnabled()) {
+        if (component.getLifecycleState() === ComponentLifecycleState.DISABLED) {
+          component._enable();
+        }
+      } else if (component.getLifecycleState() === ComponentLifecycleState.ENABLED) {
+        component._disable();
+      }
+    }
+
+    // 递归更新所有子实体状态
+    for (const child of this.children) {
+      child.updateActiveState();
+    }
+  }
+
+  /**
+   * 设置实体的父级
+   * @param parent 新的父级实体
+   * @returns 此实体，用于链式调用
+   */
+  setParent (parent: Entity | null): this {
+    if (this.parent === parent) {
+      return this;
+    }
+
+    // 防止循环引用
+    if (parent) {
+      let p = parent;
+
+      while (p) {
+        if (p === this) {
+          console.error(`[Entity] 检测到循环引用: 无法将实体 ${parent.name} 设置为 ${this.name} 的父级`);
+
+          return this;
+        }
+        p = p.parent as Entity;
+      }
+    }
 
     // 从原父级中移除
     if (this.parent) {
@@ -77,132 +186,248 @@ export class Entity extends MaxObject {
     }
 
     // 设置新父级
-    this.parent = value;
+    this.parent = parent;
+
+    // 设置变换父级
+    this.transform.setParent(parent ? parent.transform : null);
 
     // 添加到新父级的子级列表
-    if (value) {
-      value.children.push(this);
+    if (parent) {
+      parent.children.push(this);
+
+      // 继承场景
+      if (parent.scene !== this.scene) {
+        this._setScene(parent.scene);
+      }
     }
 
-    // 更新世界变换
-    this.transform.updateWorldMatrix();
+    // 更新激活状态
+    this.updateActiveState();
+
+    return this;
   }
 
-  /** 获取实体的子级列表 */
-  get children (): Entity[] {
-    return this.children.slice();
-  }
+  /**
+   * 添加子实体
+   * @param child 要添加的子实体
+   * @returns 此实体，用于链式调用
+   */
+  addChild (child: Entity): this {
+    if (child === this) {
+      console.error('[Entity] 无法将实体添加为自身的子级');
 
-  /** 添加子实体 */
-  addChild (child: Entity): void {
-    if (child.parent) {
-      child.parent.removeChild(child);
+      return this;
     }
-    child.parent = this;
-    this.children.push(child);
-    child.transform.parent = this.transform;
+
+    child.setParent(this);
+
+    return this;
   }
 
-  /** 移除子实体 */
-  removeChild (child: Entity): void {
-    const index = this.children.indexOf(child);
-
-    if (index !== -1) {
-      this.children.splice(index, 1);
-      child.parent = null;
-      child.transform.parent = null;
+  /**
+   * 移除子实体
+   * @param child 要移除的子实体
+   * @returns 此实体，用于链式调用
+   */
+  removeChild (child: Entity): this {
+    if (!child || child.parent !== this) {
+      return this;
     }
+
+    child.setParent(null);
+
+    return this;
   }
 
-  /** 检查是否包含特定组件 */
-  hasComponent<T extends Component>(componentType: { new(...args: any[]): T }): boolean {
+  /**
+   * 查找子实体
+   * @param name 子实体名称
+   * @param recursive 是否递归查找
+   * @returns 找到的实体，未找到则返回null
+   */
+  findChild (name: string, recursive: boolean = false): Entity | null {
+    // 直接子级中查找
+    for (const child of this.children) {
+      if (child.name === name) {
+        return child;
+      }
+    }
+
+    // 如果启用递归，继续在子级的子级中查找
+    if (recursive) {
+      for (const child of this.children) {
+        const found = child.findChild(name, true);
+
+        if (found) {
+          return found;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * 查找具有特定组件的子实体
+   * @param componentType 组件类型
+   * @param recursive 是否递归查找
+   * @returns 具有该组件的子实体列表
+   */
+  findChildrenWithComponent<T extends Component>(
+    componentType: new (...args: any[]) => T,
+    recursive: boolean = false
+  ): Entity[] {
+    const result: Entity[] = [];
+
+    for (const child of this.children) {
+      if (child.hasComponent(componentType)) {
+        result.push(child);
+      }
+
+      if (recursive) {
+        const childResults = child.findChildrenWithComponent(componentType, true);
+
+        result.push(...childResults);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * 检查实体是否具有指定组件
+   * @param componentType 组件类型
+   * @returns 是否具有该组件
+   */
+  hasComponent<T extends Component>(componentType: new (...args: any[]) => T): boolean {
     return this.components.has(componentType.name);
   }
 
-  /** 添加组件 */
+  /**
+   * 添加组件到实体
+   * @param component 要添加的组件
+   * @returns 添加的组件
+   */
   addComponent<T extends Component>(component: T): T {
-    const type = component.constructor.name;
+    if (this.components.has(component.constructor.name)) {
+      console.warn(`[Entity] 实体 ${this.name} 已经包含组件 ${component.constructor.name}，忽略添加请求`);
 
-    if (this.components.has(type)) {
-      throw new Error(`Component ${type} already exists on entity ${this.name}`);
+      return component;
     }
-    this.components.set(type, component);
-    component.onAwake();
-    if (this.active) {
-      component.onEnable();
-    }
+
+    this.components.set(component.constructor.name, component);
+    component._awake();
 
     return component;
   }
 
-  /** 获取组件 */
+  /**
+   * 创建并添加组件
+   * @param componentType 组件类型
+   * @returns 创建的组件
+   */
+  createComponent<T extends Component>(componentType: new (entity: Entity) => T): T {
+    if (this.components.has(componentType.name)) {
+      console.warn(`[Entity] 实体 ${this.name} 已经包含组件 ${componentType.name}，移除旧组件并创建新组件`);
+      this.removeComponent(componentType);
+    }
+
+    const component = new componentType(this);
+
+    return this.addComponent(component);
+  }
+
+  /**
+   * 获取组件
+   * @param type 组件类型
+   * @returns 找到的组件，未找到则返回null
+   */
   getComponent<T extends Component>(type: new (entity: Entity) => T): T | null {
     return this.components.get(type.name) as T || null;
   }
 
-  /** 获取所有组件 */
+  /**
+   * 获取实体上的所有组件
+   * @returns 组件数组
+   */
   getComponents (): Component[] {
     return Array.from(this.components.values());
   }
 
-  /** 移除组件 */
-  removeComponent<T extends Component>(type: new (entity: Entity) => T): void {
-    const component = this.getComponent(type);
+  /**
+   * 移除组件
+   * @param type 要移除的组件类型
+   * @returns 此实体，用于链式调用
+   */
+  removeComponent<T extends Component>(type: new (entity: Entity) => T): this {
+    if (type instanceof Transform) {
+      console.error('[Entity] 无法移除Transform组件');
+
+      return this;
+    }
+
+    const component = this.components.get(type.name);
 
     if (component) {
-      component.onDisable();
-      component.destroy();
       this.components.delete(type.name);
-    }
-  }
-
-  /** 设置激活状态 */
-  setActive (active: boolean): void {
-    if (this.active === active) {return;}
-    this.active = active;
-
-    // 更新组件状态
-    for (const component of this.components.values()) {
-      if (active) {
-        component.onEnable();
-      } else {
-        component.onDisable();
-      }
-    }
-
-    // 更新子实体状态
-    for (const child of this.children) {
-      child.setActive(active);
-    }
-  }
-
-  /** 销毁实体 */
-  destroy (): void {
-    if (this.destroyed) {return;}
-
-    // 销毁所有组件
-    for (const component of this.components.values()) {
       component.destroy();
     }
-    this.components.clear();
 
-    // 销毁所有子实体
-    for (const child of this.children) {
+    return this;
+  }
+
+  /**
+   * 设置实体的激活状态
+   * @param active 是否激活
+   * @returns 此实体，用于链式调用
+   */
+  activate (active: boolean): this {
+    this.setActive(active);
+
+    return this;
+  }
+
+  /**
+   * 销毁实体及其所有组件
+   */
+  override destroy (): void {
+    if (this.isDestroyed()) {
+      return;
+    }
+
+    // 移除所有子实体
+    const childrenToRemove = [...this.children];
+
+    for (const child of childrenToRemove) {
+      child.setParent(null);
       child.destroy();
     }
-    this.children = [];
 
-    // 从父实体中移除
+    // 断开与父级的连接
     if (this.parent) {
-      this.parent.removeChild(this);
+      this.setParent(null);
     }
 
     // 从场景中移除
-    if (this._scene) {
-      this._scene.removeEntity(this);
-      this._scene = null;
+    if (this.scene) {
+      this.scene.removeEntity(this);
+      this.scene = null;
     }
 
+    // 销毁所有组件（先销毁非Transform组件）
+    const componentsToDestroy = Array.from(this.components.values())
+      .filter(comp => !(comp instanceof Transform));
+
+    for (const component of componentsToDestroy) {
+      component.destroy();
+    }
+
+    // 最后销毁Transform组件
+    if (this.transform) {
+      this.transform.destroy();
+    }
+
+    this.components.clear();
     super.destroy();
   }
 }

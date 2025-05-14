@@ -1,5 +1,5 @@
 import { Animation, InterpolationType, LoopMode } from './Animation';
-import { ReferResource } from '../base/ReferResource';
+import { ReferResource } from '../base/refer-resource';
 
 /**
  * 关键帧数据
@@ -36,8 +36,6 @@ export interface AnimationTrack<T> {
  * 包含多个动画通道，每个通道控制物体的不同属性
  */
 export class AnimationClip extends ReferResource {
-  /** 片段名称 */
-  private name: string;
   /** 动画通道列表 */
   private tracks: AnimationTrack<any>[] = [];
   /** 动画时长 */

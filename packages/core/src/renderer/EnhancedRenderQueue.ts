@@ -2,7 +2,7 @@ import { RenderElement } from './RenderElement';
 import { SubRenderElement } from './SubRenderElement';
 import { Material } from '../material/Material';
 import { Shader } from '../shader/Shader';
-import { ObjectPoolManager } from '../base/ObjectPoolManager';
+import { ObjectPoolManager } from '../base/object-pool-manager';
 
 /**
  * 渲染队列排序模式

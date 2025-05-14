@@ -1,5 +1,5 @@
 import { Vector2, Vector3 } from '@maxellabs/math';
-import { ReferResource } from '../base/ReferResource';
+import { ReferResource } from '../base/refer-resource';
 
 /**
  * 网格属性类型

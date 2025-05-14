@@ -21,6 +21,11 @@ export class Vector3 {
   static readonly ONE = Object.freeze(new Vector3(1.0, 1.0, 1.0));
   static readonly ZERO = Object.freeze(new Vector3(0.0, 0.0, 0.0));
 
+  // 轴向常量
+  static readonly POSITIVE_X = new Vector3(1.0, 0.0, 0.0);
+  static readonly POSITIVE_Y = new Vector3(0.0, 1.0, 0.0);
+  static readonly POSITIVE_Z = new Vector3(0.0, 0.0, 1.0);
+
   // 使用TypedArray而不是单独的属性，提高内存密度和访问速度
   private elements: Float32Array;
 
