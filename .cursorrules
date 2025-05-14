@@ -38,3 +38,8 @@
 - 对异步操作使用 Promise 或 async/await
 - 使用 JSDoc 编写函数注释
 - 每个组件必须包含 README.md 文件，说明组件的用途和 API
+
+1. 私有变量不使用下划线()前缀
+2. 使用getXXX()方法替代getter
+3. 移除所有包含下划线()的变量名
+4. 使用setXXX()方法替代setter

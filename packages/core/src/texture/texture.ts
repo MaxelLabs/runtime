@@ -1,4 +1,4 @@
-import { ReferResource } from '../base/ReferResource';
+import { ReferResource } from '../base/refer-resource';
 
 /**
  * 纹理过滤模式

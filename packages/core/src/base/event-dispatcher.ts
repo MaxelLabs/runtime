@@ -1,4 +1,4 @@
-import { MaxObject } from './maxObject';
+import { MaxObject } from './max-object';
 import { Event } from './event';
 /**
  * 事件监听器接口

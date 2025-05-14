@@ -1,5 +1,5 @@
 import { Animation, InterpolationType, LoopMode } from './Animation';
-import { ReferResource } from '../base/ReferResource';
+import { ReferResource } from '../base/refer-resource';
 
 /**
  * 关键帧数据

@@ -1,6 +1,6 @@
-import type { ObjectPoolStats } from './ObjectPool';
-import { ObjectPool } from './ObjectPool';
-import { EventDispatcher } from './eventDispatcher';
+import type { ObjectPoolStats } from './object-pool';
+import { ObjectPool } from './object-pool';
+import { EventDispatcher } from './event-dispatcher';
 
 /**
  * 对象池管理器事件类型
@@ -196,7 +196,7 @@ export class ObjectPoolManager extends EventDispatcher {
       if (this.pools.has(fullId)) {
         const pool = this.pools.get(fullId) as ObjectPool<any>;
 
-        // 完全销毁对象池，而不仅是清空
+        // 完全销毁对象池，而不是清空
         pool.destroy();
         this.pools.delete(fullId);
 
@@ -218,54 +218,62 @@ export class ObjectPoolManager extends EventDispatcher {
   }
 
   /**
-   * 获取所有对象池统计信息
+   * 获取所有对象池的状态
    * @param detailed 是否包含详细统计信息
-   * @returns 所有对象池的统计信息
+   * @returns 对象池状态映射
    */
   getAllPoolStats (detailed: boolean = false): Map<string, ObjectPoolStats> {
     const stats = new Map<string, ObjectPoolStats>();
 
-    try {
-      for (const [id, pool] of this.pools.entries()) {
-        const poolStatus = pool.getStatus();
+    for (const [id, pool] of this.pools.entries()) {
+      const poolStats = pool.getStatus();
 
-        stats.set(id, poolStatus);
+      // 如果不需要详细信息，删除非必要字段
+      if (!detailed) {
+        delete poolStats.totalGets;
+        delete poolStats.totalCreated;
+        delete poolStats.totalReleased;
       }
-    } catch (error) {
-      this.dispatchEvent(ObjectPoolManagerEventType.ERROR, {
-        message: '获取对象池统计数据失败',
-        error,
-      });
-      console.error('[ObjectPoolManager] 获取对象池统计数据失败:', error);
+
+      stats.set(id, poolStats);
     }
 
     return stats;
   }
 
   /**
-   * 更新对象池的配置
+   * 更新对象池配置
    * @param id 对象池ID
-   * @param options 更新的配置选项
+   * @param options 新配置选项
    * @returns 是否成功更新
    */
   updatePoolConfig (id: string, options: Partial<ObjectPoolOptions>): boolean {
     try {
-      const pool = this.getPool(id);
+      const fullId = id.includes(':') ? id : `default:${id}`;
+      const pool = this.getPool(fullId);
 
       if (!pool) {
+        console.warn(`[ObjectPoolManager] 找不到对象池 '${fullId}'`);
+
         return false;
       }
 
+      // 更新最大容量
       if (options.maxSize !== undefined) {
         pool.setMaxSize(options.maxSize);
       }
 
+      // 预热至初始容量
+      if (options.initialCapacity !== undefined) {
+        const currentSize = pool.getSize();
+
+        if (currentSize < options.initialCapacity) {
+          pool.preAllocate(options.initialCapacity - currentSize);
+        }
+      }
+
       return true;
     } catch (error) {
-      this.dispatchEvent(ObjectPoolManagerEventType.ERROR, {
-        message: `更新对象池 '${id}' 配置失败`,
-        error,
-      });
       console.error(`[ObjectPoolManager] 更新对象池 '${id}' 配置失败:`, error);
 
       return false;
@@ -273,16 +281,19 @@ export class ObjectPoolManager extends EventDispatcher {
   }
 
   /**
-   * 预热指定对象池
+   * 预热对象池
    * @param id 对象池ID
-   * @param count 预创建数量
+   * @param count 预热数量
    * @returns 是否成功预热
    */
   warmUpPool (id: string, count: number): boolean {
     try {
-      const pool = this.getPool(id);
+      const fullId = id.includes(':') ? id : `default:${id}`;
+      const pool = this.getPool(fullId);
 
       if (!pool) {
+        console.warn(`[ObjectPoolManager] 找不到对象池 '${fullId}'`);
+
         return false;
       }
 
@@ -302,57 +313,48 @@ export class ObjectPoolManager extends EventDispatcher {
 
   /**
    * 预热所有对象池
-   * @param count 每个池的预创建数量
-   * @returns 预热结果，键为池ID，值为是否成功
+   * @param count 每个池的预热数量
+   * @returns 预热结果映射
    */
   warmUpAllPools (count: number): Map<string, boolean> {
     const results = new Map<string, boolean>();
 
-    for (const [id, pool] of this.pools.entries()) {
-      try {
-        const result = pool.warmUp(count);
+    for (const [id] of this.pools) {
+      const success = this.warmUpPool(id, count);
 
-        results.set(id, result.success);
-      } catch (error) {
-        this.dispatchEvent(ObjectPoolManagerEventType.ERROR, {
-          message: `预热对象池 '${id}' 失败`,
-          error,
-        });
-        console.error(`[ObjectPoolManager] 预热对象池 '${id}' 失败:`, error);
-        results.set(id, false);
-      }
+      results.set(id, success);
     }
 
     return results;
   }
 
   /**
-   * 清理所有对象池
+   * 清空所有对象池
    */
   clearAllPools (): void {
     try {
-      for (const pool of this.pools.values()) {
+      for (const [, pool] of this.pools) {
         pool.clear();
       }
     } catch (error) {
       this.dispatchEvent(ObjectPoolManagerEventType.ERROR, {
-        message: '清理所有对象池失败',
+        message: '清空所有对象池失败',
         error,
       });
-      console.error('[ObjectPoolManager] 清理所有对象池失败:', error);
+      console.error('[ObjectPoolManager] 清空所有对象池失败:', error);
     }
   }
 
   /**
-   * 销毁所有对象池并清理资源
+   * 销毁所有对象池
    */
   destroyAllPools (): void {
     try {
-      for (const [id, pool] of this.pools.entries()) {
-        pool.destroy();
-        this.dispatchEvent(ObjectPoolManagerEventType.POOL_DESTROYED, { poolId: id });
+      const poolIds = Array.from(this.pools.keys());
+
+      for (const id of poolIds) {
+        this.destroyPool(id);
       }
-      this.pools.clear();
     } catch (error) {
       this.dispatchEvent(ObjectPoolManagerEventType.ERROR, {
         message: '销毁所有对象池失败',
@@ -363,80 +365,77 @@ export class ObjectPoolManager extends EventDispatcher {
   }
 
   /**
-   * 启用自动性能分析
+   * 启用或禁用自动性能分析
    * @param enabled 是否启用
-   * @param interval 分析间隔（毫秒）
+   * @param interval 分析间隔(毫秒)
    */
   enableAutoAnalysis (enabled: boolean, interval: number = 10000): void {
     this.autoAnalysis = enabled;
-    this.analysisInterval = interval;
+    this.analysisInterval = Math.max(1000, interval);
     this.lastAnalysisTime = Date.now();
   }
 
   /**
-   * 执行性能分析
-   * @param force 是否强制执行，忽略时间间隔
-   * @returns 性能分析结果
+   * 分析对象池性能
+   * @param force 是否强制分析，忽略时间间隔
+   * @returns 对象池状态映射，如果未到分析时间则返回null
    */
   analyzePerformance (force: boolean = false): Map<string, ObjectPoolStats> | null {
-    try {
-      const currentTime = Date.now();
+    const now = Date.now();
+    const elapsed = now - this.lastAnalysisTime;
 
-      if (!force && currentTime - this.lastAnalysisTime < this.analysisInterval) {
-        return null;
-      }
-
-      this.lastAnalysisTime = currentTime;
-      const stats = this.getAllPoolStats(true);
-
-      // 计算汇总信息
-      let totalObjects = 0;
-      let totalInUse = 0;
-      const totalPoolCount = stats.size;
-
-      for (const stat of stats.values()) {
-        totalObjects += stat.total;
-        totalInUse += stat.inUse;
-      }
-
-      const usage = totalObjects > 0 ? totalInUse / totalObjects : 0;
-
-      // 检查是否超过内存警告阈值
-      if (totalObjects > this.globalOptions.memoryWarningThreshold!) {
-        this.dispatchEvent(ObjectPoolManagerEventType.MEMORY_WARNING, {
-          timestamp: currentTime,
-          totalObjects,
-          threshold: this.globalOptions.memoryWarningThreshold,
-          message: `对象池总对象数 ${totalObjects} 超过警告阈值 ${this.globalOptions.memoryWarningThreshold}`,
-        });
-      }
-
-      // 触发性能分析事件
-      this.dispatchEvent(ObjectPoolManagerEventType.PERFORMANCE_ANALYSIS, {
-        timestamp: currentTime,
-        stats,
-        summary: {
-          poolCount: totalPoolCount,
-          totalObjects,
-          totalInUse,
-          usage,
-        },
-      });
-
-      return stats;
-    } catch (error) {
-      this.dispatchEvent(ObjectPoolManagerEventType.ERROR, {
-        message: '执行性能分析失败',
-        error,
-      });
-      console.error('[ObjectPoolManager] 执行性能分析失败:', error);
-
+    // 如果未启用自动分析且未强制，返回null
+    if (!this.autoAnalysis && !force) {
       return null;
     }
+
+    // 如果未到分析间隔且未强制，返回null
+    if (elapsed < this.analysisInterval && !force) {
+      return null;
+    }
+
+    this.lastAnalysisTime = now;
+
+    // 收集状态
+    const stats = this.getAllPoolStats(true);
+    let totalObjects = 0;
+    let totalActive = 0;
+    let hasWarning = false;
+
+    // 计算总数并检查内存警告阈值
+    for (const [, poolStats] of stats) {
+      totalObjects += poolStats.total;
+      totalActive += poolStats.inUse;
+
+      // 检查是否超出警告阈值
+      if (poolStats.total > this.globalOptions.memoryWarningThreshold!) {
+        hasWarning = true;
+      }
+    }
+
+    // 发出内存警告事件
+    if (hasWarning) {
+      this.dispatchEvent(ObjectPoolManagerEventType.MEMORY_WARNING, {
+        totalObjects,
+        totalActive,
+        warning: `对象池总对象数量 ${totalObjects} 超过警告阈值`,
+        pools: stats,
+      });
+    }
+
+    // 发出性能分析事件
+    this.dispatchEvent(ObjectPoolManagerEventType.PERFORMANCE_ANALYSIS, {
+      totalObjects,
+      totalActive,
+      pools: stats,
+      timestamp: now,
+    });
+
+    return stats;
   }
 
   /**
-   * 更新函数，在引擎每帧调用
+   * 更新对象池管理器，通常在每帧调用
    */
   update (): void {
     if (this.autoAnalysis) {
@@ -445,48 +444,44 @@ export class ObjectPoolManager extends EventDispatcher {
   }
 
   /**
-   * 获取池中总对象数量
-   * @returns 所有对象池中的对象总数
+   * 获取所有对象池的总对象数量
+   * @returns 总对象数量
    */
   getTotalObjectCount (): number {
-    let count = 0;
+    let total = 0;
 
-    try {
-      for (const pool of this.pools.values()) {
-        count += pool.getStatus().total;
-      }
-    } catch (error) {
-      console.error('[ObjectPoolManager] 获取总对象数量失败:', error);
+    for (const [, pool] of this.pools) {
+      const status = pool.getStatus();
+
+      total += status.total;
     }
 
-    return count;
+    return total;
   }
 
   /**
-   * 获取当前使用中对象数量
-   * @returns 所有对象池中正在使用的对象总数
+   * 获取所有对象池的使用中对象数量
+   * @returns 使用中对象数量
    */
   getTotalInUseCount (): number {
-    let count = 0;
+    let total = 0;
 
-    try {
-      for (const pool of this.pools.values()) {
-        count += pool.getStatus().inUse;
-      }
-    } catch (error) {
-      console.error('[ObjectPoolManager] 获取使用中对象数量失败:', error);
+    for (const [, pool] of this.pools) {
+      const status = pool.getStatus();
+
+      total += status.inUse;
     }
 
-    return count;
+    return total;
   }
 
   /**
-   * 销毁管理器单例
-   * 用于应用程序退出或需要完全重置时
+   * 销毁单例实例
    */
   public static destroyInstance (): void {
     if (ObjectPoolManager.instance) {
       ObjectPoolManager.instance.destroyAllPools();
+      ObjectPoolManager.instance.destroy();
       ObjectPoolManager.instance = null as any;
     }
   }

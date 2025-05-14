@@ -2,8 +2,8 @@ import { Vector2, Vector3, Vector4, Matrix4, Color } from '@maxellabs/math';
 import { Texture } from '../texture/Texture';
 import { ShaderProperty } from './ShaderProperty';
 import { ShaderDataGroup } from './ShaderDataGroup';
-import { ObjectPool } from '../base/ObjectPool';
-import { ObjectPoolManager } from '../base/ObjectPoolManager';
+import { ObjectPool } from '../base/object-pool';
+import { ObjectPoolManager } from '../base/object-pool-manager';
 
 /**
  * 着色器数据类型枚举

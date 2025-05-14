@@ -1,4 +1,4 @@
-import { EventDispatcher } from './base/eventDispatcher';
+import { EventDispatcher } from './base/event-dispatcher';
 import { Container, ServiceKeys } from './base/IOC';
 import { Time } from './base/time';
 import { Scene } from './scene/Scene';

@@ -1,5 +1,5 @@
 import { Vector3 } from '@maxellabs/math';
-import { MaxObject } from '../base/maxObject';
+import { MaxObject } from '../base/max-object';
 
 /**
  * 碰撞检测模式
