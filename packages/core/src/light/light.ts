@@ -7,21 +7,21 @@ import { Vector3 } from '@maxellabs/math';
  */
 export enum LightType {
   /** 平行光 */
-  Directional,
+  Directional = 'directional',
   /** 点光源 */
-  Point,
+  Point = 'point',
   /** 聚光灯 */
-  Spot,
+  Spot = 'spot',
   /** 环境光 */
-  Ambient
+  Ambient = 'ambient'
 }
 
 /**
  * 光源基类
  */
 export abstract class Light extends Component {
-  /** 光源类型 */
-  protected _type: LightType;
+  // /** 光源类型 */
+  // protected type: LightType;
   /** 光源颜色 (RGB, 范围0-1) */
   protected _color: Vector3 = new Vector3(1, 1, 1);
   /** 光源强度 */
@@ -40,12 +40,7 @@ export abstract class Light extends Component {
    */
   constructor (entity: Entity, type: LightType) {
     super(entity);
-    this._type = type;
-  }
-
-  /** 获取光源类型 */
-  get type (): LightType {
-    return this._type;
+    this.type = type as string;
   }
 
   /** 获取光源颜色 */
@@ -136,7 +131,7 @@ export class DirectionalLight extends Light {
   /** 获取光源方向 */
   get direction (): Vector3 {
     // 使用实体的前方向作为光源方向
-    return this.entity.transform.forward;
+    return this.entity.transform.getForward();
   }
 
   /** 设置光源方向 */
@@ -147,9 +142,9 @@ export class DirectionalLight extends Light {
 
     this.entity.transform.lookAt(
       new Vector3(
-        this.entity.transform.worldPosition.x + normalizedDir.x,
-        this.entity.transform.worldPosition.y + normalizedDir.y,
-        this.entity.transform.worldPosition.z + normalizedDir.z
+        this.entity.transform.getWorldPosition().x + normalizedDir.x,
+        this.entity.transform.getWorldPosition().y + normalizedDir.y,
+        this.entity.transform.getWorldPosition().z + normalizedDir.z
       )
     );
   }
@@ -218,7 +213,7 @@ export class PointLight extends Light {
    * @returns 光照强度，范围0-1
    */
   calculateIntensityAt (position: Vector3): number {
-    const lightPos = this.entity.transform.worldPosition;
+    const lightPos = this.entity.transform.getWorldPosition();
     const distance = position.distanceTo(lightPos);
 
     if (distance >= this._range) {return 0;}
@@ -254,7 +249,7 @@ export class SpotLight extends Light {
   /** 获取光照方向 */
   get direction (): Vector3 {
     // 使用实体的前方向作为光源方向
-    return this.entity.transform.forward;
+    return this.entity.transform.getForward();
   }
 
   /** 获取光照范围 */
@@ -303,7 +298,7 @@ export class SpotLight extends Light {
    * @returns 光照强度，范围0-1
    */
   calculateIntensityAt (position: Vector3): number {
-    const lightPos = this.entity.transform.worldPosition;
+    const lightPos = this.entity.transform.getWorldPosition();
     const lightDir = this.direction;
 
     // 计算到目标点的向量

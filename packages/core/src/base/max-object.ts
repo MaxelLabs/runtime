@@ -10,7 +10,7 @@ export abstract class MaxObject {
   name: string = '';
 
   /** 对象的类型 */
-  readonly type: string;
+  protected type: string;
 
   /** 对象的创建时间(毫秒时间戳) */
   readonly createTime: number;

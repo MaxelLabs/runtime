@@ -39,12 +39,12 @@ export class PerspectiveCamera extends Camera {
     this.setFar(far);
 
     // 派发事件通知参数已更新
-    this.dispatchEvent(CameraEvent.PROJECTION_MATRIX_UPDATED, { 
+    this.eventDispatcher.dispatchEvent(CameraEvent.PROJECTION_MATRIX_UPDATED, {
       camera: this,
       fov,
       aspect,
       near,
-      far
+      far,
     });
 
     return this;
