@@ -1,5 +1,5 @@
 import type { Euler } from './euler';
-import type { Matrix4 } from './matrix4';
+import { Matrix4 } from './matrix4';
 import { clamp } from './utils';
 import { Vector3 } from './vector3';
 import type { Vector4 } from './vector4';
@@ -40,9 +40,15 @@ export class Quaternion {
     return result.invert();
   }
 
-  static fromMatrix (rotationMatrix: Matrix4) {
-    throw new Error('Method not implemented.');
+  static fromMatrix (rotationMatrix: Matrix4): Quaternion {
+    const quaternion = new Quaternion();
+
+    quaternion.setFromRotationMatrix(rotationMatrix);
+    quaternion.normalize();
+
+    return quaternion ;
   }
+
   private static readonly tempVec0: Vector3 = new Vector3();
 
   // 使用Float32Array存储四元数元素，提高内存访问效率
@@ -84,6 +90,51 @@ export class Quaternion {
     this.elements[3] = w;
 
     return this;
+  }
+
+  /**
+ * 根据方向向量和上向量设置四元数
+ * @param direction 前方向向量
+ * @param upVector 上方向向量
+ * @returns 返回自身，用于链式调用
+ */
+  setFromDirection (direction: Vector3, upVector: Vector3): this {
+  // 正规化方向向量
+    const normalizedDirection = Vector3.ZERO.copyFrom(direction).normalize();
+
+    // 如果方向向量接近零向量，则返回单位四元数
+    if (normalizedDirection.lengthSquared() < 0.0001) {
+      return this.identity();
+    }
+
+    // 计算右向量（确保垂直于上向量和方向向量）
+    const right = Vector3.cross(upVector, normalizedDirection).normalize();
+
+    // 如果右向量接近零向量（上向量和方向向量平行），使用一个后备方案
+    if (right.lengthSquared() < 0.0001) {
+    // 选择一个不与方向向量平行的轴
+      const fallbackUp = Math.abs(normalizedDirection.y) > 0.9
+        ? new Vector3(1, 0, 0)
+        : new Vector3(0, 1, 0);
+
+      right.copyFrom(Vector3.cross(fallbackUp, normalizedDirection)).normalize();
+    }
+
+    // 重新计算上向量以确保三个向量相互垂直
+    const correctedUp = Vector3.cross(normalizedDirection, right).normalize();
+
+    // 从这三个方向向量构建旋转矩阵
+    const lookMatrix = new Matrix4();
+
+    lookMatrix.set(
+      right.x, right.y, right.z, 0,
+      correctedUp.x, correctedUp.y, correctedUp.z, 0,
+      normalizedDirection.x, normalizedDirection.y, normalizedDirection.z, 0,
+      0, 0, 0, 1
+    );
+
+    // 从旋转矩阵设置四元数
+    return this.setFromRotationMatrix(lookMatrix);
   }
 
   /**

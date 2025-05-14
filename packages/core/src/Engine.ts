@@ -3,7 +3,7 @@ import { Container, ServiceKeys } from './base/IOC';
 import { Time } from './base/time';
 import { Scene } from './scene/Scene';
 import { SceneManager } from './scene/SceneManager';
-import { ResourceManager } from './resource/ResourceManager';
+import { ResourceManager } from './resource/resource-manager';
 import { RenderContext } from './renderer/RenderContext';
 import { IRenderer, RendererFactory, RendererOptions } from './renderer/RendererFactory';
 import { RendererType } from './renderer/RendererType';
