@@ -64,9 +64,9 @@ export class Scene extends EventDispatcher {
   constructor (name: string) {
     super();
     this.name = name;
-    this.id = `scene_${this.name}_${Math.floor(Math.random() * 10000)}`;
+    this.tag = `scene_${this.name}_${Math.floor(Math.random() * 10000)}`;
     this.container = Container.getInstance();
-    
+
     // 创建根实体
     this.rootEntity = new Entity('root');
     this.addEntity(this.rootEntity);

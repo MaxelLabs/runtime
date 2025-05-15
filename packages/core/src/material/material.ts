@@ -42,8 +42,6 @@ export interface MaterialParam {
  * 材质基类，定义物体的外观
  */
 export class Material extends ReferResource {
-  /** 材质名称 */
-  private _name: string;
   /** 是否启用 */
   private _enabled: boolean = true;
   /** 渲染面类型 */
@@ -71,17 +69,7 @@ export class Material extends ReferResource {
    */
   constructor (name: string = 'Material') {
     super();
-    this._name = name;
-  }
-
-  /** 获取材质名称 */
-  get name (): string {
-    return this._name;
-  }
-
-  /** 设置材质名称 */
-  set name (value: string) {
-    this._name = value;
+    this.name = name;
   }
 
   /** 获取是否启用 */
@@ -386,7 +374,7 @@ export class Material extends ReferResource {
    * @returns 材质副本
    */
   clone (): Material {
-    const material = new Material(this._name + ' (Clone)');
+    const material = new Material(this.name + ' (Clone)');
 
     material._enabled = this._enabled;
     material._cullFace = this._cullFace;
@@ -438,7 +426,7 @@ export class Material extends ReferResource {
    * 释放材质资源
    * 重写ReferResource的onDispose方法
    */
-  protected override onDispose (): void {
+  protected override onDestroy (): void {
     this.clearParams();
   }
 }

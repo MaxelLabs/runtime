@@ -4,7 +4,7 @@
  */
 export abstract class MaxObject {
   /** 对象的唯一标识 */
-  protected id: string;
+  readonly tag: string;
 
   /** 对象的名称 */
   name: string = '';
@@ -21,7 +21,7 @@ export abstract class MaxObject {
   constructor () {
     this.createTime = Date.now();
     this.type = this.constructor.name;
-    this.id = this.generateId();
+    this.tag = this.generateId();
   }
 
   /**

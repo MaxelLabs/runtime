@@ -1,12 +1,10 @@
 import { EventDispatcher } from './base/event-dispatcher';
 import { Container, ServiceKeys } from './base/IOC';
 import { Time } from './base/time';
-import { Scene } from './scene/Scene';
+import type { Scene } from './scene/Scene';
 import { SceneManager } from './scene/SceneManager';
 import { ResourceManager } from './resource/resource-manager';
 import { RenderContext } from './renderer/RenderContext';
-import { IRenderer, RendererFactory, RendererOptions } from './renderer/RendererFactory';
-import { RendererType } from './renderer/RendererType';
 import { InputManager } from './input/InputManager';
 
 /**
@@ -14,15 +12,15 @@ import { InputManager } from './input/InputManager';
  */
 export interface EngineOptions extends RendererOptions {
   /** 目标帧率 */
-  targetFrameRate?: number;
+  targetFrameRate?: number,
   /** 是否自动启动引擎 */
-  autoStart?: boolean;
+  autoStart?: boolean,
   /** 是否启用物理系统 */
-  enablePhysics?: boolean;
+  enablePhysics?: boolean,
   /** 是否启用音频系统 */
-  enableAudio?: boolean;
+  enableAudio?: boolean,
   /** 是否启用调试模式 */
-  debug?: boolean;
+  debug?: boolean,
 }
 
 /**
@@ -79,13 +77,13 @@ export class Engine extends EventDispatcher {
    * 创建引擎实例
    * @param options 引擎配置选项
    */
-  constructor(options: EngineOptions) {
+  constructor (options: EngineOptions) {
     super();
     this.options = options;
     this.targetFrameRate = options.targetFrameRate || 60;
     this.debugMode = options.debug || false;
     this.container = Container.getInstance();
-    
+
     // 注册自身到IOC容器
     this.container.register(ServiceKeys.ENGINE, this);
   }
@@ -94,9 +92,10 @@ export class Engine extends EventDispatcher {
    * 初始化引擎
    * @returns Promise<void>
    */
-  async initialize(): Promise<void> {
+  async initialize (): Promise<void> {
     if (this.state !== EngineState.UNINITIALIZED) {
       console.warn('Engine already initialized or initializing');
+
       return;
     }
 
@@ -132,7 +131,7 @@ export class Engine extends EventDispatcher {
       }
 
       this.state = EngineState.PAUSED;
-      
+
       // 触发初始化完成事件
       this.dispatchEvent('initialized');
     } catch (error) {
@@ -145,23 +144,24 @@ export class Engine extends EventDispatcher {
   /**
    * 启动引擎
    */
-  start(): void {
+  start (): void {
     if (this.state === EngineState.RUNNING) {
       return;
     }
 
     if (this.state === EngineState.UNINITIALIZED) {
       console.warn('Engine not initialized. Call initialize() first.');
+
       return;
     }
 
     this.state = EngineState.RUNNING;
     this.isRunning = true;
     this.lastFrameTime = performance.now();
-    
+
     // 开始主循环
     this.animationFrameId = requestAnimationFrame(this.mainLoop.bind(this));
-    
+
     // 触发启动事件
     this.dispatchEvent('started');
   }
@@ -169,19 +169,19 @@ export class Engine extends EventDispatcher {
   /**
    * 暂停引擎
    */
-  pause(): void {
+  pause (): void {
     if (this.state !== EngineState.RUNNING) {
       return;
     }
 
     this.state = EngineState.PAUSED;
     this.isRunning = false;
-    
+
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = 0;
     }
-    
+
     // 触发暂停事件
     this.dispatchEvent('paused');
   }
@@ -189,7 +189,7 @@ export class Engine extends EventDispatcher {
   /**
    * 恢复引擎
    */
-  resume(): void {
+  resume (): void {
     if (this.state !== EngineState.PAUSED) {
       return;
     }
@@ -200,7 +200,7 @@ export class Engine extends EventDispatcher {
   /**
    * 引擎主循环
    */
-  private mainLoop(timestamp: number): void {
+  private mainLoop (timestamp: number): void {
     if (!this.isRunning) {
       return;
     }
@@ -212,12 +212,13 @@ export class Engine extends EventDispatcher {
     // 如果时间间隔小于目标帧率时间，则跳过这一帧
     if (deltaTime < targetFrameTime) {
       this.animationFrameId = requestAnimationFrame(this.mainLoop.bind(this));
+
       return;
     }
 
     // 更新时间管理器
     this.time.update(deltaTime);
-    
+
     // 更新输入管理器
     this.inputManager.update();
 
@@ -238,16 +239,16 @@ export class Engine extends EventDispatcher {
    * 更新场景和所有游戏对象
    * @param deltaTime 时间差(秒)
    */
-  private update(deltaTime: number): void {
+  private update (deltaTime: number): void {
     const activeScene = this.sceneManager.activeScene;
-    
+
     if (!activeScene) {
       return;
     }
-    
+
     // 更新场景
     activeScene.update(deltaTime);
-    
+
     // 触发更新事件
     this.dispatchEvent('update', { deltaTime });
   }
@@ -255,19 +256,19 @@ export class Engine extends EventDispatcher {
   /**
    * 渲染当前场景
    */
-  private render(): void {
+  private render (): void {
     const activeScene = this.sceneManager.activeScene;
-    
+
     if (!activeScene) {
       return;
     }
-    
+
     // 设置渲染上下文
     this.renderContext.setScene(activeScene);
-    
+
     // 执行渲染
     this.renderer.render();
-    
+
     // 触发渲染事件
     this.dispatchEvent('render');
   }
@@ -276,7 +277,7 @@ export class Engine extends EventDispatcher {
    * 设置引擎目标帧率
    * @param fps 每秒帧数
    */
-  setTargetFrameRate(fps: number): void {
+  setTargetFrameRate (fps: number): void {
     this.targetFrameRate = Math.max(1, fps);
   }
 
@@ -285,7 +286,7 @@ export class Engine extends EventDispatcher {
    * @param name 场景名称
    * @returns 新创建的场景
    */
-  createScene(name?: string): Scene {
+  createScene (name?: string): Scene {
     return this.sceneManager.createScene(name);
   }
 
@@ -293,14 +294,14 @@ export class Engine extends EventDispatcher {
    * 加载场景
    * @param scene 要加载的场景
    */
-  loadScene(scene: Scene): void {
+  loadScene (scene: Scene): void {
     this.sceneManager.setActiveScene(scene);
   }
 
   /**
    * 销毁引擎实例
    */
-  destroy(): void {
+  destroy (): void {
     if (this.state === EngineState.DESTROYED) {
       return;
     }
@@ -327,10 +328,10 @@ export class Engine extends EventDispatcher {
     this.container.clear();
 
     this.state = EngineState.DESTROYED;
-    
+
     // 触发销毁事件
     this.dispatchEvent('destroyed');
-    
+
     // 调用父类销毁方法
     super.destroy();
   }
@@ -338,56 +339,56 @@ export class Engine extends EventDispatcher {
   /**
    * 获取当前引擎状态
    */
-  getState(): EngineState {
+  getState (): EngineState {
     return this.state;
   }
 
   /**
    * 获取场景管理器
    */
-  getSceneManager(): SceneManager {
+  getSceneManager (): SceneManager {
     return this.sceneManager;
   }
 
   /**
    * 获取资源管理器
    */
-  getResourceManager(): ResourceManager {
+  getResourceManager (): ResourceManager {
     return this.resourceManager;
   }
 
   /**
    * 获取输入管理器
    */
-  getInputManager(): InputManager {
+  getInputManager (): InputManager {
     return this.inputManager;
   }
 
   /**
    * 获取时间管理器
    */
-  getTime(): Time {
+  getTime (): Time {
     return this.time;
   }
 
   /**
    * 获取渲染器
    */
-  getRenderer(): IRenderer {
+  getRenderer (): IRenderer {
     return this.renderer;
   }
 
   /**
    * 获取渲染上下文
    */
-  getRenderContext(): RenderContext {
+  getRenderContext (): RenderContext {
     return this.renderContext;
   }
 
   /**
    * 是否处于调试模式
    */
-  isDebugMode(): boolean {
+  isDebugMode (): boolean {
     return this.debugMode;
   }
 
@@ -395,7 +396,7 @@ export class Engine extends EventDispatcher {
    * 设置调试模式
    * @param enabled 是否启用
    */
-  setDebugMode(enabled: boolean): void {
+  setDebugMode (enabled: boolean): void {
     this.debugMode = enabled;
   }
-} 
+}
