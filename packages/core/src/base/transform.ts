@@ -723,6 +723,14 @@ export class Transform extends Component {
   }
 
   /**
+   * 检查变换是否需要更新
+   * @returns 是否有变换需要更新
+   */
+  isDirty (): boolean {
+    return this.localMatrixDirty || this.worldMatrixDirty || this.directionsDirty;
+  }
+
+  /**
    * 销毁变换组件
    */
   override destroy (): void {

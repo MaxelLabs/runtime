@@ -2,6 +2,7 @@ import { Component } from '../base/component';
 import type { Entity } from '../base/entity';
 import { Vector3, Matrix4 } from '@maxellabs/math';
 import { ObjectPool } from '../base/object-pool';
+import { EventDispatcher } from '../base';
 
 /**
  * 相机事件类型
@@ -81,6 +82,8 @@ export class Camera extends Component {
     10,
     50
   );
+
+  eventDispatcher: EventDispatcher = new EventDispatcher();
 
   /**
    * 创建一个新的摄像机组件
@@ -360,7 +363,7 @@ export class Camera extends Component {
     this.projectionDirty = false;
 
     // 派发事件通知投影矩阵已更新
-    this.dispatchEvent(CameraEvent.PROJECTION_MATRIX_UPDATED, { camera: this });
+    this.eventDispatcher.dispatchEvent(CameraEvent.PROJECTION_MATRIX_UPDATED, { camera: this });
   }
 
   /**
@@ -374,7 +377,7 @@ export class Camera extends Component {
     this.viewDirty = false;
 
     // 派发事件通知视图矩阵已更新
-    this.dispatchEvent(CameraEvent.VIEW_MATRIX_UPDATED, { camera: this });
+    this.eventDispatcher.dispatchEvent(CameraEvent.VIEW_MATRIX_UPDATED, { camera: this });
   }
 
   /**
@@ -456,7 +459,7 @@ export class Camera extends Component {
   /**
    * 组件启用时调用
    */
-  onEnable (): void {
+  override onEnable (): void {
     super.onEnable();
 
     // 标记矩阵需要更新
@@ -464,7 +467,7 @@ export class Camera extends Component {
     this.projectionDirty = true;
 
     // 派发启用事件
-    this.dispatchEvent(CameraEvent.CAMERA_ENABLED, { camera: this });
+    this.eventDispatcher.dispatchEvent(CameraEvent.CAMERA_ENABLED, { camera: this });
   }
 
   /**
@@ -478,7 +481,7 @@ export class Camera extends Component {
     }
 
     // 派发更新事件
-    this.dispatchEvent(CameraEvent.CAMERA_UPDATE, { camera: this, deltaTime });
+    this.eventDispatcher.dispatchEvent(CameraEvent.CAMERA_UPDATE, { camera: this, deltaTime });
   }
 
   /**
@@ -486,7 +489,7 @@ export class Camera extends Component {
    */
   override destroy (): void {
     // 派发销毁前事件
-    this.dispatchEvent(CameraEvent.BEFORE_CAMERA_DESTROY, { camera: this });
+    this.eventDispatcher.dispatchEvent(CameraEvent.BEFORE_CAMERA_DESTROY, { camera: this });
 
     // 调用基类销毁方法
     super.destroy();

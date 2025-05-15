@@ -1,3 +1,3 @@
 export * from './Camera';
-export * from './PerspectiveCamera';
-export * from './OrthographicCamera';
+export * from './perspective-camera';
+export * from './orthographic-camera';

@@ -40,12 +40,12 @@ export class OrthographicCamera extends Camera {
     this.setFar(far);
 
     // 派发事件通知正交参数已更新
-    this.dispatchEvent(CameraEvent.PROJECTION_MATRIX_UPDATED, {
+    this.eventDispatcher.dispatchEvent(CameraEvent.PROJECTION_MATRIX_UPDATED, {
       camera: this,
       size,
       aspect,
       near,
-      far
+      far,
     });
 
     return this;
@@ -72,7 +72,7 @@ export class OrthographicCamera extends Camera {
     this.setFar(far);
 
     // 派发事件通知正交参数已更新
-    this.dispatchEvent(CameraEvent.PROJECTION_MATRIX_UPDATED, {
+    this.eventDispatcher.dispatchEvent(CameraEvent.PROJECTION_MATRIX_UPDATED, {
       camera: this,
       left, right, bottom, top, near, far,
     });

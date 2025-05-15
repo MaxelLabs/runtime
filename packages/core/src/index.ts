@@ -114,8 +114,8 @@ export * from './constants';
 
 // 相机系统
 export * from './camera/Camera';
-export * from './camera/PerspectiveCamera';
-export * from './camera/OrthographicCamera';
+export * from './camera/perspective-camera';
+export * from './camera/orthographic-camera';
 
 // // 几何体系统
 // export * from './geometry/geometry';

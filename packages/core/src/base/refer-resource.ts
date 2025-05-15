@@ -1,20 +1,4 @@
-import { ResourceManager } from '../resource/resource-manager';
 import { MaxObject } from './max-object';
-
-// 全局资源管理器单例
-let globalResourceManager: ResourceManager | null = null;
-
-/**
- * 获取全局资源管理器
- * @returns 全局ResourceManager实例
- */
-export function getResourceManager (): ResourceManager {
-  if (!globalResourceManager) {
-    globalResourceManager = new ResourceManager();
-  }
-
-  return globalResourceManager;
-}
 
 /**
  * 资源引用接口
