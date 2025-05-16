@@ -650,7 +650,7 @@ export class Geometry extends ReferResource {
    * 释放几何体资源
    * 重写ReferResource的onDispose方法
    */
-  protected override onDispose (): void {
+  protected override onDestroy (): void {
     this.clear();
   }
 }

@@ -35,6 +35,7 @@ export class EventDispatcher extends MaxObject {
   protected tag: string;
   /** 是否暂停事件分发 */
   protected paused: boolean = false;
+  protected eventDispatcherId: string;
 
   /**
    * 创建事件分发器
@@ -43,7 +44,7 @@ export class EventDispatcher extends MaxObject {
    */
   constructor (id?: string, tag?: string) {
     super();
-    this.id = id || `dispatcher-${Math.floor(Math.random() * 10000)}`;
+    this.eventDispatcherId = id || `dispatcher-${Math.floor(Math.random() * 10000)}`;
     this.tag = tag || '';
   }
 

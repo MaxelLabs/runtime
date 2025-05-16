@@ -60,7 +60,7 @@ export class ReferResource extends MaxObject implements IReferable {
    */
   addRef (): number {
     if (this.isDestroyed()) {
-      console.warn(`[ReferResource] 尝试增加已销毁资源的引用计数: ${this.id}(${this.name})`);
+      console.warn(`[ReferResource] 尝试增加已销毁资源的引用计数: ${this.tag}(${this.name})`);
 
       return this.referenceCount;
     }
@@ -144,7 +144,7 @@ export class ReferResource extends MaxObject implements IReferable {
     }
 
     if (this.referenceCount > 0) {
-      console.warn(`[ReferResource] 销毁仍被引用的资源: ${this.id}(${this.name}), 剩余引用: ${this.referenceCount}`);
+      console.warn(`[ReferResource] 销毁仍被引用的资源: ${this.tag}(${this.name}), 剩余引用: ${this.referenceCount}`);
     }
 
     this.onResourceDestroy();
