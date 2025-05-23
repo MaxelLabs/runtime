@@ -9,7 +9,7 @@ export class Canvas {
    * 创建画布
    * @param canvas HTML画布元素或Canvas ID
    */
-  constructor (canvas: HTMLCanvasElement | string) {
+  constructor(canvas: HTMLCanvasElement | string) {
     if (typeof canvas === 'string') {
       const element = document.getElementById(canvas) as HTMLCanvasElement;
 
@@ -25,42 +25,42 @@ export class Canvas {
   /**
    * 获取画布宽度
    */
-  getWidth (): number {
+  getWidth(): number {
     return this.element.width;
   }
 
   /**
    * 设置画布宽度
    */
-  setWidth (value: number) {
+  setWidth(value: number) {
     this.element.width = value;
   }
 
   /**
    * 获取画布高度
    */
-  getHeight (): number {
+  getHeight(): number {
     return this.element.height;
   }
 
   /**
    * 设置画布高度
    */
-  setHeight (value: number) {
+  setHeight(value: number) {
     this.element.height = value;
   }
 
   /**
    * 获取画布在网页中的宽度
    */
-  getClientWidth (): number {
+  getClientWidth(): number {
     return this.element.clientWidth;
   }
 
   /**
    * 获取画布在网页中的高度
    */
-  getClientHeight (): number {
+  getClientHeight(): number {
     return this.element.clientHeight;
   }
 
@@ -70,7 +70,7 @@ export class Canvas {
    * @param height 可选的设定高度，如果不指定则使用clientHeight
    * @returns 是否进行了大小调整
    */
-  resizeByClientSize (width?: number, height?: number): boolean {
+  resizeByClientSize(width?: number, height?: number): boolean {
     const clientWidth = width ?? this.getClientWidth();
     const clientHeight = height ?? this.getClientHeight();
 

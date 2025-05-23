@@ -8,8 +8,8 @@ import type { GLTexture } from '../resources/GLTexture';
 export class WebGLCommandBuffer implements IRHICommandBuffer {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private commands: Array<{
-    type: string,
-    params: any,
+    type: string;
+    params: any;
   }>;
   label?: string;
   private isDestroyed = false;
@@ -22,11 +22,11 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
    * @param commands 命令列表
    * @param label 可选标签
    */
-  constructor (
+  constructor(
     gl: WebGLRenderingContext | WebGL2RenderingContext,
     commands: Array<{
-      type: string,
-      params: any,
+      type: string;
+      params: any;
     }>,
     label?: string
   ) {
@@ -39,7 +39,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 执行命令缓冲区中的命令
    */
-  execute (): void {
+  execute(): void {
     if (this.isDestroyed) {
       console.warn('试图执行已销毁的命令缓冲区');
 
@@ -55,7 +55,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 执行单个命令
    */
-  private executeCommand (command: { type: string, params: any }): void {
+  private executeCommand(command: { type: string; params: any }): void {
     if (!command || typeof command !== 'object') {
       console.error('无效的命令对象', command);
 
@@ -148,7 +148,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 执行开始渲染通道命令
    */
-  private executeBeginRenderPass (params: any): void {
+  private executeBeginRenderPass(params: any): void {
     const gl = this.gl;
 
     // 如果要渲染到画布，不使用帧缓冲区
@@ -278,13 +278,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
           const textureView = colorAttachment.view;
           const glTexture = textureView.getGLTexture();
 
-          gl.framebufferTexture2D(
-            gl.FRAMEBUFFER,
-            gl.COLOR_ATTACHMENT0,
-            gl.TEXTURE_2D,
-            glTexture,
-            0
-          );
+          gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, glTexture, 0);
         }
 
         // 使用深度渲染缓冲区而不是深度纹理
@@ -297,12 +291,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
           depthTextureView.texture.width,
           depthTextureView.texture.height
         );
-        gl.framebufferRenderbuffer(
-          gl.FRAMEBUFFER,
-          gl.DEPTH_ATTACHMENT,
-          gl.RENDERBUFFER,
-          depthRenderBuffer
-        );
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthRenderBuffer);
 
         // 检查是否成功
         // const newStatus = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
@@ -324,13 +313,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
         const textureView = colorAttachment.view;
         const glTexture = textureView.getGLTexture();
 
-        gl.framebufferTexture2D(
-          gl.FRAMEBUFFER,
-          gl.COLOR_ATTACHMENT0,
-          gl.TEXTURE_2D,
-          glTexture,
-          0
-        );
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, glTexture, 0);
 
         // 检查这种简化配置是否可行
         const colorOnlyStatus = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
@@ -399,7 +382,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 获取帧缓冲区状态的描述信息
    */
-  private getFramebufferStatusMessage (status: number): string {
+  private getFramebufferStatusMessage(status: number): string {
     const gl = this.gl;
 
     switch (status) {
@@ -424,7 +407,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 执行结束渲染通道命令
    */
-  private executeEndRenderPass (): void {
+  private executeEndRenderPass(): void {
     const gl = this.gl;
 
     // 重置状态
@@ -446,7 +429,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 执行缓冲区到缓冲区复制命令
    */
-  private executeCopyBufferToBuffer (params: any): void {
+  private executeCopyBufferToBuffer(params: any): void {
     const { source, sourceOffset, destination, destinationOffset, size } = params;
 
     // WebGL不直接支持缓冲区间复制，需要通过CPU执行
@@ -454,14 +437,16 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
     const destBuffer = destination as GLBuffer;
 
     // 从源缓冲区读取数据
-    sourceBuffer.map('read', sourceOffset, size)
-      .then(mappedData => {
+    sourceBuffer
+      .map('read', sourceOffset, size)
+      .then((mappedData) => {
         // 更新目标缓冲区
         destBuffer.update(mappedData, destinationOffset);
 
         // 取消映射
         sourceBuffer.unmap();
-      }).catch(error => {
+      })
+      .catch((error) => {
         console.error('缓冲区复制失败:', error);
       });
   }
@@ -469,7 +454,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 执行缓冲区到纹理复制命令
    */
-  private executeCopyBufferToTexture (params: any): void {
+  private executeCopyBufferToTexture(params: any): void {
     const { source, destination, copySize } = params;
 
     const sourceBuffer = source.buffer as GLBuffer;
@@ -481,8 +466,9 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
     const bytesPerRow = source.bytesPerRow;
 
     // 从源缓冲区读取数据
-    sourceBuffer.map('read', offset, bytesPerRow * copySize[1] * copySize[2])
-      .then(mappedData => {
+    sourceBuffer
+      .map('read', offset, bytesPerRow * copySize[1] * copySize[2])
+      .then((mappedData) => {
         // 更新纹理
         destTexture.update(
           mappedData,
@@ -497,7 +483,8 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
 
         // 取消映射
         sourceBuffer.unmap();
-      }).catch(error => {
+      })
+      .catch((error) => {
         console.error('纹理复制失败:', error);
       });
   }
@@ -505,7 +492,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 执行纹理到缓冲区复制命令
    */
-  private executeCopyTextureToBuffer (params: any): void {
+  private executeCopyTextureToBuffer(params: any): void {
     const { source, destination, copySize } = params;
 
     const sourceTexture = source.texture as GLTexture;
@@ -545,15 +532,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
     const pixelData = new Uint8Array(dataSize);
 
     // 读取像素
-    gl.readPixels(
-      origin[0],
-      origin[1],
-      copySize[0],
-      copySize[1],
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      pixelData
-    );
+    gl.readPixels(origin[0], origin[1], copySize[0], copySize[1], gl.RGBA, gl.UNSIGNED_BYTE, pixelData);
 
     // 更新目标缓冲区
     destBuffer.update(pixelData, offset);
@@ -566,7 +545,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 执行纹理到纹理复制命令
    */
-  private executeCopyTextureToTexture (params: any): void {
+  private executeCopyTextureToTexture(params: any): void {
     const { source, destination, copySize } = params;
 
     const sourceTexture = source.texture as GLTexture;
@@ -579,10 +558,11 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
     const gl = this.gl;
 
     // 在WebGL2中，可以使用blitFramebuffer
-    if (gl instanceof WebGL2RenderingContext &&
-        sourceTexture.getDimension() === '2d' &&
-        destTexture.getDimension() === '2d') {
-
+    if (
+      gl instanceof WebGL2RenderingContext &&
+      sourceTexture.getDimension() === '2d' &&
+      destTexture.getDimension() === '2d'
+    ) {
       // 创建源帧缓冲
       const sourceFramebuffer = gl.createFramebuffer();
 
@@ -609,10 +589,14 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
 
       // 执行块传输
       gl.blitFramebuffer(
-        sourceOrigin[0], sourceOrigin[1],
-        sourceOrigin[0] + copySize[0], sourceOrigin[1] + copySize[1],
-        destOrigin[0], destOrigin[1],
-        destOrigin[0] + copySize[0], destOrigin[1] + copySize[1],
+        sourceOrigin[0],
+        sourceOrigin[1],
+        sourceOrigin[0] + copySize[0],
+        sourceOrigin[1] + copySize[1],
+        destOrigin[0],
+        destOrigin[1],
+        destOrigin[0] + copySize[0],
+        destOrigin[1] + copySize[1],
         gl.COLOR_BUFFER_BIT,
         gl.NEAREST
       );
@@ -643,15 +627,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
       const pixelData = new Uint8Array(dataSize);
 
       // 读取像素
-      gl.readPixels(
-        sourceOrigin[0],
-        sourceOrigin[1],
-        copySize[0],
-        copySize[1],
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        pixelData
-      );
+      gl.readPixels(sourceOrigin[0], sourceOrigin[1], copySize[0], copySize[1], gl.RGBA, gl.UNSIGNED_BYTE, pixelData);
 
       // 清理帧缓冲
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -674,7 +650,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 复制纹理到画布
    */
-  private executeCopyTextureToCanvas (params: any): void {
+  private executeCopyTextureToCanvas(params: any): void {
     const { source } = params;
     const gl = this.gl;
 
@@ -729,10 +705,22 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
     // 创建顶点数据
     const vertexData = new Float32Array([
       // x, y,   u, v
-      -1, -1, 0, 0,   // 左下
-      1, -1, 1, 0,   // 右下
-      -1, 1, 0, 1,   // 左上
-      1, 1, 1, 1,    // 右上
+      -1,
+      -1,
+      0,
+      0, // 左下
+      1,
+      -1,
+      1,
+      0, // 右下
+      -1,
+      1,
+      0,
+      1, // 左上
+      1,
+      1,
+      1,
+      1, // 右上
     ]);
 
     // 创建缓冲区
@@ -775,13 +763,12 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
     gl.deleteProgram(program);
     gl.deleteShader(vertexShader);
     gl.deleteShader(fragmentShader);
-
   }
 
   /**
    * 执行绘制命令
    */
-  private executeDraw (params: any): void {
+  private executeDraw(params: any): void {
     const gl = this.gl;
     const { vertexCount, firstVertex } = params;
 
@@ -857,7 +844,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 获取帧缓冲区状态的字符串描述
    */
-  private getFramebufferStatusString (status: number): string {
+  private getFramebufferStatusString(status: number): string {
     const gl = this.gl;
 
     switch (status) {
@@ -879,24 +866,31 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 获取WebGL错误代码的字符串描述
    */
-  private getGLErrorString (errorCode: number): string {
+  private getGLErrorString(errorCode: number): string {
     const gl = this.gl;
 
     switch (errorCode) {
-      case gl.INVALID_ENUM: return 'INVALID_ENUM';
-      case gl.INVALID_VALUE: return 'INVALID_VALUE';
-      case gl.INVALID_OPERATION: return 'INVALID_OPERATION';
-      case gl.OUT_OF_MEMORY: return 'OUT_OF_MEMORY';
-      case gl.CONTEXT_LOST_WEBGL: return 'CONTEXT_LOST_WEBGL';
-      case gl.INVALID_FRAMEBUFFER_OPERATION: return 'INVALID_FRAMEBUFFER_OPERATION';
-      default: return `未知错误(${errorCode})`;
+      case gl.INVALID_ENUM:
+        return 'INVALID_ENUM';
+      case gl.INVALID_VALUE:
+        return 'INVALID_VALUE';
+      case gl.INVALID_OPERATION:
+        return 'INVALID_OPERATION';
+      case gl.OUT_OF_MEMORY:
+        return 'OUT_OF_MEMORY';
+      case gl.CONTEXT_LOST_WEBGL:
+        return 'CONTEXT_LOST_WEBGL';
+      case gl.INVALID_FRAMEBUFFER_OPERATION:
+        return 'INVALID_FRAMEBUFFER_OPERATION';
+      default:
+        return `未知错误(${errorCode})`;
     }
   }
 
   /**
    * 执行索引绘制命令
    */
-  private executeDrawIndexed (params: any): void {
+  private executeDrawIndexed(params: any): void {
     const gl = this.gl;
 
     const { indexCount, instanceCount, firstIndex } = params;
@@ -925,7 +919,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 执行设置视口命令
    */
-  private executeSetViewport (params: any): void {
+  private executeSetViewport(params: any): void {
     const gl = this.gl;
     const { x, y, width, height, minDepth, maxDepth } = params;
 
@@ -940,7 +934,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 执行设置裁剪区域命令
    */
-  private executeSetScissor (params: any): void {
+  private executeSetScissor(params: any): void {
     const gl = this.gl;
     const { x, y, width, height, enabled } = params;
 
@@ -955,7 +949,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 执行设置管线命令
    */
-  private executeSetPipeline (params: any): void {
+  private executeSetPipeline(params: any): void {
     const { pipeline } = params;
 
     // 应用管线状态
@@ -965,7 +959,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 执行设置绑定组命令
    */
-  private executeSetBindGroup (params: any): void {
+  private executeSetBindGroup(params: any): void {
     const { bindGroup, program } = params;
 
     // 应用绑定
@@ -975,7 +969,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 执行设置顶点缓冲区命令
    */
-  private executeSetVertexBuffers (params: any): void {
+  private executeSetVertexBuffers(params: any): void {
     const { startSlot, buffers, pipeline } = params;
 
     if (!pipeline) {
@@ -1028,7 +1022,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 执行设置索引缓冲区命令
    */
-  private executeSetIndexBuffer (params: any): void {
+  private executeSetIndexBuffer(params: any): void {
     const gl = this.gl;
     const { buffer } = params;
 
@@ -1039,14 +1033,14 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   /**
    * 获取命令缓冲区标签
    */
-  getLabel (): string | undefined {
+  getLabel(): string | undefined {
     return this.label;
   }
 
   /**
    * 销毁资源
    */
-  destroy (): void {
+  destroy(): void {
     if (this.isDestroyed) {
       return;
     }

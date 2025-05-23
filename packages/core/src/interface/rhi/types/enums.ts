@@ -22,9 +22,9 @@ export enum RHIBackend {
 }
 
 /**
-   * 缓冲区用途标志
-   * 这些标志值可以按位组合
-   */
+ * 缓冲区用途标志
+ * 这些标志值可以按位组合
+ */
 export enum RHIBufferUsage {
   /** 用作顶点缓冲区 */
   VERTEX = 0x1,
@@ -47,8 +47,8 @@ export enum RHIBufferUsage {
 }
 
 /**
-   * 纹理格式
-   */
+ * 纹理格式
+ */
 export enum RHITextureFormat {
   // 8位格式
   R8_UNORM = 0,
@@ -144,9 +144,9 @@ export enum RHITextureFormat {
 }
 
 /**
-   * 纹理用途标志
-   * 这些标志值可以按位组合
-   */
+ * 纹理用途标志
+ * 这些标志值可以按位组合
+ */
 export enum RHITextureUsage {
   /** 纹理可以被采样 */
   SAMPLED = 0x1,
@@ -161,8 +161,8 @@ export enum RHITextureUsage {
 }
 
 /**
-   * 纹理维度
-   */
+ * 纹理维度
+ */
 export enum RHITextureDimension {
   /** 1D纹理 */
   TEX_1D = 0,
@@ -179,8 +179,8 @@ export enum RHITextureDimension {
 }
 
 /**
-   * 寻址模式
-   */
+ * 寻址模式
+ */
 export enum RHIAddressMode {
   /** 重复纹理 */
   REPEAT = 0,
@@ -195,8 +195,8 @@ export enum RHIAddressMode {
 }
 
 /**
-   * 过滤模式
-   */
+ * 过滤模式
+ */
 export enum RHIFilterMode {
   /** 最近邻过滤 */
   NEAREST = 0,
@@ -205,8 +205,8 @@ export enum RHIFilterMode {
 }
 
 /**
-   * 比较函数
-   */
+ * 比较函数
+ */
 export enum RHICompareFunction {
   /** 永不通过 */
   NEVER = 0,
@@ -227,9 +227,9 @@ export enum RHICompareFunction {
 }
 
 /**
-   * 着色器阶段标志
-   * 这些标志值可以按位组合
-   */
+ * 着色器阶段标志
+ * 这些标志值可以按位组合
+ */
 export enum RHIShaderStage {
   /** 顶点着色器 */
   VERTEX = 0x1,
@@ -250,8 +250,8 @@ export enum RHIShaderStage {
 }
 
 /**
-   * 图元拓扑
-   */
+ * 图元拓扑
+ */
 export enum RHIPrimitiveTopology {
   /** 点列表 */
   POINT_LIST = 0,
@@ -266,8 +266,8 @@ export enum RHIPrimitiveTopology {
 }
 
 /**
-   * 索引格式
-   */
+ * 索引格式
+ */
 export enum RHIIndexFormat {
   /** 16位无符号整数 */
   UINT16 = 0,
@@ -276,8 +276,8 @@ export enum RHIIndexFormat {
 }
 
 /**
-   * 顶点格式
-   */
+ * 顶点格式
+ */
 export enum RHIVertexFormat {
   // 8位格式
   UINT8X2 = 0,
@@ -317,8 +317,8 @@ export enum RHIVertexFormat {
 }
 
 /**
-   * 顶点步进模式
-   */
+ * 顶点步进模式
+ */
 export enum RHIVertexStepMode {
   /** 每个顶点 */
   VERTEX = 0,
@@ -327,8 +327,8 @@ export enum RHIVertexStepMode {
 }
 
 /**
-   * 查询类型
-   */
+ * 查询类型
+ */
 export enum RHIQueryType {
   /** 遮挡查询 */
   OCCLUSION = 0,
@@ -339,8 +339,8 @@ export enum RHIQueryType {
 }
 
 /**
-   * RHI错误类型
-   */
+ * RHI错误类型
+ */
 export enum RHIErrorType {
   /** 内部错误 */
   INTERNAL = 0,
@@ -353,9 +353,9 @@ export enum RHIErrorType {
 }
 
 /**
-   * RHI设备特性标志
-   * 这些标志值可以按位组合
-   */
+ * RHI设备特性标志
+ * 这些标志值可以按位组合
+ */
 export enum RHIFeatureFlags {
   /** 支持深度纹理 */
   DEPTH_TEXTURE = 0x1,
@@ -392,8 +392,8 @@ export enum RHIFeatureFlags {
 }
 
 /**
-   * 混合操作
-   */
+ * 混合操作
+ */
 export enum RHIBlendOperation {
   /** 加法 */
   ADD = 0,
@@ -408,8 +408,8 @@ export enum RHIBlendOperation {
 }
 
 /**
-   * 混合因子
-   */
+ * 混合因子
+ */
 export enum RHIBlendFactor {
   /** 零 */
   ZERO = 0,
@@ -444,8 +444,8 @@ export enum RHIBlendFactor {
 }
 
 /**
-   * 正面方向
-   */
+ * 正面方向
+ */
 export enum RHIFrontFace {
   /** 顺时针 */
   CW = 0,
@@ -454,8 +454,8 @@ export enum RHIFrontFace {
 }
 
 /**
-   * 剔除模式
-   */
+ * 剔除模式
+ */
 export enum RHICullMode {
   /** 不剔除 */
   NONE = 0,
@@ -466,8 +466,8 @@ export enum RHICullMode {
 }
 
 /**
-   * 模板操作
-   */
+ * 模板操作
+ */
 export enum RHIStencilOperation {
   /** 保持当前值 */
   KEEP = 0,
@@ -488,8 +488,8 @@ export enum RHIStencilOperation {
 }
 
 /**
-   * 图元类型
-   */
+ * 图元类型
+ */
 export enum RHIPrimitiveType {
   /** 点列表 */
   POINT_LIST = 0,
@@ -504,8 +504,8 @@ export enum RHIPrimitiveType {
 }
 
 /**
-   * 绑定组布局条目类型
-   */
+ * 绑定组布局条目类型
+ */
 export enum RHIBindGroupLayoutEntryType {
   /** 统一缓冲区 */
   UNIFORM_BUFFER = 0,

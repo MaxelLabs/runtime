@@ -21,7 +21,7 @@ export const hasSIMD = (): boolean => {
 /**
  * 优化的正弦函数，使用优化的缓存和小角度近似
  */
-export function fastSin (angle: number): number {
+export function fastSin(angle: number): number {
   // 角度归一化到 [0, 2π)
   const normalized = angle % PI2;
   const normalizedKey = Math.floor(normalized * 1000) | 0;
@@ -58,7 +58,7 @@ export function fastSin (angle: number): number {
 /**
  * 优化的余弦函数，使用优化的缓存
  */
-export function fastCos (angle: number): number {
+export function fastCos(angle: number): number {
   // 角度归一化到 [0, 2π)
   const normalized = angle % PI2;
   const normalizedKey = Math.floor(normalized * 1000) | 0;
@@ -73,7 +73,7 @@ export function fastCos (angle: number): number {
   if (Math.abs(normalized) < 0.01) {
     result = 1 - (normalized * normalized) / 2;
   } else {
-  // 标准库计算
+    // 标准库计算
     result = Math.cos(normalized);
   }
 
@@ -95,12 +95,20 @@ export function fastCos (angle: number): number {
 /**
  * 优化的平方根函数
  */
-export function fastSqrt (x: number): number {
+export function fastSqrt(x: number): number {
   // 对于常见值如 0, 1, 4, 9 等可以直接返回结果
-  if (x === 0 || x === 1) {return x;}
-  if (x === 4) {return 2;}
-  if (x === 9) {return 3;}
-  if (x === 16) {return 4;}
+  if (x === 0 || x === 1) {
+    return x;
+  }
+  if (x === 4) {
+    return 2;
+  }
+  if (x === 9) {
+    return 3;
+  }
+  if (x === 16) {
+    return 4;
+  }
 
   return Math.sqrt(x);
 }
@@ -108,12 +116,20 @@ export function fastSqrt (x: number): number {
 /**
  * 优化的反平方根函数 - 改进版本的 Quake III 算法
  */
-export function fastInvSqrt (x: number): number {
+export function fastInvSqrt(x: number): number {
   // 特殊值优化
-  if (x === 0) {return Infinity;}
-  if (x === 1) {return 1;}
-  if (x === 4) {return 0.5;}
-  if (x === 9) {return 1 / 3;}
+  if (x === 0) {
+    return Infinity;
+  }
+  if (x === 1) {
+    return 1;
+  }
+  if (x === 4) {
+    return 0.5;
+  }
+  if (x === 9) {
+    return 1 / 3;
+  }
 
   const halfx = 0.5 * x;
   const buffer = new ArrayBuffer(4);
@@ -126,8 +142,8 @@ export function fastInvSqrt (x: number): number {
   let y = floatView[0];
 
   // 两次迭代以提高精度
-  y = y * (1.5 - (halfx * y * y));
-  y = y * (1.5 - (halfx * y * y)); // 增加一次迭代提高精度
+  y = y * (1.5 - halfx * y * y);
+  y = y * (1.5 - halfx * y * y); // 增加一次迭代提高精度
 
   return y;
 }
@@ -135,26 +151,27 @@ export function fastInvSqrt (x: number): number {
 /**
  * 清除三角函数缓存
  */
-export function clearTrigCache (): void {
+export function clearTrigCache(): void {
   sinCache.clear();
   cosCache.clear();
 }
 
-export function isZero (v: number): boolean {
+export function isZero(v: number): boolean {
   return isNaN(v) || Math.abs(v) < NumberEpsilon;
 }
 
-export function isEqual (a: number, b: number): boolean {
+export function isEqual(a: number, b: number): boolean {
   return Math.abs(a - b) < NumberEpsilon || (a === Infinity && b === Infinity) || (a === -Infinity && b === -Infinity);
 }
 
 // http://www.rorydriscoll.com/2016/03/07/frame-rate-independent-damping-using-lerp/
-export const damp = (x: number, y: number, lambda: number, dt: number): number => lerp(x, y, 1 - Math.exp(-lambda * dt));
+export const damp = (x: number, y: number, lambda: number, dt: number): number =>
+  lerp(x, y, 1 - Math.exp(-lambda * dt));
 
 /**
  * 线性插值 - 优化版本
  */
-export function lerp (x: number, y: number, t: number): number {
+export function lerp(x: number, y: number, t: number): number {
   return (1 - t) * x + t * y;
 }
 
@@ -162,14 +179,14 @@ export const degToRad = (degrees: number): number => degrees * DEG2RAD;
 
 export const radToDeg = (radians: number): number => radians * RAD2DEG;
 
-export function clamp (value: number, min: number, max: number): number {
+export function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
 /**
  * 数值小数位截断
  */
-export function truncateDecimals (value: number, decimals: number): number {
+export function truncateDecimals(value: number, decimals: number): number {
   const factor = Math.pow(10, decimals);
 
   return Math.trunc(value * factor) / factor;
@@ -178,13 +195,13 @@ export function truncateDecimals (value: number, decimals: number): number {
 /**
  * 更高效的三次方计算
  */
-export function cube (x: number): number {
+export function cube(x: number): number {
   return x * x * x;
 }
 
 /**
  * 安全地计算两个数的商，避免除以零错误
  */
-export function safeDivide (a: number, b: number, fallback = 0): number {
+export function safeDivide(a: number, b: number, fallback = 0): number {
   return Math.abs(b) < NumberEpsilon ? fallback : a / b;
 }

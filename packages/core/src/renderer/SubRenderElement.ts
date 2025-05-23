@@ -31,7 +31,7 @@ export class SubRenderElement {
    * @param primitive 网格体
    * @param subPrimitive 子网格索引
    */
-  constructor (component: Component, material: Material, primitive: Mesh, subPrimitive: number = 0) {
+  constructor(component: Component, material: Material, primitive: Mesh, subPrimitive: number = 0) {
     this.component = component;
     this.material = material;
     this.primitive = primitive;
@@ -43,8 +43,9 @@ export class SubRenderElement {
    * @param flags 渲染队列标志
    * @returns 当前子渲染元素
    */
-  setRenderQueueFlags (flags: number): SubRenderElement {
+  setRenderQueueFlags(flags: number): SubRenderElement {
     this.renderQueueFlags = flags;
+
     return this;
   }
 
@@ -53,8 +54,9 @@ export class SubRenderElement {
    * @param distance 到相机的距离
    * @returns 当前子渲染元素
    */
-  setDistanceForSort (distance: number): SubRenderElement {
+  setDistanceForSort(distance: number): SubRenderElement {
     this.distanceForSort = distance;
+
     return this;
   }
 
@@ -63,8 +65,9 @@ export class SubRenderElement {
    * @param priority 优先级
    * @returns 当前子渲染元素
    */
-  setPriority (priority: number): SubRenderElement {
+  setPriority(priority: number): SubRenderElement {
     this.priority = priority;
+
     return this;
   }
 
@@ -72,16 +75,13 @@ export class SubRenderElement {
    * 克隆子渲染元素
    * @returns 新的子渲染元素实例
    */
-  clone (): SubRenderElement {
-    const result = new SubRenderElement(
-      this.component,
-      this.material,
-      this.primitive,
-      this.subPrimitive
-    );
+  clone(): SubRenderElement {
+    const result = new SubRenderElement(this.component, this.material, this.primitive, this.subPrimitive);
+
     result.renderQueueFlags = this.renderQueueFlags;
     result.distanceForSort = this.distanceForSort;
     result.priority = this.priority;
+
     return result;
   }
-} 
+}

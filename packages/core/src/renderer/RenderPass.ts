@@ -16,7 +16,7 @@ export enum RenderPassType {
   /** 用户界面 */
   UI,
   /** 自定义 */
-  Custom
+  Custom,
 }
 
 /**
@@ -82,4 +82,4 @@ export abstract class RenderPass {
     // 基类默认实现，子类可重写
     this._renderTarget = null;
   }
-} 
+}

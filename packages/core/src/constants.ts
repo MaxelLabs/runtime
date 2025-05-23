@@ -10,11 +10,11 @@ export const MAX_SHADOWMAPS = 4;
 
 // 渲染队列排序顺序
 export enum RenderQueue {
-  BACKGROUND = 1000,  // 背景渲染
-  GEOMETRY = 2000,    // 不透明几何体
-  ALPHA_TEST = 2500,  // Alpha测试
+  BACKGROUND = 1000, // 背景渲染
+  GEOMETRY = 2000, // 不透明几何体
+  ALPHA_TEST = 2500, // Alpha测试
   TRANSPARENT = 3000, // 透明物体
-  OVERLAY = 4000,     // UI和覆盖物
+  OVERLAY = 4000, // UI和覆盖物
 }
 
 // 着色器宏定义
@@ -46,7 +46,7 @@ export enum CollisionGroup {
   PROJECTILE = 0x00000020,
   SENSOR = 0x00000040,
   PARTICLE = 0x00000080,
-  ALL = 0xFFFFFFFF,
+  ALL = 0xffffffff,
 }
 
 // 事件类型
@@ -55,29 +55,29 @@ export enum EventType {
   READY = 'ready',
   COMPLETE = 'complete',
   ERROR = 'error',
-  
+
   // 输入事件
   POINTER_DOWN = 'pointerdown',
   POINTER_MOVE = 'pointermove',
   POINTER_UP = 'pointerup',
   KEY_DOWN = 'keydown',
   KEY_UP = 'keyup',
-  
+
   // 资源事件
   RESOURCE_LOADED = 'resourceLoaded',
   RESOURCE_ERROR = 'resourceError',
   RESOURCE_PROGRESS = 'resourceProgress',
-  
+
   // 场景事件
   SCENE_LOAD = 'sceneLoad',
   SCENE_UNLOAD = 'sceneUnload',
-  
+
   // 实体事件
   ENTITY_ADDED = 'entityAdded',
   ENTITY_REMOVED = 'entityRemoved',
   ENTITY_COMPONENT_ADDED = 'entityComponentAdded',
   ENTITY_COMPONENT_REMOVED = 'entityComponentRemoved',
-  
+
   // 物理事件
   COLLISION_ENTER = 'collisionEnter',
   COLLISION_STAY = 'collisionStay',
@@ -132,7 +132,7 @@ export const PHYSICS_CONSTANTS = {
   GRAVITY: -9.81,
   DEFAULT_FRICTION: 0.5,
   DEFAULT_RESTITUTION: 0.1,
-  STEP_SIZE: 1/60,
+  STEP_SIZE: 1 / 60,
 };
 
 // 文件类型映射

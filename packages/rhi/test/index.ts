@@ -5,4 +5,4 @@ import './webgl/GLShader.test';
 import './webgl/GLTexture.test';
 import './webgl/GLVertexArray.test';
 import './webgl/GLFramebuffer.test';
-import './webgl/GLState.test'; 
+import './webgl/GLState.test';

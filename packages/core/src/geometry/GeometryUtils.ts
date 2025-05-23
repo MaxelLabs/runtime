@@ -1,4 +1,3 @@
-
 /**
  * 顶点属性枚举
  */
@@ -10,7 +9,7 @@ export enum VertexAttribute {
   TexCoord0 = 'TEXCOORD_0',
   TexCoord1 = 'TEXCOORD_1',
   BoneIndex = 'JOINTS_0',
-  BoneWeight = 'WEIGHTS_0'
+  BoneWeight = 'WEIGHTS_0',
 }
 
 /**
@@ -28,7 +27,7 @@ export class GeometryUtils {
    * @param depthSegments 深度分段数
    * @returns 几何体数据对象
    */
-  static createBox (
+  static createBox(
     width: number = 1,
     height: number = 1,
     depth: number = 1,
@@ -60,72 +59,132 @@ export class GeometryUtils {
     // 前面 (Z+)
     vertexCount = this.addBoxFace(
       result,
-      widthSegments, heightSegments,
-      width, height,
-      -1, -1, 1, // 左下角起点位置
-      1, 0, 0,   // 水平方向
-      0, 1, 0,   // 垂直方向
-      0, 0, 1,   // 法线方向
+      widthSegments,
+      heightSegments,
+      width,
+      height,
+      -1,
+      -1,
+      1, // 左下角起点位置
+      1,
+      0,
+      0, // 水平方向
+      0,
+      1,
+      0, // 垂直方向
+      0,
+      0,
+      1, // 法线方向
       vertexCount
     );
 
     // 后面 (Z-)
     vertexCount = this.addBoxFace(
       result,
-      widthSegments, heightSegments,
-      width, height,
-      1, -1, -1, // 左下角起点位置
-      -1, 0, 0,  // 水平方向
-      0, 1, 0,   // 垂直方向
-      0, 0, -1,  // 法线方向
+      widthSegments,
+      heightSegments,
+      width,
+      height,
+      1,
+      -1,
+      -1, // 左下角起点位置
+      -1,
+      0,
+      0, // 水平方向
+      0,
+      1,
+      0, // 垂直方向
+      0,
+      0,
+      -1, // 法线方向
       vertexCount
     );
 
     // 上面 (Y+)
     vertexCount = this.addBoxFace(
       result,
-      widthSegments, depthSegments,
-      width, depth,
-      -1, 1, -1, // 左下角起点位置
-      1, 0, 0,   // 水平方向
-      0, 0, 1,   // 垂直方向
-      0, 1, 0,   // 法线方向
+      widthSegments,
+      depthSegments,
+      width,
+      depth,
+      -1,
+      1,
+      -1, // 左下角起点位置
+      1,
+      0,
+      0, // 水平方向
+      0,
+      0,
+      1, // 垂直方向
+      0,
+      1,
+      0, // 法线方向
       vertexCount
     );
 
     // 下面 (Y-)
     vertexCount = this.addBoxFace(
       result,
-      widthSegments, depthSegments,
-      width, depth,
-      -1, -1, 1, // 左下角起点位置
-      1, 0, 0,   // 水平方向
-      0, 0, -1,  // 垂直方向
-      0, -1, 0,  // 法线方向
+      widthSegments,
+      depthSegments,
+      width,
+      depth,
+      -1,
+      -1,
+      1, // 左下角起点位置
+      1,
+      0,
+      0, // 水平方向
+      0,
+      0,
+      -1, // 垂直方向
+      0,
+      -1,
+      0, // 法线方向
       vertexCount
     );
 
     // 右面 (X+)
     vertexCount = this.addBoxFace(
       result,
-      depthSegments, heightSegments,
-      depth, height,
-      1, -1, -1, // 左下角起点位置
-      0, 0, 1,   // 水平方向
-      0, 1, 0,   // 垂直方向
-      1, 0, 0,   // 法线方向
+      depthSegments,
+      heightSegments,
+      depth,
+      height,
+      1,
+      -1,
+      -1, // 左下角起点位置
+      0,
+      0,
+      1, // 水平方向
+      0,
+      1,
+      0, // 垂直方向
+      1,
+      0,
+      0, // 法线方向
       vertexCount
     );
 
     // 左面 (X-)
     vertexCount = this.addBoxFace(
       result,
-      depthSegments, heightSegments,
-      depth, height,
-      -1, -1, 1, // 左下角起点位置
-      0, 0, -1,  // 水平方向
-      0, 1, 0,   // 垂直方向
-      -1, 0, 0,  // 法线方向
+      depthSegments,
+      heightSegments,
+      depth,
+      height,
+      -1,
+      -1,
+      1, // 左下角起点位置
+      0,
+      0,
+      -1, // 水平方向
+      0,
+      1,
+      0, // 垂直方向
+      -1,
+      0,
+      0, // 法线方向
       vertexCount
     );
 
@@ -168,14 +227,24 @@ export class GeometryUtils {
    * @param vertexOffset 顶点偏移
    * @returns 更新后的顶点数量
    */
-  private static addBoxFace (
-    result: { positions: number[], normals: number[], uvs: number[], indices: number[] },
-    segmentsW: number, segmentsH: number,
-    width: number, height: number,
-    startX: number, startY: number, startZ: number,
-    uDirX: number, uDirY: number, uDirZ: number,
-    vDirX: number, vDirY: number, vDirZ: number,
-    normalX: number, normalY: number, normalZ: number,
+  private static addBoxFace(
+    result: { positions: number[]; normals: number[]; uvs: number[]; indices: number[] },
+    segmentsW: number,
+    segmentsH: number,
+    width: number,
+    height: number,
+    startX: number,
+    startY: number,
+    startZ: number,
+    uDirX: number,
+    uDirY: number,
+    uDirZ: number,
+    vDirX: number,
+    vDirY: number,
+    vDirZ: number,
+    normalX: number,
+    normalY: number,
+    normalZ: number,
     vertexOffset: number
   ): number {
     const { positions, normals, uvs, indices } = result;
@@ -235,7 +304,7 @@ export class GeometryUtils {
    * @param thetaLength 垂直扫描角度
    * @returns 几何体数据对象
    */
-  static createSphere (
+  static createSphere(
     radius: number = 1,
     widthSegments: number = 32,
     heightSegments: number = 16,
@@ -320,7 +389,7 @@ export class GeometryUtils {
    * @param heightSegments 高度分段数
    * @returns 几何体数据对象
    */
-  static createPlane (
+  static createPlane(
     width: number = 1,
     height: number = 1,
     widthSegments: number = 1,
@@ -357,7 +426,7 @@ export class GeometryUtils {
         normals.push(0, 1, 0);
 
         // UV
-        uvs.push(x / widthSegments, 1 - (y / heightSegments));
+        uvs.push(x / widthSegments, 1 - y / heightSegments);
       }
     }
 
@@ -395,7 +464,7 @@ export class GeometryUtils {
    * @param openEnded 是否开口（不包含顶部和底部）
    * @returns 几何体数据对象
    */
-  static createCylinder (
+  static createCylinder(
     radiusTop: number = 1,
     radiusBottom: number = 1,
     height: number = 1,
@@ -553,7 +622,7 @@ export class GeometryUtils {
  */
 export interface GeometryData {
   attributes: {
-    [key: string]: number[],
-  },
-  indices: number[],
+    [key: string]: number[];
+  };
+  indices: number[];
 }

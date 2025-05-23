@@ -14,7 +14,7 @@ export class PerspectiveCamera extends Camera {
    * @param near 近裁剪面（默认0.1）
    * @param far 远裁剪面（默认1000）
    */
-  constructor (entity: Entity, fov: number = 60, aspect: number = 16 / 9, near: number = 0.1, far: number = 1000) {
+  constructor(entity: Entity, fov: number = 60, aspect: number = 16 / 9, near: number = 0.1, far: number = 1000) {
     super(entity);
 
     // 设置为透视投影类型
@@ -32,7 +32,7 @@ export class PerspectiveCamera extends Camera {
    * @param far 远裁剪面
    * @returns 当前实例，用于链式调用
    */
-  setPerspective (fov: number, aspect: number, near: number, far: number): this {
+  setPerspective(fov: number, aspect: number, near: number, far: number): this {
     this.setFov(fov);
     this.setAspect(aspect);
     this.setNear(near);

@@ -14,7 +14,7 @@ export enum ComponentLifecycleState {
   /** 已禁用 */
   DISABLED = 3,
   /** 已销毁 */
-  DESTROYED = 4
+  DESTROYED = 4,
 }
 
 /**
@@ -44,7 +44,7 @@ export abstract class Component extends ReferResource {
    * 创建一个新的组件
    * @param entity 组件所属的实体
    */
-  constructor (entity: Entity) {
+  constructor(entity: Entity) {
     super();
     this.entity = entity;
     this.name = this.constructor.name;
@@ -53,14 +53,14 @@ export abstract class Component extends ReferResource {
   /**
    * 获取组件是否启用
    */
-  getEnabled (): boolean {
+  getEnabled(): boolean {
     return this.enabled && !this.isDestroyed();
   }
 
   /**
    * 设置组件启用状态
    */
-  setEnabled (value: boolean): void {
+  setEnabled(value: boolean): void {
     if (this.enabled === value || this.isDestroyed()) {
       return;
     }
@@ -81,7 +81,7 @@ export abstract class Component extends ReferResource {
   /**
    * 获取当前组件的生命周期状态
    */
-  getLifecycleState (): ComponentLifecycleState {
+  getLifecycleState(): ComponentLifecycleState {
     return this.lifecycleState;
   }
 
@@ -89,7 +89,7 @@ export abstract class Component extends ReferResource {
    * 当组件被创建时调用（内部使用）
    * @internal
    */
-  _awake (): void {
+  _awake(): void {
     if (this.lifecycleState !== ComponentLifecycleState.CREATED) {
       return;
     }
@@ -106,9 +106,11 @@ export abstract class Component extends ReferResource {
    * 内部启用方法
    * @internal
    */
-  private enable (): void {
-    if (this.lifecycleState !== ComponentLifecycleState.INITIALIZED &&
-        this.lifecycleState !== ComponentLifecycleState.DISABLED) {
+  private enable(): void {
+    if (
+      this.lifecycleState !== ComponentLifecycleState.INITIALIZED &&
+      this.lifecycleState !== ComponentLifecycleState.DISABLED
+    ) {
       return;
     }
 
@@ -120,7 +122,7 @@ export abstract class Component extends ReferResource {
    * 内部禁用方法
    * @internal
    */
-  private disable (): void {
+  private disable(): void {
     if (this.lifecycleState !== ComponentLifecycleState.ENABLED) {
       return;
     }
@@ -133,45 +135,45 @@ export abstract class Component extends ReferResource {
    * 当组件被创建并添加到实体上时调用
    * 子类可以重写此方法以执行初始化逻辑
    */
-  protected onAwake (): void {}
+  protected onAwake(): void {}
 
   /**
    * 当组件首次激活或重新启用时调用
    * 子类可以重写此方法以执行激活逻辑
    */
-  protected onEnable (): void {}
+  protected onEnable(): void {}
 
   /**
    * 当组件被禁用时调用
    * 子类可以重写此方法以执行禁用逻辑
    */
-  protected onDisable (): void {}
+  protected onDisable(): void {}
 
   /**
    * 每帧更新时调用
    * 子类可以重写此方法以执行更新逻辑
    * @param deltaTime 上一帧到当前帧的时间间隔，单位为秒
    */
-  update (deltaTime: number): void {}
+  update(deltaTime: number): void {}
 
   /**
    * 物理更新时调用，通常在所有对象的update之后
    * 子类可以重写此方法以执行依赖于其他对象更新后的逻辑
    * @param deltaTime 上一帧到当前帧的时间间隔，单位为秒
    */
-  lateUpdate (deltaTime: number): void {}
+  lateUpdate(deltaTime: number): void {}
 
   /**
    * 渲染前调用
    * 子类可以重写此方法以执行渲染前的准备工作
    */
-  render (): void {}
+  render(): void {}
 
   /**
    * 销毁组件
    * 不要直接调用此方法，通常应通过实体的removeComponent方法移除组件
    */
-  override destroy (): void {
+  override destroy(): void {
     if (this.isDestroyed()) {
       return;
     }
@@ -190,5 +192,5 @@ export abstract class Component extends ReferResource {
    * 子类可以重写此方法以执行清理逻辑
    * @protected
    */
-  override onDestroy (): void {}
+  override onDestroy(): void {}
 }

@@ -13,10 +13,7 @@ export class Line2 {
    * @param [start=Vector2.ZERO] - 线段起点，默认值为(0, 0)
    * @param [end=Vector2.ZERO] - 线段终点，默认值为(0, 0)
    */
-  constructor (
-    start = Vector2.ZERO,
-    end = Vector2.ZERO,
-  ) {
+  constructor(start = Vector2.ZERO, end = Vector2.ZERO) {
     this.start = start.clone();
     this.end = end.clone();
   }
@@ -27,7 +24,7 @@ export class Line2 {
    * @param end - 线段终点
    * @returns 二维线段
    */
-  set (start: Vector2, end: Vector2): this {
+  set(start: Vector2, end: Vector2): this {
     this.start.copyFrom(start);
     this.end.copyFrom(end);
 
@@ -39,7 +36,7 @@ export class Line2 {
    * @param line - 复制对象
    * @returns 复制结果
    */
-  copyFrom (line: Line2): this {
+  copyFrom(line: Line2): this {
     this.start.copyFrom(line.start);
     this.end.copyFrom(line.end);
 
@@ -50,7 +47,7 @@ export class Line2 {
    * 二维线段求方向
    * @returns 二维线段方向
    */
-  direction (): Vector2 {
+  direction(): Vector2 {
     return new Vector2().subtractVectors(this.end, this.start).normalize();
   }
 
@@ -59,7 +56,7 @@ export class Line2 {
    * @param [target=new Vector2()] - 目标保存对象
    * @returns 二维线段中点
    */
-  getCenter (target = new Vector2()): Vector2 {
+  getCenter(target = new Vector2()): Vector2 {
     return target.addVectors(this.start, this.end).multiply(0.5);
   }
 
@@ -68,7 +65,7 @@ export class Line2 {
    * @param [target=new Vector2()] - 目标保存对象
    * @returns 二维线段向量值
    */
-  delta (target = new Vector2()): Vector2 {
+  delta(target = new Vector2()): Vector2 {
     return target.subtractVectors(this.end, this.start);
   }
 
@@ -76,7 +73,7 @@ export class Line2 {
    * 二维线段欧式距离平方
    * @returns 计算结果
    */
-  distanceSq (): number {
+  distanceSq(): number {
     return this.start.distanceSquared(this.end);
   }
 
@@ -84,7 +81,7 @@ export class Line2 {
    * 二维线段欧式距离
    * @returns 计算结果
    */
-  distance (): number {
+  distance(): number {
     return this.start.distance(this.end);
   }
 
@@ -94,7 +91,7 @@ export class Line2 {
    * @param [target=new Vector2()] - 目标保存对象
    * @returns 比例点结果
    */
-  at (t: number, target = new Vector2()): Vector2 {
+  at(t: number, target = new Vector2()): Vector2 {
     return this.delta(target).multiply(t).add(this.start);
   }
 
@@ -104,7 +101,7 @@ export class Line2 {
    * @param clampToLine - 是否限制于线段内
    * @returns 距离结果
    */
-  closestPointToPointParameter (point: Vector2, clampToLine: boolean): number {
+  closestPointToPointParameter(point: Vector2, clampToLine: boolean): number {
     const startP = new Vector2();
     const startEnd = new Vector2();
 
@@ -130,7 +127,7 @@ export class Line2 {
    * @param [target=new Vector2()] - 目标保存对象
    * @returns 最近交点
    */
-  closestPointToPoint (point: Vector2, clampToLine: boolean, target: Vector2 = new Vector2()): Vector2 {
+  closestPointToPoint(point: Vector2, clampToLine: boolean, target: Vector2 = new Vector2()): Vector2 {
     const t = this.closestPointToPointParameter(point, clampToLine);
 
     return this.delta(target).multiply(t).add(this.start);
@@ -141,7 +138,7 @@ export class Line2 {
    * @param line - 二维线段
    * @returns 判等结果
    */
-  equals (line: Line2): boolean {
+  equals(line: Line2): boolean {
     return line.start.equals(this.start) && line.end.equals(this.end);
   }
 
@@ -149,7 +146,7 @@ export class Line2 {
    * 克隆二维线段
    * @returns 克隆结果
    */
-  clone (): Line2 {
+  clone(): Line2 {
     return new Line2().copyFrom(this);
   }
 
@@ -157,7 +154,7 @@ export class Line2 {
    * 二维线段求长度
    * @returns 长度
    */
-  length (): number {
+  length(): number {
     return new Vector2().subtractVectors(this.end, this.start).length();
   }
 
@@ -166,7 +163,7 @@ export class Line2 {
    * @param other - 二维线段
    * @returns 相交判断结果
    */
-  crossWithLine (other: Line2): boolean {
+  crossWithLine(other: Line2): boolean {
     const vecA = this.delta();
     const vecB = other.delta();
     const vecAStart = new Vector2().subtractVectors(other.start, this.start);

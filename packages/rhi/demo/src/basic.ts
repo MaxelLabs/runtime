@@ -1,5 +1,4 @@
-import type {
-  RHIVertexLayout } from '@maxellabs/core';
+import type { RHIVertexLayout } from '@maxellabs/core';
 import {
   RHIBufferUsage,
   RHICompareFunction,
@@ -78,9 +77,8 @@ const fragmentShader = device.createShaderModule({
 // 创建顶点数据 - 简单三角形
 const vertices = new Float32Array([
   // Position(x,y,z)  // Texture coords(u,v)  // Color(r,g,b,a)
-  -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
-  0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0,
-  0.0, 0.5, 0.0, 0.5, 1.0, 0.0, 0.0, 1.0, 1.0,
+  -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.5, 0.0, 0.5, 1.0,
+  0.0, 0.0, 1.0, 1.0,
 ]);
 
 // 创建顶点缓冲区
@@ -132,10 +130,10 @@ for (let y = 0; y < textureSize; y++) {
     const index = (y * textureSize + x) * 4;
     const isCheckerboard = (Math.floor(x / 32) % 2 === 0) !== (Math.floor(y / 32) % 2 === 0);
 
-    textureData[index] = isCheckerboard ? 255 : 0;     // R
+    textureData[index] = isCheckerboard ? 255 : 0; // R
     textureData[index + 1] = isCheckerboard ? 255 : 0; // G
     textureData[index + 2] = isCheckerboard ? 255 : 0; // B
-    textureData[index + 3] = 255;                     // A
+    textureData[index + 3] = 255; // A
   }
 }
 
@@ -211,54 +209,62 @@ modelViewMatrixBuffer.update(new Float32Array(modelViewMatrix.getElements()));
 projectionMatrixBuffer.update(new Float32Array(projectionMatrix.getElements()));
 
 // 创建绑定组布局
-const bindGroupLayout = device.createBindGroupLayout([
-  { // Binding 0: Uniform Buffer
-    binding: 0,
-    visibility: RHIShaderStage.VERTEX,
-    buffer: {
-      type: 'uniform', // 使用 'uniform' 并嵌套在 buffer 对象内
-      // hasDynamicOffset: false, // 可选
-      // minBindingSize: 64, // 可选
+const bindGroupLayout = device.createBindGroupLayout(
+  [
+    {
+      // Binding 0: Uniform Buffer
+      binding: 0,
+      visibility: RHIShaderStage.VERTEX,
+      buffer: {
+        type: 'uniform', // 使用 'uniform' 并嵌套在 buffer 对象内
+        // hasDynamicOffset: false, // 可选
+        // minBindingSize: 64, // 可选
+      },
+      name: 'uModelViewMatrix', // name 作为我们内部扩展添加，用于查找 uniform location
     },
-    name: 'uModelViewMatrix', // name 作为我们内部扩展添加，用于查找 uniform location
-  },
-  { // Binding 1: Uniform Buffer
-    binding: 1,
-    visibility: RHIShaderStage.VERTEX,
-    buffer: {
-      type: 'uniform',
+    {
+      // Binding 1: Uniform Buffer
+      binding: 1,
+      visibility: RHIShaderStage.VERTEX,
+      buffer: {
+        type: 'uniform',
+      },
+      name: 'uProjectionMatrix',
     },
-    name: 'uProjectionMatrix',
-  },
-  { // Binding 2: Texture
-    binding: 2,
-    visibility: RHIShaderStage.FRAGMENT,
-    texture: {
-      sampleType: 'float', // 需要指定 sampleType
-      viewDimension: '2d', // 需要指定 viewDimension
-      // multisampled: false, // 可选
+    {
+      // Binding 2: Texture
+      binding: 2,
+      visibility: RHIShaderStage.FRAGMENT,
+      texture: {
+        sampleType: 'float', // 需要指定 sampleType
+        viewDimension: '2d', // 需要指定 viewDimension
+        // multisampled: false, // 可选
+      },
+      name: 'uTexture', // 对应 shader 中的 sampler2D uniform
     },
-    name: 'uTexture', // 对应 shader 中的 sampler2D uniform
-  },
-  { // Binding 3: Sampler
-    binding: 3,
-    visibility: RHIShaderStage.FRAGMENT,
-    sampler: {
-      type: 'filtering', // 需要指定 sampler 类型 (filtering, non-filtering, comparison)
-      // comparison: false, // 可选
+    {
+      // Binding 3: Sampler
+      binding: 3,
+      visibility: RHIShaderStage.FRAGMENT,
+      sampler: {
+        type: 'filtering', // 需要指定 sampler 类型 (filtering, non-filtering, comparison)
+        // comparison: false, // 可选
+      },
+      name: 'uTextureSampler', // 这个 name 可能在 WebGL 中不直接用于 getUniformLocation，但可以保留用于调试或特殊逻辑
+      // sampler uniform 的值通常是 texture unit index
     },
-    name: 'uTextureSampler', // 这个 name 可能在 WebGL 中不直接用于 getUniformLocation，但可以保留用于调试或特殊逻辑
-    // sampler uniform 的值通常是 texture unit index
-  },
-  { // Binding 4: Uniform Buffer
-    binding: 4,
-    visibility: RHIShaderStage.FRAGMENT,
-    buffer: {
-      type: 'uniform',
+    {
+      // Binding 4: Uniform Buffer
+      binding: 4,
+      visibility: RHIShaderStage.FRAGMENT,
+      buffer: {
+        type: 'uniform',
+      },
+      name: 'uTime',
     },
-    name: 'uTime',
-  },
-], 'Main Bind Group Layout');
+  ],
+  'Main Bind Group Layout'
+);
 
 // 创建管线布局
 const pipelineLayout = device.createPipelineLayout([bindGroupLayout], 'Main Pipeline Layout');
@@ -276,52 +282,58 @@ const pipeline = device.createRenderPipeline({
     format: RHITextureFormat.DEPTH24_UNORM_STENCIL8,
   },
   colorBlendState: {
-    attachments: [{
-      color: {
-        enable: true,
-        srcFactor: RHIBlendFactor.SRC_ALPHA,
-        dstFactor: RHIBlendFactor.ONE_MINUS_SRC_ALPHA,
-        operation: RHIBlendOperation.ADD,
+    attachments: [
+      {
+        color: {
+          enable: true,
+          srcFactor: RHIBlendFactor.SRC_ALPHA,
+          dstFactor: RHIBlendFactor.ONE_MINUS_SRC_ALPHA,
+          operation: RHIBlendOperation.ADD,
+        },
+        alpha: {
+          enable: true,
+          srcFactor: RHIBlendFactor.ONE,
+          dstFactor: RHIBlendFactor.ONE_MINUS_SRC_ALPHA,
+          operation: RHIBlendOperation.ADD,
+        },
       },
-      alpha: {
-        enable: true,
-        srcFactor: RHIBlendFactor.ONE,
-        dstFactor: RHIBlendFactor.ONE_MINUS_SRC_ALPHA,
-        operation: RHIBlendOperation.ADD,
-      },
-    }],
+    ],
   },
   label: 'Main Render Pipeline',
 });
 
 // 创建绑定组
-const bindGroup = device.createBindGroup(bindGroupLayout, [
-  {
-    binding: 0,
-    resource: modelViewMatrixBuffer,
-  },
-  {
-    binding: 1,
-    resource: projectionMatrixBuffer,
-  },
-  {
-    binding: 2,
-    resource: textureView,
-  },
-  {
-    binding: 3,
-    resource: sampler,
-  },
-  {
-    binding: 4,
-    resource: timeBuffer,
-  },
-], 'Main Bind Group');
+const bindGroup = device.createBindGroup(
+  bindGroupLayout,
+  [
+    {
+      binding: 0,
+      resource: modelViewMatrixBuffer,
+    },
+    {
+      binding: 1,
+      resource: projectionMatrixBuffer,
+    },
+    {
+      binding: 2,
+      resource: textureView,
+    },
+    {
+      binding: 3,
+      resource: sampler,
+    },
+    {
+      binding: 4,
+      resource: timeBuffer,
+    },
+  ],
+  'Main Bind Group'
+);
 
 // 渲染循环
 let time = 0;
 
-function render () {
+function render() {
   time += 0.01;
 
   // 更新旋转

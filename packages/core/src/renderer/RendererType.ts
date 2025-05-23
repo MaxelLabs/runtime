@@ -7,7 +7,7 @@ export enum RendererType {
   /** WebGL2渲染器 */
   WebGL2 = 1,
   /** WebGPU渲染器 */
-  WebGPU = 2
+  WebGPU = 2,
 }
 
 /**
@@ -21,5 +21,5 @@ export enum RenderQueueType {
   /** 透明 */
   Transparent = 2,
   /** 叠加 */
-  Overlay = 3
-} 
+  Overlay = 3,
+}

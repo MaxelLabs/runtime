@@ -10,12 +10,7 @@ describe('GLBuffer', () => {
   beforeEach(() => {
     canvas = document.createElement('canvas');
     gl = canvas.getContext('webgl') as WebGLRenderingContext;
-    buffer = new GLBuffer(
-      gl,
-      GLConstants.BUFFER_TYPE.ARRAY_BUFFER,
-      GLConstants.BUFFER_USAGE.STATIC_DRAW,
-      1024
-    );
+    buffer = new GLBuffer(gl, GLConstants.BUFFER_TYPE.ARRAY_BUFFER, GLConstants.BUFFER_USAGE.STATIC_DRAW, 1024);
   });
 
   afterEach(() => {

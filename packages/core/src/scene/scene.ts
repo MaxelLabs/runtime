@@ -28,7 +28,7 @@ export enum SceneEvent {
   /** 场景销毁前 */
   BEFORE_DESTROY = 'beforeDestroy',
   /** 场景已销毁 */
-  DESTROYED = 'destroyed'
+  DESTROYED = 'destroyed',
 }
 
 /**
@@ -52,7 +52,9 @@ export class Scene extends EventDispatcher {
   private static readonly entityArrayPool = new ObjectPool<Entity[]>(
     'sceneEntityArrayPool',
     () => [],
-    array => { array.length = 0; },
+    (array) => {
+      array.length = 0;
+    },
     5,
     20
   );
@@ -61,7 +63,7 @@ export class Scene extends EventDispatcher {
    * 创建场景
    * @param name 场景名称
    */
-  constructor (name: string) {
+  constructor(name: string) {
     super();
     this.name = name;
     this.tag = `scene_${this.name}_${Math.floor(Math.random() * 10000)}`;
@@ -77,18 +79,19 @@ export class Scene extends EventDispatcher {
    * @param entity 实体
    * @returns 当前场景实例，用于链式调用
    */
-  addEntity (entity: Entity): this {
+  addEntity(entity: Entity): this {
     if (this.entities.has(entity.getId())) {
       console.warn(`实体 ${entity.getId()} 已存在于场景中`);
+
       return this;
     }
-    
+
     this.entities.set(entity.getId(), entity);
     entity.setScene(this);
-    
+
     // 派发实体添加事件
     this.dispatchEvent(SceneEvent.ENTITY_ADDED, { entity });
-    
+
     return this;
   }
 
@@ -97,27 +100,29 @@ export class Scene extends EventDispatcher {
    * @param entity 实体或实体ID
    * @returns 当前场景实例，用于链式调用
    */
-  removeEntity (entity: Entity | string): this {
+  removeEntity(entity: Entity | string): this {
     const entityId = typeof entity === 'string' ? entity : entity.getId();
     const targetEntity = this.entities.get(entityId);
-    
+
     if (!targetEntity) {
       console.warn(`实体 ${entityId} 不存在于场景中`);
+
       return this;
     }
-    
+
     // 阻止移除根实体
     if (targetEntity === this.rootEntity) {
       console.error('无法从场景中移除根实体');
+
       return this;
     }
-    
+
     this.entities.delete(entityId);
     targetEntity.setScene(null);
-    
+
     // 派发实体移除事件
     this.dispatchEvent(SceneEvent.ENTITY_REMOVED, { entity: targetEntity });
-    
+
     return this;
   }
 
@@ -126,7 +131,7 @@ export class Scene extends EventDispatcher {
    * @param id 实体ID
    * @returns 找到的实体或null
    */
-  findEntity (id: string): Entity | null {
+  findEntity(id: string): Entity | null {
     return this.entities.get(id) || null;
   }
 
@@ -135,12 +140,13 @@ export class Scene extends EventDispatcher {
    * @param name 实体名称
    * @returns 找到的第一个匹配实体或null
    */
-  findEntityByName (name: string): Entity | null {
+  findEntityByName(name: string): Entity | null {
     for (const entity of this.entities.values()) {
       if (entity.name === name) {
         return entity;
       }
     }
+
     return null;
   }
 
@@ -149,13 +155,14 @@ export class Scene extends EventDispatcher {
    * @param name 实体名称
    * @returns 创建的实体
    */
-  createEntity (name?: string): Entity {
+  createEntity(name?: string): Entity {
     const entity = new Entity(name);
+
     this.addEntity(entity);
-    
+
     // 派发实体创建事件
     this.dispatchEvent(SceneEvent.ENTITY_CREATED, { entity });
-    
+
     return entity;
   }
 
@@ -163,13 +170,13 @@ export class Scene extends EventDispatcher {
    * 获取场景中的所有实体
    * @returns 实体数组（从对象池获取，使用完请释放）
    */
-  getAllEntities (): Entity[] {
+  getAllEntities(): Entity[] {
     const result = Scene.entityArrayPool.get();
-    
+
     for (const entity of this.entities.values()) {
       result.push(entity);
     }
-    
+
     return result;
   }
 
@@ -177,7 +184,7 @@ export class Scene extends EventDispatcher {
    * 释放实体数组回对象池
    * @param array 从getAllEntities获取的数组
    */
-  releaseEntityArray (array: Entity[]): void {
+  releaseEntityArray(array: Entity[]): void {
     Scene.entityArrayPool.release(array);
   }
 
@@ -185,21 +192,21 @@ export class Scene extends EventDispatcher {
    * 场景加载时调用
    * @returns 当前场景实例，用于链式调用
    */
-  onLoad (): this {
+  onLoad(): this {
     if (this.isLoaded) {
       return this;
     }
-    
+
     this.isLoaded = true;
-    
+
     // 通知所有实体场景加载
     for (const entity of this.entities.values()) {
       entity.onSceneLoad();
     }
-    
+
     // 派发加载事件
     this.dispatchEvent(SceneEvent.LOAD, { scene: this });
-    
+
     return this;
   }
 
@@ -207,21 +214,21 @@ export class Scene extends EventDispatcher {
    * 场景卸载时调用
    * @returns 当前场景实例，用于链式调用
    */
-  onUnload (): this {
+  onUnload(): this {
     if (!this.isLoaded) {
       return this;
     }
-    
+
     this.isLoaded = false;
-    
+
     // 通知所有实体场景卸载
     for (const entity of this.entities.values()) {
       entity.onSceneUnload();
     }
-    
+
     // 派发卸载事件
     this.dispatchEvent(SceneEvent.UNLOAD, { scene: this });
-    
+
     return this;
   }
 
@@ -229,23 +236,23 @@ export class Scene extends EventDispatcher {
    * 更新场景
    * @param deltaTime 时间增量(秒)
    */
-  update (deltaTime: number): void {
+  update(deltaTime: number): void {
     if (!this.isLoaded) {
       return;
     }
-    
+
     // 先更新根实体，确保场景层级关系正确
     if (this.rootEntity.isEnabled()) {
       this.rootEntity.update(deltaTime);
     }
-    
+
     // 更新除了根实体之外的所有顶级实体
     for (const entity of this.entities.values()) {
       if (entity !== this.rootEntity && entity.isEnabled() && !entity.transform.getParent()) {
         entity.update(deltaTime);
       }
     }
-    
+
     // 派发更新事件
     this.dispatchEvent(SceneEvent.UPDATE, { deltaTime, scene: this });
   }
@@ -253,14 +260,14 @@ export class Scene extends EventDispatcher {
   /**
    * 获取根实体
    */
-  getRoot (): Entity {
+  getRoot(): Entity {
     return this.rootEntity;
   }
 
   /**
    * 获取实体数量
    */
-  getEntityCount (): number {
+  getEntityCount(): number {
     return this.entities.size;
   }
 
@@ -268,63 +275,63 @@ export class Scene extends EventDispatcher {
    * 清除场景中除根实体外的所有实体
    * @returns 当前场景实例，用于链式调用
    */
-  clear (): this {
+  clear(): this {
     const entitiesToRemove: Entity[] = [];
-    
+
     // 收集需要移除的实体
     for (const entity of this.entities.values()) {
       if (entity !== this.rootEntity) {
         entitiesToRemove.push(entity);
       }
     }
-    
+
     // 派发场景清理前事件
-    this.dispatchEvent(SceneEvent.BEFORE_CLEAR, { 
-      scene: this, 
-      entityCount: entitiesToRemove.length 
+    this.dispatchEvent(SceneEvent.BEFORE_CLEAR, {
+      scene: this,
+      entityCount: entitiesToRemove.length,
     });
-    
+
     // 移除并销毁实体
     for (const entity of entitiesToRemove) {
       this.removeEntity(entity);
       entity.destroy();
     }
-    
+
     // 派发场景清理完成事件
     this.dispatchEvent(SceneEvent.CLEARED, { scene: this });
-    
+
     return this;
   }
 
   /**
    * 销毁场景
    */
-  override destroy (): void {
+  override destroy(): void {
     if (this.isDestroyed()) {
       return;
     }
-    
+
     // 派发销毁前事件
     this.dispatchEvent(SceneEvent.BEFORE_DESTROY, { scene: this });
-    
+
     // 卸载场景
     this.onUnload();
-    
+
     // 销毁所有实体
     for (const entity of this.entities.values()) {
       if (entity !== this.rootEntity) {
         entity.destroy();
       }
     }
-    
+
     // 最后销毁根实体
     this.rootEntity.destroy();
-    
+
     this.entities.clear();
-    
+
     // 派发销毁事件
     this.dispatchEvent(SceneEvent.DESTROYED, { scene: this });
-    
+
     super.destroy();
   }
 
@@ -333,7 +340,7 @@ export class Scene extends EventDispatcher {
    * @param tag 实体标签
    * @returns 具有指定标签的所有实体
    */
-  getEntitiesByTag (tag: string): Entity[] {
+  getEntitiesByTag(tag: string): Entity[] {
     const result = Scene.entityArrayPool.get();
 
     for (const entity of this.entities.values()) {
@@ -361,43 +368,45 @@ export class Scene extends EventDispatcher {
 
     return result;
   }
-  
+
   /**
    * 检查场景是否已加载
    */
-  isActive (): boolean {
+  isActive(): boolean {
     return this.isLoaded;
   }
-  
+
   /**
    * 激活特定标签的所有实体
    * @param tag 实体标签
    * @returns 当前场景实例，用于链式调用
    */
-  activateEntitiesByTag (tag: string): this {
+  activateEntitiesByTag(tag: string): this {
     const entities = this.getEntitiesByTag(tag);
-    
+
     for (const entity of entities) {
       entity.setEnabled(true);
     }
-    
+
     this.releaseEntityArray(entities);
+
     return this;
   }
-  
+
   /**
    * 禁用特定标签的所有实体
    * @param tag 实体标签
    * @returns 当前场景实例，用于链式调用
    */
-  deactivateEntitiesByTag (tag: string): this {
+  deactivateEntitiesByTag(tag: string): this {
     const entities = this.getEntitiesByTag(tag);
-    
+
     for (const entity of entities) {
       entity.setEnabled(false);
     }
-    
+
     this.releaseEntityArray(entities);
+
     return this;
   }
 }

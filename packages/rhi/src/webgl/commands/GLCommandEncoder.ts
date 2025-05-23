@@ -1,4 +1,12 @@
-import type { IRHIBuffer, IRHICommandBuffer, IRHICommandEncoder, IRHIComputePass, IRHIRenderPass, IRHITexture, IRHITextureView } from '@maxellabs/core';
+import type {
+  IRHIBuffer,
+  IRHICommandBuffer,
+  IRHICommandEncoder,
+  IRHIComputePass,
+  IRHIRenderPass,
+  IRHITexture,
+  IRHITextureView,
+} from '@maxellabs/core';
 import { WebGLRenderPass } from './GLRenderPass';
 import { WebGLCommandBuffer } from './GLCommandBuffer';
 
@@ -9,8 +17,8 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private isWebGL2: boolean;
   private commands: Array<{
-    type: string,
-    params: any,
+    type: string;
+    params: any;
   }>;
   private label?: string;
   private isDestroyed = false;
@@ -21,7 +29,7 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
    * @param gl WebGL上下文
    * @param label 可选标签
    */
-  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, label?: string) {
+  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, label?: string) {
     this.gl = gl;
     this.isWebGL2 = gl instanceof WebGL2RenderingContext;
     this.commands = [];
@@ -32,7 +40,7 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
    * 添加命令到编码器
    * @param command 命令对象或函数
    */
-  addCommand (command: any): void {
+  addCommand(command: any): void {
     if (this.isDestroyed) {
       console.error('尝试向已销毁的命令编码器添加命令');
 
@@ -58,25 +66,25 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
   /**
    * 开始渲染通道
    */
-  beginRenderPass (options: {
+  beginRenderPass(options: {
     colorAttachments: Array<{
-      view: IRHITextureView,
-      resolveTarget?: IRHITextureView,
-      loadOp: 'load' | 'clear' | 'none',
-      storeOp: 'store' | 'discard',
-      clearColor?: [number, number, number, number],
-    }>,
+      view: IRHITextureView;
+      resolveTarget?: IRHITextureView;
+      loadOp: 'load' | 'clear' | 'none';
+      storeOp: 'store' | 'discard';
+      clearColor?: [number, number, number, number];
+    }>;
     depthStencilAttachment?: {
-      view: IRHITextureView,
-      depthLoadOp: 'load' | 'clear' | 'none',
-      depthStoreOp: 'store' | 'discard',
-      clearDepth?: number,
-      depthWriteEnabled?: boolean,
-      stencilLoadOp?: 'load' | 'clear' | 'none',
-      stencilStoreOp?: 'store' | 'discard',
-      clearStencil?: number,
-    },
-    label?: string,
+      view: IRHITextureView;
+      depthLoadOp: 'load' | 'clear' | 'none';
+      depthStoreOp: 'store' | 'discard';
+      clearDepth?: number;
+      depthWriteEnabled?: boolean;
+      stencilLoadOp?: 'load' | 'clear' | 'none';
+      stencilStoreOp?: 'store' | 'discard';
+      clearStencil?: number;
+    };
+    label?: string;
   }): IRHIRenderPass {
     // 创建渲染通道
     const renderPass = new WebGLRenderPass(this.gl, options, this);
@@ -94,16 +102,14 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
    * 开始计算通道
    * 注意：WebGL不原生支持计算着色器，此方法可能在WebGL环境中不可用
    */
-  beginComputePass (options?: {
-    label?: string,
-  }): IRHIComputePass {
+  beginComputePass(options?: { label?: string }): IRHIComputePass {
     throw new Error('WebGL不支持计算着色器');
   }
 
   /**
    * 复制缓冲区到缓冲区
    */
-  copyBufferToBuffer (
+  copyBufferToBuffer(
     source: IRHIBuffer,
     sourceOffset: number,
     destination: IRHIBuffer,
@@ -126,17 +132,17 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
   /**
    * 复制缓冲区到纹理
    */
-  copyBufferToTexture (
+  copyBufferToTexture(
     source: {
-      buffer: IRHIBuffer,
-      offset?: number,
-      bytesPerRow: number,
-      rowsPerImage?: number,
+      buffer: IRHIBuffer;
+      offset?: number;
+      bytesPerRow: number;
+      rowsPerImage?: number;
     },
     destination: {
-      texture: IRHITexture,
-      mipLevel?: number,
-      origin?: [number, number, number],
+      texture: IRHITexture;
+      mipLevel?: number;
+      origin?: [number, number, number];
     },
     copySize: [number, number, number]
   ): void {
@@ -154,17 +160,17 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
   /**
    * 复制纹理到缓冲区
    */
-  copyTextureToBuffer (
+  copyTextureToBuffer(
     source: {
-      texture: IRHITexture,
-      mipLevel?: number,
-      origin?: [number, number, number],
+      texture: IRHITexture;
+      mipLevel?: number;
+      origin?: [number, number, number];
     },
     destination: {
-      buffer: IRHIBuffer,
-      offset?: number,
-      bytesPerRow: number,
-      rowsPerImage?: number,
+      buffer: IRHIBuffer;
+      offset?: number;
+      bytesPerRow: number;
+      rowsPerImage?: number;
     },
     copySize: [number, number, number]
   ): void {
@@ -182,16 +188,16 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
   /**
    * 复制纹理到纹理
    */
-  copyTextureToTexture (
+  copyTextureToTexture(
     source: {
-      texture: IRHITexture,
-      mipLevel?: number,
-      origin?: [number, number, number],
+      texture: IRHITexture;
+      mipLevel?: number;
+      origin?: [number, number, number];
     },
     destination: {
-      texture: IRHITexture,
-      mipLevel?: number,
-      origin?: [number, number, number],
+      texture: IRHITexture;
+      mipLevel?: number;
+      origin?: [number, number, number];
     },
     copySize: [number, number, number]
   ): void {
@@ -210,11 +216,11 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
    * 复制纹理到画布
    * 这是为了兼容WebGPU的渲染架构，在WebGL中提供类似功能
    */
-  copyTextureToCanvas (options: {
-    source: IRHITextureView,
-    destination: HTMLCanvasElement,
-    origin?: [number, number],
-    extent?: [number, number],
+  copyTextureToCanvas(options: {
+    source: IRHITextureView;
+    destination: HTMLCanvasElement;
+    origin?: [number, number];
+    extent?: [number, number];
   }): void {
     // 记录复制纹理到画布的命令
     this.commands.push({
@@ -226,15 +232,9 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
   /**
    * 结束命令编码，返回命令缓冲区
    */
-  finish (options?: {
-    label?: string,
-  }): IRHICommandBuffer {
+  finish(options?: { label?: string }): IRHICommandBuffer {
     // 创建命令缓冲区
-    const commandBuffer = new WebGLCommandBuffer(
-      this.gl,
-      this.commands,
-      options?.label || this.label
-    );
+    const commandBuffer = new WebGLCommandBuffer(this.gl, this.commands, options?.label || this.label);
 
     // 清空命令列表，防止重复使用
     this.commands = [];
@@ -245,7 +245,7 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
   /**
    * 获取编码器标签
    */
-  getLabel (): string | undefined {
+  getLabel(): string | undefined {
     return this.label;
   }
 
@@ -253,9 +253,9 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
    * 获取命令列表
    * 仅供内部使用
    */
-  getCommands (): Array<{
-    type: string,
-    params: any,
+  getCommands(): Array<{
+    type: string;
+    params: any;
   }> {
     return this.commands;
   }
@@ -264,7 +264,7 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
    * 添加渲染通道结束命令
    * 仅供内部使用，由WebGLRenderPass调用
    */
-  addEndRenderPassCommand (): void {
+  addEndRenderPassCommand(): void {
     // this.addCommand(() => {
     //   // 处理渲染通道结束逻辑
     //   const gl = this.gl;
@@ -281,7 +281,7 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
   /**
    * 销毁资源
    */
-  destroy (): void {
+  destroy(): void {
     if (this.isDestroyed) {
       return;
     }

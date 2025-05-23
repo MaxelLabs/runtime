@@ -5,16 +5,16 @@ export class Color {
   /**
    * 颜色的常量
    */
-  static readonly BLACK = new Color(0, 0, 0, 1);          // 纯黑色
-  static readonly BLUE = new Color(0, 0, 1, 1);           // 纯蓝色
-  static readonly CLEAR = new Color(0, 0, 0, 0);          // 完全透明
-  static readonly CYAN = new Color(0, 1, 1, 1);           // 青色
-  static readonly GRAY = new Color(0.5, 0.5, 0.5, 1);     // 灰色
-  static readonly GREEN = new Color(0, 1, 0, 1);          // 纯绿色
-  static readonly MAGENTA = new Color(1, 0, 1, 1);        // 洋红色
-  static readonly RED = new Color(1, 0, 0, 1);            // 纯红色
-  static readonly WHITE = new Color(1, 1, 1, 1);          // 纯白色
-  static readonly YELLOW = new Color(1, 0.92, 0.016, 1);  // 黄色
+  static readonly BLACK = new Color(0, 0, 0, 1); // 纯黑色
+  static readonly BLUE = new Color(0, 0, 1, 1); // 纯蓝色
+  static readonly CLEAR = new Color(0, 0, 0, 0); // 完全透明
+  static readonly CYAN = new Color(0, 1, 1, 1); // 青色
+  static readonly GRAY = new Color(0.5, 0.5, 0.5, 1); // 灰色
+  static readonly GREEN = new Color(0, 1, 0, 1); // 纯绿色
+  static readonly MAGENTA = new Color(1, 0, 1, 1); // 洋红色
+  static readonly RED = new Color(1, 0, 0, 1); // 纯红色
+  static readonly WHITE = new Color(1, 1, 1, 1); // 纯白色
+  static readonly YELLOW = new Color(1, 0.92, 0.016, 1); // 黄色
 
   /**
    * 构造函数，默认值为黑色
@@ -23,12 +23,12 @@ export class Color {
    * @param [b=0]
    * @param [a=0]
    */
-  constructor (
+  constructor(
     public r = 0,
     public g = 0,
     public b = 0,
-    public a = 0,
-  ) { }
+    public a = 0
+  ) {}
 
   /**
    * 设置颜色
@@ -38,7 +38,7 @@ export class Color {
    * @param a - a 分量
    * @returns
    */
-  set (r: number, g: number, b: number, a: number) {
+  set(r: number, g: number, b: number, a: number) {
     this.r = r;
     this.g = g;
     this.b = b;
@@ -51,7 +51,7 @@ export class Color {
    * 设置零颜色
    * @returns
    */
-  setZero (): this {
+  setZero(): this {
     this.r = 0;
     this.g = 0;
     this.b = 0;
@@ -65,7 +65,7 @@ export class Color {
    * @param num - 数值
    * @returns
    */
-  setFromNumber (num: number): this {
+  setFromNumber(num: number): this {
     this.r = num;
     this.g = num;
     this.b = num;
@@ -79,7 +79,7 @@ export class Color {
    * @param v - Vector4
    * @returns
    */
-  setFromVector4 (v: Vector4Like): this {
+  setFromVector4(v: Vector4Like): this {
     this.r = v.x;
     this.g = v.y;
     this.b = v.z;
@@ -94,7 +94,7 @@ export class Color {
    * @param [offset=0] - 起始偏移值
    * @returns
    */
-  setFromArray (array: ColorDataType, offset = 0): this {
+  setFromArray(array: ColorDataType, offset = 0): this {
     this.r = array[offset] ?? 0;
     this.g = array[offset + 1] ?? 0;
     this.b = array[offset + 2] ?? 0;
@@ -103,7 +103,7 @@ export class Color {
     return this;
   }
 
-  setFromHSV (hue: number, saturation: number, value: number, alpha = 1): this {
+  setFromHSV(hue: number, saturation: number, value: number, alpha = 1): this {
     const chroma = value * saturation;
     const h = hue / 60;
     const x = chroma * (1 - Math.abs((h % 2) - 1));
@@ -136,7 +136,7 @@ export class Color {
     return this.set(r + m, g + m, b + m, alpha);
   }
 
-  setFromHexString (hex: string): this {
+  setFromHexString(hex: string): this {
     if (hex.substring(0, 1) !== '#' || (hex.length !== 9 && hex.length !== 7)) {
       return this;
     }
@@ -154,7 +154,7 @@ export class Color {
    * @param v - 复制对象
    * @returns 拷贝结果
    */
-  copyFrom (v: ColorLike): this {
+  copyFrom(v: ColorLike): this {
     this.r = v.r;
     this.g = v.g;
     this.b = v.b;
@@ -167,7 +167,7 @@ export class Color {
    * 克隆颜色
    * @returns 克隆结果
    */
-  clone (): Color {
+  clone(): Color {
     return new Color(this.r, this.g, this.b, this.a);
   }
 
@@ -177,21 +177,26 @@ export class Color {
    * @param value - 分量值
    * @returns
    */
-  setElement (index: number, value: number): this {
+  setElement(index: number, value: number): this {
     switch (index) {
-      case 0: this.r = value;
+      case 0:
+        this.r = value;
 
         break;
-      case 1: this.g = value;
+      case 1:
+        this.g = value;
 
         break;
-      case 2: this.b = value;
+      case 2:
+        this.b = value;
 
         break;
-      case 3: this.a = value;
+      case 3:
+        this.a = value;
 
         break;
-      default: console.error('index is out of range: ' + index);
+      default:
+        console.error('index is out of range: ' + index);
     }
 
     return this;
@@ -202,13 +207,18 @@ export class Color {
    * @param index - 下标
    * @returns 分量值
    */
-  getElement (index: number): number {
+  getElement(index: number): number {
     switch (index) {
-      case 0: return this.r;
-      case 1: return this.g;
-      case 2: return this.b;
-      case 3: return this.a;
-      default: console.error('index is out of range: ' + index);
+      case 0:
+        return this.r;
+      case 1:
+        return this.g;
+      case 2:
+        return this.b;
+      case 3:
+        return this.a;
+      default:
+        console.error('index is out of range: ' + index);
     }
 
     return 0;
@@ -219,7 +229,7 @@ export class Color {
    * @param right - 相加对象，颜色 | 数字
    * @returns 相加结果
    */
-  add (right: number | vec4 | Color): this {
+  add(right: number | vec4 | Color): this {
     if (typeof right === 'number') {
       this.r += right;
       this.g += right;
@@ -245,7 +255,7 @@ export class Color {
    * @param right - 相减对象，颜色 | 数字
    * @returns 相减结果
    */
-  subtract (right: number | vec4 | Color): this {
+  subtract(right: number | vec4 | Color): this {
     if (typeof right === 'number') {
       this.r -= right;
       this.g -= right;
@@ -271,7 +281,7 @@ export class Color {
    * @param right - 相乘对象，对象 | 数字
    * @returns 颜色
    */
-  multiply (right: number | vec4 | Color): this {
+  multiply(right: number | vec4 | Color): this {
     if (typeof right === 'number') {
       this.r *= right;
       this.g *= right;
@@ -297,7 +307,7 @@ export class Color {
    * @param right - 相除对象，对象 | 数字
    * @returns 颜色
    */
-  divide (right: number | vec4 | Color): this {
+  divide(right: number | vec4 | Color): this {
     if (typeof right === 'number') {
       this.r /= right;
       this.g /= right;
@@ -323,7 +333,7 @@ export class Color {
    * @param v - 数字
    * @returns 缩放结果
    */
-  scale (v: number): this {
+  scale(v: number): this {
     this.r *= v;
     this.g *= v;
     this.b *= v;
@@ -337,7 +347,7 @@ export class Color {
    * @param v - 颜色或数值
    * @returns 最小值
    */
-  min (v: Color | number): this {
+  min(v: Color | number): this {
     if (typeof v === 'number') {
       this.r = Math.min(this.r, v);
       this.g = Math.min(this.g, v);
@@ -358,7 +368,7 @@ export class Color {
    * @param v - 颜色或数值
    * @returns 最大值
    */
-  max (v: Color | number): this {
+  max(v: Color | number): this {
     if (typeof v === 'number') {
       this.r = Math.max(this.r, v);
       this.g = Math.max(this.g, v);
@@ -380,7 +390,7 @@ export class Color {
    * @param max - 最大值
    * @returns 颜色
    */
-  clamp (min: Color | number, max: Color | number): this {
+  clamp(min: Color | number, max: Color | number): this {
     return this.max(min).min(max);
   }
 
@@ -390,7 +400,7 @@ export class Color {
    * @param alpha - 插值比例
    * @returns 插值结果
    */
-  lerp (v: Color, alpha: number): this {
+  lerp(v: Color, alpha: number): this {
     this.r += (v.r - this.r) * alpha;
     this.g += (v.g - this.g) * alpha;
     this.b += (v.b - this.b) * alpha;
@@ -403,7 +413,7 @@ export class Color {
    * 计算颜色亮度值
    * @returns 亮度值
    */
-  luminance (): number {
+  luminance(): number {
     return this.r * 0.3 + this.g * 0.59 + this.b * 0.11;
   }
 
@@ -412,11 +422,11 @@ export class Color {
    * @param v - 颜色
    * @returns 判等结果
    */
-  equals (v: Color): boolean {
+  equals(v: Color): boolean {
     return v.r === this.r && v.g === this.g && v.b === this.b && v.a === this.a;
   }
 
-  toLinear (): this {
+  toLinear(): this {
     this.r = Color.gammaToLinear(this.r);
     this.g = Color.gammaToLinear(this.g);
     this.b = Color.gammaToLinear(this.b);
@@ -424,7 +434,7 @@ export class Color {
     return this;
   }
 
-  toGamma (): this {
+  toGamma(): this {
     this.r = Color.linearToGamma(this.r);
     this.g = Color.linearToGamma(this.g);
     this.b = Color.linearToGamma(this.b);
@@ -436,11 +446,11 @@ export class Color {
    * 转换为数组
    * @returns [r, g, b, a]数组
    */
-  toArray (): [r: number, g: number, b: number, a: number] {
+  toArray(): [r: number, g: number, b: number, a: number] {
     return [this.r, this.g, this.b, this.a];
   }
 
-  toVector4 (): Vector4 {
+  toVector4(): Vector4 {
     return new Vector4(this.r, this.g, this.b, this.a);
   }
 
@@ -448,7 +458,7 @@ export class Color {
    * RGB 颜色空间转 HSV
    * @param result HSV 值
    */
-  toHSV (): Color {
+  toHSV(): Color {
     const { r, g, b, a } = this;
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
@@ -478,7 +488,7 @@ export class Color {
     return new Color(h, s, v, a);
   }
 
-  toHexString (includeAlpha = true) {
+  toHexString(includeAlpha = true) {
     const R = Color.ToHex(Math.round(this.r * 255));
     const G = Color.ToHex(Math.round(this.g * 255));
     const B = Color.ToHex(Math.round(this.b * 255));
@@ -491,7 +501,7 @@ export class Color {
     }
   }
 
-  fill (array: number[] | Float32Array, offset = 0) {
+  fill(array: number[] | Float32Array, offset = 0) {
     array[offset] = this.r;
     array[offset + 1] = this.g;
     array[offset + 2] = this.b;
@@ -503,7 +513,7 @@ export class Color {
    * @param num - 数值
    * @returns
    */
-  static fromNumber (num: number): Color {
+  static fromNumber(num: number): Color {
     return new Color().setFromNumber(num);
   }
 
@@ -513,7 +523,7 @@ export class Color {
    * @param [offset=0] - 起始偏移值
    * @returns
    */
-  static fromArray (array: ColorDataType, offset = 0): Color {
+  static fromArray(array: ColorDataType, offset = 0): Color {
     return new Color().setFromArray(array, offset);
   }
 
@@ -522,11 +532,11 @@ export class Color {
    * @param hex - hex 字符串
    * @returns
    */
-  static fromHexString (hex: string): Color {
+  static fromHexString(hex: string): Color {
     return new Color().setFromHexString(hex);
   }
 
-  static fromHSV (hue: number, saturation: number, value: number, alpha = 1): Color {
+  static fromHSV(hue: number, saturation: number, value: number, alpha = 1): Color {
     return new Color().setFromHSV(hue, saturation, value, alpha);
   }
 
@@ -535,7 +545,7 @@ export class Color {
    * @param v - Gamma 空间颜色值
    * @returns 线性空间颜色值
    */
-  static gammaToLinear (v: number): number {
+  static gammaToLinear(v: number): number {
     if (v <= 0.0) {
       return 0.0;
     } else if (v <= 0.04045) {
@@ -552,7 +562,7 @@ export class Color {
    * @param value - 线性空间颜色值
    * @returns Gamma 空间颜色值
    */
-  static linearToGamma (value: number): number {
+  static linearToGamma(value: number): number {
     if (value <= 0.0) {
       return 0.0;
     } else if (value < 0.0031308) {
@@ -564,7 +574,7 @@ export class Color {
     }
   }
 
-  static ToHex (i: number): string {
+  static ToHex(i: number): string {
     const str = i.toString(16);
 
     if (i <= 15) {
@@ -582,7 +592,7 @@ export class Color {
    * @param a - 透明度 (0-1)
    * @returns 修改后的颜色对象
    */
-  setFromHSL (h: number, s: number, l: number, a = 1): this {
+  setFromHSL(h: number, s: number, l: number, a = 1): this {
     const [r, g, b, alpha] = hslToRgb(h, s, l, a);
 
     return this.set(r, g, b, alpha);
@@ -592,7 +602,7 @@ export class Color {
    * 转换为HSL颜色对象
    * @returns HSL颜色对象
    */
-  toHSL (): HSLColor {
+  toHSL(): HSLColor {
     return rgbToHsl(this.r, this.g, this.b, this.a);
   }
 
@@ -604,7 +614,7 @@ export class Color {
    * @param a - 透明度 (0-1)
    * @returns 新的颜色对象
    */
-  static fromHSL (h: number, s: number, l: number, a = 1): Color {
+  static fromHSL(h: number, s: number, l: number, a = 1): Color {
     return new Color().setFromHSL(h, s, l, a);
   }
 }
@@ -613,10 +623,10 @@ export class Color {
  * 增加HSL颜色空间支持
  */
 export interface HSLColor {
-  h: number, // 色相 (0-360)
-  s: number, // 饱和度 (0-1)
-  l: number, // 亮度 (0-1)
-  a: number, // 透明度 (0-1)
+  h: number; // 色相 (0-360)
+  s: number; // 饱和度 (0-1)
+  l: number; // 亮度 (0-1)
+  a: number; // 透明度 (0-1)
 }
 
 /**
@@ -627,27 +637,41 @@ export interface HSLColor {
  * @param a - 透明度 (0-1)
  * @returns RGB颜色数组 [r, g, b, a]
  */
-export function hslToRgb (h: number, s: number, l: number, a = 1): [number, number, number, number] {
-  h = ((h % 360) + 360) % 360 / 360;
+export function hslToRgb(h: number, s: number, l: number, a = 1): [number, number, number, number] {
+  h = (((h % 360) + 360) % 360) / 360;
 
   const c = (1 - Math.abs(2 * l - 1)) * s;
-  const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+  const x = c * (1 - Math.abs(((h * 6) % 2) - 1));
   const m = l - c / 2;
 
-  let r = 0, g = 0, b = 0;
+  let r = 0,
+    g = 0,
+    b = 0;
 
   if (h < 1 / 6) {
-    r = c; g = x; b = 0;
+    r = c;
+    g = x;
+    b = 0;
   } else if (h < 2 / 6) {
-    r = x; g = c; b = 0;
+    r = x;
+    g = c;
+    b = 0;
   } else if (h < 3 / 6) {
-    r = 0; g = c; b = x;
+    r = 0;
+    g = c;
+    b = x;
   } else if (h < 4 / 6) {
-    r = 0; g = x; b = c;
+    r = 0;
+    g = x;
+    b = c;
   } else if (h < 5 / 6) {
-    r = x; g = 0; b = c;
+    r = x;
+    g = 0;
+    b = c;
   } else {
-    r = c; g = 0; b = x;
+    r = c;
+    g = 0;
+    b = x;
   }
 
   return [r + m, g + m, b + m, a];
@@ -661,10 +685,11 @@ export function hslToRgb (h: number, s: number, l: number, a = 1): [number, numb
  * @param a - 透明度 (0-1)
  * @returns HSL颜色对象
  */
-export function rgbToHsl (r: number, g: number, b: number, a = 1): HSLColor {
+export function rgbToHsl(r: number, g: number, b: number, a = 1): HSLColor {
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
-  let h = 0, s = 0;
+  let h = 0,
+    s = 0;
   const l = (max + min) / 2;
 
   if (max !== min) {

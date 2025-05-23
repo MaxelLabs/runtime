@@ -32,12 +32,12 @@ export class Euler {
    * @param [z=0] - z 方向分量
    * @param [order=Euler.DEFAULT_ORDER] - 欧拉角顺序
    */
-  constructor (
+  constructor(
     public x = 0,
     public y = 0,
     public z = 0,
     public order = Euler.DEFAULT_ORDER
-  ) { }
+  ) {}
 
   /**
    * 设置欧拉角
@@ -47,7 +47,7 @@ export class Euler {
    * @param [order] - 欧拉角顺序
    * @returns
    */
-  set (x: number, y: number, z: number, order = this.order): this {
+  set(x: number, y: number, z: number, order = this.order): this {
     this.x = x;
     this.y = y;
     this.z = z;
@@ -56,7 +56,7 @@ export class Euler {
     return this;
   }
 
-  setZero (order = this.order): this {
+  setZero(order = this.order): this {
     return this.set(0, 0, 0, order);
   }
 
@@ -66,11 +66,17 @@ export class Euler {
    * @param [order] - 欧拉角顺序
    * @returns
    */
-  setFromRotationMatrix4 (m: Matrix4, order = this.order): this {
+  setFromRotationMatrix4(m: Matrix4, order = this.order): this {
     const te = m.getElements();
-    const m11 = te[0]; const m12 = te[4]; const m13 = te[8];
-    const m21 = te[1]; const m22 = te[5]; const m23 = te[9];
-    const m31 = te[2]; const m32 = te[6]; const m33 = te[10];
+    const m11 = te[0];
+    const m12 = te[4];
+    const m13 = te[8];
+    const m21 = te[1];
+    const m22 = te[5];
+    const m23 = te[9];
+    const m31 = te[2];
+    const m32 = te[6];
+    const m33 = te[10];
 
     switch (order) {
       case EulerOrder.XYZ:
@@ -157,7 +163,7 @@ export class Euler {
    * @param [order] - 欧拉角顺序
    * @returns
    */
-  setFromQuaternion (quat: Quaternion, order = this.order): this {
+  setFromQuaternion(quat: Quaternion, order = this.order): this {
     const matrix = Euler.tempMat0;
     const zero = new Vector3();
     const one = new Vector3(1, 1, 1);
@@ -173,7 +179,7 @@ export class Euler {
    * @param [order] - 欧拉角顺序
    * @returns
    */
-  setFromVector3 (v: Vector3, order = this.order): this {
+  setFromVector3(v: Vector3, order = this.order): this {
     return this.set(v.x, v.y, v.z, order);
   }
 
@@ -184,7 +190,7 @@ export class Euler {
    * @param [order] - 欧拉角顺序
    * @returns
    */
-  setFromArray (array: number[], offset = 0, order = this.order): this {
+  setFromArray(array: number[], offset = 0, order = this.order): this {
     this.x = array[offset] ?? 0;
     this.y = array[offset + 1] ?? 0;
     this.z = array[offset + 2] ?? 0;
@@ -197,7 +203,7 @@ export class Euler {
    * 克隆欧拉角
    * @returns 克隆结果
    */
-  clone (): Euler {
+  clone(): Euler {
     return new Euler(this.x, this.y, this.z, this.order);
   }
 
@@ -206,7 +212,7 @@ export class Euler {
    * @param euler - 复制对象
    * @returns 复制结果
    */
-  copyFrom (euler: Euler): this {
+  copyFrom(euler: Euler): this {
     this.x = euler.x;
     this.y = euler.y;
     this.z = euler.z;
@@ -215,7 +221,7 @@ export class Euler {
     return this;
   }
 
-  add (euler: Euler): this {
+  add(euler: Euler): this {
     if (this.order != euler.order) {
       console.error('add euler with different order');
 
@@ -229,7 +235,7 @@ export class Euler {
     return this;
   }
 
-  addEulers (left: Euler, right: Euler): this {
+  addEulers(left: Euler, right: Euler): this {
     if (left.order != right.order) {
       console.error('add euler with different order');
 
@@ -244,7 +250,7 @@ export class Euler {
     return this;
   }
 
-  negate (): this {
+  negate(): this {
     this.x = -this.x;
     this.y = -this.y;
     this.z = -this.z;
@@ -257,7 +263,7 @@ export class Euler {
    * @param newOrder - 欧拉角顺序
    * @returns 修改结果
    */
-  reorder (newOrder: EulerOrder): this {
+  reorder(newOrder: EulerOrder): this {
     const quaternion = new Quaternion();
 
     quaternion.setFromEuler(this.x, this.y, this.z);
@@ -271,7 +277,7 @@ export class Euler {
    * @param out - 旋转结果，如果没有传入直接覆盖输入值
    * @returns
    */
-  rotateVector3 (v: Vector3, out?: Vector3): Vector3 {
+  rotateVector3(v: Vector3, out?: Vector3): Vector3 {
     const q = Euler.tempQuat0;
 
     q.setFromEuler(this.x, this.y, this.z);
@@ -284,11 +290,8 @@ export class Euler {
    * @param euler - 欧拉角
    * @returns 判断结果
    */
-  equals (euler: Euler): boolean {
-    return euler.x === this.x
-      && euler.y === this.y
-      && euler.z === this.z
-      && euler.order === this.order;
+  equals(euler: Euler): boolean {
+    return euler.x === this.x && euler.y === this.y && euler.z === this.z && euler.order === this.order;
   }
 
   /**
@@ -296,7 +299,7 @@ export class Euler {
    * @param vec - 目标保存对象
    * @returns 保存结果
    */
-  toVector3 (vec: Vector3): Vector3 {
+  toVector3(vec: Vector3): Vector3 {
     return vec.set(this.x, this.y, this.z);
   }
 
@@ -304,7 +307,7 @@ export class Euler {
    * 欧拉角转数组
    * @returns 保存结果
    */
-  toArray (): [x: number, y: number, z: number] {
+  toArray(): [x: number, y: number, z: number] {
     return [this.x, this.y, this.z];
   }
 
@@ -313,7 +316,7 @@ export class Euler {
    * @param quat - 目标四元数
    * @returns 目标四元数
    */
-  toQuaternion (quat: Quaternion): Quaternion {
+  toQuaternion(quat: Quaternion): Quaternion {
     const { x, y, z, order } = this;
     const c1 = Math.cos(x * DEG2RAD * 0.5);
     const c2 = Math.cos(y * DEG2RAD * 0.5);
@@ -390,12 +393,15 @@ export class Euler {
    * @param mat - 目标矩阵
    * @returns 返回目标矩阵
    */
-  toMatrix4 (mat: Matrix4): Matrix4 {
+  toMatrix4(mat: Matrix4): Matrix4 {
     const me = mat.getElements();
     const { x, y, z, order } = this;
-    const cosX = Math.cos(x * DEG2RAD), sinX = Math.sin(x * DEG2RAD);
-    const cosY = Math.cos(y * DEG2RAD), sinY = Math.sin(y * DEG2RAD);
-    const cosZ = Math.cos(z * DEG2RAD), sinZ = Math.sin(z * DEG2RAD);
+    const cosX = Math.cos(x * DEG2RAD),
+      sinX = Math.sin(x * DEG2RAD);
+    const cosY = Math.cos(y * DEG2RAD),
+      sinY = Math.sin(y * DEG2RAD);
+    const cosZ = Math.cos(z * DEG2RAD),
+      sinZ = Math.sin(z * DEG2RAD);
 
     if (order === EulerOrder.XYZ) {
       const cosXcosZ = cosX * cosZ;
@@ -404,12 +410,12 @@ export class Euler {
       const sinXsinZ = sinX * sinZ;
 
       me[0] = cosY * cosZ;
-      me[4] = - cosY * sinZ;
+      me[4] = -cosY * sinZ;
       me[8] = sinY;
 
       me[1] = cosXsinZ + sinXcosZ * sinY;
       me[5] = cosXcosZ - sinXsinZ * sinY;
-      me[9] = - sinX * cosY;
+      me[9] = -sinX * cosY;
 
       me[2] = sinXsinZ - cosXcosZ * sinY;
       me[6] = sinXcosZ + cosXsinZ * sinY;
@@ -426,7 +432,7 @@ export class Euler {
 
       me[1] = cosX * sinZ;
       me[5] = cosX * cosZ;
-      me[9] = - sinX;
+      me[9] = -sinX;
 
       me[2] = cosYsinZ * sinX - sinYcosZ;
       me[6] = sinYsinZ + cosYcosZ * sinX;
@@ -438,14 +444,14 @@ export class Euler {
       const sinYsinZ = sinY * sinZ;
 
       me[0] = cosYcosZ - sinYsinZ * sinX;
-      me[4] = - cosX * sinZ;
+      me[4] = -cosX * sinZ;
       me[8] = sinYcosZ + cosYsinZ * sinX;
 
       me[1] = cosYsinZ + sinYcosZ * sinX;
       me[5] = cosX * cosZ;
       me[9] = sinYsinZ - cosYcosZ * sinX;
 
-      me[2] = - cosX * sinY;
+      me[2] = -cosX * sinY;
       me[6] = sinX;
       me[10] = cosX * cosY;
     } else if (order === EulerOrder.ZYX) {
@@ -462,7 +468,7 @@ export class Euler {
       me[5] = sinXsinZ * sinY + cosXcosZ;
       me[9] = cosXsinZ * sinY - sinXcosZ;
 
-      me[2] = - sinY;
+      me[2] = -sinY;
       me[6] = sinX * cosY;
       me[10] = cosX * cosY;
     } else if (order === EulerOrder.YZX) {
@@ -477,9 +483,9 @@ export class Euler {
 
       me[1] = sinZ;
       me[5] = cosX * cosZ;
-      me[9] = - sinX * cosZ;
+      me[9] = -sinX * cosZ;
 
-      me[2] = - sinY * cosZ;
+      me[2] = -sinY * cosZ;
       me[6] = cosXsinY * sinZ + sinXcosY;
       me[10] = cosXcosY - sinXsinY * sinZ;
     } else if (order === EulerOrder.XZY) {
@@ -489,7 +495,7 @@ export class Euler {
       const sinXsinY = sinX * sinY;
 
       me[0] = cosY * cosZ;
-      me[4] = - sinZ;
+      me[4] = -sinZ;
       me[8] = sinY * cosZ;
 
       me[1] = cosXcosY * sinZ + sinXsinY;
@@ -523,7 +529,7 @@ export class Euler {
    * @param [order=Euler.DEFAULT_ORDER] - 欧拉角顺序
    * @returns 创建结果
    */
-  static fromRotationMatrix4 (m: Matrix4, order = Euler.DEFAULT_ORDER): Euler {
+  static fromRotationMatrix4(m: Matrix4, order = Euler.DEFAULT_ORDER): Euler {
     return new Euler().setFromRotationMatrix4(m, order);
   }
 
@@ -533,7 +539,7 @@ export class Euler {
    * @param [order=Euler.DEFAULT_ORDER] - 欧拉角顺序
    * @returns 创建结果
    */
-  static fromQuaternion (quat: Quaternion, order = Euler.DEFAULT_ORDER): Euler {
+  static fromQuaternion(quat: Quaternion, order = Euler.DEFAULT_ORDER): Euler {
     return new Euler().setFromQuaternion(quat, order);
   }
 
@@ -543,7 +549,7 @@ export class Euler {
    * @param [order=Euler.DEFAULT_ORDER] - 欧拉角顺序
    * @returns 创建结果
    */
-  static fromVector3 (v: Vector3, order = Euler.DEFAULT_ORDER): Euler {
+  static fromVector3(v: Vector3, order = Euler.DEFAULT_ORDER): Euler {
     return new Euler().setFromVector3(v, order);
   }
 
@@ -554,7 +560,7 @@ export class Euler {
    * @param [order=Euler.DEFAULT_ORDER] - 欧拉角顺序
    * @returns 创建结果
    */
-  static fromArray (array: number[], offset = 0, order = Euler.DEFAULT_ORDER): Euler {
+  static fromArray(array: number[], offset = 0, order = Euler.DEFAULT_ORDER): Euler {
     return new Euler().setFromArray(array, offset, order);
   }
 }

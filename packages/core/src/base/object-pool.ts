@@ -3,21 +3,21 @@
  */
 export interface ObjectPoolStats {
   /** 对象池ID */
-  poolId: string,
+  poolId: string;
   /** 池中可用对象数量 */
-  available: number,
+  available: number;
   /** 当前使用中对象数量 */
-  inUse: number,
+  inUse: number;
   /** 池中总对象数量 */
-  total: number,
+  total: number;
   /** 对象重用率 */
-  efficiency: number,
+  efficiency: number;
   /** 总获取对象次数 */
-  totalGets?: number,
+  totalGets?: number;
   /** 总创建对象次数 */
-  totalCreated?: number,
+  totalCreated?: number;
   /** 总释放对象次数 */
-  totalReleased?: number,
+  totalReleased?: number;
 }
 
 /**
@@ -54,7 +54,13 @@ export class ObjectPool<T> {
    * @param initialSize 初始池大小
    * @param maxSize 池最大容量
    */
-  constructor (name: string, factory: () => T, reset: (obj: T) => void, initialSize: number = 0, maxSize: number = 1000) {
+  constructor(
+    name: string,
+    factory: () => T,
+    reset: (obj: T) => void,
+    initialSize: number = 0,
+    maxSize: number = 1000
+  ) {
     this.name = name;
     this.factory = factory;
     this.reset = reset;
@@ -68,7 +74,7 @@ export class ObjectPool<T> {
    * 预分配对象
    * @param count 预分配数量
    */
-  preAllocate (count: number): void {
+  preAllocate(count: number): void {
     if (this.isDestroyed) {
       console.warn(`对象池 ${this.name} 已销毁，无法预分配对象`);
 
@@ -94,7 +100,7 @@ export class ObjectPool<T> {
    * @param count 预热数量
    * @returns 预热结果，包含成功预热数量
    */
-  warmUp (count: number): { success: boolean, count: number } {
+  warmUp(count: number): { success: boolean; count: number } {
     if (this.isDestroyed) {
       console.warn(`对象池 ${this.name} 已销毁，无法预热对象池`);
 
@@ -130,7 +136,7 @@ export class ObjectPool<T> {
    * 跟踪对象，将其标记为由此池创建
    * @param obj 需要跟踪的对象
    */
-  private trackObject (obj: T): void {
+  private trackObject(obj: T): void {
     // 只有对象类型才能加入WeakSet
     if (obj && typeof obj === 'object') {
       this.poolObjects.add(obj as object);
@@ -141,7 +147,7 @@ export class ObjectPool<T> {
    * 检查对象是否由此池创建
    * @param obj 需要检查的对象
    */
-  private isPoolObject (obj: T): boolean {
+  private isPoolObject(obj: T): boolean {
     // 非对象类型无法验证所有权，返回true
     if (!obj || typeof obj !== 'object') {
       return true;
@@ -155,7 +161,7 @@ export class ObjectPool<T> {
    * @returns 池中的对象或新创建的对象
    * @throws 如果对象池已销毁或创建对象失败
    */
-  get (): T {
+  get(): T {
     if (this.isDestroyed) {
       throw new Error(`对象池 ${this.name} 已销毁，无法获取对象`);
     }
@@ -188,7 +194,7 @@ export class ObjectPool<T> {
    * @param obj 要放回的对象
    * @returns 是否成功释放对象
    */
-  release (obj: T): boolean {
+  release(obj: T): boolean {
     if (this.isDestroyed) {
       console.warn(`对象池 ${this.name} 已销毁，对象将被丢弃`);
 
@@ -232,7 +238,7 @@ export class ObjectPool<T> {
   /**
    * 清空对象池
    */
-  clear (): void {
+  clear(): void {
     this.pool.length = 0;
     this.activeCount = 0;
   }
@@ -240,7 +246,7 @@ export class ObjectPool<T> {
   /**
    * 完全销毁对象池，释放所有资源
    */
-  destroy (): void {
+  destroy(): void {
     this.clear();
     this.isDestroyed = true;
   }
@@ -249,16 +255,14 @@ export class ObjectPool<T> {
    * 获取对象池当前状态统计
    * @returns 对象池性能统计
    */
-  getStatus (): ObjectPoolStats {
+  getStatus(): ObjectPoolStats {
     const available = this.pool.length;
     const inUse = this.activeCount;
     const total = available + inUse;
 
     // 计算对象重用率: (获取次数 - 创建次数) / 获取次数
     // 如果获取次数为0，则返回0
-    const efficiency = this._totalGets === 0
-      ? 0
-      : (this._totalGets - this._totalCreated) / this._totalGets;
+    const efficiency = this._totalGets === 0 ? 0 : (this._totalGets - this._totalCreated) / this._totalGets;
 
     return {
       poolId: this.name,
@@ -276,7 +280,7 @@ export class ObjectPool<T> {
    * 调整对象池最大容量
    * @param maxSize 新的最大容量
    */
-  setMaxSize (maxSize: number): void {
+  setMaxSize(maxSize: number): void {
     if (this.isDestroyed) {
       console.warn(`对象池 ${this.name} 已销毁，无法调整容量`);
 
@@ -294,21 +298,21 @@ export class ObjectPool<T> {
   /**
    * 获取池中当前空闲对象数量
    */
-  getSize (): number {
+  getSize(): number {
     return this.pool.length;
   }
 
   /**
    * 获取对象池总容量（活跃+空闲）
    */
-  getCapacity (): number {
+  getCapacity(): number {
     return this.activeCount + this.pool.length;
   }
 
   /**
    * 检查对象池是否已销毁
    */
-  getDestroyed (): boolean {
+  getDestroyed(): boolean {
     return this.isDestroyed;
   }
 }

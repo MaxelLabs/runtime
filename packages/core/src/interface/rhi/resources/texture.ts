@@ -12,47 +12,47 @@ export interface IRHITexture {
   /**
    * 纹理宽度
    */
-  readonly width: number,
+  readonly width: number;
 
   /**
    * 纹理高度
    */
-  readonly height: number,
+  readonly height: number;
 
   /**
    * 纹理深度或数组层数
    */
-  readonly depthOrArrayLayers: number,
+  readonly depthOrArrayLayers: number;
 
   /**
    * MIP等级数
    */
-  readonly mipLevelCount: number,
+  readonly mipLevelCount: number;
 
   /**
    * 纹理格式
    */
-  readonly format: RHITextureFormat,
+  readonly format: RHITextureFormat;
 
   /**
    * 纹理用途
    */
-  readonly usage: RHITextureUsage,
+  readonly usage: RHITextureUsage;
 
   /**
    * 纹理维度
    */
-  readonly dimension: '1d' | '2d' | '3d' | 'cube',
+  readonly dimension: '1d' | '2d' | '3d' | 'cube';
 
   /**
    * 采样数量
    */
-  readonly sampleCount: number,
+  readonly sampleCount: number;
 
   /**
    * 纹理标签
    */
-  readonly label?: string,
+  readonly label?: string;
 
   /**
    * 更新纹理数据
@@ -76,7 +76,7 @@ export interface IRHITexture {
     depth?: number,
     mipLevel?: number,
     arrayLayer?: number
-  ): void,
+  ): void;
 
   /**
    * 创建纹理视图
@@ -94,12 +94,12 @@ export interface IRHITexture {
     mipLevelCount?: number,
     baseArrayLayer?: number,
     arrayLayerCount?: number
-  ): IRHITextureView,
+  ): IRHITextureView;
 
   /**
    * 销毁资源
    */
-  destroy(): void,
+  destroy(): void;
 }
 
 /**
@@ -109,45 +109,45 @@ export interface IRHITextureView {
   /**
    * 源纹理
    */
-  readonly texture: IRHITexture,
+  readonly texture: IRHITexture;
 
   /**
    * 视图格式
    */
-  readonly format: RHITextureFormat,
+  readonly format: RHITextureFormat;
 
   /**
    * 视图维度
    */
-  readonly dimension: '1d' | '2d' | '3d' | 'cube' | '2d-array' | 'cube-array',
+  readonly dimension: '1d' | '2d' | '3d' | 'cube' | '2d-array' | 'cube-array';
 
   /**
    * 基础MIP等级
    */
-  readonly baseMipLevel: number,
+  readonly baseMipLevel: number;
 
   /**
    * MIP等级数
    */
-  readonly mipLevelCount: number,
+  readonly mipLevelCount: number;
 
   /**
    * 基础数组层
    */
-  readonly baseArrayLayer: number,
+  readonly baseArrayLayer: number;
 
   /**
    * 数组层数
    */
-  readonly arrayLayerCount: number,
+  readonly arrayLayerCount: number;
 
   /**
    * 视图标签
    */
-  readonly label?: string,
+  readonly label?: string;
 
   /**
    * 销毁资源
    */
-  destroy(): void,
+  destroy(): void;
 }

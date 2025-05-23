@@ -23,13 +23,13 @@ export class ShaderMacroCollection {
    */
   enable(macro: ShaderMacro | number, value: string | number | boolean = ''): void {
     const macroID = macro instanceof ShaderMacro ? macro.id : macro;
-    
+
     // 将宏添加到已启用集合
     this.enabledMacros.add(macroID);
-    
+
     // 设置宏值
     this.macroValues.set(macroID, value);
-    
+
     // 如果提供的是ShaderMacro对象，同时更新其值
     if (macro instanceof ShaderMacro) {
       macro.value = value;
@@ -42,10 +42,10 @@ export class ShaderMacroCollection {
    */
   disable(macro: ShaderMacro | number): void {
     const macroID = macro instanceof ShaderMacro ? macro.id : macro;
-    
+
     // 从已启用集合中移除
     this.enabledMacros.delete(macroID);
-    
+
     // 移除宏值
     this.macroValues.delete(macroID);
   }
@@ -57,6 +57,7 @@ export class ShaderMacroCollection {
    */
   isEnabled(macro: ShaderMacro | number): boolean {
     const macroID = macro instanceof ShaderMacro ? macro.id : macro;
+
     return this.enabledMacros.has(macroID);
   }
 
@@ -67,11 +68,11 @@ export class ShaderMacroCollection {
    */
   getValue(macro: ShaderMacro | number): string | number | boolean {
     const macroID = macro instanceof ShaderMacro ? macro.id : macro;
-    
+
     if (this.macroValues.has(macroID)) {
       return this.macroValues.get(macroID);
     }
-    
+
     return undefined;
   }
 
@@ -106,14 +107,15 @@ export class ShaderMacroCollection {
    */
   getEnabledMacros(): ShaderMacro[] {
     const result: ShaderMacro[] = [];
-    
+
     for (const macroID of this.enabledMacros) {
       const macro = ShaderMacro.getById(macroID);
+
       if (macro) {
         result.push(macro);
       }
     }
-    
+
     return result;
   }
 
@@ -125,11 +127,11 @@ export class ShaderMacroCollection {
     if (!other) {
       return;
     }
-    
+
     // 合并所有已启用的宏及其值
     for (const macroID of other.enabledMacros) {
       this.enabledMacros.add(macroID);
-      
+
       if (other.macroValues.has(macroID)) {
         this.macroValues.set(macroID, other.macroValues.get(macroID));
       }
@@ -142,16 +144,16 @@ export class ShaderMacroCollection {
    */
   clone(): ShaderMacroCollection {
     const result = new ShaderMacroCollection();
-    
+
     // 复制所有已启用的宏及其值
     for (const macroID of this.enabledMacros) {
       result.enabledMacros.add(macroID);
-      
+
       if (this.macroValues.has(macroID)) {
         result.macroValues.set(macroID, this.macroValues.get(macroID));
       }
     }
-    
+
     return result;
   }
 
@@ -169,12 +171,13 @@ export class ShaderMacroCollection {
    */
   getGLSLDefines(): string {
     const defines: string[] = [];
-    
+
     for (const macroID of this.enabledMacros) {
       const macro = ShaderMacro.getById(macroID);
+
       if (macro) {
         const value = this.macroValues.get(macroID);
-        
+
         if (value === false) {
           // 如果值为false，则不定义该宏
           continue;
@@ -187,7 +190,7 @@ export class ShaderMacroCollection {
         }
       }
     }
-    
+
     return defines.join('\n');
   }
-} 
+}

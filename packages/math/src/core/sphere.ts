@@ -14,10 +14,7 @@ export class Sphere {
    * @param [center=Vector3.ZERO] - 球心，默认值为(0, 0, 0)
    * @param [radius=-1] - 半径
    */
-  constructor (
-    center = Vector3.ZERO,
-    radius = -1
-  ) {
+  constructor(center = Vector3.ZERO, radius = -1) {
     this.center = center.clone();
     this.radius = radius;
   }
@@ -28,7 +25,7 @@ export class Sphere {
    * @param radius - 半径
    * @returns
    */
-  set (center: Vector3, radius: number): this {
+  set(center: Vector3, radius: number): this {
     this.center.copyFrom(center);
     this.radius = radius;
 
@@ -41,7 +38,7 @@ export class Sphere {
    * @param [optionalCenter] - 指定球心
    * @returns
    */
-  setFromPoints (points: Vector3[], optionalCenter?: Vector3): this {
+  setFromPoints(points: Vector3[], optionalCenter?: Vector3): this {
     const { center } = this;
 
     if (optionalCenter !== undefined) {
@@ -70,7 +67,7 @@ export class Sphere {
    * @param sphere - 球信息
    * @returns 复制结果
    */
-  copyFrom (sphere: Sphere): this {
+  copyFrom(sphere: Sphere): this {
     this.center.copyFrom(sphere.center);
     this.radius = sphere.radius;
 
@@ -81,7 +78,7 @@ export class Sphere {
    * 球判空
    * @returns 判空结果
    */
-  isEmpty (): boolean {
+  isEmpty(): boolean {
     return this.radius < 0;
   }
 
@@ -89,9 +86,9 @@ export class Sphere {
    * 球置空
    * @returns 置空结果
    */
-  makeEmpty (): this {
+  makeEmpty(): this {
     this.center.set(0, 0, 0);
-    this.radius = - 1;
+    this.radius = -1;
 
     return this;
   }
@@ -101,8 +98,8 @@ export class Sphere {
    * @param point - 三维空间点
    * @returns 空间点包含判断
    */
-  containsPoint (point: Vector3): boolean {
-    return point.distanceToSquared(this.center) <= (this.radius * this.radius);
+  containsPoint(point: Vector3): boolean {
+    return point.distanceToSquared(this.center) <= this.radius * this.radius;
   }
 
   /**
@@ -110,8 +107,8 @@ export class Sphere {
    * @param point - 三维空间点
    * @returns 距离结果
    */
-  distanceToPoint (point: Vector3): number {
-    return (point.distanceTo(this.center) - this.radius);
+  distanceToPoint(point: Vector3): number {
+    return point.distanceTo(this.center) - this.radius;
   }
 
   /**
@@ -119,10 +116,10 @@ export class Sphere {
    * @param sphere - 球
    * @returns 相交判断结果
    */
-  intersectsSphere (sphere: Sphere): boolean {
+  intersectsSphere(sphere: Sphere): boolean {
     const radiusSum = this.radius + sphere.radius;
 
-    return sphere.center.distanceToSquared(this.center) <= (radiusSum * radiusSum);
+    return sphere.center.distanceToSquared(this.center) <= radiusSum * radiusSum;
   }
 
   /**
@@ -130,7 +127,7 @@ export class Sphere {
    * @param box - 三维包围盒
    * @returns 相交判断结果
    */
-  intersectsBox (box: Box3): boolean {
+  intersectsBox(box: Box3): boolean {
     return box.intersectsSphere(this);
   }
 
@@ -141,18 +138,18 @@ export class Sphere {
    * @param [target] - 结果保存对象
    * @returns 收敛结果
    */
-  clampPoint (point: Vector3, target?: Vector3): Vector3 {
+  clampPoint(point: Vector3, target?: Vector3): Vector3 {
     const deltaLengthSq = this.center.distanceToSquared(point);
 
-    if (target === undefined) { target = new Vector3(); }
+    if (target === undefined) {
+      target = new Vector3();
+    }
 
     target.copyFrom(point);
 
-    if (deltaLengthSq > (this.radius * this.radius)) {
-
+    if (deltaLengthSq > this.radius * this.radius) {
       target.subtract(this.center).normalize();
       target.multiply(this.radius).add(this.center);
-
     }
 
     return target;
@@ -163,8 +160,10 @@ export class Sphere {
    * @param target - 包围盒
    * @returns 球
    */
-  getBoundingBox (target: Box3): Box3 {
-    if (target === undefined) { target = new Box3(); }
+  getBoundingBox(target: Box3): Box3 {
+    if (target === undefined) {
+      target = new Box3();
+    }
 
     if (this.isEmpty()) {
       // Empty sphere produces empty bounding box
@@ -184,7 +183,7 @@ export class Sphere {
    * @param matrix - 空间变化矩阵
    * @returns 变换结果
    */
-  applyMatrix4 (matrix: Matrix4): this {
+  applyMatrix4(matrix: Matrix4): this {
     const mt = matrix.getElements();
 
     const scaleXSq = mt[0] * mt[0] + mt[1] * mt[1] + mt[2] * mt[2];
@@ -204,7 +203,7 @@ export class Sphere {
    * @param offset - 位移信息
    * @returns 位移结果
    */
-  translate (offset: Vector3): this {
+  translate(offset: Vector3): this {
     this.center.add(offset);
 
     return this;
@@ -215,11 +214,11 @@ export class Sphere {
    * @param point - 扩展点
    * @returns 扩展结果
    */
-  expandByPoint (point: Vector3): this {
+  expandByPoint(point: Vector3): this {
     const vector = new Vector3().subtractVectors(point, this.center);
     const lengthSquared = vector.lengthSquared();
 
-    if (lengthSquared > (this.radius * this.radius)) {
+    if (lengthSquared > this.radius * this.radius) {
       const length = Math.sqrt(lengthSquared);
       const missingRadiusHalf = (length - this.radius) * 0.5;
 
@@ -239,7 +238,7 @@ export class Sphere {
    * @param sphere - 包围球
    * @returns 求并结果
    */
-  union (sphere: Sphere): this {
+  union(sphere: Sphere): this {
     if (sphere.isEmpty()) {
       return this;
     }
@@ -287,7 +286,7 @@ export class Sphere {
    * @param other - 其它包围球
    * @returns 求交结果
    */
-  intersect (other: Sphere): this {
+  intersect(other: Sphere): this {
     const vector = new Vector3().subtractVectors(this.center, other.center);
     const distance = vector.length();
     const radiusSum = this.radius + other.radius;
@@ -307,15 +306,15 @@ export class Sphere {
    * @param sphere - 包围球
    * @returns 判等结果
    */
-  equals (sphere: Sphere): boolean {
-    return sphere.center.equals(this.center) && (sphere.radius === this.radius);
+  equals(sphere: Sphere): boolean {
+    return sphere.center.equals(this.center) && sphere.radius === this.radius;
   }
 
   /**
    * 包围球克隆
    * @returns 克隆结果
    */
-  clone (): Sphere {
+  clone(): Sphere {
     return new Sphere().copyFrom(this);
   }
 }

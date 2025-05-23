@@ -1,3 +1,1 @@
-export interface Camera {
-
-}
+export interface Camera {}

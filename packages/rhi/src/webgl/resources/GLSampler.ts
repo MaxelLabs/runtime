@@ -31,10 +31,13 @@ export class GLSampler implements IRHISampler {
    * @param gl WebGL上下文
    * @param descriptor 采样器描述符
    */
-  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHISamplerDescriptor & {
-    borderColor?: [number, number, number, number],
-    useMipmap?: boolean,
-  } = {}) {
+  constructor(
+    gl: WebGLRenderingContext | WebGL2RenderingContext,
+    descriptor: RHISamplerDescriptor & {
+      borderColor?: [number, number, number, number];
+      useMipmap?: boolean;
+    } = {}
+  ) {
     this.gl = gl;
     this.isWebGL2 = gl instanceof WebGL2RenderingContext;
     this.utils = new WebGLUtils(gl);
@@ -69,7 +72,9 @@ export class GLSampler implements IRHISampler {
   /**
    * 将字符串或枚举寻址模式转换为枚举值
    */
-  private getAddressMode (mode?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border' | RHIAddressMode): RHIAddressMode {
+  private getAddressMode(
+    mode?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border' | RHIAddressMode
+  ): RHIAddressMode {
     if (mode === undefined || mode === null) {
       return RHIAddressMode.CLAMP_TO_EDGE;
     }
@@ -87,18 +92,23 @@ export class GLSampler implements IRHISampler {
 
     // 字符串转换到枚举
     switch (mode) {
-      case 'repeat': return RHIAddressMode.REPEAT;
-      case 'mirror-repeat': return RHIAddressMode.MIRROR_REPEAT;
-      case 'clamp-to-edge': return RHIAddressMode.CLAMP_TO_EDGE;
-      case 'clamp-to-border': return RHIAddressMode.CLAMP_TO_BORDER;
-      default: return RHIAddressMode.CLAMP_TO_EDGE;
+      case 'repeat':
+        return RHIAddressMode.REPEAT;
+      case 'mirror-repeat':
+        return RHIAddressMode.MIRROR_REPEAT;
+      case 'clamp-to-edge':
+        return RHIAddressMode.CLAMP_TO_EDGE;
+      case 'clamp-to-border':
+        return RHIAddressMode.CLAMP_TO_BORDER;
+      default:
+        return RHIAddressMode.CLAMP_TO_EDGE;
     }
   }
 
   /**
    * 将字符串或枚举过滤模式转换为枚举值
    */
-  private getFilterMode (mode?: 'nearest' | 'linear' | RHIFilterMode): RHIFilterMode {
+  private getFilterMode(mode?: 'nearest' | 'linear' | RHIFilterMode): RHIFilterMode {
     if (mode === undefined || mode === null) {
       return RHIFilterMode.LINEAR;
     }
@@ -116,16 +126,30 @@ export class GLSampler implements IRHISampler {
 
     // 字符串转换到枚举
     switch (mode) {
-      case 'nearest': return RHIFilterMode.NEAREST;
-      case 'linear': return RHIFilterMode.LINEAR;
-      default: return RHIFilterMode.LINEAR;
+      case 'nearest':
+        return RHIFilterMode.NEAREST;
+      case 'linear':
+        return RHIFilterMode.LINEAR;
+      default:
+        return RHIFilterMode.LINEAR;
     }
   }
 
   /**
    * 将字符串或枚举比较函数转换为枚举值
    */
-  private getCompareFunction (func: 'never' | 'less' | 'equal' | 'less-equal' | 'greater' | 'not-equal' | 'greater-equal' | 'always' | RHICompareFunction): RHICompareFunction {
+  private getCompareFunction(
+    func:
+      | 'never'
+      | 'less'
+      | 'equal'
+      | 'less-equal'
+      | 'greater'
+      | 'not-equal'
+      | 'greater-equal'
+      | 'always'
+      | RHICompareFunction
+  ): RHICompareFunction {
     if (typeof func === 'number') {
       // 验证枚举值合法性
       if (Object.values(RHICompareFunction).includes(func)) {
@@ -138,15 +162,24 @@ export class GLSampler implements IRHISampler {
 
     // 字符串转换到枚举
     switch (func) {
-      case 'never': return RHICompareFunction.NEVER;
-      case 'less': return RHICompareFunction.LESS;
-      case 'equal': return RHICompareFunction.EQUAL;
-      case 'less-equal': return RHICompareFunction.LESS_EQUAL;
-      case 'greater': return RHICompareFunction.GREATER;
-      case 'not-equal': return RHICompareFunction.NOT_EQUAL;
-      case 'greater-equal': return RHICompareFunction.GREATER_EQUAL;
-      case 'always': return RHICompareFunction.ALWAYS;
-      default: return RHICompareFunction.ALWAYS;
+      case 'never':
+        return RHICompareFunction.NEVER;
+      case 'less':
+        return RHICompareFunction.LESS;
+      case 'equal':
+        return RHICompareFunction.EQUAL;
+      case 'less-equal':
+        return RHICompareFunction.LESS_EQUAL;
+      case 'greater':
+        return RHICompareFunction.GREATER;
+      case 'not-equal':
+        return RHICompareFunction.NOT_EQUAL;
+      case 'greater-equal':
+        return RHICompareFunction.GREATER_EQUAL;
+      case 'always':
+        return RHICompareFunction.ALWAYS;
+      default:
+        return RHICompareFunction.ALWAYS;
     }
   }
 
@@ -154,7 +187,7 @@ export class GLSampler implements IRHISampler {
    * 创建WebGL2采样器对象
    * @returns 创建的WebGL2采样器对象，如果创建失败或不支持WebGL2则返回null
    */
-  private createWebGL2Sampler (): WebGLSampler | null {
+  private createWebGL2Sampler(): WebGLSampler | null {
     if (!this.isWebGL2) {
       return null;
     }
@@ -185,10 +218,11 @@ export class GLSampler implements IRHISampler {
       gl2.samplerParameteri(sampler, gl2.TEXTURE_WRAP_R, this.utils.addressModeToGL(this.addressModeW));
 
       // 处理边界颜色（如果使用CLAMP_TO_BORDER模式）
-      if (this.addressModeU === RHIAddressMode.CLAMP_TO_BORDER ||
-          this.addressModeV === RHIAddressMode.CLAMP_TO_BORDER ||
-          this.addressModeW === RHIAddressMode.CLAMP_TO_BORDER) {
-
+      if (
+        this.addressModeU === RHIAddressMode.CLAMP_TO_BORDER ||
+        this.addressModeV === RHIAddressMode.CLAMP_TO_BORDER ||
+        this.addressModeW === RHIAddressMode.CLAMP_TO_BORDER
+      ) {
         try {
           // 获取TEXTURE_BORDER_COLOR常量
           const TEXTURE_BORDER_COLOR = this.getBorderColorConstant(gl2);
@@ -240,8 +274,7 @@ export class GLSampler implements IRHISampler {
       // 设置比较函数（仅深度纹理使用）
       if (this.compareFunction !== undefined) {
         gl2.samplerParameteri(sampler, gl2.TEXTURE_COMPARE_MODE, gl2.COMPARE_REF_TO_TEXTURE);
-        gl2.samplerParameteri(sampler, gl2.TEXTURE_COMPARE_FUNC,
-          this.utils.compareFunctionToGL(this.compareFunction));
+        gl2.samplerParameteri(sampler, gl2.TEXTURE_COMPARE_FUNC, this.utils.compareFunctionToGL(this.compareFunction));
       } else {
         // 明确禁用比较模式
         gl2.samplerParameteri(sampler, gl2.TEXTURE_COMPARE_MODE, gl2.NONE);
@@ -273,7 +306,7 @@ export class GLSampler implements IRHISampler {
   /**
    * 获取边界颜色常量
    */
-  private getBorderColorConstant (gl: WebGL2RenderingContext): number | null {
+  private getBorderColorConstant(gl: WebGL2RenderingContext): number | null {
     // 标准中这个值是0x1004，但我们通过动态方式获取更安全
     if ('TEXTURE_BORDER_COLOR' in gl) {
       return (gl as any).TEXTURE_BORDER_COLOR;
@@ -293,7 +326,7 @@ export class GLSampler implements IRHISampler {
   /**
    * 获取过滤模式组合值
    */
-  private getMinFilterValue (gl: WebGLRenderingContext | WebGL2RenderingContext): number {
+  private getMinFilterValue(gl: WebGLRenderingContext | WebGL2RenderingContext): number {
     // 处理是否使用mipmap
     if (!this.useMipmap) {
       // 不使用mipmap时的简单过滤
@@ -301,11 +334,9 @@ export class GLSampler implements IRHISampler {
     } else {
       // 使用mipmap时的组合过滤
       if (this.minFilter === RHIFilterMode.NEAREST) {
-        return this.mipmapFilter === RHIFilterMode.NEAREST ?
-          gl.NEAREST_MIPMAP_NEAREST : gl.NEAREST_MIPMAP_LINEAR;
+        return this.mipmapFilter === RHIFilterMode.NEAREST ? gl.NEAREST_MIPMAP_NEAREST : gl.NEAREST_MIPMAP_LINEAR;
       } else {
-        return this.mipmapFilter === RHIFilterMode.NEAREST ?
-          gl.LINEAR_MIPMAP_NEAREST : gl.LINEAR_MIPMAP_LINEAR;
+        return this.mipmapFilter === RHIFilterMode.NEAREST ? gl.LINEAR_MIPMAP_NEAREST : gl.LINEAR_MIPMAP_LINEAR;
       }
     }
   }
@@ -313,33 +344,22 @@ export class GLSampler implements IRHISampler {
   /**
    * 应用各向异性过滤
    */
-  private applyAnisotropicFiltering (gl: WebGLRenderingContext | WebGL2RenderingContext, sampler?: WebGLSampler): void {
+  private applyAnisotropicFiltering(gl: WebGLRenderingContext | WebGL2RenderingContext, sampler?: WebGLSampler): void {
     // 尝试使用不同名称的扩展
     const ext =
-      gl.getExtension('EXT_texture_filter_anisotropic') ||
-      gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic');
+      gl.getExtension('EXT_texture_filter_anisotropic') || gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic');
 
     if (ext && this.maxAnisotropy > 1) {
-      const maxSupportedAnisotropy = gl.getParameter(
-        ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT
-      );
+      const maxSupportedAnisotropy = gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
 
       const maxAniso = Math.min(this.maxAnisotropy, maxSupportedAnisotropy);
 
       if (sampler && this.isWebGL2) {
         // WebGL2采样器对象
-        (gl as WebGL2RenderingContext).samplerParameterf(
-          sampler,
-          ext.TEXTURE_MAX_ANISOTROPY_EXT,
-          maxAniso
-        );
+        (gl as WebGL2RenderingContext).samplerParameterf(sampler, ext.TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
       } else if (!sampler) {
         // 直接应用到纹理
-        gl.texParameterf(
-          gl.TEXTURE_2D,
-          ext.TEXTURE_MAX_ANISOTROPY_EXT,
-          maxAniso
-        );
+        gl.texParameterf(gl.TEXTURE_2D, ext.TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
       }
 
       if (this.maxAnisotropy > maxSupportedAnisotropy) {
@@ -354,7 +374,7 @@ export class GLSampler implements IRHISampler {
    * 验证对象是否已销毁
    * @throws 如果对象已销毁，则抛出异常
    */
-  private validateNotDestroyed (): void {
+  private validateNotDestroyed(): void {
     if (this.isDestroyed) {
       throw new Error(`尝试使用已销毁的采样器: ${this.label || '未命名'}`);
     }
@@ -363,7 +383,7 @@ export class GLSampler implements IRHISampler {
   /**
    * 获取寻址模式U
    */
-  getAddressModeU (): RHIAddressMode {
+  getAddressModeU(): RHIAddressMode {
     this.validateNotDestroyed();
 
     return this.addressModeU;
@@ -372,7 +392,7 @@ export class GLSampler implements IRHISampler {
   /**
    * 获取寻址模式V
    */
-  getAddressModeV (): RHIAddressMode {
+  getAddressModeV(): RHIAddressMode {
     this.validateNotDestroyed();
 
     return this.addressModeV;
@@ -381,7 +401,7 @@ export class GLSampler implements IRHISampler {
   /**
    * 获取寻址模式W
    */
-  getAddressModeW (): RHIAddressMode {
+  getAddressModeW(): RHIAddressMode {
     this.validateNotDestroyed();
 
     return this.addressModeW;
@@ -390,7 +410,7 @@ export class GLSampler implements IRHISampler {
   /**
    * 获取放大过滤模式
    */
-  getMagFilter (): RHIFilterMode {
+  getMagFilter(): RHIFilterMode {
     this.validateNotDestroyed();
 
     return this.magFilter;
@@ -399,7 +419,7 @@ export class GLSampler implements IRHISampler {
   /**
    * 获取缩小过滤模式
    */
-  getMinFilter (): RHIFilterMode {
+  getMinFilter(): RHIFilterMode {
     this.validateNotDestroyed();
 
     return this.minFilter;
@@ -408,7 +428,7 @@ export class GLSampler implements IRHISampler {
   /**
    * 获取Mipmap过滤模式
    */
-  getMipmapFilter (): RHIFilterMode {
+  getMipmapFilter(): RHIFilterMode {
     this.validateNotDestroyed();
 
     return this.mipmapFilter;
@@ -417,7 +437,7 @@ export class GLSampler implements IRHISampler {
   /**
    * 获取LOD最小值
    */
-  getLodMinClamp (): number {
+  getLodMinClamp(): number {
     this.validateNotDestroyed();
 
     return this.lodMinClamp;
@@ -426,7 +446,7 @@ export class GLSampler implements IRHISampler {
   /**
    * 获取LOD最大值
    */
-  getLodMaxClamp (): number {
+  getLodMaxClamp(): number {
     this.validateNotDestroyed();
 
     return this.lodMaxClamp;
@@ -435,7 +455,7 @@ export class GLSampler implements IRHISampler {
   /**
    * 获取最大各向异性值
    */
-  getMaxAnisotropy (): number {
+  getMaxAnisotropy(): number {
     this.validateNotDestroyed();
 
     return this.maxAnisotropy;
@@ -444,7 +464,7 @@ export class GLSampler implements IRHISampler {
   /**
    * 获取边界颜色
    */
-  getBorderColor (): [number, number, number, number] {
+  getBorderColor(): [number, number, number, number] {
     this.validateNotDestroyed();
 
     return [...this.borderColor]; // 返回副本避免修改
@@ -453,7 +473,7 @@ export class GLSampler implements IRHISampler {
   /**
    * 获取是否使用Mipmap
    */
-  getUseMipmap (): boolean {
+  getUseMipmap(): boolean {
     this.validateNotDestroyed();
 
     return this.useMipmap;
@@ -462,7 +482,7 @@ export class GLSampler implements IRHISampler {
   /**
    * 获取标签
    */
-  getLabel (): string | undefined {
+  getLabel(): string | undefined {
     return this.label;
   }
 
@@ -470,7 +490,7 @@ export class GLSampler implements IRHISampler {
    * 获取WebGL采样器对象
    * WebGL1不支持采样器对象，将返回null
    */
-  getGLSampler (): WebGLSampler | null {
+  getGLSampler(): WebGLSampler | null {
     this.validateNotDestroyed();
 
     return this.sampler;
@@ -481,7 +501,7 @@ export class GLSampler implements IRHISampler {
    * WebGL1必须使用此方法来应用采样器设置
    * @param textureTarget WebGL纹理目标
    */
-  applyToTexture (textureTarget: number): void {
+  applyToTexture(textureTarget: number): void {
     this.validateNotDestroyed();
     const gl = this.gl;
 
@@ -498,10 +518,11 @@ export class GLSampler implements IRHISampler {
     }
 
     // 处理边界颜色（如果使用CLAMP_TO_BORDER模式）
-    if (this.addressModeU === RHIAddressMode.CLAMP_TO_BORDER ||
-        this.addressModeV === RHIAddressMode.CLAMP_TO_BORDER ||
-        this.addressModeW === RHIAddressMode.CLAMP_TO_BORDER) {
-
+    if (
+      this.addressModeU === RHIAddressMode.CLAMP_TO_BORDER ||
+      this.addressModeV === RHIAddressMode.CLAMP_TO_BORDER ||
+      this.addressModeW === RHIAddressMode.CLAMP_TO_BORDER
+    ) {
       if (this.isWebGL2) {
         // WebGL2
         const TEXTURE_BORDER_COLOR = this.getBorderColorConstant(gl as WebGL2RenderingContext);
@@ -560,14 +581,22 @@ export class GLSampler implements IRHISampler {
         const gl2 = gl as WebGL2RenderingContext;
 
         gl2.texParameteri(textureTarget, gl2.TEXTURE_COMPARE_MODE, gl2.COMPARE_REF_TO_TEXTURE);
-        gl2.texParameteri(textureTarget, gl2.TEXTURE_COMPARE_FUNC, this.utils.compareFunctionToGL(this.compareFunction));
+        gl2.texParameteri(
+          textureTarget,
+          gl2.TEXTURE_COMPARE_FUNC,
+          this.utils.compareFunctionToGL(this.compareFunction)
+        );
       } else {
         const ext = gl.getExtension('WEBGL_depth_texture');
 
         if (ext) {
           // 使用常量值（WebGL规范中的值）
-          gl.texParameteri(textureTarget, 0x884C /*TEXTURE_COMPARE_MODE*/, 0x884E /*COMPARE_REF_TO_TEXTURE*/);
-          gl.texParameteri(textureTarget, 0x884D /*TEXTURE_COMPARE_FUNC*/, this.utils.compareFunctionToGL(this.compareFunction));
+          gl.texParameteri(textureTarget, 0x884c /*TEXTURE_COMPARE_MODE*/, 0x884e /*COMPARE_REF_TO_TEXTURE*/);
+          gl.texParameteri(
+            textureTarget,
+            0x884d /*TEXTURE_COMPARE_FUNC*/,
+            this.utils.compareFunctionToGL(this.compareFunction)
+          );
         }
       }
     }
@@ -581,7 +610,7 @@ export class GLSampler implements IRHISampler {
    * 仅WebGL2支持
    * @param unit 纹理单元索引
    */
-  bind (unit: number): void {
+  bind(unit: number): void {
     this.validateNotDestroyed();
     if (this.isWebGL2 && this.sampler) {
       (this.gl as WebGL2RenderingContext).bindSampler(unit, this.sampler);
@@ -591,7 +620,7 @@ export class GLSampler implements IRHISampler {
   /**
    * 销毁资源
    */
-  destroy (): void {
+  destroy(): void {
     if (this.isDestroyed) {
       return;
     }

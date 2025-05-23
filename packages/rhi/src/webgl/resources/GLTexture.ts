@@ -3,11 +3,9 @@ import type {
   IRHITextureView,
   RHITextureDescriptor,
   RHITextureFormat,
-  RHITextureUsage } from '@maxellabs/core';
-import {
-  RHIFilterMode,
-  RHIAddressMode,
+  RHITextureUsage,
 } from '@maxellabs/core';
+import { RHIFilterMode, RHIAddressMode } from '@maxellabs/core';
 import { WebGLUtils } from '../utils/GLUtils';
 import { WebGLTextureView } from './GLTextureView';
 
@@ -53,7 +51,7 @@ export class GLTexture implements IRHITexture {
    * @param gl WebGL上下文
    * @param descriptor 纹理描述符
    */
-  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHITextureDescriptor) {
+  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHITextureDescriptor) {
     this.gl = gl;
     this.extension = descriptor.extension || {};
 
@@ -111,7 +109,7 @@ export class GLTexture implements IRHITexture {
   /**
    * 初始化纹理
    */
-  private initializeTexture (): void {
+  private initializeTexture(): void {
     const gl = this.gl;
 
     gl.bindTexture(this.target, this.glTexture);
@@ -126,31 +124,15 @@ export class GLTexture implements IRHITexture {
       gl.TEXTURE_MIN_FILTER,
       this.utils.filterModeToGL(defaultFilter, this.mipLevelCount > 1)
     );
-    gl.texParameteri(
-      this.target,
-      gl.TEXTURE_MAG_FILTER,
-      this.utils.filterModeToGL(defaultFilter, false)
-    );
+    gl.texParameteri(this.target, gl.TEXTURE_MAG_FILTER, this.utils.filterModeToGL(defaultFilter, false));
 
     // 设置纹理寻址参数
-    gl.texParameteri(
-      this.target,
-      gl.TEXTURE_WRAP_S,
-      this.utils.addressModeToGL(defaultAddressMode)
-    );
-    gl.texParameteri(
-      this.target,
-      gl.TEXTURE_WRAP_T,
-      this.utils.addressModeToGL(defaultAddressMode)
-    );
+    gl.texParameteri(this.target, gl.TEXTURE_WRAP_S, this.utils.addressModeToGL(defaultAddressMode));
+    gl.texParameteri(this.target, gl.TEXTURE_WRAP_T, this.utils.addressModeToGL(defaultAddressMode));
 
     // 对于3D纹理和WebGL2，设置TEXTURE_WRAP_R
     if (this.dimension === '3d' && gl instanceof WebGL2RenderingContext) {
-      gl.texParameteri(
-        this.target,
-        gl.TEXTURE_WRAP_R,
-        this.utils.addressModeToGL(defaultAddressMode)
-      );
+      gl.texParameteri(this.target, gl.TEXTURE_WRAP_R, this.utils.addressModeToGL(defaultAddressMode));
     }
 
     // 设置深度纹理比较函数（如果提供）
@@ -160,31 +142,15 @@ export class GLTexture implements IRHITexture {
       const isWebGL2 = gl instanceof WebGL2RenderingContext;
 
       if (isWebGL2) {
-        gl.texParameteri(
-          this.target,
-          gl.TEXTURE_COMPARE_MODE,
-          gl.COMPARE_REF_TO_TEXTURE
-        );
-        gl.texParameteri(
-          this.target,
-          gl.TEXTURE_COMPARE_FUNC,
-          this.utils.compareFunctionToGL(compareFunction)
-        );
+        gl.texParameteri(this.target, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);
+        gl.texParameteri(this.target, gl.TEXTURE_COMPARE_FUNC, this.utils.compareFunctionToGL(compareFunction));
       } else {
         // 检查WebGL1扩展支持
         if (this.utils.extension['EXT_shadow_samplers']) {
           const ext = this.utils.extension['EXT_shadow_samplers'];
 
-          gl.texParameteri(
-            this.target,
-            ext.TEXTURE_COMPARE_MODE_EXT,
-            ext.COMPARE_REF_TO_TEXTURE_EXT
-          );
-          gl.texParameteri(
-            this.target,
-            ext.TEXTURE_COMPARE_FUNC_EXT,
-            this.utils.compareFunctionToGL(compareFunction)
-          );
+          gl.texParameteri(this.target, ext.TEXTURE_COMPARE_MODE_EXT, ext.COMPARE_REF_TO_TEXTURE_EXT);
+          gl.texParameteri(this.target, ext.TEXTURE_COMPARE_FUNC_EXT, this.utils.compareFunctionToGL(compareFunction));
         }
       }
     }
@@ -215,7 +181,7 @@ export class GLTexture implements IRHITexture {
   /**
    * 初始化标准（非压缩）纹理
    */
-  private initializeStandardTexture (): void {
+  private initializeStandardTexture(): void {
     const gl = this.gl;
 
     // 根据纹理维度初始化
@@ -244,18 +210,38 @@ export class GLTexture implements IRHITexture {
       } else {
         // WebGL1降级处理：创建2D纹理
         // 这里已经设置了is3DDowngradedTo2D标志，创建2D纹理
-        gl.texImage2D(this.target, 0, this.glInternalFormat, this.width, this.height, 0, this.glFormat, this.glType, null);
+        gl.texImage2D(
+          this.target,
+          0,
+          this.glInternalFormat,
+          this.width,
+          this.height,
+          0,
+          this.glFormat,
+          this.glType,
+          null
+        );
       }
     } else {
       // 2D纹理
-      gl.texImage2D(this.target, 0, this.glInternalFormat, this.width, this.height, 0, this.glFormat, this.glType, null);
+      gl.texImage2D(
+        this.target,
+        0,
+        this.glInternalFormat,
+        this.width,
+        this.height,
+        0,
+        this.glFormat,
+        this.glType,
+        null
+      );
     }
   }
 
   /**
    * 初始化压缩纹理
    */
-  private initializeCompressedTexture (): void {
+  private initializeCompressedTexture(): void {
     const gl = this.gl;
     const compressedFormat = this.extension?.compressedFormat;
 
@@ -294,21 +280,13 @@ export class GLTexture implements IRHITexture {
           const dataSize = Math.ceil(this.width / 4) * Math.ceil(this.height / 4) * blockSize;
           const emptyData = new Uint8Array(dataSize);
 
-          gl.compressedTexImage2D(
-            target,
-            0,
-            this.glInternalFormat,
-            this.width,
-            this.height,
-            0,
-            emptyData
-          );
+          gl.compressedTexImage2D(target, 0, this.glInternalFormat, this.width, this.height, 0, emptyData);
         }
       }
     } else if (this.dimension === '3d' && gl instanceof WebGL2RenderingContext) {
       // WebGL2 3D压缩纹理（如果支持）
       if (compressedFormat.data) {
-        (gl).compressedTexImage3D(
+        gl.compressedTexImage3D(
           this.target,
           0,
           this.glInternalFormat,
@@ -329,9 +307,7 @@ export class GLTexture implements IRHITexture {
           this.width,
           this.height,
           0,
-          compressedFormat.data instanceof Uint8Array
-            ? compressedFormat.data
-            : compressedFormat.data[0]
+          compressedFormat.data instanceof Uint8Array ? compressedFormat.data : compressedFormat.data[0]
         );
       }
 
@@ -359,7 +335,7 @@ export class GLTexture implements IRHITexture {
   /**
    * 检查WebGL环境是否支持指定的压缩纹理格式
    */
-  private checkCompressedTextureSupport (format: number): boolean {
+  private checkCompressedTextureSupport(format: number): boolean {
     const gl = this.gl;
     const isWebGL2 = gl instanceof WebGL2RenderingContext;
 
@@ -377,10 +353,10 @@ export class GLTexture implements IRHITexture {
       // 检查原生支持的格式
       const supportedFormats = [
         // ETC1/ETC2 在WebGL2中是原生支持的
-        0x8D64, // COMPRESSED_RGB8_ETC2
-        0x8D65, // COMPRESSED_RGBA8_ETC2_EAC
-        0x8D66, // COMPRESSED_R11_EAC
-        0x8D67, // COMPRESSED_RG11_EAC
+        0x8d64, // COMPRESSED_RGB8_ETC2
+        0x8d65, // COMPRESSED_RGBA8_ETC2_EAC
+        0x8d66, // COMPRESSED_R11_EAC
+        0x8d67, // COMPRESSED_RG11_EAC
       ];
 
       if (supportedFormats.includes(format)) {
@@ -395,8 +371,8 @@ export class GLTexture implements IRHITexture {
       if (ext) {
         // 获取扩展支持的所有格式
         const supportedFormats = Object.values(ext)
-          .filter(value => typeof value === 'number')
-          .map(value => value as number);
+          .filter((value) => typeof value === 'number')
+          .map((value) => value as number);
 
         if (supportedFormats.includes(format)) {
           return true;
@@ -410,28 +386,34 @@ export class GLTexture implements IRHITexture {
   /**
    * 获取压缩纹理格式的块大小（字节）
    */
-  private getCompressedBlockSize (format: number): number {
+  private getCompressedBlockSize(format: number): number {
     // DXT1/BC1 - 8 bytes per 4x4 block
-    if ([
-      0x83F0, // COMPRESSED_RGB_S3TC_DXT1_EXT
-      0x83F1, // COMPRESSED_RGBA_S3TC_DXT1_EXT
-    ].includes(format)) {
+    if (
+      [
+        0x83f0, // COMPRESSED_RGB_S3TC_DXT1_EXT
+        0x83f1, // COMPRESSED_RGBA_S3TC_DXT1_EXT
+      ].includes(format)
+    ) {
       return 8;
     }
 
     // DXT3/BC2, DXT5/BC3 - 16 bytes per 4x4 block
-    if ([
-      0x83F2, // COMPRESSED_RGBA_S3TC_DXT3_EXT
-      0x83F3, // COMPRESSED_RGBA_S3TC_DXT5_EXT
-    ].includes(format)) {
+    if (
+      [
+        0x83f2, // COMPRESSED_RGBA_S3TC_DXT3_EXT
+        0x83f3, // COMPRESSED_RGBA_S3TC_DXT5_EXT
+      ].includes(format)
+    ) {
       return 16;
     }
 
     // ETC1/ETC2 - 8 bytes per 4x4 block
-    if ([
-      0x8D64, // COMPRESSED_RGB8_ETC2
-      0x8D65, // COMPRESSED_RGBA8_ETC2_EAC
-    ].includes(format)) {
+    if (
+      [
+        0x8d64, // COMPRESSED_RGB8_ETC2
+        0x8d65, // COMPRESSED_RGBA8_ETC2_EAC
+      ].includes(format)
+    ) {
       return 8;
     }
 
@@ -442,7 +424,7 @@ export class GLTexture implements IRHITexture {
   /**
    * 获取WebGL纹理目标
    */
-  private getGLTextureTarget (dimension: '1d' | '2d' | '3d' | 'cube'): number {
+  private getGLTextureTarget(dimension: '1d' | '2d' | '3d' | 'cube'): number {
     const gl = this.gl;
 
     switch (dimension) {
@@ -461,7 +443,7 @@ export class GLTexture implements IRHITexture {
   /**
    * 更新纹理数据
    */
-  update (
+  update(
     data: BufferSource | ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement,
     x = 0,
     y = 0,
@@ -489,36 +471,52 @@ export class GLTexture implements IRHITexture {
       // 更新立方体贴图的一个面
       const target = gl.TEXTURE_CUBE_MAP_POSITIVE_X + (arrayLayer % 6);
 
-      if (data instanceof HTMLImageElement ||
-          data instanceof HTMLCanvasElement ||
-          data instanceof HTMLVideoElement ||
-          data instanceof ImageBitmap ||
-          data instanceof ImageData) {
+      if (
+        data instanceof HTMLImageElement ||
+        data instanceof HTMLCanvasElement ||
+        data instanceof HTMLVideoElement ||
+        data instanceof ImageBitmap ||
+        data instanceof ImageData
+      ) {
         gl.texSubImage2D(target, mipLevel, x, y, this.glFormat, this.glType, data);
       } else {
-        const actualWidth = width ?? (this.width - x);
-        const actualHeight = height ?? (this.height - y);
+        const actualWidth = width ?? this.width - x;
+        const actualHeight = height ?? this.height - y;
 
-        gl.texSubImage2D(target, mipLevel, x, y, actualWidth, actualHeight, this.glFormat, this.glType, data as ArrayBufferView);
+        gl.texSubImage2D(
+          target,
+          mipLevel,
+          x,
+          y,
+          actualWidth,
+          actualHeight,
+          this.glFormat,
+          this.glType,
+          data as ArrayBufferView
+        );
       }
     } else if (this.dimension === '3d') {
       if (gl instanceof WebGL2RenderingContext) {
         // WebGL2 3D纹理更新
-        const actualWidth = width ?? (this.width - x);
-        const actualHeight = height ?? (this.height - y);
-        const actualDepth = depth ?? (this.depthOrArrayLayers - z);
+        const actualWidth = width ?? this.width - x;
+        const actualHeight = height ?? this.height - y;
+        const actualDepth = depth ?? this.depthOrArrayLayers - z;
 
-        if (data instanceof HTMLImageElement ||
-            data instanceof HTMLCanvasElement ||
-            data instanceof HTMLVideoElement ||
-            data instanceof ImageBitmap ||
-            data instanceof ImageData) {
+        if (
+          data instanceof HTMLImageElement ||
+          data instanceof HTMLCanvasElement ||
+          data instanceof HTMLVideoElement ||
+          data instanceof ImageBitmap ||
+          data instanceof ImageData
+        ) {
           throw new Error('不支持将DOM元素直接更新到3D纹理');
         } else {
           gl.texSubImage3D(
             this.target,
             mipLevel,
-            x, y, z,
+            x,
+            y,
+            z,
             actualWidth,
             actualHeight,
             actualDepth,
@@ -531,17 +529,29 @@ export class GLTexture implements IRHITexture {
         // WebGL1环境下3D纹理降级为2D处理
         console.warn('在WebGL1环境中更新3D纹理，使用2D纹理更新方式，z坐标和depth参数将被忽略');
 
-        const actualWidth = width ?? (this.width - x);
-        const actualHeight = height ?? (this.height - y);
+        const actualWidth = width ?? this.width - x;
+        const actualHeight = height ?? this.height - y;
 
-        if (data instanceof HTMLImageElement ||
-            data instanceof HTMLCanvasElement ||
-            data instanceof HTMLVideoElement ||
-            data instanceof ImageBitmap ||
-            data instanceof ImageData) {
+        if (
+          data instanceof HTMLImageElement ||
+          data instanceof HTMLCanvasElement ||
+          data instanceof HTMLVideoElement ||
+          data instanceof ImageBitmap ||
+          data instanceof ImageData
+        ) {
           gl.texSubImage2D(this.target, mipLevel, x, y, this.glFormat, this.glType, data);
         } else {
-          gl.texSubImage2D(this.target, mipLevel, x, y, actualWidth, actualHeight, this.glFormat, this.glType, data as ArrayBufferView);
+          gl.texSubImage2D(
+            this.target,
+            mipLevel,
+            x,
+            y,
+            actualWidth,
+            actualHeight,
+            this.glFormat,
+            this.glType,
+            data as ArrayBufferView
+          );
         }
       } else {
         // 这个分支理论上不应该被执行到，因为如果dimension是'3d'且不是WebGL2，
@@ -551,17 +561,29 @@ export class GLTexture implements IRHITexture {
       }
     } else {
       // 更新2D纹理
-      if (data instanceof HTMLImageElement ||
-          data instanceof HTMLCanvasElement ||
-          data instanceof HTMLVideoElement ||
-          data instanceof ImageBitmap ||
-          data instanceof ImageData) {
+      if (
+        data instanceof HTMLImageElement ||
+        data instanceof HTMLCanvasElement ||
+        data instanceof HTMLVideoElement ||
+        data instanceof ImageBitmap ||
+        data instanceof ImageData
+      ) {
         gl.texSubImage2D(this.target, mipLevel, x, y, this.glFormat, this.glType, data);
       } else {
-        const actualWidth = width ?? (this.width - x);
-        const actualHeight = height ?? (this.height - y);
+        const actualWidth = width ?? this.width - x;
+        const actualHeight = height ?? this.height - y;
 
-        gl.texSubImage2D(this.target, mipLevel, x, y, actualWidth, actualHeight, this.glFormat, this.glType, data as ArrayBufferView);
+        gl.texSubImage2D(
+          this.target,
+          mipLevel,
+          x,
+          y,
+          actualWidth,
+          actualHeight,
+          this.glFormat,
+          this.glType,
+          data as ArrayBufferView
+        );
       }
     }
 
@@ -577,7 +599,7 @@ export class GLTexture implements IRHITexture {
   /**
    * 创建纹理视图
    */
-  createView (
+  createView(
     format?: RHITextureFormat,
     dimension?: '1d' | '2d' | '3d' | 'cube' | '2d-array' | 'cube-array',
     baseMipLevel = 0,
@@ -595,9 +617,9 @@ export class GLTexture implements IRHITexture {
       format: format || this.format,
       dimension: dimension || this.dimension,
       baseMipLevel,
-      mipLevelCount: mipLevelCount !== undefined ? mipLevelCount : (this.mipLevelCount - baseMipLevel),
+      mipLevelCount: mipLevelCount !== undefined ? mipLevelCount : this.mipLevelCount - baseMipLevel,
       baseArrayLayer,
-      arrayLayerCount: arrayLayerCount !== undefined ? arrayLayerCount : (this.depthOrArrayLayers - baseArrayLayer),
+      arrayLayerCount: arrayLayerCount !== undefined ? arrayLayerCount : this.depthOrArrayLayers - baseArrayLayer,
     };
 
     // 创建并返回纹理视图
@@ -607,42 +629,42 @@ export class GLTexture implements IRHITexture {
   /**
    * 获取WebGL原生纹理
    */
-  getGLTexture (): WebGLTexture | null {
+  getGLTexture(): WebGLTexture | null {
     return this.glTexture;
   }
 
   /**
    * 获取WebGL纹理目标
    */
-  getTarget (): number {
+  getTarget(): number {
     return this.target;
   }
 
   /**
    * 获取是否为降级的3D纹理
    */
-  isDowngraded3DTexture (): boolean {
+  isDowngraded3DTexture(): boolean {
     return this.is3DDowngradedTo2D;
   }
 
   /**
    * 获取是否为压缩纹理
    */
-  isCompressed (): boolean {
+  isCompressed(): boolean {
     return this.isCompressedTexture;
   }
 
   /**
    * 获取扩展配置
    */
-  getExtension (): Record<string, any> | null {
+  getExtension(): Record<string, any> | null {
     return this.extension;
   }
 
   /**
    * 销毁资源
    */
-  destroy (): void {
+  destroy(): void {
     if (this.isDestroyed) {
       return;
     }
@@ -658,63 +680,63 @@ export class GLTexture implements IRHITexture {
   /**
    * 获取纹理宽度
    */
-  getWidth (): number {
+  getWidth(): number {
     return this.width;
   }
 
   /**
    * 获取纹理高度
    */
-  getHeight (): number {
+  getHeight(): number {
     return this.height;
   }
 
   /**
    * 获取纹理深度或数组层数
    */
-  getDepthOrArrayLayers (): number {
+  getDepthOrArrayLayers(): number {
     return this.depthOrArrayLayers;
   }
 
   /**
    * 获取MIP等级数
    */
-  getMipLevelCount (): number {
+  getMipLevelCount(): number {
     return this.mipLevelCount;
   }
 
   /**
    * 获取纹理格式
    */
-  getFormat (): RHITextureFormat {
+  getFormat(): RHITextureFormat {
     return this.format;
   }
 
   /**
    * 获取纹理用途
    */
-  getUsage (): RHITextureUsage {
+  getUsage(): RHITextureUsage {
     return this.usage;
   }
 
   /**
    * 获取纹理维度
    */
-  getDimension (): '1d' | '2d' | '3d' | 'cube' {
+  getDimension(): '1d' | '2d' | '3d' | 'cube' {
     return this.dimension;
   }
 
   /**
    * 获取采样数量
    */
-  getSampleCount (): number {
+  getSampleCount(): number {
     return this.sampleCount;
   }
 
   /**
    * 获取纹理标签
    */
-  getLabel (): string | undefined {
+  getLabel(): string | undefined {
     return this.label;
   }
 }

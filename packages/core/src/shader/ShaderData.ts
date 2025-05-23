@@ -30,7 +30,7 @@ export enum ShaderDataType {
   /** 数组 */
   Array = 9,
   /** 结构体 */
-  Struct = 10
+  Struct = 10,
 }
 
 /**
@@ -38,13 +38,13 @@ export enum ShaderDataType {
  */
 export interface ShaderDataChangeEvent {
   /** 属性ID */
-  propertyId: number,
+  propertyId: number;
   /** 数据组 */
-  group: ShaderDataGroup,
+  group: ShaderDataGroup;
   /** 新值 */
-  value: any,
+  value: any;
   /** 旧值 */
-  oldValue: any,
+  oldValue: any;
 }
 
 /**
@@ -66,35 +66,35 @@ export class EnhancedShaderData {
   private static vector2Pool = ObjectPoolManager.getInstance().createPool<Vector2>(
     'shader:vector2',
     () => new Vector2(0, 0),
-    v => v.set(0, 0),
+    (v) => v.set(0, 0),
     { initialCapacity: 20, maxSize: 100, logStats: false }
   );
   /** 向量对象池 */
   private static vector3Pool = ObjectPoolManager.getInstance().createPool<Vector3>(
     'shader:vector3',
     () => new Vector3(0, 0, 0),
-    v => v.set(0, 0, 0),
+    (v) => v.set(0, 0, 0),
     { initialCapacity: 20, maxSize: 100, logStats: false }
   );
   /** 向量对象池 */
   private static vector4Pool = ObjectPoolManager.getInstance().createPool<Vector4>(
     'shader:vector4',
     () => new Vector4(0, 0, 0, 0),
-    v => v.set(0, 0, 0, 0),
+    (v) => v.set(0, 0, 0, 0),
     { initialCapacity: 20, maxSize: 100, logStats: false }
   );
   /** 颜色对象池 */
   private static colorPool = ObjectPoolManager.getInstance().createPool<Color>(
     'shader:color',
     () => new Color(1, 1, 1, 1),
-    c => c.set(1, 1, 1, 1),
+    (c) => c.set(1, 1, 1, 1),
     { initialCapacity: 20, maxSize: 100, logStats: false }
   );
 
   /**
    * 创建着色器数据实例
    */
-  constructor () {
+  constructor() {
     // 初始化所有组的数据
     for (const group of Object.values(ShaderDataGroup)) {
       if (typeof group === 'number') {
@@ -108,7 +108,7 @@ export class EnhancedShaderData {
    * 添加数据变更监听器
    * @param listener 监听回调函数
    */
-  addChangeListener (listener: (event: ShaderDataChangeEvent) => void): void {
+  addChangeListener(listener: (event: ShaderDataChangeEvent) => void): void {
     this.changeListeners.push(listener);
   }
 
@@ -116,7 +116,7 @@ export class EnhancedShaderData {
    * 移除数据变更监听器
    * @param listener 监听回调函数
    */
-  removeChangeListener (listener: (event: ShaderDataChangeEvent) => void): void {
+  removeChangeListener(listener: (event: ShaderDataChangeEvent) => void): void {
     const index = this.changeListeners.indexOf(listener);
 
     if (index !== -1) {
@@ -131,7 +131,7 @@ export class EnhancedShaderData {
    * @param value 新值
    * @param oldValue 旧值
    */
-  private notifyChange (propertyId: number, group: ShaderDataGroup, value: any, oldValue: any): void {
+  private notifyChange(propertyId: number, group: ShaderDataGroup, value: any, oldValue: any): void {
     const event: ShaderDataChangeEvent = {
       propertyId,
       group,
@@ -150,7 +150,7 @@ export class EnhancedShaderData {
    * @param value 浮点数值
    * @param group 数据组
    */
-  setFloat (property: ShaderProperty | number, value: number, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
+  setFloat(property: ShaderProperty | number, value: number, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
     this.setData(property, value, group, ShaderDataType.Float);
   }
 
@@ -160,7 +160,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 浮点数值
    */
-  getFloat (property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): number {
+  getFloat(property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): number {
     return this.getData(property, group) || 0;
   }
 
@@ -170,7 +170,7 @@ export class EnhancedShaderData {
    * @param value 整数值
    * @param group 数据组
    */
-  setInt (property: ShaderProperty | number, value: number, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
+  setInt(property: ShaderProperty | number, value: number, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
     this.setData(property, Math.floor(value), group, ShaderDataType.Int);
   }
 
@@ -180,7 +180,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 整数值
    */
-  getInt (property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): number {
+  getInt(property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): number {
     return Math.floor(this.getData(property, group) || 0);
   }
 
@@ -190,7 +190,11 @@ export class EnhancedShaderData {
    * @param value 二维向量
    * @param group 数据组
    */
-  setVector2 (property: ShaderProperty | number, value: Vector2, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
+  setVector2(
+    property: ShaderProperty | number,
+    value: Vector2,
+    group: ShaderDataGroup = ShaderDataGroup.Uniform
+  ): void {
     this.setData(property, value.clone(), group, ShaderDataType.Vector2);
   }
 
@@ -201,7 +205,12 @@ export class EnhancedShaderData {
    * @param y Y分量
    * @param group 数据组
    */
-  setVector2Components (property: ShaderProperty | number, x: number, y: number, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
+  setVector2Components(
+    property: ShaderProperty | number,
+    x: number,
+    y: number,
+    group: ShaderDataGroup = ShaderDataGroup.Uniform
+  ): void {
     const propId = property instanceof ShaderProperty ? property.id : property;
     const groupData = this.groups.get(group);
     let vec = groupData.get(propId);
@@ -224,7 +233,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 二维向量
    */
-  getVector2 (property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Vector2 {
+  getVector2(property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Vector2 {
     return this.getData(property, group) || new Vector2(0, 0);
   }
 
@@ -234,7 +243,11 @@ export class EnhancedShaderData {
    * @param value 三维向量
    * @param group 数据组
    */
-  setVector3 (property: ShaderProperty | number, value: Vector3, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
+  setVector3(
+    property: ShaderProperty | number,
+    value: Vector3,
+    group: ShaderDataGroup = ShaderDataGroup.Uniform
+  ): void {
     this.setData(property, value.clone(), group, ShaderDataType.Vector3);
   }
 
@@ -246,7 +259,13 @@ export class EnhancedShaderData {
    * @param z Z分量
    * @param group 数据组
    */
-  setVector3Components (property: ShaderProperty | number, x: number, y: number, z: number, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
+  setVector3Components(
+    property: ShaderProperty | number,
+    x: number,
+    y: number,
+    z: number,
+    group: ShaderDataGroup = ShaderDataGroup.Uniform
+  ): void {
     const propId = property instanceof ShaderProperty ? property.id : property;
     const groupData = this.groups.get(group);
     let vec = groupData.get(propId);
@@ -269,7 +288,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 三维向量
    */
-  getVector3 (property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Vector3 {
+  getVector3(property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Vector3 {
     return this.getData(property, group) || new Vector3(0, 0, 0);
   }
 
@@ -279,7 +298,11 @@ export class EnhancedShaderData {
    * @param value 四维向量
    * @param group 数据组
    */
-  setVector4 (property: ShaderProperty | number, value: Vector4, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
+  setVector4(
+    property: ShaderProperty | number,
+    value: Vector4,
+    group: ShaderDataGroup = ShaderDataGroup.Uniform
+  ): void {
     this.setData(property, value.clone(), group, ShaderDataType.Vector4);
   }
 
@@ -292,9 +315,12 @@ export class EnhancedShaderData {
    * @param w W分量
    * @param group 数据组
    */
-  setVector4Components (
+  setVector4Components(
     property: ShaderProperty | number,
-    x: number, y: number, z: number, w: number,
+    x: number,
+    y: number,
+    z: number,
+    w: number,
     group: ShaderDataGroup = ShaderDataGroup.Uniform
   ): void {
     const propId = property instanceof ShaderProperty ? property.id : property;
@@ -319,7 +345,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 四维向量
    */
-  getVector4 (property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Vector4 {
+  getVector4(property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Vector4 {
     return this.getData(property, group) || new Vector4(0, 0, 0, 0);
   }
 
@@ -329,7 +355,7 @@ export class EnhancedShaderData {
    * @param value 颜色
    * @param group 数据组
    */
-  setColor (property: ShaderProperty | number, value: Color, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
+  setColor(property: ShaderProperty | number, value: Color, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
     this.setData(property, value.clone(), group, ShaderDataType.Color);
   }
 
@@ -339,7 +365,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 颜色
    */
-  getColor (property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Color {
+  getColor(property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Color {
     return this.getData(property, group) || new Color(1, 1, 1, 1);
   }
 
@@ -349,7 +375,7 @@ export class EnhancedShaderData {
    * @param value 矩阵
    * @param group 数据组
    */
-  setMatrix (property: ShaderProperty | number, value: Matrix4, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
+  setMatrix(property: ShaderProperty | number, value: Matrix4, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
     this.setData(property, value.clone(), group, ShaderDataType.Matrix4);
   }
 
@@ -359,7 +385,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 矩阵
    */
-  getMatrix (property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Matrix4 {
+  getMatrix(property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Matrix4 {
     return this.getData(property, group) || new Matrix4();
   }
 
@@ -369,7 +395,11 @@ export class EnhancedShaderData {
    * @param value 纹理
    * @param group 数据组
    */
-  setTexture (property: ShaderProperty | number, value: Texture, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
+  setTexture(
+    property: ShaderProperty | number,
+    value: Texture,
+    group: ShaderDataGroup = ShaderDataGroup.Uniform
+  ): void {
     this.setData(property, value, group, ShaderDataType.Texture);
   }
 
@@ -379,7 +409,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 纹理
    */
-  getTexture (property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Texture {
+  getTexture(property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Texture {
     return this.getData(property, group);
   }
 
@@ -389,7 +419,7 @@ export class EnhancedShaderData {
    * @param value 布尔值
    * @param group 数据组
    */
-  setBool (property: ShaderProperty | number, value: boolean, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
+  setBool(property: ShaderProperty | number, value: boolean, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
     this.setData(property, value ? 1 : 0, group, ShaderDataType.Bool);
   }
 
@@ -399,7 +429,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 布尔值
    */
-  getBool (property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): boolean {
+  getBool(property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): boolean {
     return this.getData(property, group) === 1;
   }
 
@@ -410,7 +440,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @param type 数据类型
    */
-  setData (property: ShaderProperty | number, value: any, group: ShaderDataGroup, type?: ShaderDataType): void {
+  setData(property: ShaderProperty | number, value: any, group: ShaderDataGroup, type?: ShaderDataType): void {
     const propId = property instanceof ShaderProperty ? property.id : property;
     const groupData = this.groups.get(group);
 
@@ -443,7 +473,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 数据值
    */
-  getData (property: ShaderProperty | number, group: ShaderDataGroup): any {
+  getData(property: ShaderProperty | number, group: ShaderDataGroup): any {
     const propId = property instanceof ShaderProperty ? property.id : property;
     const groupData = this.groups.get(group);
 
@@ -456,12 +486,16 @@ export class EnhancedShaderData {
    * @param b 第二个值
    * @returns 是否相等
    */
-  private areValuesEqual (a: any, b: any): boolean {
+  private areValuesEqual(a: any, b: any): boolean {
     // 如果两个值都是null或undefined，则认为相等
-    if (a == null && b == null) {return true;}
+    if (a == null && b == null) {
+      return true;
+    }
 
     // 如果只有一个是null或undefined，则不相等
-    if (a == null || b == null) {return false;}
+    if (a == null || b == null) {
+      return false;
+    }
 
     // 如果是简单类型，直接比较
     if (typeof a !== 'object' && typeof b !== 'object') {
@@ -469,10 +503,12 @@ export class EnhancedShaderData {
     }
 
     // 向量和颜色类型的比较
-    if ((a instanceof Vector2 && b instanceof Vector2) ||
-        (a instanceof Vector3 && b instanceof Vector3) ||
-        (a instanceof Vector4 && b instanceof Vector4) ||
-        (a instanceof Color && b instanceof Color)) {
+    if (
+      (a instanceof Vector2 && b instanceof Vector2) ||
+      (a instanceof Vector3 && b instanceof Vector3) ||
+      (a instanceof Vector4 && b instanceof Vector4) ||
+      (a instanceof Color && b instanceof Color)
+    ) {
       return a.equals(b);
     }
 
@@ -495,7 +531,7 @@ export class EnhancedShaderData {
    * @param propId 属性ID
    * @param group 数据组
    */
-  private markDirty (propId: number, group: ShaderDataGroup): void {
+  private markDirty(propId: number, group: ShaderDataGroup): void {
     this.dirtyProps.get(group).add(propId);
     this.dirty = true;
   }
@@ -505,7 +541,7 @@ export class EnhancedShaderData {
    * @param propId 属性ID
    * @param group 数据组
    */
-  clearDirty (propId: number, group: ShaderDataGroup): void {
+  clearDirty(propId: number, group: ShaderDataGroup): void {
     this.dirtyProps.get(group).delete(propId);
 
     // 检查所有组是否都没有脏属性
@@ -526,7 +562,7 @@ export class EnhancedShaderData {
    * 清除组的脏标记
    * @param group 数据组
    */
-  clearGroupDirty (group: ShaderDataGroup): void {
+  clearGroupDirty(group: ShaderDataGroup): void {
     this.dirtyProps.get(group).clear();
 
     // 检查所有组是否都没有脏属性
@@ -546,7 +582,7 @@ export class EnhancedShaderData {
   /**
    * 清除所有脏标记
    */
-  clearAllDirty (): void {
+  clearAllDirty(): void {
     for (const [, dirtySet] of this.dirtyProps) {
       dirtySet.clear();
     }
@@ -560,7 +596,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 是否已设置
    */
-  hasProperty (property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): boolean {
+  hasProperty(property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): boolean {
     const propId = property instanceof ShaderProperty ? property.id : property;
     const groupData = this.groups.get(group);
 
@@ -572,7 +608,7 @@ export class EnhancedShaderData {
    * @param property 着色器属性
    * @returns 属性类型
    */
-  getPropertyType (property: ShaderProperty | number): ShaderDataType | undefined {
+  getPropertyType(property: ShaderProperty | number): ShaderDataType | undefined {
     const propId = property instanceof ShaderProperty ? property.id : property;
 
     return this.typeMap.get(propId);
@@ -583,7 +619,7 @@ export class EnhancedShaderData {
    * @param property 着色器属性
    * @param group 数据组
    */
-  deleteProperty (property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
+  deleteProperty(property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): void {
     const propId = property instanceof ShaderProperty ? property.id : property;
     const groupData = this.groups.get(group);
 
@@ -606,7 +642,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 脏属性ID数组
    */
-  getDirtyProperties (group: ShaderDataGroup): number[] {
+  getDirtyProperties(group: ShaderDataGroup): number[] {
     return Array.from(this.dirtyProps.get(group));
   }
 
@@ -615,7 +651,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 属性ID数组
    */
-  getAllProperties (group: ShaderDataGroup): number[] {
+  getAllProperties(group: ShaderDataGroup): number[] {
     const groupData = this.groups.get(group);
 
     return Array.from(groupData.keys());
@@ -626,7 +662,7 @@ export class EnhancedShaderData {
    * @param other 要复制的ShaderData
    * @param copyDirtyOnly 是否只复制脏数据
    */
-  copyFrom (other: EnhancedShaderData, copyDirtyOnly: boolean = false): void {
+  copyFrom(other: EnhancedShaderData, copyDirtyOnly: boolean = false): void {
     // 遍历所有组
     for (const group of Object.values(ShaderDataGroup)) {
       if (typeof group === 'number') {
@@ -662,16 +698,22 @@ export class EnhancedShaderData {
    * @param value 要克隆的值
    * @returns 克隆后的值
    */
-  private cloneValue (value: any): any {
-    if (value == null) {return value;}
+  private cloneValue(value: any): any {
+    if (value == null) {
+      return value;
+    }
 
-    if (typeof value !== 'object') {return value;}
+    if (typeof value !== 'object') {
+      return value;
+    }
 
-    if (value instanceof Vector2 ||
-        value instanceof Vector3 ||
-        value instanceof Vector4 ||
-        value instanceof Color ||
-        value instanceof Matrix4) {
+    if (
+      value instanceof Vector2 ||
+      value instanceof Vector3 ||
+      value instanceof Vector4 ||
+      value instanceof Color ||
+      value instanceof Matrix4
+    ) {
       return value.clone();
     }
 
@@ -682,7 +724,7 @@ export class EnhancedShaderData {
   /**
    * 重置所有数据
    */
-  reset (): void {
+  reset(): void {
     // 清空所有组数据
     for (const [group, groupData] of this.groups) {
       groupData.clear();
@@ -697,7 +739,7 @@ export class EnhancedShaderData {
    * 克隆当前ShaderData
    * @returns 新的ShaderData实例
    */
-  clone (): EnhancedShaderData {
+  clone(): EnhancedShaderData {
     const result = new EnhancedShaderData();
 
     result.copyFrom(this);
@@ -710,7 +752,7 @@ export class EnhancedShaderData {
    * @param program WebGL程序
    * @param gl WebGL上下文
    */
-  applyToProgram (program: WebGLProgram, gl: WebGLRenderingContext): void {
+  applyToProgram(program: WebGLProgram, gl: WebGLRenderingContext): void {
     // 遍历Uniform组的所有属性
     const uniformData = this.groups.get(ShaderDataGroup.Uniform);
 
@@ -718,7 +760,9 @@ export class EnhancedShaderData {
       // 获取uniform位置
       const location = gl.getUniformLocation(program, `u_${propId}`);
 
-      if (!location) {continue;}
+      if (!location) {
+        continue;
+      }
 
       // 根据类型设置uniform
       const type = this.typeMap.get(propId);
@@ -750,7 +794,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 四维向量
    */
-  getVector4ForRead (property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Vector4 {
+  getVector4ForRead(property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Vector4 {
     const propId = property instanceof ShaderProperty ? property.id : property;
     const groupData = this.groups.get(group);
 
@@ -786,7 +830,7 @@ export class EnhancedShaderData {
    * 释放从对象池获取的临时对象
    * @param vec 临时向量对象
    */
-  releaseTemporaryVector4 (vec: Vector4): void {
+  releaseTemporaryVector4(vec: Vector4): void {
     if (vec) {
       EnhancedShaderData.vector4Pool.release(vec);
     }
@@ -798,7 +842,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 三维向量
    */
-  getVector3ForRead (property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Vector3 {
+  getVector3ForRead(property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Vector3 {
     const propId = property instanceof ShaderProperty ? property.id : property;
     const groupData = this.groups.get(group);
 
@@ -834,7 +878,7 @@ export class EnhancedShaderData {
    * 释放从对象池获取的临时对象
    * @param vec 临时向量对象
    */
-  releaseTemporaryVector3 (vec: Vector3): void {
+  releaseTemporaryVector3(vec: Vector3): void {
     if (vec) {
       EnhancedShaderData.vector3Pool.release(vec);
     }
@@ -846,7 +890,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 二维向量
    */
-  getVector2ForRead (property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Vector2 {
+  getVector2ForRead(property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Vector2 {
     const propId = property instanceof ShaderProperty ? property.id : property;
     const groupData = this.groups.get(group);
 
@@ -882,7 +926,7 @@ export class EnhancedShaderData {
    * 释放从对象池获取的临时对象
    * @param vec 临时向量对象
    */
-  releaseTemporaryVector2 (vec: Vector2): void {
+  releaseTemporaryVector2(vec: Vector2): void {
     if (vec) {
       EnhancedShaderData.vector2Pool.release(vec);
     }
@@ -894,7 +938,7 @@ export class EnhancedShaderData {
    * @param group 数据组
    * @returns 颜色
    */
-  getColorForRead (property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Color {
+  getColorForRead(property: ShaderProperty | number, group: ShaderDataGroup = ShaderDataGroup.Uniform): Color {
     const propId = property instanceof ShaderProperty ? property.id : property;
     const groupData = this.groups.get(group);
 
@@ -930,7 +974,7 @@ export class EnhancedShaderData {
    * 释放从对象池获取的临时对象
    * @param color 临时颜色对象
    */
-  releaseTemporaryColor (color: Color): void {
+  releaseTemporaryColor(color: Color): void {
     if (color) {
       EnhancedShaderData.colorPool.release(color);
     }
@@ -939,7 +983,7 @@ export class EnhancedShaderData {
   /**
    * 分析着色器数据性能
    */
-  analyzePerformance (): void {
+  analyzePerformance(): void {
     // 分析所有对象池性能
     ObjectPoolManager.getInstance().analyzePerformance(true);
 
@@ -956,18 +1000,16 @@ export class EnhancedShaderData {
 
       // eslint-disable-next-line no-console
       console.info(
-        `着色器数据组 ${ShaderDataGroup[group]} 统计: ` +
-        `总属性: ${props.length}, ` +
-        `脏属性: ${dirtyProps.length}`
+        `着色器数据组 ${ShaderDataGroup[group]} 统计: ` + `总属性: ${props.length}, ` + `脏属性: ${dirtyProps.length}`
       );
     }
 
     // eslint-disable-next-line no-console
     console.info(
       '着色器数据总计: ' +
-      `总属性: ${totalProperties}, ` +
-      `总脏属性: ${totalDirtyProperties}, ` +
-      `脏属性比例: ${totalProperties > 0 ? (totalDirtyProperties / totalProperties * 100).toFixed(2) : 0}%`
+        `总属性: ${totalProperties}, ` +
+        `总脏属性: ${totalDirtyProperties}, ` +
+        `脏属性比例: ${totalProperties > 0 ? ((totalDirtyProperties / totalProperties) * 100).toFixed(2) : 0}%`
     );
   }
 }

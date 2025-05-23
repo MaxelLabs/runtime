@@ -18,9 +18,9 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         input: {
-          'index': resolve(__dirname, 'demo/index.html'),
-          'simple': resolve(__dirname, 'demo/simple.html'),
-        }
+          index: resolve(__dirname, 'demo/index.html'),
+          simple: resolve(__dirname, 'demo/simple.html'),
+        },
       },
       minify: false, // iOS 9 等低版本加载压缩代码报脚本异常
     },
@@ -79,7 +79,7 @@ function configureServerPlugin() {
     setTimeout(() => {
       console.log(`  \x1b[1m\x1b[32m->\x1b[97m Demo: \x1b[0m\x1b[96m${baseUrl}/demo/index.html\x1b[0m`);
     }, 1000);
-  }
+  };
 
   return {
     name: 'configure-server',
@@ -89,5 +89,5 @@ function configureServerPlugin() {
     configureServer(server) {
       server.httpServer.once('listening', handleServer.bind(this, server));
     },
-  }
+  };
 }

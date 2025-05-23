@@ -18,7 +18,7 @@ export abstract class MaxObject {
   /** 对象是否已销毁 */
   protected destroyed: boolean = false;
 
-  constructor () {
+  constructor() {
     this.createTime = Date.now();
     this.type = this.constructor.name;
     this.tag = this.generateId();
@@ -28,12 +28,12 @@ export abstract class MaxObject {
    * 检查对象是否已被销毁
    * @returns 是否已被销毁
    */
-  isDestroyed (): boolean {
+  isDestroyed(): boolean {
     return this.destroyed;
   }
 
   /** 生成唯一ID */
-  protected generateId (): string {
+  protected generateId(): string {
     return `${this.type}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   }
 
@@ -41,8 +41,10 @@ export abstract class MaxObject {
    * 销毁对象，释放资源
    * 子类应该重写onDestroy方法进行资源清理
    */
-  destroy (): void {
-    if (this.destroyed) {return;}
+  destroy(): void {
+    if (this.destroyed) {
+      return;
+    }
     this.destroyed = true;
     this.onDestroy();
   }
@@ -51,5 +53,5 @@ export abstract class MaxObject {
    * 销毁时的回调，子类应该重写此方法清理自身资源
    * @protected
    */
-  protected onDestroy (): void {}
+  protected onDestroy(): void {}
 }

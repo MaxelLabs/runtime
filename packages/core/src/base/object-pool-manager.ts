@@ -15,7 +15,7 @@ export enum ObjectPoolManagerEventType {
   /** 内存警告事件 */
   MEMORY_WARNING = 'memory-warning',
   /** 错误事件 */
-  ERROR = 'error'
+  ERROR = 'error',
 }
 
 /**
@@ -23,13 +23,13 @@ export enum ObjectPoolManagerEventType {
  */
 export interface ObjectPoolOptions {
   /** 初始容量 */
-  initialCapacity?: number,
+  initialCapacity?: number;
   /** 最大容量 */
-  maxSize?: number,
+  maxSize?: number;
   /** 是否记录统计数据 */
-  logStats?: boolean,
+  logStats?: boolean;
   /** 内存警告阈值 */
-  memoryWarningThreshold?: number,
+  memoryWarningThreshold?: number;
 }
 
 /**
@@ -65,14 +65,14 @@ export class ObjectPoolManager extends EventDispatcher {
   /**
    * 私有构造函数，使用单例模式
    */
-  private constructor () {
+  private constructor() {
     super();
   }
 
   /**
    * 获取单例实例
    */
-  public static getInstance (): ObjectPoolManager {
+  public static getInstance(): ObjectPoolManager {
     if (!ObjectPoolManager.instance) {
       ObjectPoolManager.instance = new ObjectPoolManager();
     }
@@ -84,7 +84,7 @@ export class ObjectPoolManager extends EventDispatcher {
    * 初始化对象池管理器
    * @param options 全局配置选项
    */
-  public initialize (options?: Partial<ObjectPoolOptions>): void {
+  public initialize(options?: Partial<ObjectPoolOptions>): void {
     if (this.initialized) {
       console.warn('[ObjectPoolManager] 管理器已初始化，忽略重复调用');
 
@@ -151,13 +151,7 @@ export class ObjectPoolManager extends EventDispatcher {
       };
 
       // 创建对象池
-      const pool = new ObjectPool<T>(
-        id,
-        factory,
-        resetFunc,
-        poolOptions.initialCapacity,
-        poolOptions.maxSize
-      );
+      const pool = new ObjectPool<T>(id, factory, resetFunc, poolOptions.initialCapacity, poolOptions.maxSize);
 
       // 注册对象池
       this.registerPool(fullId, pool);
@@ -181,7 +175,7 @@ export class ObjectPoolManager extends EventDispatcher {
   getPool<T>(id: string): ObjectPool<T> | null {
     const fullId = id.includes(':') ? id : `default:${id}`;
 
-    return this.pools.get(fullId) as ObjectPool<T> || null;
+    return (this.pools.get(fullId) as ObjectPool<T>) || null;
   }
 
   /**
@@ -189,7 +183,7 @@ export class ObjectPoolManager extends EventDispatcher {
    * @param id 对象池ID
    * @returns 是否成功销毁
    */
-  destroyPool (id: string): boolean {
+  destroyPool(id: string): boolean {
     try {
       const fullId = id.includes(':') ? id : `default:${id}`;
 
@@ -222,7 +216,7 @@ export class ObjectPoolManager extends EventDispatcher {
    * @param detailed 是否包含详细统计信息
    * @returns 对象池状态映射
    */
-  getAllPoolStats (detailed: boolean = false): Map<string, ObjectPoolStats> {
+  getAllPoolStats(detailed: boolean = false): Map<string, ObjectPoolStats> {
     const stats = new Map<string, ObjectPoolStats>();
 
     for (const [id, pool] of this.pools.entries()) {
@@ -247,7 +241,7 @@ export class ObjectPoolManager extends EventDispatcher {
    * @param options 新配置选项
    * @returns 是否成功更新
    */
-  updatePoolConfig (id: string, options: Partial<ObjectPoolOptions>): boolean {
+  updatePoolConfig(id: string, options: Partial<ObjectPoolOptions>): boolean {
     try {
       const fullId = id.includes(':') ? id : `default:${id}`;
       const pool = this.getPool(fullId);
@@ -286,7 +280,7 @@ export class ObjectPoolManager extends EventDispatcher {
    * @param count 预热数量
    * @returns 是否成功预热
    */
-  warmUpPool (id: string, count: number): boolean {
+  warmUpPool(id: string, count: number): boolean {
     try {
       const fullId = id.includes(':') ? id : `default:${id}`;
       const pool = this.getPool(fullId);
@@ -316,7 +310,7 @@ export class ObjectPoolManager extends EventDispatcher {
    * @param count 每个池的预热数量
    * @returns 预热结果映射
    */
-  warmUpAllPools (count: number): Map<string, boolean> {
+  warmUpAllPools(count: number): Map<string, boolean> {
     const results = new Map<string, boolean>();
 
     for (const [id] of this.pools) {
@@ -331,7 +325,7 @@ export class ObjectPoolManager extends EventDispatcher {
   /**
    * 清空所有对象池
    */
-  clearAllPools (): void {
+  clearAllPools(): void {
     try {
       for (const [, pool] of this.pools) {
         pool.clear();
@@ -348,7 +342,7 @@ export class ObjectPoolManager extends EventDispatcher {
   /**
    * 销毁所有对象池
    */
-  destroyAllPools (): void {
+  destroyAllPools(): void {
     try {
       const poolIds = Array.from(this.pools.keys());
 
@@ -369,7 +363,7 @@ export class ObjectPoolManager extends EventDispatcher {
    * @param enabled 是否启用
    * @param interval 分析间隔(毫秒)
    */
-  enableAutoAnalysis (enabled: boolean, interval: number = 10000): void {
+  enableAutoAnalysis(enabled: boolean, interval: number = 10000): void {
     this.autoAnalysis = enabled;
     this.analysisInterval = Math.max(1000, interval);
     this.lastAnalysisTime = Date.now();
@@ -380,7 +374,7 @@ export class ObjectPoolManager extends EventDispatcher {
    * @param force 是否强制分析，忽略时间间隔
    * @returns 对象池状态映射，如果未到分析时间则返回null
    */
-  analyzePerformance (force: boolean = false): Map<string, ObjectPoolStats> | null {
+  analyzePerformance(force: boolean = false): Map<string, ObjectPoolStats> | null {
     const now = Date.now();
     const elapsed = now - this.lastAnalysisTime;
 
@@ -437,7 +431,7 @@ export class ObjectPoolManager extends EventDispatcher {
   /**
    * 更新对象池管理器，通常在每帧调用
    */
-  update (): void {
+  update(): void {
     if (this.autoAnalysis) {
       this.analyzePerformance();
     }
@@ -447,7 +441,7 @@ export class ObjectPoolManager extends EventDispatcher {
    * 获取所有对象池的总对象数量
    * @returns 总对象数量
    */
-  getTotalObjectCount (): number {
+  getTotalObjectCount(): number {
     let total = 0;
 
     for (const [, pool] of this.pools) {
@@ -463,7 +457,7 @@ export class ObjectPoolManager extends EventDispatcher {
    * 获取所有对象池的使用中对象数量
    * @returns 使用中对象数量
    */
-  getTotalInUseCount (): number {
+  getTotalInUseCount(): number {
     let total = 0;
 
     for (const [, pool] of this.pools) {
@@ -478,7 +472,7 @@ export class ObjectPoolManager extends EventDispatcher {
   /**
    * 销毁单例实例
    */
-  public static destroyInstance (): void {
+  public static destroyInstance(): void {
     if (ObjectPoolManager.instance) {
       ObjectPoolManager.instance.destroyAllPools();
       ObjectPoolManager.instance.destroy();

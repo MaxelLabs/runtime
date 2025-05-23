@@ -20,12 +20,12 @@ export class Event {
   timestamp: number;
 
   /**
-     * 创建事件
-     * @param type 事件类型
-     * @param bubbles 是否冒泡
-     * @param data 自定义数据
-     */
-  constructor (type: string, bubbles: boolean = false, data?: any) {
+   * 创建事件
+   * @param type 事件类型
+   * @param bubbles 是否冒泡
+   * @param data 自定义数据
+   */
+  constructor(type: string, bubbles: boolean = false, data?: any) {
     this.type = type;
     this.bubbles = bubbles;
     this.data = data;
@@ -33,38 +33,38 @@ export class Event {
   }
 
   /**
-     * 停止事件传播
-     */
-  stopPropagation (): void {
+   * 停止事件传播
+   */
+  stopPropagation(): void {
     this.propagationStopped = true;
   }
 
   /**
-     * 立即停止事件传播(包括当前监听器)
-     */
-  stopImmediatePropagation (): void {
+   * 立即停止事件传播(包括当前监听器)
+   */
+  stopImmediatePropagation(): void {
     this.propagationStopped = true;
     this.immediatelyStopped = true;
   }
 
   /**
-     * 检查事件是否已停止传播
-     */
-  isPropagationStopped (): boolean {
+   * 检查事件是否已停止传播
+   */
+  isPropagationStopped(): boolean {
     return this.propagationStopped;
   }
 
   /**
-     * 检查事件是否立即停止传播
-     */
-  isImmediatelyStopped (): boolean {
+   * 检查事件是否立即停止传播
+   */
+  isImmediatelyStopped(): boolean {
     return this.immediatelyStopped;
   }
 
   /**
-     * 重置事件状态，用于事件池回收再利用
-     */
-  reset (): void {
+   * 重置事件状态，用于事件池回收再利用
+   */
+  reset(): void {
     this.type = null;
     this.target = null;
     this.currentTarget = null;

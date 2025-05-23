@@ -1,4 +1,4 @@
-import type { Engine } from '../Engine';
+import type { Engine } from '../engine';
 import type { Component } from '../base/component';
 import type { RenderQueue } from './RenderQueue';
 import type { SubRenderElement } from './SubRenderElement';
@@ -14,7 +14,7 @@ export class BatcherManager {
    * 创建批处理管理器
    * @param engine 引擎实例
    */
-  constructor (engine: Engine) {
+  constructor(engine: Engine) {
     this.engine = engine;
   }
 
@@ -22,7 +22,7 @@ export class BatcherManager {
    * 批处理渲染队列中的元素
    * @param renderQueue 渲染队列
    */
-  batch (renderQueue: RenderQueue): void {
+  batch(renderQueue: RenderQueue): void {
     const { elements, batchedSubElements } = renderQueue;
     let preSubElement: SubRenderElement | null = null;
     let preComponent: Component | null = null;
@@ -86,17 +86,14 @@ export class BatcherManager {
    * @param subElement2 第二个子渲染元素
    * @returns 是否可以合并批处理
    */
-  private canBatch (
+  private canBatch(
     comp1: Component,
     subElement1: SubRenderElement,
     comp2: Component,
     subElement2: SubRenderElement
   ): boolean {
     // 默认实现：相同材质和网格类型可以合并
-    return (
-      subElement1.material === subElement2.material &&
-      subElement1.primitive === subElement2.primitive
-    );
+    return subElement1.material === subElement2.material && subElement1.primitive === subElement2.primitive;
   }
 
   /**
@@ -106,7 +103,7 @@ export class BatcherManager {
    * @param comp2 第二个组件
    * @param subElement2 第二个子渲染元素
    */
-  private performBatch (
+  private performBatch(
     comp1: Component,
     subElement1: SubRenderElement,
     comp2: Component,
@@ -120,21 +117,21 @@ export class BatcherManager {
    * @param component 组件
    * @param subElement 子渲染元素
    */
-  private prepareForBatch (component: Component, subElement: SubRenderElement): void {
+  private prepareForBatch(component: Component, subElement: SubRenderElement): void {
     // 默认空实现，具体组件类型可以自定义批处理准备逻辑
   }
 
   /**
    * 上传批处理后的缓冲区数据
    */
-  uploadBuffer (): void {
+  uploadBuffer(): void {
     // 子类中实现具体的缓冲区上传逻辑
   }
 
   /**
    * 销毁批处理管理器
    */
-  destroy (): void {
+  destroy(): void {
     this.engine = null as any;
   }
-} 
+}

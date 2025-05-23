@@ -16,7 +16,7 @@ export enum SceneManagerEvent {
   /** 场景销毁 */
   SCENE_DESTROYED = 'sceneDestroyed',
   /** 活动场景变更 */
-  ACTIVE_SCENE_CHANGED = 'activeSceneChanged'
+  ACTIVE_SCENE_CHANGED = 'activeSceneChanged',
 }
 
 /**
@@ -34,7 +34,7 @@ export class SceneManager extends EventDispatcher {
   private static readonly sceneArrayPool = new ObjectPool<Scene[]>(
     'sceneManagerArrayPool',
     () => [],
-    array => array.length = 0,
+    (array) => (array.length = 0),
     2,
     10
   );
@@ -42,7 +42,7 @@ export class SceneManager extends EventDispatcher {
   /**
    * 创建场景管理器
    */
-  constructor () {
+  constructor() {
     super();
     this.container = Container.getInstance();
 
@@ -55,7 +55,7 @@ export class SceneManager extends EventDispatcher {
    * @param name 场景名称
    * @returns 新创建的场景
    */
-  createScene (name?: string): Scene {
+  createScene(name?: string): Scene {
     // 生成场景名称
     const sceneName = name || `Scene_${this.scenes.size + 1}`;
 
@@ -70,7 +70,7 @@ export class SceneManager extends EventDispatcher {
     const scene = new Scene(sceneName);
 
     // 添加到场景列表
-    this.scenes.set(scene.tag, scene);
+    this.scenes.set(scene.id, scene);
 
     // 派发场景创建事件
     this.dispatchEvent(SceneManagerEvent.SCENE_CREATED, { scene });
@@ -83,7 +83,7 @@ export class SceneManager extends EventDispatcher {
    * @param scene 场景对象或场景ID
    * @returns 是否成功加载
    */
-  loadScene (scene: Scene | string): boolean {
+  loadScene(scene: Scene | string): boolean {
     let targetScene: Scene | null = null;
 
     if (typeof scene === 'string') {
@@ -108,7 +108,7 @@ export class SceneManager extends EventDispatcher {
    * 设置活动场景
    * @param scene 要设置为活动的场景
    */
-  setActiveScene (scene: Scene | null): void {
+  setActiveScene(scene: Scene | null): void {
     // 如果尝试设置当前已经是活动场景的场景，直接返回
     if (this.activeScene === scene) {
       return;
@@ -146,7 +146,7 @@ export class SceneManager extends EventDispatcher {
    * @param id 场景ID
    * @returns 场景对象或null
    */
-  getSceneById (id: string): Scene | null {
+  getSceneById(id: string): Scene | null {
     return this.scenes.get(id) || null;
   }
 
@@ -155,7 +155,7 @@ export class SceneManager extends EventDispatcher {
    * @param name 场景名称
    * @returns 找到的第一个匹配场景或null
    */
-  getSceneByName (name: string): Scene | null {
+  getSceneByName(name: string): Scene | null {
     for (const scene of this.scenes.values()) {
       if (scene.name === name) {
         return scene;
@@ -170,7 +170,7 @@ export class SceneManager extends EventDispatcher {
    * @param scene 要销毁的场景对象或ID
    * @returns 是否成功销毁
    */
-  destroyScene (scene: Scene | string): boolean {
+  destroyScene(scene: Scene | string): boolean {
     let targetScene: Scene | null = null;
 
     if (typeof scene === 'string') {
@@ -200,7 +200,7 @@ export class SceneManager extends EventDispatcher {
     targetScene.destroy();
 
     // 从场景列表中移除
-    const result = this.scenes.delete(targetScene.tag);
+    const result = this.scenes.delete(targetScene.id);
 
     // 派发场景销毁后事件
     if (result) {
@@ -216,7 +216,7 @@ export class SceneManager extends EventDispatcher {
   /**
    * 获取当前活动场景
    */
-  getActiveScene (): Scene | null {
+  getActiveScene(): Scene | null {
     return this.activeScene;
   }
 
@@ -224,7 +224,7 @@ export class SceneManager extends EventDispatcher {
    * 获取所有场景
    * @returns 场景数组（从对象池获取，使用完请释放）
    */
-  getAllScenes (): Scene[] {
+  getAllScenes(): Scene[] {
     const result = SceneManager.sceneArrayPool.get();
 
     for (const scene of this.scenes.values()) {
@@ -238,21 +238,21 @@ export class SceneManager extends EventDispatcher {
    * 释放场景数组回对象池
    * @param array 从getAllScenes获取的数组
    */
-  releaseSceneArray (array: Scene[]): void {
+  releaseSceneArray(array: Scene[]): void {
     SceneManager.sceneArrayPool.release(array);
   }
 
   /**
    * 获取场景数量
    */
-  getSceneCount (): number {
+  getSceneCount(): number {
     return this.scenes.size;
   }
 
   /**
    * 销毁所有场景
    */
-  destroyAllScenes (): void {
+  destroyAllScenes(): void {
     // 先卸载活动场景
     this.setActiveScene(null);
 
@@ -260,7 +260,7 @@ export class SceneManager extends EventDispatcher {
     const sceneIds: string[] = [];
 
     for (const scene of this.scenes.values()) {
-      sceneIds.push(scene.tag);
+      sceneIds.push(scene.id);
     }
 
     // 销毁所有场景
@@ -272,7 +272,7 @@ export class SceneManager extends EventDispatcher {
   /**
    * 销毁场景管理器
    */
-  override destroy (): void {
+  override destroy(): void {
     // 销毁所有场景
     this.destroyAllScenes();
 

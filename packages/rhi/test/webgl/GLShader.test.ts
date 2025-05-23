@@ -11,16 +11,19 @@ describe('GLShader', () => {
     canvas = document.createElement('canvas');
     gl = canvas.getContext('webgl')!;
     shader = new GLShader(gl);
-    shader.create(`
+    shader.create(
+      `
       attribute vec4 a_position;
       void main() {
         gl_Position = a_position;
       }
-    `, `
+    `,
+      `
       void main() {
         gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
       }
-    `);
+    `
+    );
   });
 
   afterEach(() => {
@@ -43,20 +46,14 @@ describe('GLShader', () => {
   });
 
   test('使用着色器程序', () => {
-    shader.create(
-      GLShaderConstants.VERTEX_SHADER,
-      GLShaderConstants.FRAGMENT_SHADER
-    );
+    shader.create(GLShaderConstants.VERTEX_SHADER, GLShaderConstants.FRAGMENT_SHADER);
     shader.use();
     // 由于WebGL上下文是模拟的，我们无法直接验证着色器程序是否被使用
     // 但可以验证方法是否被调用
   });
 
   test('设置uniform变量', () => {
-    shader.create(
-      GLShaderConstants.VERTEX_SHADER,
-      GLShaderConstants.FRAGMENT_SHADER
-    );
+    shader.create(GLShaderConstants.VERTEX_SHADER, GLShaderConstants.FRAGMENT_SHADER);
     shader.use();
 
     // 测试设置float uniform
@@ -72,12 +69,7 @@ describe('GLShader', () => {
     shader.setUniform4f('uColor', 1.0, 0.0, 0.0, 1.0);
 
     // 测试设置mat4 uniform
-    const matrix = new Float32Array([
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1,
-    ]);
+    const matrix = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 
     shader.setUniformMatrix4fv('uModelViewMatrix', matrix);
 
@@ -89,10 +81,7 @@ describe('GLShader', () => {
   });
 
   test('销毁着色器程序', () => {
-    shader.create(
-      GLShaderConstants.VERTEX_SHADER,
-      GLShaderConstants.FRAGMENT_SHADER
-    );
+    shader.create(GLShaderConstants.VERTEX_SHADER, GLShaderConstants.FRAGMENT_SHADER);
     shader.dispose();
     // 由于WebGL上下文是模拟的，我们无法直接验证着色器程序是否被销毁
     // 但可以验证方法是否被调用

@@ -10,7 +10,7 @@ export class Container {
   /**
    * 获取容器单例
    */
-  public static getInstance (): Container {
+  public static getInstance(): Container {
     if (!Container.instance) {
       Container.instance = new Container();
     }
@@ -65,7 +65,7 @@ export class Container {
    * @param key 服务标识符
    * @returns 是否已注册
    */
-  has (key: string): boolean {
+  has(key: string): boolean {
     return this.services.has(key) || this.factories.has(key);
   }
 
@@ -73,7 +73,7 @@ export class Container {
    * 移除已注册的服务
    * @param key 服务标识符
    */
-  remove (key: string): void {
+  remove(key: string): void {
     this.services.delete(key);
     this.factories.delete(key);
   }
@@ -81,7 +81,7 @@ export class Container {
   /**
    * 清空容器
    */
-  clear (): void {
+  clear(): void {
     this.services.clear();
     this.factories.clear();
   }

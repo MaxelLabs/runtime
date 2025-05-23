@@ -15,7 +15,7 @@ export enum SerializeFlags {
   /** 忽略私有属性 */
   IgnorePrivate = 1 << 4,
   /** 不保存默认值 */
-  IgnoreDefault = 1 << 5
+  IgnoreDefault = 1 << 5,
 }
 
 /**
@@ -23,30 +23,30 @@ export enum SerializeFlags {
  */
 export interface SerializeField {
   /** 序列化名称，默认使用属性名 */
-  name?: string,
+  name?: string;
   /** 是否可序列化，默认true */
-  serializable?: boolean,
+  serializable?: boolean;
   /** 默认值 */
-  defaultValue?: any,
+  defaultValue?: any;
   /** 自定义序列化函数 */
-  serialize?: (value: any) => any,
+  serialize?: (value: any) => any;
   /** 自定义反序列化函数 */
-  deserialize?: (data: any) => any,
+  deserialize?: (data: any) => any;
   /** 类型信息 */
-  type?: any,
+  type?: any;
 }
 
 /**
  * 序列化字段元数据
  */
 interface SerializeFieldInfo {
-  name: string,
-  propertyKey: string,
-  defaultValue?: any,
-  serializable: boolean,
-  serialize?: (value: any) => any,
-  deserialize?: (data: any) => any,
-  type?: any,
+  name: string;
+  propertyKey: string;
+  defaultValue?: any;
+  serializable: boolean;
+  serialize?: (value: any) => any;
+  deserialize?: (data: any) => any;
+  type?: any;
 }
 
 /**
@@ -57,21 +57,21 @@ export interface ISerializable {
    * 自定义序列化方法
    * @returns 序列化后的对象
    */
-  _serialize(): any,
+  _serialize(): any;
 
   /**
    * 自定义反序列化方法
    * @param data 反序列化数据
    */
-  _deserialize(data: any): void,
+  _deserialize(data: any): void;
 }
 
 /**
  * 类型信息
  */
 interface TypeInfo {
-  type: string,
-  module?: string,
+  type: string;
+  module?: string;
 }
 
 /**
@@ -88,7 +88,7 @@ const typeRegistry: Map<string, Function> = new Map();
  * 序列化字段装饰器
  * @param options 字段配置选项
  */
-export function serializable (options: SerializeField = {}): PropertyDecorator {
+export function serializable(options: SerializeField = {}): PropertyDecorator {
   return function (target: any, propertyKey: string | symbol) {
     if (typeof propertyKey !== 'string') {
       return;
@@ -121,7 +121,7 @@ export function serializable (options: SerializeField = {}): PropertyDecorator {
  * @param typeName 类型名称
  * @param module 模块名
  */
-export function serializableClass (typeName?: string, module?: string): ClassDecorator {
+export function serializableClass(typeName?: string, module?: string): ClassDecorator {
   return function (target: Function) {
     // 注册类型
     const name = typeName || target.name;
@@ -145,7 +145,7 @@ export class SerializationManager {
    * @param typeName 类型名称
    * @param module 模块名
    */
-  static registerType (type: Function, typeName?: string, module?: string): void {
+  static registerType(type: Function, typeName?: string, module?: string): void {
     const name = typeName || type.name;
 
     typeRegistry.set(module ? `${module}.${name}` : name, type);
@@ -156,7 +156,7 @@ export class SerializationManager {
    * @param typeName 类型名称
    * @returns 类型构造函数
    */
-  static getType (typeName: string): Function | undefined {
+  static getType(typeName: string): Function | undefined {
     return typeRegistry.get(typeName);
   }
 
@@ -166,7 +166,7 @@ export class SerializationManager {
    * @param flags 序列化标志
    * @returns 序列化后的JSON字符串
    */
-  static serialize (obj: any, flags: SerializeFlags = SerializeFlags.Default): string {
+  static serialize(obj: any, flags: SerializeFlags = SerializeFlags.Default): string {
     const data = this.toJSON(obj, flags);
 
     const indent = flags & SerializeFlags.PrettyPrint ? 2 : undefined;
@@ -180,7 +180,7 @@ export class SerializationManager {
    * @param flags 序列化标志
    * @returns 可序列化的JSON对象
    */
-  static toJSON (obj: any, flags: SerializeFlags = SerializeFlags.Default): any {
+  static toJSON(obj: any, flags: SerializeFlags = SerializeFlags.Default): any {
     if (obj === null || obj === undefined) {
       return obj;
     }
@@ -192,7 +192,7 @@ export class SerializationManager {
 
     // 处理数组
     if (Array.isArray(obj)) {
-      return obj.map(item => this.toJSON(item, flags));
+      return obj.map((item) => this.toJSON(item, flags));
     }
 
     // 处理Date对象
@@ -220,7 +220,7 @@ export class SerializationManager {
     if (obj instanceof Set) {
       return {
         __type: 'Set',
-        values: Array.from(obj).map(item => this.toJSON(item, flags)),
+        values: Array.from(obj).map((item) => this.toJSON(item, flags)),
       };
     }
 
@@ -265,13 +265,17 @@ export class SerializationManager {
 
     // 序列化所有字段
     for (const [propertyKey, fieldInfo] of metadata.entries()) {
-      if (!fieldInfo.serializable) {continue;}
+      if (!fieldInfo.serializable) {
+        continue;
+      }
 
       const value = obj[propertyKey];
 
       // 忽略空值
-      if ((flags & SerializeFlags.IgnoreNull && value === null) ||
-          (flags & SerializeFlags.IgnoreUndefined && value === undefined)) {
+      if (
+        (flags & SerializeFlags.IgnoreNull && value === null) ||
+        (flags & SerializeFlags.IgnoreUndefined && value === undefined)
+      ) {
         continue;
       }
 
@@ -300,8 +304,10 @@ export class SerializationManager {
           const value = obj[key];
 
           // 忽略空值
-          if ((flags & SerializeFlags.IgnoreNull && value === null) ||
-              (flags & SerializeFlags.IgnoreUndefined && value === undefined)) {
+          if (
+            (flags & SerializeFlags.IgnoreNull && value === null) ||
+            (flags & SerializeFlags.IgnoreUndefined && value === undefined)
+          ) {
             continue;
           }
 
@@ -343,7 +349,7 @@ export class SerializationManager {
 
     // 处理数组
     if (Array.isArray(data)) {
-      return data.map(item => this.fromJSON(item)) as any;
+      return data.map((item) => this.fromJSON(item)) as any;
     }
 
     // 处理特殊类型
@@ -358,10 +364,7 @@ export class SerializationManager {
         const map = new Map();
 
         for (const entry of data.entries) {
-          map.set(
-            this.fromJSON(entry.key),
-            this.fromJSON(entry.value)
-          );
+          map.set(this.fromJSON(entry.key), this.fromJSON(entry.value));
         }
 
         return map as any;
@@ -425,7 +428,9 @@ export class SerializationManager {
 
     // 处理所有可序列化字段
     for (const [propertyKey, fieldInfo] of metadata.entries()) {
-      if (!fieldInfo.serializable) {continue;}
+      if (!fieldInfo.serializable) {
+        continue;
+      }
 
       const dataKey = fieldInfo.name;
 

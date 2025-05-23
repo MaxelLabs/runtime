@@ -14,10 +14,7 @@ export class Box3 {
    * @param [min=new Vector3(Infinity)] - 最小角点
    * @param [max=new Vector3(-Infinity)] - 最大角点
    */
-  constructor (
-    min = new Vector3(Infinity, Infinity, Infinity),
-    max = new Vector3(-Infinity, -Infinity, -Infinity),
-  ) {
+  constructor(min = new Vector3(Infinity, Infinity, Infinity), max = new Vector3(-Infinity, -Infinity, -Infinity)) {
     this.min = min.clone();
     this.max = max.clone();
   }
@@ -28,7 +25,7 @@ export class Box3 {
    * @param max - 三维包围盒最大点
    * @returns
    */
-  set (min: Vector3, max: Vector3): this {
+  set(min: Vector3, max: Vector3): this {
     this.min.copyFrom(min);
     this.max.copyFrom(max);
 
@@ -40,7 +37,7 @@ export class Box3 {
    * @param array - 数组集合（每三个数视为一个三维空间点）
    * @returns 三维包围盒
    */
-  setFromArray (array: number[]): this {
+  setFromArray(array: number[]): this {
     let minX = Number(Infinity);
     let minY = Number(Infinity);
     let minZ = Number(Infinity);
@@ -54,13 +51,25 @@ export class Box3 {
       const y = array[i + 1];
       const z = array[i + 2];
 
-      if (x < minX) { minX = x; }
-      if (y < minY) { minY = y; }
-      if (z < minZ) { minZ = z; }
+      if (x < minX) {
+        minX = x;
+      }
+      if (y < minY) {
+        minY = y;
+      }
+      if (z < minZ) {
+        minZ = z;
+      }
 
-      if (x > maxX) { maxX = x; }
-      if (y > maxY) { maxY = y; }
-      if (z > maxZ) { maxZ = z; }
+      if (x > maxX) {
+        maxX = x;
+      }
+      if (y > maxY) {
+        maxY = y;
+      }
+      if (z > maxZ) {
+        maxZ = z;
+      }
     }
 
     this.min.set(minX, minY, minZ);
@@ -74,7 +83,7 @@ export class Box3 {
    * @param points - 三维空间点集合
    * @returns 三维包围盒
    */
-  setFromPoints (points: Vector3[]): this {
+  setFromPoints(points: Vector3[]): this {
     this.makeEmpty();
 
     for (let i = 0, il = points.length; i < il; i++) {
@@ -90,7 +99,7 @@ export class Box3 {
    * @param size - 三维包围盒大小值
    * @returns 三维包围盒
    */
-  setFromCenterAndSize (center: Vector3, size: Vector3): this {
+  setFromCenterAndSize(center: Vector3, size: Vector3): this {
     const halfSize = size.clone().multiply(0.5);
 
     this.min.copyFrom(center).subtract(halfSize);
@@ -105,7 +114,7 @@ export class Box3 {
    * @param object - 构件实体
    * @returns 三维包围盒
    */
-  setFromObject (object: any) {
+  setFromObject(object: any) {
     this.makeEmpty();
 
     return this.expandByObject(object);
@@ -115,7 +124,7 @@ export class Box3 {
    * 克隆三维包围盒
    * @returns 克隆结果
    */
-  clone (): Box3 {
+  clone(): Box3 {
     return new Box3().copyFrom(this);
   }
 
@@ -124,7 +133,7 @@ export class Box3 {
    * @param box - 复制对象
    * @returns 复制结果
    */
-  copyFrom (box: Box3): this {
+  copyFrom(box: Box3): this {
     this.min.copyFrom(box.min);
     this.max.copyFrom(box.max);
 
@@ -135,7 +144,7 @@ export class Box3 {
    * 三维包围盒置空
    * @returns 置空结果
    */
-  makeEmpty (): this {
+  makeEmpty(): this {
     this.min.x = this.min.y = this.min.z = Number(Infinity);
     this.max.x = this.max.y = this.max.z = -Infinity;
 
@@ -146,11 +155,9 @@ export class Box3 {
    * 三维包围盒判空
    * @returns 判空结果
    */
-  isEmpty (): boolean {
+  isEmpty(): boolean {
     // this is a more robust check for empty than ( volume <= 0 ) because volume can get positive with two negative axes
-    return this.max.x < this.min.x
-      || this.max.y < this.min.y
-      || this.max.z < this.min.z;
+    return this.max.x < this.min.x || this.max.y < this.min.y || this.max.z < this.min.z;
   }
 
   /**
@@ -158,7 +165,7 @@ export class Box3 {
    * @param [target=new Vector3()]
    * @returns
    */
-  getCenter (target: Vector3 = new Vector3()): Vector3 {
+  getCenter(target: Vector3 = new Vector3()): Vector3 {
     return this.isEmpty() ? target.set(0, 0, 0) : target.addVectors(this.min, this.max).multiply(0.5);
   }
 
@@ -167,7 +174,7 @@ export class Box3 {
    * @param [target=new Vector3()] - 结果保存对象
    * @returns 三维包围盒大小
    */
-  getSize (target: Vector3 = new Vector3()): Vector3 {
+  getSize(target: Vector3 = new Vector3()): Vector3 {
     return this.isEmpty() ? target.set(0, 0, 0) : target.subtractVectors(this.max, this.min);
   }
 
@@ -176,7 +183,7 @@ export class Box3 {
    * @param point - 三维空间点
    * @returns 扩展结果
    */
-  expandByPoint (point: Vector3): this {
+  expandByPoint(point: Vector3): this {
     this.min.min(point);
     this.max.max(point);
 
@@ -188,7 +195,7 @@ export class Box3 {
    * @param vector - 三维向量
    * @returns 扩展结果
    */
-  expandByVector (vector: Vector3): this {
+  expandByVector(vector: Vector3): this {
     this.min.subtract(vector);
     this.max.add(vector);
 
@@ -200,7 +207,7 @@ export class Box3 {
    * @param scalar - 扩展大小
    * @returns 扩展结果
    */
-  expandByScalar (scalar: number): this {
+  expandByScalar(scalar: number): this {
     this.min.add(-scalar);
     this.max.add(scalar);
 
@@ -212,7 +219,7 @@ export class Box3 {
    * @param box
    * @returns
    */
-  expandByBox (box: Box3): this {
+  expandByBox(box: Box3): this {
     this.min.min(box.min);
     this.max.max(box.max);
 
@@ -225,7 +232,7 @@ export class Box3 {
    * @param object - 构件实体
    * @returns 扩展结果
    */
-  expandByObject (object: any): this {
+  expandByObject(object: any): this {
     // Computes the world-axis-aligned bounding box of an object (including its children),
     // accounting for both the object's, and children's, world transforms
     object.updateWorldMatrix(false, false);
@@ -259,13 +266,15 @@ export class Box3 {
    * @param point - 三维空间点
    * @returns 点包含判断结果
    */
-  containsPoint (point: Vector3): boolean {
-    return !(point.x < this.min.x
-      || point.x > this.max.x
-      || point.y < this.min.y
-      || point.y > this.max.y
-      || point.z < this.min.z
-      || point.z > this.max.z);
+  containsPoint(point: Vector3): boolean {
+    return !(
+      point.x < this.min.x ||
+      point.x > this.max.x ||
+      point.y < this.min.y ||
+      point.y > this.max.y ||
+      point.z < this.min.z ||
+      point.z > this.max.z
+    );
   }
 
   /**
@@ -273,13 +282,15 @@ export class Box3 {
    * @param other - 三维包围盒
    * @returns 包围盒包含结果（true 表示包含 other, false 表示不包含 other）
    */
-  containsBox (other: Box3): boolean {
-    return this.min.x <= other.min.x
-      && this.max.x >= other.max.x
-      && this.min.y <= other.min.y
-      && this.max.y >= other.max.y
-      && this.min.z <= other.min.z
-      && this.max.z >= other.max.z;
+  containsBox(other: Box3): boolean {
+    return (
+      this.min.x <= other.min.x &&
+      this.max.x >= other.max.x &&
+      this.min.y <= other.min.y &&
+      this.max.y >= other.max.y &&
+      this.min.z <= other.min.z &&
+      this.max.z >= other.max.z
+    );
   }
 
   // TODO
@@ -289,7 +300,7 @@ export class Box3 {
    * @param [target=new Vector3()] - 结果保存对象
    * @returns 点在包围盒比例位置
    */
-  getParameter (point: Vector3, target: Vector3 = new Vector3()): Vector3 {
+  getParameter(point: Vector3, target: Vector3 = new Vector3()): Vector3 {
     // This can potentially have a divide by zero if the box
     // has a size dimension of 0.
     return target.set(
@@ -304,11 +315,16 @@ export class Box3 {
    * @param other - 三维包围盒
    * @returns 相交判断结果
    */
-  intersectsBox (other: Box3): boolean {
+  intersectsBox(other: Box3): boolean {
     // using 6 splitting planes to rule out intersections.
-    return !(other.max.x < this.min.x || other.min.x > this.max.x
-      || other.max.y < this.min.y || other.min.y > this.max.y
-      || other.max.z < this.min.z || other.min.z > this.max.z);
+    return !(
+      other.max.x < this.min.x ||
+      other.min.x > this.max.x ||
+      other.max.y < this.min.y ||
+      other.min.y > this.max.y ||
+      other.max.z < this.min.z ||
+      other.min.z > this.max.z
+    );
   }
 
   /**
@@ -316,14 +332,14 @@ export class Box3 {
    * @param sphere
    * @returns
    */
-  intersectsSphere (sphere: Sphere) {
+  intersectsSphere(sphere: Sphere) {
     // Find the point on the AABB closest to the sphere center.
     const vector = new Vector3();
 
     this.clampPoint(sphere.center, vector);
 
     // If that point is inside the sphere, the AABB and sphere intersect.
-    return vector.distanceToSquared(sphere.center) <= (sphere.radius * sphere.radius);
+    return vector.distanceToSquared(sphere.center) <= sphere.radius * sphere.radius;
   }
 
   /**
@@ -332,7 +348,7 @@ export class Box3 {
    * @param [target=new Vector3()] - 结果存放对象
    * @returns 计算结果
    */
-  clampPoint (point: Vector3, target: Vector3 = new Vector3()): Vector3 {
+  clampPoint(point: Vector3, target: Vector3 = new Vector3()): Vector3 {
     return target.copyFrom(point).clamp(this.min, this.max);
   }
 
@@ -341,7 +357,7 @@ export class Box3 {
    * @param point - 三维包围盒
    * @returns 距离结果
    */
-  distanceToPoint (point: Vector3): number {
+  distanceToPoint(point: Vector3): number {
     const clampedPoint = point.clone().clamp(this.min, this.max);
 
     return clampedPoint.subtract(point).length();
@@ -352,12 +368,14 @@ export class Box3 {
    * @param box - 三维包围盒
    * @returns 求交结果
    */
-  intersect (box: Box3): this {
+  intersect(box: Box3): this {
     this.min.max(box.min);
     this.max.min(box.max);
 
     // ensure that if there is no overlap, the result is fully empty, not slightly empty with non-inf/+inf values that will cause subsequence intersects to erroneously return valid values.
-    if (this.isEmpty()) { this.makeEmpty(); }
+    if (this.isEmpty()) {
+      this.makeEmpty();
+    }
 
     return this;
   }
@@ -367,7 +385,7 @@ export class Box3 {
    * @param box - 三维包围盒
    * @returns 求并结果
    */
-  union (box: Box3): this {
+  union(box: Box3): this {
     this.min.min(box.min);
     this.max.max(box.max);
 
@@ -379,9 +397,11 @@ export class Box3 {
    * @param matrix - 三维变换矩阵
    * @returns 变换结果
    */
-  applyMatrix4 (matrix: Matrix4, center = new Vector3()): this {
+  applyMatrix4(matrix: Matrix4, center = new Vector3()): this {
     // transform of empty box is an empty box.
-    if (this.isEmpty()) { return this; }
+    if (this.isEmpty()) {
+      return this;
+    }
 
     const points = this.getOBBPoints(matrix, center);
 
@@ -390,9 +410,11 @@ export class Box3 {
     return this;
   }
 
-  getOBBPoints (matrix: Matrix4, center = new Vector3()): Vector3[] {
+  getOBBPoints(matrix: Matrix4, center = new Vector3()): Vector3[] {
     // transform of empty box is an empty box.
-    if (this.isEmpty()) { return []; }
+    if (this.isEmpty()) {
+      return [];
+    }
 
     const points: Vector3[] = [];
 
@@ -405,7 +427,7 @@ export class Box3 {
     points[5] = new Vector3(this.max.x, this.min.y, this.max.z); // 101
     points[6] = new Vector3(this.max.x, this.max.y, this.min.z); // 110
     points[7] = new Vector3(this.max.x, this.max.y, this.max.z); // 111
-    points.forEach(p => {
+    points.forEach((p) => {
       p.subtract(center);
       p.applyMatrix(matrix);
       p.add(center);
@@ -419,7 +441,7 @@ export class Box3 {
    * @param target
    * @returns
    */
-  getBoundingSphere (target: Sphere) {
+  getBoundingSphere(target: Sphere) {
     this.getCenter(target.center);
 
     const vector = new Vector3();
@@ -434,7 +456,7 @@ export class Box3 {
    * @param offset - 三维位移向量
    * @returns 位移结果
    */
-  translate (offset: Vector3): this {
+  translate(offset: Vector3): this {
     this.min.add(offset);
     this.max.add(offset);
 
@@ -446,7 +468,7 @@ export class Box3 {
    * @param other - 三维包围盒
    * @returns 判等结果
    */
-  equals (other: Box3): boolean {
+  equals(other: Box3): boolean {
     return other.min.equals(this.min) && other.max.equals(this.max);
   }
 }

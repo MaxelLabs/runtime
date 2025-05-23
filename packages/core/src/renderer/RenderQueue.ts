@@ -13,7 +13,7 @@ export enum RenderQueueMaskType {
   /** 写入掩码 */
   Write = 1,
   /** 读取掩码 */
-  Read = 2
+  Read = 2,
 }
 
 /**
@@ -21,13 +21,13 @@ export enum RenderQueueMaskType {
  */
 export class RenderQueue {
   /** 不透明物体排序函数 */
-  static compareForOpaque (a: RenderElement, b: RenderElement): number {
+  static compareForOpaque(a: RenderElement, b: RenderElement): number {
     // 先按优先级排序，再按距离排序（从近到远）
     return a.priority - b.priority || a.distanceForSort - b.distanceForSort;
   }
 
   /** 透明物体排序函数 */
-  static compareForTransparent (a: RenderElement, b: RenderElement): number {
+  static compareForTransparent(a: RenderElement, b: RenderElement): number {
     // 先按优先级排序，再按距离排序（从远到近）
     return a.priority - b.priority || b.distanceForSort - a.distanceForSort;
   }
@@ -47,7 +47,7 @@ export class RenderQueue {
    * 添加渲染元素
    * @param element 渲染元素
    */
-  pushRenderElement (element: RenderElement): void {
+  pushRenderElement(element: RenderElement): void {
     this.elements.push(element);
   }
 
@@ -56,7 +56,7 @@ export class RenderQueue {
    * @param compareFunc 比较函数
    * @param batcherManager 批处理管理器
    */
-  sortBatch (compareFunc: Function, batcherManager: BatcherManager): void {
+  sortBatch(compareFunc: Function, batcherManager: BatcherManager): void {
     // 快速排序
     this._quickSort(this.elements, 0, this.elements.length, compareFunc);
     this.batch(batcherManager);
@@ -66,7 +66,7 @@ export class RenderQueue {
    * 执行批处理
    * @param batcherManager 批处理管理器
    */
-  batch (batcherManager: BatcherManager): void {
+  batch(batcherManager: BatcherManager): void {
     batcherManager.batch(this);
   }
 
@@ -76,13 +76,10 @@ export class RenderQueue {
    * @param pipelineStage 管线阶段标识
    * @param maskType 掩码类型
    */
-  render (
-    context: RenderContext,
-    pipelineStage: string,
-    maskType: RenderQueueMaskType = RenderQueueMaskType.No
-  ): void {
+  render(context: RenderContext, pipelineStage: string, maskType: RenderQueueMaskType = RenderQueueMaskType.No): void {
     const batchedSubElements = this.batchedSubElements;
     const length = batchedSubElements.length;
+
     if (length === 0) {
       return;
     }
@@ -106,7 +103,7 @@ export class RenderQueue {
   /**
    * 清空队列
    */
-  clear (): void {
+  clear(): void {
     this.elements.length = 0;
     this.batchedSubElements.length = 0;
   }
@@ -114,7 +111,7 @@ export class RenderQueue {
   /**
    * 销毁队列
    */
-  destroy (): void {
+  destroy(): void {
     this.clear();
   }
 
@@ -125,13 +122,14 @@ export class RenderQueue {
    * @param right 右边界
    * @param compareFunc 比较函数
    */
-  private _quickSort (array: any[], left: number, right: number, compareFunc: Function): void {
+  private _quickSort(array: any[], left: number, right: number, compareFunc: Function): void {
     if (right - left <= 1) {
       return;
     }
 
     const pivot = array[Math.floor((left + right) / 2)];
     const newLeft = this._partition(array, left, right, pivot, compareFunc);
+
     this._quickSort(array, left, newLeft, compareFunc);
     this._quickSort(array, newLeft, right, compareFunc);
   }
@@ -139,7 +137,7 @@ export class RenderQueue {
   /**
    * 快速排序分区函数
    */
-  private _partition (array: any[], left: number, right: number, pivot: any, compareFunc: Function): number {
+  private _partition(array: any[], left: number, right: number, pivot: any, compareFunc: Function): number {
     while (left < right) {
       while (compareFunc(array[left], pivot) < 0) {
         left++;
@@ -149,12 +147,14 @@ export class RenderQueue {
       }
       if (left < right) {
         const temp = array[left];
+
         array[left] = array[right - 1];
         array[right - 1] = temp;
         left++;
         right--;
       }
     }
+
     return left;
   }
 }
@@ -172,5 +172,5 @@ export enum RenderQueueFlags {
   /** 透明 */
   Transparent = 0x4,
   /** 所有 */
-  All = 0x7
-} 
+  All = 0x7,
+}

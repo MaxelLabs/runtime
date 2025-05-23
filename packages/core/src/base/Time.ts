@@ -28,14 +28,14 @@ export class Time {
   /**
    * 创建时间管理器
    */
-  constructor () {
+  constructor() {
     this.reset();
   }
 
   /**
    * 重置时间
    */
-  reset (): void {
+  reset(): void {
     const now = performance.now() / 1000; // 转换为秒
 
     this.time = now;
@@ -51,7 +51,7 @@ export class Time {
   /**
    * 更新时间
    */
-  update (): void {
+  update(): void {
     const now = performance.now() / 1000; // 转换为秒
     const realDeltaTime = now - this.lastTime;
 
@@ -79,14 +79,14 @@ export class Time {
    * 检查是否需要进行固定更新
    * @returns 是否需要固定更新
    */
-  needFixedUpdate (): boolean {
+  needFixedUpdate(): boolean {
     return this.fixedTimeAccumulator >= this.fixedDeltaTime;
   }
 
   /**
    * 执行固定更新
    */
-  performFixedUpdate (): void {
+  performFixedUpdate(): void {
     this.fixedTimeAccumulator -= this.fixedDeltaTime;
   }
 }

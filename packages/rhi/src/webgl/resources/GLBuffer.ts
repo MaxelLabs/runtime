@@ -40,21 +40,21 @@ export enum UniformType {
   FLOAT_ARRAY = 'float[]',
   FLOAT_VEC2_ARRAY = 'vec2[]',
   FLOAT_VEC3_ARRAY = 'vec3[]',
-  FLOAT_VEC4_ARRAY = 'vec4[]'
+  FLOAT_VEC4_ARRAY = 'vec4[]',
 }
 
 /**
  * 缓冲区类型信息接口
  */
 export interface BufferTypeInfo {
-  uniformName?: string,
-  uniformType?: UniformType,
+  uniformName?: string;
+  uniformType?: UniformType;
   structLayout?: Array<{
-    name: string,
-    type: UniformType,
-    offset: number,
-    size?: number,
-  }>,
+    name: string;
+    type: UniformType;
+    offset: number;
+    size?: number;
+  }>;
 }
 
 /**
@@ -85,7 +85,7 @@ export class GLBuffer implements IRHIBuffer {
    * @param gl WebGL上下文
    * @param descriptor 缓冲区描述符
    */
-  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHIBufferDescriptor) {
+  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHIBufferDescriptor) {
     this.gl = gl;
     this.size = descriptor.size;
     this.usage = descriptor.usage;
@@ -122,21 +122,21 @@ export class GLBuffer implements IRHIBuffer {
    * 设置缓冲区类型信息
    * @param typeInfo 类型信息
    */
-  setTypeInfo (typeInfo: BufferTypeInfo): void {
+  setTypeInfo(typeInfo: BufferTypeInfo): void {
     this.typeInfo = typeInfo;
   }
 
   /**
    * 获取缓冲区类型信息
    */
-  getTypeInfo (): BufferTypeInfo | null {
+  getTypeInfo(): BufferTypeInfo | null {
     return this.typeInfo;
   }
 
   /**
    * 根据RHI缓冲区用途获取WebGL缓冲区目标
    */
-  private getGLBufferTarget (usage: RHIBufferUsage): number {
+  private getGLBufferTarget(usage: RHIBufferUsage): number {
     if (usage & RHIBufferUsage.VERTEX) {
       return this.gl.ARRAY_BUFFER;
     }
@@ -144,9 +144,7 @@ export class GLBuffer implements IRHIBuffer {
       return this.gl.ELEMENT_ARRAY_BUFFER;
     }
     if (usage & RHIBufferUsage.UNIFORM) {
-      return this.gl instanceof WebGL2RenderingContext
-        ? this.gl.UNIFORM_BUFFER
-        : this.gl.ARRAY_BUFFER; // WebGL1 回退
+      return this.gl instanceof WebGL2RenderingContext ? this.gl.UNIFORM_BUFFER : this.gl.ARRAY_BUFFER; // WebGL1 回退
     }
     // WebGL2 特有支持
     // if (this.gl instanceof WebGL2RenderingContext) {
@@ -169,19 +167,23 @@ export class GLBuffer implements IRHIBuffer {
   /**
    * 根据提示获取WebGL缓冲区用途
    */
-  private getGLBufferUsage (hint: 'static' | 'dynamic' | 'stream'): number {
+  private getGLBufferUsage(hint: 'static' | 'dynamic' | 'stream'): number {
     switch (hint) {
-      case 'static': return this.gl.STATIC_DRAW;
-      case 'dynamic': return this.gl.DYNAMIC_DRAW;
-      case 'stream': return this.gl.STREAM_DRAW;
-      default: return this.gl.STATIC_DRAW;
+      case 'static':
+        return this.gl.STATIC_DRAW;
+      case 'dynamic':
+        return this.gl.DYNAMIC_DRAW;
+      case 'stream':
+        return this.gl.STREAM_DRAW;
+      default:
+        return this.gl.STATIC_DRAW;
     }
   }
 
   /**
    * 更新缓冲区数据
    */
-  update (data: BufferSource, offset = 0): void {
+  update(data: BufferSource, offset = 0): void {
     if (this.isDestroyed) {
       console.warn('试图更新已销毁的缓冲区');
 
@@ -189,7 +191,7 @@ export class GLBuffer implements IRHIBuffer {
     }
 
     // 参数边界检查
-    if (offset < 0 || (offset + data.byteLength > this.size)) {
+    if (offset < 0 || offset + data.byteLength > this.size) {
       console.error(`更新缓冲区参数越界: offset=${offset}, dataSize=${data.byteLength}, bufferSize=${this.size}`);
 
       return;
@@ -212,12 +214,12 @@ export class GLBuffer implements IRHIBuffer {
    * 映射缓冲区以供CPU访问
    * 注意：WebGL1不支持真正的映射，这里模拟实现
    */
-  async map (mode: 'read' | 'write' | 'read-write', offset = 0, size?: number): Promise<ArrayBuffer> {
+  async map(mode: 'read' | 'write' | 'read-write', offset = 0, size?: number): Promise<ArrayBuffer> {
     if (this.isDestroyed) {
       throw new Error('试图映射已销毁的缓冲区');
     }
 
-    const actualSize = size ?? (this.size - offset);
+    const actualSize = size ?? this.size - offset;
 
     // 参数边界检查
     if (actualSize <= 0 || offset < 0 || offset + actualSize > this.size) {
@@ -273,7 +275,7 @@ export class GLBuffer implements IRHIBuffer {
    * 取消映射缓冲区
    * 如果之前是写入模式，会自动将修改写回GPU
    */
-  unmap (): void {
+  unmap(): void {
     if (this.mappedMode === null || this.mappedWriteBuffer === null) {
       // 没有活动的映射
       return;
@@ -281,15 +283,13 @@ export class GLBuffer implements IRHIBuffer {
 
     try {
       // 如果是写入或读写模式，将数据写回GPU
-      if ((this.mappedMode === 'write' || this.mappedMode === 'read-write') &&
-          this.mappedWriteBuffer && this.mappedSize > 0) {
-
+      if (
+        (this.mappedMode === 'write' || this.mappedMode === 'read-write') &&
+        this.mappedWriteBuffer &&
+        this.mappedSize > 0
+      ) {
         this.gl.bindBuffer(this.bufferTarget, this.glBuffer);
-        this.gl.bufferSubData(
-          this.bufferTarget,
-          this.mappedOffset,
-          new Uint8Array(this.mappedWriteBuffer)
-        );
+        this.gl.bufferSubData(this.bufferTarget, this.mappedOffset, new Uint8Array(this.mappedWriteBuffer));
       }
     } catch (e) {
       console.error('缓冲区数据写回失败:', e);
@@ -307,28 +307,28 @@ export class GLBuffer implements IRHIBuffer {
   /**
    * 获取原生WebGL缓冲区对象
    */
-  getGLBuffer (): WebGLBuffer | null {
+  getGLBuffer(): WebGLBuffer | null {
     return this.glBuffer;
   }
 
   /**
    * 获取目标类型
    */
-  getTarget (): number {
+  getTarget(): number {
     return this.bufferTarget;
   }
 
   /**
    * 获取缓冲区大小
    */
-  getSize (): number {
+  getSize(): number {
     return this.size;
   }
 
   /**
    * 销毁资源
    */
-  destroy (): void {
+  destroy(): void {
     if (this.isDestroyed) {
       return;
     }
@@ -353,14 +353,14 @@ export class GLBuffer implements IRHIBuffer {
    * @param size 大小（字节）
    * @returns 缓冲区数据
    */
-  getData (offset: number = 0, size?: number): ArrayBuffer | null {
+  getData(offset: number = 0, size?: number): ArrayBuffer | null {
     if (this.isDestroyed) {
       console.warn('试图从已销毁的缓冲区获取数据');
 
       return null;
     }
 
-    const actualSize = size ?? (this.size - offset);
+    const actualSize = size ?? this.size - offset;
 
     if (actualSize <= 0 || offset >= this.size) {
       console.warn('无效的缓冲区访问范围');

@@ -38,7 +38,7 @@ export class DeviceManager {
     if (this.device) {
       return this.device;
     }
-    
+
     this.device = new WebGLDevice(canvas, options);
 
     return this.device;

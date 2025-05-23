@@ -17,7 +17,7 @@ export class WebGLDemo {
   private init(canvas: HTMLCanvasElement): void {
     // 创建渲染器
     this.renderer = this.factory.getInstance().createRenderer(canvas);
-    
+
     // 创建着色器
     const vertexShaderSource = `
       attribute vec3 aPosition;
@@ -46,51 +46,46 @@ export class WebGLDemo {
     `;
 
     this.shader = this.factory.getInstance().createShader(vertexShaderSource, fragmentShaderSource);
-    
+
     // 创建顶点数据
     const vertices = new Float32Array([
       // 位置          // 纹理坐标  // 颜色
-      -0.5, -0.5, 0,  0, 0,       1, 0, 0, 1,
-       0.5, -0.5, 0,  1, 0,       0, 1, 0, 1,
-       0.5,  0.5, 0,  1, 1,       0, 0, 1, 1,
-      -0.5,  0.5, 0,  0, 1,       1, 1, 0, 1,
+      -0.5, -0.5, 0, 0, 0, 1, 0, 0, 1, 0.5, -0.5, 0, 1, 0, 0, 1, 0, 1, 0.5, 0.5, 0, 1, 1, 0, 0, 1, 1, -0.5, 0.5, 0, 0,
+      1, 1, 1, 0, 1,
     ]);
 
     // 创建索引数据
-    const indices = new Uint16Array([
-      0, 1, 2,
-      0, 2, 3,
-    ]);
+    const indices = new Uint16Array([0, 1, 2, 0, 2, 3]);
 
     // 创建顶点缓冲区
-    this.vertexBuffer = this.factory.getInstance().createBuffer(
-      GLConstants.BUFFER_TYPE.ARRAY_BUFFER,
-      GLConstants.BUFFER_USAGE.STATIC_DRAW,
-      vertices.length * 4
-    );
+    this.vertexBuffer = this.factory
+      .getInstance()
+      .createBuffer(GLConstants.BUFFER_TYPE.ARRAY_BUFFER, GLConstants.BUFFER_USAGE.STATIC_DRAW, vertices.length * 4);
     this.vertexBuffer.update(vertices);
 
     // 创建索引缓冲区
-    this.indexBuffer = this.factory.getInstance().createBuffer(
-      GLConstants.BUFFER_TYPE.ELEMENT_ARRAY_BUFFER,
-      GLConstants.BUFFER_USAGE.STATIC_DRAW,
-      indices.length * 2
-    );
+    this.indexBuffer = this.factory
+      .getInstance()
+      .createBuffer(
+        GLConstants.BUFFER_TYPE.ELEMENT_ARRAY_BUFFER,
+        GLConstants.BUFFER_USAGE.STATIC_DRAW,
+        indices.length * 2
+      );
     this.indexBuffer.update(indices);
 
     // 创建纹理
-    this.texture = this.factory.getInstance().createTexture(
-      GLConstants.TEXTURE_FORMAT.RGBA,
-      GLConstants.DATA_TYPE.UNSIGNED_BYTE
-    );
+    this.texture = this.factory
+      .getInstance()
+      .createTexture(GLConstants.TEXTURE_FORMAT.RGBA, GLConstants.DATA_TYPE.UNSIGNED_BYTE);
     this.texture.create();
-    
+
     // 创建测试纹理数据
     const textureData = new Uint8Array(4 * 4 * 4);
+
     for (let i = 0; i < textureData.length; i += 4) {
-      textureData[i] = 255;     // R
-      textureData[i + 1] = 0;   // G
-      textureData[i + 2] = 0;   // B
+      textureData[i] = 255; // R
+      textureData[i + 1] = 0; // G
+      textureData[i + 2] = 0; // B
       textureData[i + 3] = 255; // A
     }
     this.texture.setData(textureData, 4, 4);
@@ -109,15 +104,7 @@ export class WebGLDemo {
     this.vao.setAttributeLocation('aColor', 2);
 
     // 设置顶点属性
-    this.vao.setAttribute(
-      'aPosition',
-      this.vertexBuffer.getBuffer(),
-      3,
-      GLConstants.DATA_TYPE.FLOAT,
-      false,
-      9 * 4,
-      0
-    );
+    this.vao.setAttribute('aPosition', this.vertexBuffer.getBuffer(), 3, GLConstants.DATA_TYPE.FLOAT, false, 9 * 4, 0);
     this.vao.setAttribute(
       'aTexCoord',
       this.vertexBuffer.getBuffer(),
@@ -127,15 +114,7 @@ export class WebGLDemo {
       9 * 4,
       3 * 4
     );
-    this.vao.setAttribute(
-      'aColor',
-      this.vertexBuffer.getBuffer(),
-      4,
-      GLConstants.DATA_TYPE.FLOAT,
-      false,
-      9 * 4,
-      5 * 4
-    );
+    this.vao.setAttribute('aColor', this.vertexBuffer.getBuffer(), 4, GLConstants.DATA_TYPE.FLOAT, false, 9 * 4, 5 * 4);
   }
 
   public render(): void {
@@ -146,18 +125,9 @@ export class WebGLDemo {
     this.shader.use();
 
     // 设置变换矩阵
-    const modelViewMatrix = new Float32Array([
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1
-    ]);
-    const projectionMatrix = new Float32Array([
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1
-    ]);
+    const modelViewMatrix = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+    const projectionMatrix = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+
     this.shader.setUniformMatrix4fv('uModelViewMatrix', modelViewMatrix);
     this.shader.setUniformMatrix4fv('uProjectionMatrix', projectionMatrix);
 
@@ -198,4 +168,4 @@ export class WebGLDemo {
     this.renderer.dispose();
     this.factory.getInstance().destroy();
   }
-} 
+}

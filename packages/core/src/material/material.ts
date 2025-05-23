@@ -23,7 +23,7 @@ export enum MaterialParamType {
   /** 4x4矩阵 */
   Matrix4,
   /** 纹理 */
-  Texture
+  Texture,
 }
 
 /**
@@ -31,11 +31,11 @@ export enum MaterialParamType {
  */
 export interface MaterialParam {
   /** 参数名称 */
-  name: string,
+  name: string;
   /** 参数类型 */
-  type: MaterialParamType,
+  type: MaterialParamType;
   /** 参数值 */
-  value: any,
+  value: any;
 }
 
 /**
@@ -67,107 +67,107 @@ export class Material extends ReferResource {
    * 创建一个新的材质
    * @param name 材质名称
    */
-  constructor (name: string = 'Material') {
+  constructor(name: string = 'Material') {
     super();
     this.name = name;
   }
 
   /** 获取是否启用 */
-  get enabled (): boolean {
+  get enabled(): boolean {
     return this._enabled;
   }
 
   /** 设置是否启用 */
-  set enabled (value: boolean) {
+  set enabled(value: boolean) {
     this._enabled = value;
     this._dirty = true;
   }
 
   /** 获取渲染面类型 */
-  get cullFace (): CullFace {
+  get cullFace(): CullFace {
     return this._cullFace;
   }
 
   /** 设置渲染面类型 */
-  set cullFace (value: CullFace) {
+  set cullFace(value: CullFace) {
     this._cullFace = value;
     this._dirty = true;
   }
 
   /** 获取是否启用深度测试 */
-  get depthTest (): boolean {
+  get depthTest(): boolean {
     return this._depthTest;
   }
 
   /** 设置是否启用深度测试 */
-  set depthTest (value: boolean) {
+  set depthTest(value: boolean) {
     this._depthTest = value;
     this._dirty = true;
   }
 
   /** 获取是否启用深度写入 */
-  get depthWrite (): boolean {
+  get depthWrite(): boolean {
     return this._depthWrite;
   }
 
   /** 设置是否启用深度写入 */
-  set depthWrite (value: boolean) {
+  set depthWrite(value: boolean) {
     this._depthWrite = value;
     this._dirty = true;
   }
 
   /** 获取深度测试函数 */
-  get depthFunc (): DepthFunc {
+  get depthFunc(): DepthFunc {
     return this._depthFunc;
   }
 
   /** 设置深度测试函数 */
-  set depthFunc (value: DepthFunc) {
+  set depthFunc(value: DepthFunc) {
     this._depthFunc = value;
     this._dirty = true;
   }
 
   /** 获取混合模式 */
-  get blendMode (): BlendMode {
+  get blendMode(): BlendMode {
     return this._blendMode;
   }
 
   /** 设置混合模式 */
-  set blendMode (value: BlendMode) {
+  set blendMode(value: BlendMode) {
     this._blendMode = value;
     this._dirty = true;
   }
 
   /** 获取透明度 */
-  get opacity (): number {
+  get opacity(): number {
     return this._opacity;
   }
 
   /** 设置透明度 */
-  set opacity (value: number) {
+  set opacity(value: number) {
     // 确保透明度在有效范围内
     this._opacity = Math.max(0, Math.min(1, value));
     this._dirty = true;
   }
 
   /** 获取着色器ID */
-  get shaderId (): string {
+  get shaderId(): string {
     return this._shaderId;
   }
 
   /** 设置着色器ID */
-  set shaderId (value: string) {
+  set shaderId(value: string) {
     this._shaderId = value;
     this._dirty = true;
   }
 
   /** 获取材质是否需要更新 */
-  get dirty (): boolean {
+  get dirty(): boolean {
     return this._dirty;
   }
 
   /** 设置材质是否需要更新 */
-  set dirty (value: boolean) {
+  set dirty(value: boolean) {
     this._dirty = value;
   }
 
@@ -176,7 +176,7 @@ export class Material extends ReferResource {
    * @param name 参数名称
    * @param value 参数值
    */
-  setFloat (name: string, value: number): void {
+  setFloat(name: string, value: number): void {
     this._params.set(name, {
       name,
       type: MaterialParamType.Float,
@@ -191,7 +191,7 @@ export class Material extends ReferResource {
    * @param defaultValue 默认值
    * @returns 参数值
    */
-  getFloat (name: string, defaultValue: number = 0): number {
+  getFloat(name: string, defaultValue: number = 0): number {
     const param = this._params.get(name);
 
     if (param && param.type === MaterialParamType.Float) {
@@ -206,7 +206,7 @@ export class Material extends ReferResource {
    * @param name 参数名称
    * @param value 参数值
    */
-  setInt (name: string, value: number): void {
+  setInt(name: string, value: number): void {
     this._params.set(name, {
       name,
       type: MaterialParamType.Integer,
@@ -221,7 +221,7 @@ export class Material extends ReferResource {
    * @param defaultValue 默认值
    * @returns 参数值
    */
-  getInt (name: string, defaultValue: number = 0): number {
+  getInt(name: string, defaultValue: number = 0): number {
     const param = this._params.get(name);
 
     if (param && param.type === MaterialParamType.Integer) {
@@ -236,7 +236,7 @@ export class Material extends ReferResource {
    * @param name 参数名称
    * @param value 参数值
    */
-  setBool (name: string, value: boolean): void {
+  setBool(name: string, value: boolean): void {
     this._params.set(name, {
       name,
       type: MaterialParamType.Boolean,
@@ -251,7 +251,7 @@ export class Material extends ReferResource {
    * @param defaultValue 默认值
    * @returns 参数值
    */
-  getBool (name: string, defaultValue: boolean = false): boolean {
+  getBool(name: string, defaultValue: boolean = false): boolean {
     const param = this._params.get(name);
 
     if (param && param.type === MaterialParamType.Boolean) {
@@ -269,7 +269,7 @@ export class Material extends ReferResource {
    * @param b 蓝色分量(0-1)
    * @param a 透明度(0-1)
    */
-  setColor (name: string, r: number, g: number, b: number, a: number = 1): void {
+  setColor(name: string, r: number, g: number, b: number, a: number = 1): void {
     this._params.set(name, {
       name,
       type: MaterialParamType.Color,
@@ -284,7 +284,7 @@ export class Material extends ReferResource {
    * @param defaultValue 默认值
    * @returns 参数值
    */
-  getColor (name: string, defaultValue: Vector4 = new Vector4(1, 1, 1, 1)): Vector4 {
+  getColor(name: string, defaultValue: Vector4 = new Vector4(1, 1, 1, 1)): Vector4 {
     const param = this._params.get(name);
 
     if (param && param.type === MaterialParamType.Color) {
@@ -299,7 +299,7 @@ export class Material extends ReferResource {
    * @param name 参数名称
    * @param value 纹理
    */
-  setTexture (name: string, value: any): void {
+  setTexture(name: string, value: any): void {
     // 如果是引用计数资源，增加引用计数
     if (value && typeof value.addRef === 'function') {
       value.addRef();
@@ -307,8 +307,12 @@ export class Material extends ReferResource {
       // 如果已有旧纹理，释放引用
       const oldParam = this._params.get(name);
 
-      if (oldParam && oldParam.type === MaterialParamType.Texture &&
-          oldParam.value && typeof oldParam.value.release === 'function') {
+      if (
+        oldParam &&
+        oldParam.type === MaterialParamType.Texture &&
+        oldParam.value &&
+        typeof oldParam.value.release === 'function'
+      ) {
         oldParam.value.release();
       }
     }
@@ -327,7 +331,7 @@ export class Material extends ReferResource {
    * @param defaultValue 默认值
    * @returns 参数值
    */
-  getTexture (name: string, defaultValue: any = null): any {
+  getTexture(name: string, defaultValue: any = null): any {
     const param = this._params.get(name);
 
     if (param && param.type === MaterialParamType.Texture) {
@@ -341,18 +345,17 @@ export class Material extends ReferResource {
    * 获取所有参数
    * @returns 参数列表
    */
-  getParams (): MaterialParam[] {
+  getParams(): MaterialParam[] {
     return Array.from(this._params.values());
   }
 
   /**
    * 清除所有参数
    */
-  clearParams (): void {
+  clearParams(): void {
     // 释放所有纹理引用
     for (const [_, param] of this._params) {
-      if (param.type === MaterialParamType.Texture &&
-          param.value && typeof param.value.release === 'function') {
+      if (param.type === MaterialParamType.Texture && param.value && typeof param.value.release === 'function') {
         param.value.release();
       }
     }
@@ -365,7 +368,7 @@ export class Material extends ReferResource {
    * 判断是否为透明材质
    * @returns 是否为透明材质
    */
-  isTransparent (): boolean {
+  isTransparent(): boolean {
     return this._blendMode !== BlendMode.Opaque || this._opacity < 1.0;
   }
 
@@ -373,7 +376,7 @@ export class Material extends ReferResource {
    * 复制材质
    * @returns 材质副本
    */
-  clone (): Material {
+  clone(): Material {
     const material = new Material(this.name + ' (Clone)');
 
     material._enabled = this._enabled;
@@ -390,11 +393,13 @@ export class Material extends ReferResource {
       let value: any;
 
       // 对于引用类型的参数，需要创建副本
-      if (param.type === MaterialParamType.Vector2 ||
-          param.type === MaterialParamType.Vector3 ||
-          param.type === MaterialParamType.Vector4 ||
-          param.type === MaterialParamType.Color ||
-          param.type === MaterialParamType.Matrix4) {
+      if (
+        param.type === MaterialParamType.Vector2 ||
+        param.type === MaterialParamType.Vector3 ||
+        param.type === MaterialParamType.Vector4 ||
+        param.type === MaterialParamType.Color ||
+        param.type === MaterialParamType.Matrix4
+      ) {
         if (typeof param.value.clone === 'function') {
           value = param.value.clone();
         } else {
@@ -426,7 +431,7 @@ export class Material extends ReferResource {
    * 释放材质资源
    * 重写ReferResource的onDispose方法
    */
-  protected override onDestroy (): void {
+  protected override onDestroy(): void {
     this.clearParams();
   }
 }

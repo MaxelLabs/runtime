@@ -19,7 +19,7 @@ export enum RenderQueueSortMode {
   /** 按优先级排序 */
   PRIORITY = 4,
   /** 不排序 */
-  NONE = 5
+  NONE = 5,
 }
 
 /**
@@ -37,7 +37,7 @@ export enum RenderQueueStage {
   /** 透明阶段 (无深度写入，从后到前) */
   TRANSPARENT = 3000,
   /** 叠加阶段 (无深度写入，从后到前) */
-  OVERLAY = 4000
+  OVERLAY = 4000,
 }
 
 /**
@@ -45,19 +45,19 @@ export enum RenderQueueStage {
  */
 export interface RenderQueueDesc {
   /** 渲染队列ID */
-  id: number,
+  id: number;
   /** 渲染队列阶段 */
-  stage: RenderQueueStage,
+  stage: RenderQueueStage;
   /** 是否是透明队列 */
-  isTransparent: boolean,
+  isTransparent: boolean;
   /** 是否写入深度 */
-  writeDepth: boolean,
+  writeDepth: boolean;
   /** 排序模式 */
-  sortMode: RenderQueueSortMode,
+  sortMode: RenderQueueSortMode;
   /** 是否启用批处理 */
-  enableBatching: boolean,
+  enableBatching: boolean;
   /** 是否启用实例化 */
-  enableInstancing: boolean,
+  enableInstancing: boolean;
 }
 
 /**
@@ -69,7 +69,7 @@ class RenderStateHash {
    * @param material 材质
    * @returns 状态哈希值
    */
-  public static calculate (material: Material): number {
+  public static calculate(material: Material): number {
     let hash = 0;
 
     // 如果材质没有渲染状态，返回0
@@ -86,17 +86,17 @@ class RenderStateHash {
     // 深度状态
     if (material.renderState.depthState) {
       if (material.renderState.depthState.writeEnabled) {
-        hash |= (1 << 1);
+        hash |= 1 << 1;
       }
 
       if (material.renderState.depthState.compareFunc) {
-        hash |= ((material.renderState.depthState.compareFunc & 0x7) << 2);
+        hash |= (material.renderState.depthState.compareFunc & 0x7) << 2;
       }
     }
 
     // 剔除状态
     if (material.renderState.cullMode != null) {
-      hash |= ((material.renderState.cullMode & 0x3) << 5);
+      hash |= (material.renderState.cullMode & 0x3) << 5;
     }
 
     return hash;
@@ -147,7 +147,7 @@ export class EnhancedRenderQueue {
 
       return subElem;
     },
-    subElem => {
+    (subElem) => {
       subElem.renderElement = null;
       subElem.material = null;
       subElem.subMesh = null;
@@ -165,7 +165,7 @@ export class EnhancedRenderQueue {
    * @param stage 队列阶段
    * @param isTransparent 是否是透明队列
    */
-  constructor (id: number, stage: RenderQueueStage, isTransparent: boolean = false) {
+  constructor(id: number, stage: RenderQueueStage, isTransparent: boolean = false) {
     this.id = id;
     this.desc = {
       id,
@@ -182,7 +182,7 @@ export class EnhancedRenderQueue {
    * 添加渲染元素到队列
    * @param element 渲染元素
    */
-  addRenderElement (element: RenderElement): void {
+  addRenderElement(element: RenderElement): void {
     if (!element) {
       return;
     }
@@ -194,7 +194,7 @@ export class EnhancedRenderQueue {
   /**
    * 准备渲染队列，分解渲染元素并排序
    */
-  prepare (): void {
+  prepare(): void {
     // 清空子渲染元素
     this.releaseSubRenderElements();
 
@@ -218,7 +218,7 @@ export class EnhancedRenderQueue {
   /**
    * 创建子渲染元素
    */
-  private createSubRenderElements (): void {
+  private createSubRenderElements(): void {
     // 确保有效的渲染元素
     if (!this.renderElements || this.renderElements.length === 0) {
       return;
@@ -272,7 +272,7 @@ export class EnhancedRenderQueue {
   /**
    * 释放子渲染元素回对象池
    */
-  private releaseSubRenderElements (): void {
+  private releaseSubRenderElements(): void {
     // 返回所有子渲染元素到对象池
     if (this.subRenderElements.length > 0) {
       EnhancedRenderQueue.subElementPool.releaseAll(this.subRenderElements);
@@ -287,7 +287,7 @@ export class EnhancedRenderQueue {
   /**
    * 排序子渲染元素
    */
-  private sort (): void {
+  private sort(): void {
     if (!this.needsSort || this.subRenderElements.length <= 1) {
       return;
     }
@@ -384,7 +384,7 @@ export class EnhancedRenderQueue {
     }
 
     // 然后按深度排序
-    return this.desc.isTransparent ? (b.depth - a.depth) : (a.depth - b.depth);
+    return this.desc.isTransparent ? b.depth - a.depth : a.depth - b.depth;
   };
 
   /**
@@ -402,7 +402,7 @@ export class EnhancedRenderQueue {
     }
 
     // 最后按深度排序
-    return this.desc.isTransparent ? (b.depth - a.depth) : (a.depth - b.depth);
+    return this.desc.isTransparent ? b.depth - a.depth : a.depth - b.depth;
   };
 
   /**
@@ -415,13 +415,13 @@ export class EnhancedRenderQueue {
     }
 
     // 然后按深度排序
-    return this.desc.isTransparent ? (b.depth - a.depth) : (a.depth - b.depth);
+    return this.desc.isTransparent ? b.depth - a.depth : a.depth - b.depth;
   };
 
   /**
    * 批处理渲染元素
    */
-  private batchElements (): void {
+  private batchElements(): void {
     // 首先将元素分组
     this.groupElementsForBatching();
 
@@ -455,7 +455,7 @@ export class EnhancedRenderQueue {
   /**
    * 按批处理键分组元素
    */
-  private groupElementsForBatching (): void {
+  private groupElementsForBatching(): void {
     this.batchGroups.clear();
 
     for (const element of this.subRenderElements) {
@@ -479,20 +479,20 @@ export class EnhancedRenderQueue {
   /**
    * 计算批处理键
    */
-  private calculateBatchKey (element: SubRenderElement): number {
+  private calculateBatchKey(element: SubRenderElement): number {
     // 批处理键应该包括着色器ID、材质ID和共享状态
     const shaderId = element.shaderId;
     const materialId = element.material?.id || 0;
     const stateHash = element.stateHash;
 
     // 组合成一个单一的键
-    return ((shaderId & 0xFFF) << 20) | ((materialId & 0xFF) << 12) | (stateHash & 0xFFF);
+    return ((shaderId & 0xfff) << 20) | ((materialId & 0xff) << 12) | (stateHash & 0xfff);
   }
 
   /**
    * 创建批处理后的渲染元素
    */
-  private createBatchedElement (elements: SubRenderElement[]): SubRenderElement | null {
+  private createBatchedElement(elements: SubRenderElement[]): SubRenderElement | null {
     // 这里应该创建一个合并了多个元素的新SubRenderElement
     // 实际实现需要合并几何数据
     // 这里简化处理，实际应该实现具体的批处理逻辑
@@ -509,7 +509,7 @@ export class EnhancedRenderQueue {
   /**
    * 处理实例化渲染
    */
-  private instanceElements (): void {
+  private instanceElements(): void {
     // 首先将元素分组
     this.groupElementsForInstancing();
 
@@ -533,7 +533,7 @@ export class EnhancedRenderQueue {
   /**
    * 按实例化键分组元素
    */
-  private groupElementsForInstancing (): void {
+  private groupElementsForInstancing(): void {
     this.instanceGroups.clear();
 
     for (const element of this.subRenderElements) {
@@ -557,20 +557,20 @@ export class EnhancedRenderQueue {
   /**
    * 计算实例化键
    */
-  private calculateInstanceKey (element: SubRenderElement): number {
+  private calculateInstanceKey(element: SubRenderElement): number {
     // 实例化键应该包括着色器ID、材质ID和网格ID
     const shaderId = element.shaderId;
     const materialId = element.material?.id || 0;
     const meshId = element.subMesh?.id || 0;
 
     // 组合成一个单一的键
-    return ((shaderId & 0xFFF) << 20) | ((materialId & 0xFF) << 12) | (meshId & 0xFFF);
+    return ((shaderId & 0xfff) << 20) | ((materialId & 0xff) << 12) | (meshId & 0xfff);
   }
 
   /**
    * 创建实例化渲染元素
    */
-  private createInstancedElement (elements: SubRenderElement[]): SubRenderElement | null {
+  private createInstancedElement(elements: SubRenderElement[]): SubRenderElement | null {
     // 这里应该创建一个包含实例化数据的元素
     // 实际实现需要收集所有实例的变换信息
     // 这里简化处理，实际应该实现具体的实例化逻辑
@@ -587,7 +587,7 @@ export class EnhancedRenderQueue {
   /**
    * 清空渲染队列
    */
-  clear (): void {
+  clear(): void {
     this.releaseSubRenderElements();
     this.renderElements = [];
     this.needsSort = false;
@@ -596,7 +596,7 @@ export class EnhancedRenderQueue {
   /**
    * 获取子渲染元素数量
    */
-  getElementCount (): number {
+  getElementCount(): number {
     return this.subRenderElements.length;
   }
 
@@ -604,7 +604,7 @@ export class EnhancedRenderQueue {
    * 设置排序模式
    * @param mode 排序模式
    */
-  setSortMode (mode: RenderQueueSortMode): void {
+  setSortMode(mode: RenderQueueSortMode): void {
     if (this.desc.sortMode !== mode) {
       this.desc.sortMode = mode;
       this.needsSort = true;
@@ -614,18 +614,18 @@ export class EnhancedRenderQueue {
   /**
    * 分析渲染队列性能
    */
-  analyzePerformance (): void {
+  analyzePerformance(): void {
     // 分析对象池性能
     ObjectPoolManager.getInstance().analyzePerformance(true);
 
     // 输出统计信息
     console.info(
       `渲染队列(ID=${this.id}, 阶段=${RenderQueueStage[this.desc.stage]})统计:\n` +
-      `- 原始渲染元素: ${this.renderElements.length}\n` +
-      `- 子渲染元素: ${this.subRenderElements.length}\n` +
-      `- 批处理分组: ${this.batchGroups.size}\n` +
-      `- 实例化分组: ${this.instanceGroups.size}\n` +
-      `- 是否需要排序: ${this.needsSort}`
+        `- 原始渲染元素: ${this.renderElements.length}\n` +
+        `- 子渲染元素: ${this.subRenderElements.length}\n` +
+        `- 批处理分组: ${this.batchGroups.size}\n` +
+        `- 实例化分组: ${this.instanceGroups.size}\n` +
+        `- 是否需要排序: ${this.needsSort}`
     );
   }
 }

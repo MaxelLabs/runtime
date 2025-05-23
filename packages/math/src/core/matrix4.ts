@@ -26,7 +26,7 @@ export class Matrix4 {
    */
   private elements: Float32Array;
 
-  constructor () {
+  constructor() {
     this.elements = new Float32Array(16);
     this.identity();
   }
@@ -34,13 +34,25 @@ export class Matrix4 {
   /**
    * 设置单位矩阵
    */
-  identity (): this {
+  identity(): this {
     const e = this.elements;
 
-    e[0] = 1; e[4] = 0; e[8] = 0; e[12] = 0;
-    e[1] = 0; e[5] = 1; e[9] = 0; e[13] = 0;
-    e[2] = 0; e[6] = 0; e[10] = 1; e[14] = 0;
-    e[3] = 0; e[7] = 0; e[11] = 0; e[15] = 1;
+    e[0] = 1;
+    e[4] = 0;
+    e[8] = 0;
+    e[12] = 0;
+    e[1] = 0;
+    e[5] = 1;
+    e[9] = 0;
+    e[13] = 0;
+    e[2] = 0;
+    e[6] = 0;
+    e[10] = 1;
+    e[14] = 0;
+    e[3] = 0;
+    e[7] = 0;
+    e[11] = 0;
+    e[15] = 1;
 
     return this;
   }
@@ -65,18 +77,42 @@ export class Matrix4 {
    * @param m44 - 第 4 行，第 4 列
    * @returns 矩阵
    */
-  set (
-    m11: number, m21: number, m31: number, m41: number,
-    m12: number, m22: number, m32: number, m42: number,
-    m13: number, m23: number, m33: number, m43: number,
-    m14: number, m24: number, m34: number, m44: number,
+  set(
+    m11: number,
+    m21: number,
+    m31: number,
+    m41: number,
+    m12: number,
+    m22: number,
+    m32: number,
+    m42: number,
+    m13: number,
+    m23: number,
+    m33: number,
+    m43: number,
+    m14: number,
+    m24: number,
+    m34: number,
+    m44: number
   ): this {
     const e = this.elements;
 
-    e[0] = m11; e[1] = m21; e[2] = m31; e[3] = m41;
-    e[4] = m12; e[5] = m22; e[6] = m32; e[7] = m42;
-    e[8] = m13; e[9] = m23; e[10] = m33; e[11] = m43;
-    e[12] = m14; e[13] = m24; e[14] = m34; e[15] = m44;
+    e[0] = m11;
+    e[1] = m21;
+    e[2] = m31;
+    e[3] = m41;
+    e[4] = m12;
+    e[5] = m22;
+    e[6] = m32;
+    e[7] = m42;
+    e[8] = m13;
+    e[9] = m23;
+    e[10] = m33;
+    e[11] = m43;
+    e[12] = m14;
+    e[13] = m24;
+    e[14] = m34;
+    e[15] = m44;
 
     return this;
   }
@@ -85,7 +121,7 @@ export class Matrix4 {
    * 矩阵克隆
    * @returns 克隆结果
    */
-  clone (): Matrix4 {
+  clone(): Matrix4 {
     // 使用对象池创建矩阵
     return Matrix4.create().copyFrom(this);
   }
@@ -95,7 +131,7 @@ export class Matrix4 {
    * @param m - 复制对象
    * @returns 复制结果
    */
-  copyFrom (m: Matrix4): this {
+  copyFrom(m: Matrix4): this {
     const te = this.elements;
     const me = m.elements;
 
@@ -108,7 +144,7 @@ export class Matrix4 {
   /**
    * 矩阵乘法（优化版本）
    */
-  multiply (m: Matrix4): this {
+  multiply(m: Matrix4): this {
     const a = this.elements;
     const b = m.elements;
     const r = new Float32Array(16);
@@ -142,16 +178,40 @@ export class Matrix4 {
   /**
    * 矩阵求逆（优化版本）
    */
-  invert (): this {
+  invert(): this {
     const e = this.elements;
     const r = new Float32Array(16);
 
     // 计算行列式
     const det =
-      e[0] * (e[5] * e[10] * e[15] - e[5] * e[11] * e[14] - e[9] * e[6] * e[15] + e[9] * e[7] * e[14] + e[13] * e[6] * e[11] - e[13] * e[7] * e[10]) -
-      e[1] * (e[4] * e[10] * e[15] - e[4] * e[11] * e[14] - e[8] * e[6] * e[15] + e[8] * e[7] * e[14] + e[12] * e[6] * e[11] - e[12] * e[7] * e[10]) +
-      e[2] * (e[4] * e[9] * e[15] - e[4] * e[11] * e[13] - e[8] * e[5] * e[15] + e[8] * e[7] * e[13] + e[12] * e[5] * e[11] - e[12] * e[7] * e[9]) -
-      e[3] * (e[4] * e[9] * e[14] - e[4] * e[10] * e[13] - e[8] * e[5] * e[14] + e[8] * e[6] * e[13] + e[12] * e[5] * e[10] - e[12] * e[6] * e[9]);
+      e[0] *
+        (e[5] * e[10] * e[15] -
+          e[5] * e[11] * e[14] -
+          e[9] * e[6] * e[15] +
+          e[9] * e[7] * e[14] +
+          e[13] * e[6] * e[11] -
+          e[13] * e[7] * e[10]) -
+      e[1] *
+        (e[4] * e[10] * e[15] -
+          e[4] * e[11] * e[14] -
+          e[8] * e[6] * e[15] +
+          e[8] * e[7] * e[14] +
+          e[12] * e[6] * e[11] -
+          e[12] * e[7] * e[10]) +
+      e[2] *
+        (e[4] * e[9] * e[15] -
+          e[4] * e[11] * e[13] -
+          e[8] * e[5] * e[15] +
+          e[8] * e[7] * e[13] +
+          e[12] * e[5] * e[11] -
+          e[12] * e[7] * e[9]) -
+      e[3] *
+        (e[4] * e[9] * e[14] -
+          e[4] * e[10] * e[13] -
+          e[8] * e[5] * e[14] +
+          e[8] * e[6] * e[13] +
+          e[12] * e[5] * e[10] -
+          e[12] * e[6] * e[9]);
 
     if (det === 0) {
       console.warn('Matrix4: Matrix is not invertible.');
@@ -162,25 +222,137 @@ export class Matrix4 {
     const invDet = 1 / det;
 
     // 计算伴随矩阵并乘以逆行列式
-    r[0] = (e[5] * e[10] * e[15] - e[5] * e[11] * e[14] - e[9] * e[6] * e[15] + e[9] * e[7] * e[14] + e[13] * e[6] * e[11] - e[13] * e[7] * e[10]) * invDet;
-    r[1] = (-e[1] * e[10] * e[15] + e[1] * e[11] * e[14] + e[9] * e[2] * e[15] - e[9] * e[3] * e[14] - e[13] * e[2] * e[11] + e[13] * e[3] * e[10]) * invDet;
-    r[2] = (e[1] * e[6] * e[15] - e[1] * e[7] * e[14] - e[5] * e[2] * e[15] + e[5] * e[3] * e[14] + e[13] * e[2] * e[7] - e[13] * e[3] * e[6]) * invDet;
-    r[3] = (-e[1] * e[6] * e[11] + e[1] * e[7] * e[10] + e[5] * e[2] * e[11] - e[5] * e[3] * e[10] - e[9] * e[2] * e[7] + e[9] * e[3] * e[6]) * invDet;
+    r[0] =
+      (e[5] * e[10] * e[15] -
+        e[5] * e[11] * e[14] -
+        e[9] * e[6] * e[15] +
+        e[9] * e[7] * e[14] +
+        e[13] * e[6] * e[11] -
+        e[13] * e[7] * e[10]) *
+      invDet;
+    r[1] =
+      (-e[1] * e[10] * e[15] +
+        e[1] * e[11] * e[14] +
+        e[9] * e[2] * e[15] -
+        e[9] * e[3] * e[14] -
+        e[13] * e[2] * e[11] +
+        e[13] * e[3] * e[10]) *
+      invDet;
+    r[2] =
+      (e[1] * e[6] * e[15] -
+        e[1] * e[7] * e[14] -
+        e[5] * e[2] * e[15] +
+        e[5] * e[3] * e[14] +
+        e[13] * e[2] * e[7] -
+        e[13] * e[3] * e[6]) *
+      invDet;
+    r[3] =
+      (-e[1] * e[6] * e[11] +
+        e[1] * e[7] * e[10] +
+        e[5] * e[2] * e[11] -
+        e[5] * e[3] * e[10] -
+        e[9] * e[2] * e[7] +
+        e[9] * e[3] * e[6]) *
+      invDet;
 
-    r[4] = (-e[4] * e[10] * e[15] + e[4] * e[11] * e[14] + e[8] * e[6] * e[15] - e[8] * e[7] * e[14] - e[12] * e[6] * e[11] + e[12] * e[7] * e[10]) * invDet;
-    r[5] = (e[0] * e[10] * e[15] - e[0] * e[11] * e[14] - e[8] * e[2] * e[15] + e[8] * e[3] * e[14] + e[12] * e[2] * e[11] - e[12] * e[3] * e[10]) * invDet;
-    r[6] = (-e[0] * e[6] * e[15] + e[0] * e[7] * e[14] + e[4] * e[2] * e[15] - e[4] * e[3] * e[14] - e[12] * e[2] * e[7] + e[12] * e[3] * e[6]) * invDet;
-    r[7] = (e[0] * e[6] * e[11] - e[0] * e[7] * e[10] - e[4] * e[2] * e[11] + e[4] * e[3] * e[10] + e[8] * e[2] * e[7] - e[8] * e[3] * e[6]) * invDet;
+    r[4] =
+      (-e[4] * e[10] * e[15] +
+        e[4] * e[11] * e[14] +
+        e[8] * e[6] * e[15] -
+        e[8] * e[7] * e[14] -
+        e[12] * e[6] * e[11] +
+        e[12] * e[7] * e[10]) *
+      invDet;
+    r[5] =
+      (e[0] * e[10] * e[15] -
+        e[0] * e[11] * e[14] -
+        e[8] * e[2] * e[15] +
+        e[8] * e[3] * e[14] +
+        e[12] * e[2] * e[11] -
+        e[12] * e[3] * e[10]) *
+      invDet;
+    r[6] =
+      (-e[0] * e[6] * e[15] +
+        e[0] * e[7] * e[14] +
+        e[4] * e[2] * e[15] -
+        e[4] * e[3] * e[14] -
+        e[12] * e[2] * e[7] +
+        e[12] * e[3] * e[6]) *
+      invDet;
+    r[7] =
+      (e[0] * e[6] * e[11] -
+        e[0] * e[7] * e[10] -
+        e[4] * e[2] * e[11] +
+        e[4] * e[3] * e[10] +
+        e[8] * e[2] * e[7] -
+        e[8] * e[3] * e[6]) *
+      invDet;
 
-    r[8] = (e[4] * e[9] * e[15] - e[4] * e[11] * e[13] - e[8] * e[5] * e[15] + e[8] * e[7] * e[13] + e[12] * e[5] * e[11] - e[12] * e[7] * e[9]) * invDet;
-    r[9] = (-e[0] * e[9] * e[15] + e[0] * e[11] * e[13] + e[8] * e[1] * e[15] - e[8] * e[3] * e[13] - e[12] * e[1] * e[11] + e[12] * e[3] * e[9]) * invDet;
-    r[10] = (e[0] * e[5] * e[15] - e[0] * e[7] * e[13] - e[4] * e[1] * e[15] + e[4] * e[3] * e[13] + e[12] * e[1] * e[7] - e[12] * e[3] * e[5]) * invDet;
-    r[11] = (-e[0] * e[5] * e[11] + e[0] * e[7] * e[9] + e[4] * e[1] * e[11] - e[4] * e[3] * e[9] - e[8] * e[1] * e[7] + e[8] * e[3] * e[5]) * invDet;
+    r[8] =
+      (e[4] * e[9] * e[15] -
+        e[4] * e[11] * e[13] -
+        e[8] * e[5] * e[15] +
+        e[8] * e[7] * e[13] +
+        e[12] * e[5] * e[11] -
+        e[12] * e[7] * e[9]) *
+      invDet;
+    r[9] =
+      (-e[0] * e[9] * e[15] +
+        e[0] * e[11] * e[13] +
+        e[8] * e[1] * e[15] -
+        e[8] * e[3] * e[13] -
+        e[12] * e[1] * e[11] +
+        e[12] * e[3] * e[9]) *
+      invDet;
+    r[10] =
+      (e[0] * e[5] * e[15] -
+        e[0] * e[7] * e[13] -
+        e[4] * e[1] * e[15] +
+        e[4] * e[3] * e[13] +
+        e[12] * e[1] * e[7] -
+        e[12] * e[3] * e[5]) *
+      invDet;
+    r[11] =
+      (-e[0] * e[5] * e[11] +
+        e[0] * e[7] * e[9] +
+        e[4] * e[1] * e[11] -
+        e[4] * e[3] * e[9] -
+        e[8] * e[1] * e[7] +
+        e[8] * e[3] * e[5]) *
+      invDet;
 
-    r[12] = (-e[4] * e[9] * e[14] + e[4] * e[10] * e[13] + e[8] * e[5] * e[14] - e[8] * e[6] * e[13] - e[12] * e[5] * e[10] + e[12] * e[6] * e[9]) * invDet;
-    r[13] = (e[0] * e[9] * e[14] - e[0] * e[10] * e[13] - e[8] * e[1] * e[14] + e[8] * e[2] * e[13] + e[12] * e[1] * e[10] - e[12] * e[2] * e[9]) * invDet;
-    r[14] = (-e[0] * e[5] * e[14] + e[0] * e[6] * e[13] + e[4] * e[1] * e[14] - e[4] * e[2] * e[13] - e[12] * e[1] * e[6] + e[12] * e[2] * e[5]) * invDet;
-    r[15] = (e[0] * e[5] * e[10] - e[0] * e[6] * e[9] - e[4] * e[1] * e[10] + e[4] * e[2] * e[9] + e[8] * e[1] * e[6] - e[8] * e[2] * e[5]) * invDet;
+    r[12] =
+      (-e[4] * e[9] * e[14] +
+        e[4] * e[10] * e[13] +
+        e[8] * e[5] * e[14] -
+        e[8] * e[6] * e[13] -
+        e[12] * e[5] * e[10] +
+        e[12] * e[6] * e[9]) *
+      invDet;
+    r[13] =
+      (e[0] * e[9] * e[14] -
+        e[0] * e[10] * e[13] -
+        e[8] * e[1] * e[14] +
+        e[8] * e[2] * e[13] +
+        e[12] * e[1] * e[10] -
+        e[12] * e[2] * e[9]) *
+      invDet;
+    r[14] =
+      (-e[0] * e[5] * e[14] +
+        e[0] * e[6] * e[13] +
+        e[4] * e[1] * e[14] -
+        e[4] * e[2] * e[13] -
+        e[12] * e[1] * e[6] +
+        e[12] * e[2] * e[5]) *
+      invDet;
+    r[15] =
+      (e[0] * e[5] * e[10] -
+        e[0] * e[6] * e[9] -
+        e[4] * e[1] * e[10] +
+        e[4] * e[2] * e[9] +
+        e[8] * e[1] * e[6] -
+        e[8] * e[2] * e[5]) *
+      invDet;
 
     this.elements = r;
 
@@ -191,13 +363,25 @@ export class Matrix4 {
    * 设置为零矩阵
    * @returns 矩阵
    */
-  setZero (): this {
+  setZero(): this {
     const e = this.elements;
 
-    e[0] = 0; e[1] = 0; e[2] = 0; e[3] = 0;
-    e[4] = 0; e[5] = 0; e[6] = 0; e[7] = 0;
-    e[8] = 0; e[9] = 0; e[10] = 0; e[11] = 0;
-    e[12] = 0; e[13] = 0; e[14] = 0; e[15] = 0;
+    e[0] = 0;
+    e[1] = 0;
+    e[2] = 0;
+    e[3] = 0;
+    e[4] = 0;
+    e[5] = 0;
+    e[6] = 0;
+    e[7] = 0;
+    e[8] = 0;
+    e[9] = 0;
+    e[10] = 0;
+    e[11] = 0;
+    e[12] = 0;
+    e[13] = 0;
+    e[14] = 0;
+    e[15] = 0;
 
     return this;
   }
@@ -206,7 +390,7 @@ export class Matrix4 {
    * 矩阵转数组 - 优化为直接返回Float32Array的拷贝
    * @returns 数组
    */
-  toArray (): mat4 {
+  toArray(): mat4 {
     // 返回一个元素数组的拷贝而不是展开操作
     return Array.from(this.elements) as mat4;
   }
@@ -216,7 +400,7 @@ export class Matrix4 {
    * @param array 目标数组
    * @param offset 起始偏移值
    */
-  fill (array: number[] | Float32Array, offset = 0) {
+  fill(array: number[] | Float32Array, offset = 0) {
     const te = this.elements;
 
     if (array instanceof Float32Array && offset === 0 && array.length >= 16) {
@@ -249,7 +433,7 @@ export class Matrix4 {
    * @param out - 输出点，如果没有设置就直接返回新的点
    * @returns 变换结果
    */
-  transformPoint (v: Vector3, out?: Vector3): Vector3 {
+  transformPoint(v: Vector3, out?: Vector3): Vector3 {
     const x = v.x;
     const y = v.y;
     const z = v.z;
@@ -271,7 +455,7 @@ export class Matrix4 {
    * @param out - 输出向量，如果没有设置就直接返回新的向量
    * @returns 变换结果
    */
-  transformVector (v: Vector3, out?: Vector3): Vector3 {
+  transformVector(v: Vector3, out?: Vector3): Vector3 {
     const x = v.x;
     const y = v.y;
     const z = v.z;
@@ -293,7 +477,7 @@ export class Matrix4 {
    * @param out - 输出向量，如果没有设置就直接返回新的向量
    * @returns 变换结果
    */
-  transformVector4 (v: Vector4, out?: Vector4): Vector4 {
+  transformVector4(v: Vector4, out?: Vector4): Vector4 {
     const x = v.x;
     const y = v.y;
     const z = v.z;
@@ -316,7 +500,7 @@ export class Matrix4 {
    * @param out - 输出法向量，如果没有设置就直接返回新的向量
    * @returns 变换结果
    */
-  transformNormal (v: Vector3, out?: Vector3): Vector3 {
+  transformNormal(v: Vector3, out?: Vector3): Vector3 {
     // 法向量变换需要使用原矩阵的逆转置矩阵
     // 对于刚体变换，可以直接使用旋转部分
     const x = v.x;
@@ -342,16 +526,29 @@ export class Matrix4 {
    * @param scale - 缩放
    * @returns 变换矩阵
    */
-  compose (position: Vector3, rotation: Quaternion, scale: Vector3): this {
+  compose(position: Vector3, rotation: Quaternion, scale: Vector3): this {
     const e = this.elements;
 
-    const x = rotation.x, y = rotation.y, z = rotation.z, w = rotation.w;
-    const x2 = x + x, y2 = y + y, z2 = z + z;
-    const xx = x * x2, xy = x * y2, xz = x * z2;
-    const yy = y * y2, yz = y * z2, zz = z * z2;
-    const wx = w * x2, wy = w * y2, wz = w * z2;
+    const x = rotation.x,
+      y = rotation.y,
+      z = rotation.z,
+      w = rotation.w;
+    const x2 = x + x,
+      y2 = y + y,
+      z2 = z + z;
+    const xx = x * x2,
+      xy = x * y2,
+      xz = x * z2;
+    const yy = y * y2,
+      yz = y * z2,
+      zz = z * z2;
+    const wx = w * x2,
+      wy = w * y2,
+      wz = w * z2;
 
-    const sx = scale.x, sy = scale.y, sz = scale.z;
+    const sx = scale.x,
+      sy = scale.y,
+      sz = scale.z;
 
     e[0] = (1 - (yy + zz)) * sx;
     e[1] = (xy + wz) * sx;
@@ -384,9 +581,9 @@ export class Matrix4 {
    * @param far - 远平面距离
    * @returns 透视投影矩阵
    */
-  perspective (fov: number, aspect: number, near: number, far: number): this {
+  perspective(fov: number, aspect: number, near: number, far: number): this {
     const e = this.elements;
-    const tanHalfFov = Math.tan(fov * Math.PI / 360);
+    const tanHalfFov = Math.tan((fov * Math.PI) / 360);
     const range = 1.0 / (near - far);
 
     e[0] = 1.0 / (tanHalfFov * aspect);
@@ -417,9 +614,11 @@ export class Matrix4 {
    * @param v - 平移向量
    * @returns 平移后的矩阵
    */
-  translate (v: Vector3): this {
+  translate(v: Vector3): this {
     const e = this.elements;
-    const x = v.x, y = v.y, z = v.z;
+    const x = v.x,
+      y = v.y,
+      z = v.z;
 
     e[12] = e[0] * x + e[4] * y + e[8] * z + e[12];
     e[13] = e[1] * x + e[5] * y + e[9] * z + e[13];
@@ -439,7 +638,7 @@ export class Matrix4 {
    * @param far - 远平面距离
    * @returns 正交投影矩阵
    */
-  orthographic (left: number, right: number, bottom: number, top: number, near: number, far: number): this {
+  orthographic(left: number, right: number, bottom: number, top: number, near: number, far: number): this {
     const e = this.elements;
     const w = 1.0 / (right - left);
     const h = 1.0 / (top - bottom);
@@ -474,14 +673,17 @@ export class Matrix4 {
    * @param angle - 旋转角度（弧度）
    * @returns 旋转后的矩阵
    */
-  rotateOnAxis (axis: Vector3, angle: number): this {
+  rotateOnAxis(axis: Vector3, angle: number): this {
     // 确保轴是单位向量
     const normalizedAxis = axis.normalized();
-    const x = normalizedAxis.x, y = normalizedAxis.y, z = normalizedAxis.z;
+    const x = normalizedAxis.x,
+      y = normalizedAxis.y,
+      z = normalizedAxis.z;
     const c = Math.cos(angle);
     const s = Math.sin(angle);
     const t = 1 - c;
-    const tx = t * x, ty = t * y;
+    const tx = t * x,
+      ty = t * y;
 
     // 创建旋转矩阵
     const rotationMatrix = Matrix4.create();
@@ -519,14 +721,20 @@ export class Matrix4 {
    * @param angle - 旋转角度（弧度）
    * @returns 旋转后的矩阵
    */
-  rotateX (angle: number): this {
+  rotateX(angle: number): this {
     const e = this.elements;
     const c = Math.cos(angle);
     const s = Math.sin(angle);
 
     // 应用旋转变换
-    const a10 = e[4], a11 = e[5], a12 = e[6], a13 = e[7];
-    const a20 = e[8], a21 = e[9], a22 = e[10], a23 = e[11];
+    const a10 = e[4],
+      a11 = e[5],
+      a12 = e[6],
+      a13 = e[7];
+    const a20 = e[8],
+      a21 = e[9],
+      a22 = e[10],
+      a23 = e[11];
 
     // 第二行
     e[4] = a10 * c + a20 * s;
@@ -548,14 +756,20 @@ export class Matrix4 {
    * @param angle - 旋转角度（弧度）
    * @returns 旋转后的矩阵
    */
-  rotateY (angle: number): this {
+  rotateY(angle: number): this {
     const e = this.elements;
     const c = Math.cos(angle);
     const s = Math.sin(angle);
 
     // 应用旋转变换
-    const a00 = e[0], a01 = e[1], a02 = e[2], a03 = e[3];
-    const a20 = e[8], a21 = e[9], a22 = e[10], a23 = e[11];
+    const a00 = e[0],
+      a01 = e[1],
+      a02 = e[2],
+      a03 = e[3];
+    const a20 = e[8],
+      a21 = e[9],
+      a22 = e[10],
+      a23 = e[11];
 
     // 第一行
     e[0] = a00 * c - a20 * s;
@@ -577,14 +791,20 @@ export class Matrix4 {
    * @param angle - 旋转角度（弧度）
    * @returns 旋转后的矩阵
    */
-  rotateZ (angle: number): this {
+  rotateZ(angle: number): this {
     const e = this.elements;
     const c = Math.cos(angle);
     const s = Math.sin(angle);
 
     // 应用旋转变换
-    const a00 = e[0], a01 = e[1], a02 = e[2], a03 = e[3];
-    const a10 = e[4], a11 = e[5], a12 = e[6], a13 = e[7];
+    const a00 = e[0],
+      a01 = e[1],
+      a02 = e[2],
+      a03 = e[3];
+    const a10 = e[4],
+      a11 = e[5],
+      a12 = e[6],
+      a13 = e[7];
 
     // 第一行
     e[0] = a00 * c + a10 * s;
@@ -606,14 +826,24 @@ export class Matrix4 {
    * @param v - 缩放向量
    * @returns 缩放后的矩阵
    */
-  scale (v: Vector3): this {
+  scale(v: Vector3): this {
     const e = this.elements;
-    const x = v.x, y = v.y, z = v.z;
+    const x = v.x,
+      y = v.y,
+      z = v.z;
 
-    e[0] *= x; e[4] *= y; e[8] *= z;
-    e[1] *= x; e[5] *= y; e[9] *= z;
-    e[2] *= x; e[6] *= y; e[10] *= z;
-    e[3] *= x; e[7] *= y; e[11] *= z;
+    e[0] *= x;
+    e[4] *= y;
+    e[8] *= z;
+    e[1] *= x;
+    e[5] *= y;
+    e[9] *= z;
+    e[2] *= x;
+    e[6] *= y;
+    e[10] *= z;
+    e[3] *= x;
+    e[7] *= y;
+    e[11] *= z;
 
     return this;
   }
@@ -625,7 +855,7 @@ export class Matrix4 {
    * @param up - 上方向向量
    * @returns 视图矩阵
    */
-  lookAt (eye: Vector3, target: Vector3, up: Vector3): this {
+  lookAt(eye: Vector3, target: Vector3, up: Vector3): this {
     const z = Vector3.subtract(eye, target).normalize();
 
     if (z.lengthSquared() === 0) {
@@ -643,10 +873,22 @@ export class Matrix4 {
 
     const e = this.elements;
 
-    e[0] = x.x; e[4] = y.x; e[8] = z.x; e[12] = eye.x;
-    e[1] = x.y; e[5] = y.y; e[9] = z.y; e[13] = eye.y;
-    e[2] = x.z; e[6] = y.z; e[10] = z.z; e[14] = eye.z;
-    e[3] = 0; e[7] = 0; e[11] = 0; e[15] = 1;
+    e[0] = x.x;
+    e[4] = y.x;
+    e[8] = z.x;
+    e[12] = eye.x;
+    e[1] = x.y;
+    e[5] = y.y;
+    e[9] = z.y;
+    e[13] = eye.y;
+    e[2] = x.z;
+    e[6] = y.z;
+    e[10] = z.z;
+    e[14] = eye.z;
+    e[3] = 0;
+    e[7] = 0;
+    e[11] = 0;
+    e[15] = 1;
 
     return this.invert();
   }
@@ -655,16 +897,28 @@ export class Matrix4 {
    * 矩阵转置
    * @returns 转置后的矩阵
    */
-  transpose (): this {
+  transpose(): this {
     const e = this.elements;
     let tmp;
 
-    tmp = e[1]; e[1] = e[4]; e[4] = tmp;
-    tmp = e[2]; e[2] = e[8]; e[8] = tmp;
-    tmp = e[3]; e[3] = e[12]; e[12] = tmp;
-    tmp = e[6]; e[6] = e[9]; e[9] = tmp;
-    tmp = e[7]; e[7] = e[13]; e[13] = tmp;
-    tmp = e[11]; e[11] = e[14]; e[14] = tmp;
+    tmp = e[1];
+    e[1] = e[4];
+    e[4] = tmp;
+    tmp = e[2];
+    e[2] = e[8];
+    e[8] = tmp;
+    tmp = e[3];
+    e[3] = e[12];
+    e[12] = tmp;
+    tmp = e[6];
+    e[6] = e[9];
+    e[9] = tmp;
+    tmp = e[7];
+    e[7] = e[13];
+    e[13] = tmp;
+    tmp = e[11];
+    e[11] = e[14];
+    e[14] = tmp;
 
     return this;
   }
@@ -677,7 +931,7 @@ export class Matrix4 {
    * @param order - 旋转顺序，默认为'XYZ'
    * @returns 旋转矩阵
    */
-  setFromEuler (x: number, y: number, z: number, order = 'XYZ'): this {
+  setFromEuler(x: number, y: number, z: number, order = 'XYZ'): this {
     this.identity();
 
     switch (order) {
@@ -703,7 +957,7 @@ export class Matrix4 {
   /**
    * 从对象池获取一个 Matrix4 实例
    */
-  static create (): Matrix4 {
+  static create(): Matrix4 {
     if (matrix4PoolIndex < matrix4Pool.length) {
       return matrix4Pool[matrix4PoolIndex++].identity();
     }
@@ -714,7 +968,7 @@ export class Matrix4 {
   /**
    * 将 Matrix4 实例释放回对象池
    */
-  static release (matrix: Matrix4): void {
+  static release(matrix: Matrix4): void {
     if (matrix4PoolIndex > 0 && matrix4Pool.length < MATRIX4_POOL_SIZE) {
       matrix4PoolIndex--;
       matrix4Pool[matrix4PoolIndex] = matrix;
@@ -724,7 +978,7 @@ export class Matrix4 {
   /**
    * 预分配对象池
    */
-  static preallocate (count: number): void {
+  static preallocate(count: number): void {
     const initialSize = matrix4Pool.length;
 
     for (let i = 0; i < count && matrix4Pool.length < MATRIX4_POOL_SIZE; i++) {
@@ -736,7 +990,7 @@ export class Matrix4 {
   /**
    * 清空对象池
    */
-  static clearPool (): void {
+  static clearPool(): void {
     matrix4Pool.length = 0;
     matrix4PoolIndex = 0;
   }
@@ -744,7 +998,7 @@ export class Matrix4 {
   /**
    * 获取矩阵元素数组
    */
-  getElements (): Float32Array {
+  getElements(): Float32Array {
     return this.elements;
   }
 
@@ -755,20 +1009,44 @@ export class Matrix4 {
    * @param target - 目标矩阵，用于存储结果
    * @returns 目标矩阵
    */
-  static multiply (a: Matrix4, b: Matrix4, target: Matrix4): Matrix4 {
+  static multiply(a: Matrix4, b: Matrix4, target: Matrix4): Matrix4 {
     const ae = a.getElements();
     const be = b.getElements();
     const te = target.getElements();
 
-    const a11 = ae[0], a12 = ae[4], a13 = ae[8], a14 = ae[12];
-    const a21 = ae[1], a22 = ae[5], a23 = ae[9], a24 = ae[13];
-    const a31 = ae[2], a32 = ae[6], a33 = ae[10], a34 = ae[14];
-    const a41 = ae[3], a42 = ae[7], a43 = ae[11], a44 = ae[15];
+    const a11 = ae[0],
+      a12 = ae[4],
+      a13 = ae[8],
+      a14 = ae[12];
+    const a21 = ae[1],
+      a22 = ae[5],
+      a23 = ae[9],
+      a24 = ae[13];
+    const a31 = ae[2],
+      a32 = ae[6],
+      a33 = ae[10],
+      a34 = ae[14];
+    const a41 = ae[3],
+      a42 = ae[7],
+      a43 = ae[11],
+      a44 = ae[15];
 
-    const b11 = be[0], b12 = be[4], b13 = be[8], b14 = be[12];
-    const b21 = be[1], b22 = be[5], b23 = be[9], b24 = be[13];
-    const b31 = be[2], b32 = be[6], b33 = be[10], b34 = be[14];
-    const b41 = be[3], b42 = be[7], b43 = be[11], b44 = be[15];
+    const b11 = be[0],
+      b12 = be[4],
+      b13 = be[8],
+      b14 = be[12];
+    const b21 = be[1],
+      b22 = be[5],
+      b23 = be[9],
+      b24 = be[13];
+    const b31 = be[2],
+      b32 = be[6],
+      b33 = be[10],
+      b34 = be[14];
+    const b41 = be[3],
+      b42 = be[7],
+      b43 = be[11],
+      b44 = be[15];
 
     te[0] = a11 * b11 + a12 * b21 + a13 * b31 + a14 * b41;
     te[1] = a21 * b11 + a22 * b21 + a23 * b31 + a24 * b41;
@@ -800,7 +1078,7 @@ export class Matrix4 {
    * @param scale - 用于存储缩放的向量
    * @returns 返回自身，用于链式调用
    */
-  decompose (position: Vector3, rotation: Quaternion, scale: Vector3): this {
+  decompose(position: Vector3, rotation: Quaternion, scale: Vector3): this {
     const e = this.elements;
 
     // 提取位置
@@ -857,7 +1135,7 @@ export class Matrix4 {
    * @param up - 上方向向量
    * @returns 返回自身，用于链式调用
    */
-  setLookRotation (forward: Vector3, up: Vector3): this {
+  setLookRotation(forward: Vector3, up: Vector3): this {
     // 确保前方向是单位向量
     const f = forward.normalized();
 

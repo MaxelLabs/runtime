@@ -15,9 +15,15 @@ export class Quaternion {
    * @param b - 四元数 b
    * @returns 相乘结果
    */
-  static multiply (a: Quaternion, b: Quaternion): Quaternion {
-    const ax = a.x, ay = a.y, az = a.z, aw = a.w;
-    const bx = b.x, by = b.y, bz = b.z, bw = b.w;
+  static multiply(a: Quaternion, b: Quaternion): Quaternion {
+    const ax = a.x,
+      ay = a.y,
+      az = a.z,
+      aw = a.w;
+    const bx = b.x,
+      by = b.y,
+      bz = b.z,
+      bw = b.w;
 
     const result = new Quaternion();
 
@@ -34,19 +40,19 @@ export class Quaternion {
    * @param q - 四元数
    * @returns 逆四元数
    */
-  static invert (q: Quaternion): Quaternion {
+  static invert(q: Quaternion): Quaternion {
     const result = q.clone();
 
     return result.invert();
   }
 
-  static fromMatrix (rotationMatrix: Matrix4): Quaternion {
+  static fromMatrix(rotationMatrix: Matrix4): Quaternion {
     const quaternion = new Quaternion();
 
     quaternion.setFromRotationMatrix(rotationMatrix);
     quaternion.normalize();
 
-    return quaternion ;
+    return quaternion;
   }
 
   private static readonly tempVec0: Vector3 = new Vector3();
@@ -61,11 +67,11 @@ export class Quaternion {
    * @param [z=0] - z 分量
    * @param [w=1] - w 分量
    */
-  constructor (
+  constructor(
     public x = 0,
     public y = 0,
     public z = 0,
-    public w = 1,
+    public w = 1
   ) {
     this.elements = new Float32Array([x, y, z, w]);
   }
@@ -78,7 +84,7 @@ export class Quaternion {
    * @param w - w 分量
    * @returns 四元数
    */
-  set (x: number, y: number, z: number, w: number): this {
+  set(x: number, y: number, z: number, w: number): this {
     this.x = x;
     this.y = y;
     this.z = z;
@@ -93,13 +99,13 @@ export class Quaternion {
   }
 
   /**
- * 根据方向向量和上向量设置四元数
- * @param direction 前方向向量
- * @param upVector 上方向向量
- * @returns 返回自身，用于链式调用
- */
-  setFromDirection (direction: Vector3, upVector: Vector3): this {
-  // 正规化方向向量
+   * 根据方向向量和上向量设置四元数
+   * @param direction 前方向向量
+   * @param upVector 上方向向量
+   * @returns 返回自身，用于链式调用
+   */
+  setFromDirection(direction: Vector3, upVector: Vector3): this {
+    // 正规化方向向量
     const normalizedDirection = Vector3.ZERO.copyFrom(direction).normalize();
 
     // 如果方向向量接近零向量，则返回单位四元数
@@ -112,10 +118,8 @@ export class Quaternion {
 
     // 如果右向量接近零向量（上向量和方向向量平行），使用一个后备方案
     if (right.lengthSquared() < 0.0001) {
-    // 选择一个不与方向向量平行的轴
-      const fallbackUp = Math.abs(normalizedDirection.y) > 0.9
-        ? new Vector3(1, 0, 0)
-        : new Vector3(0, 1, 0);
+      // 选择一个不与方向向量平行的轴
+      const fallbackUp = Math.abs(normalizedDirection.y) > 0.9 ? new Vector3(1, 0, 0) : new Vector3(0, 1, 0);
 
       right.copyFrom(Vector3.cross(fallbackUp, normalizedDirection)).normalize();
     }
@@ -127,10 +131,22 @@ export class Quaternion {
     const lookMatrix = new Matrix4();
 
     lookMatrix.set(
-      right.x, right.y, right.z, 0,
-      correctedUp.x, correctedUp.y, correctedUp.z, 0,
-      normalizedDirection.x, normalizedDirection.y, normalizedDirection.z, 0,
-      0, 0, 0, 1
+      right.x,
+      right.y,
+      right.z,
+      0,
+      correctedUp.x,
+      correctedUp.y,
+      correctedUp.z,
+      0,
+      normalizedDirection.x,
+      normalizedDirection.y,
+      normalizedDirection.z,
+      0,
+      0,
+      0,
+      0,
+      1
     );
 
     // 从旋转矩阵设置四元数
@@ -144,7 +160,7 @@ export class Quaternion {
    * @param z 绕Z轴的旋转角度（弧度）
    * @returns 当前四元数
    */
-  setFromEuler (x: number, y: number, z: number): Quaternion {
+  setFromEuler(x: number, y: number, z: number): Quaternion {
     const c1 = Math.cos(x / 2);
     const c2 = Math.cos(y / 2);
     const c3 = Math.cos(z / 2);
@@ -171,7 +187,7 @@ export class Quaternion {
    * @param angle - 旋转角度（弧度）
    * @returns
    */
-  setFromAxisAngle (axis: Vector3, angle: number): this {
+  setFromAxisAngle(axis: Vector3, angle: number): this {
     const halfAngle = angle / 2;
     const s = Math.sin(halfAngle);
     const v = Quaternion.tempVec0;
@@ -195,7 +211,7 @@ export class Quaternion {
    * @param v - Vector4Like
    * @returns
    */
-  setFromVector4 (v: Vector4Like): this {
+  setFromVector4(v: Vector4Like): this {
     this.x = v.x;
     this.y = v.y;
     this.z = v.z;
@@ -215,7 +231,7 @@ export class Quaternion {
    * @param [offset=0] - 起始偏移值
    * @returns
    */
-  setFromArray (array: number[], offset = 0): this {
+  setFromArray(array: number[], offset = 0): this {
     this.x = array[offset];
     this.y = array[offset + 1];
     this.z = array[offset + 2];
@@ -234,7 +250,7 @@ export class Quaternion {
    * @param m - 矩阵
    * @returns
    */
-  setFromRotationMatrix (m: Matrix4): this {
+  setFromRotationMatrix(m: Matrix4): this {
     // http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
 
     // assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
@@ -314,7 +330,7 @@ export class Quaternion {
    * @param to - 结束向量
    * @returns
    */
-  setFromUnitVectors (from: Vector3, to: Vector3): this {
+  setFromUnitVectors(from: Vector3, to: Vector3): this {
     // assumes direction vectors vFrom and vTo are normalized
     let r = from.dot(to) + 1;
 
@@ -351,7 +367,7 @@ export class Quaternion {
    * @param quat - 拷贝目标四元数
    * @returns 拷贝四元数
    */
-  copyFrom (quat: Quaternion | Vector4Like): this {
+  copyFrom(quat: Quaternion | Vector4Like): this {
     this.x = quat.x;
     this.y = quat.y;
     this.z = quat.z;
@@ -369,7 +385,7 @@ export class Quaternion {
    * 四元数克隆
    * @returns 克隆结果
    */
-  clone (): Quaternion {
+  clone(): Quaternion {
     return new Quaternion(this.x, this.y, this.z, this.w);
   }
 
@@ -378,8 +394,8 @@ export class Quaternion {
    * @param other - 其他四元数
    * @returns 夹角
    */
-  angleTo (other: Quaternion): number {
-    return 2 * Math.acos(Math.abs(clamp(this.dot(other), - 1, 1)));
+  angleTo(other: Quaternion): number {
+    return 2 * Math.acos(Math.abs(clamp(this.dot(other), -1, 1)));
   }
 
   /**
@@ -388,7 +404,7 @@ export class Quaternion {
    * @param step - 旋转弧度
    * @returns 目标四元数
    */
-  rotateTowards (q: Quaternion, step: number): this {
+  rotateTowards(q: Quaternion, step: number): this {
     const angle = this.angleTo(q);
 
     if (angle === 0) {
@@ -405,7 +421,7 @@ export class Quaternion {
    * 四元数单位化
    * @returns 单位四元数
    */
-  identity (): this {
+  identity(): this {
     return this.set(0, 0, 0, 1);
   }
 
@@ -413,7 +429,7 @@ export class Quaternion {
    * 求四元数的逆
    * @returns 返回自身，用于链式调用
    */
-  invert (): this {
+  invert(): this {
     // 四元数求逆: q^-1 = q* / |q|^2
     // 对于单位四元数，求逆等于求共轭: q^-1 = q*
     // 我们这里假设是单位四元数，所以仅需取负x,y,z即可
@@ -436,7 +452,7 @@ export class Quaternion {
    * 四元数取负
    * @returns 负四元数
    */
-  negate (): this {
+  negate(): this {
     this.x = -this.x;
     this.y = -this.y;
     this.z = -this.z;
@@ -454,7 +470,7 @@ export class Quaternion {
    * 四元数求共轭值
    * @returns 四元数的共轭值
    */
-  conjugate (): this {
+  conjugate(): this {
     this.x = -this.x;
     this.y = -this.y;
     this.z = -this.z;
@@ -472,7 +488,7 @@ export class Quaternion {
    * @param v
    * @return
    */
-  dot (v: Quaternion): number {
+  dot(v: Quaternion): number {
     return this.x * v.x + this.y * v.y + this.z * v.z + this.w * v.w;
   }
 
@@ -480,7 +496,7 @@ export class Quaternion {
    * 四元数的模平方
    * @return
    */
-  lengthSquared (): number {
+  lengthSquared(): number {
     return this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w;
   }
 
@@ -488,7 +504,7 @@ export class Quaternion {
    * 四元数的欧式长度
    * @returns 长度
    */
-  length (): number {
+  length(): number {
     return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w);
   }
 
@@ -496,7 +512,7 @@ export class Quaternion {
    * 四元数归一化
    * @returns 归一化值
    */
-  normalize (): this {
+  normalize(): this {
     const e = this.elements;
     const len = e[0] * e[0] + e[1] * e[1] + e[2] * e[2] + e[3] * e[3];
 
@@ -517,7 +533,7 @@ export class Quaternion {
    * @param right - 右乘的四元数
    * @returns
    */
-  multiply (right: Quaternion): this {
+  multiply(right: Quaternion): this {
     const a = this.elements;
     const b = right.elements;
     const r = new Float32Array(4);
@@ -537,7 +553,7 @@ export class Quaternion {
    * @param left - 左乘的四元数
    * @returns
    */
-  premultiply (left: Quaternion): this {
+  premultiply(left: Quaternion): this {
     return this.multiply(left);
   }
 
@@ -548,7 +564,7 @@ export class Quaternion {
    * @param t - 插值比
    * @returns 插值结果
    */
-  slerp (other: Quaternion, t: number): this {
+  slerp(other: Quaternion, t: number): this {
     const e = this.elements;
     const b = other.elements;
 
@@ -605,7 +621,7 @@ export class Quaternion {
    * @param qb - 四元数
    * @param t - 插值比
    */
-  slerpQuaternions (qa: Quaternion, qb: Quaternion, t: number) {
+  slerpQuaternions(qa: Quaternion, qb: Quaternion, t: number) {
     this.copyFrom(qa).slerp(qb, t);
   }
 
@@ -614,7 +630,7 @@ export class Quaternion {
    * @param arg0 - 要旋转的向量
    * @returns 旋转后的向量
    */
-  rotateVector3 (v: Vector3, out?: Vector3): Vector3 {
+  rotateVector3(v: Vector3, out?: Vector3): Vector3 {
     if (out) {
       out.copyFrom(v);
 
@@ -629,12 +645,17 @@ export class Quaternion {
    * @param v - 要变换的向量
    * @returns 变换后的向量
    */
-  transformVector (v: Vector3): Vector3 {
+  transformVector(v: Vector3): Vector3 {
     // 基于四元数旋转公式: v' = q * v * q^-1
     // 为效率实现的直接计算方式
 
-    const x = v.x, y = v.y, z = v.z;
-    const qx = this.x, qy = this.y, qz = this.z, qw = this.w;
+    const x = v.x,
+      y = v.y,
+      z = v.z;
+    const qx = this.x,
+      qy = this.y,
+      qz = this.z,
+      qw = this.w;
 
     // 计算 q * v (四元数乘以向量，将向量视为纯四元数)
     const ix = qw * x + qy * z - qz * y;
@@ -655,18 +676,15 @@ export class Quaternion {
    * @param quaternion - 四元数
    * @returns 判等结果
    */
-  equals (quaternion: Quaternion): boolean {
-    return quaternion.x === this.x
-      && quaternion.y === this.y
-      && quaternion.z === this.z
-      && quaternion.w === this.w;
+  equals(quaternion: Quaternion): boolean {
+    return quaternion.x === this.x && quaternion.y === this.y && quaternion.z === this.z && quaternion.w === this.w;
   }
 
   /**
    * 四元数保存为数组
    * @returns
    */
-  toArray (): [x: number, y: number, z: number, w: number] {
+  toArray(): [x: number, y: number, z: number, w: number] {
     return [this.x, this.y, this.z, this.w];
   }
 
@@ -675,7 +693,7 @@ export class Quaternion {
    * @param vec - 目标保存对象
    * @returns 保存结果
    */
-  toVector4 (vec: Vector4): Vector4 {
+  toVector4(vec: Vector4): Vector4 {
     return vec.set(this.x, this.y, this.z, this.w);
   }
 
@@ -684,7 +702,7 @@ export class Quaternion {
    * @param euler - 目标欧拉角
    * @returns 欧拉角
    */
-  toEuler (euler: Euler): Euler {
+  toEuler(euler: Euler): Euler {
     return euler.setFromQuaternion(this);
   }
 
@@ -693,7 +711,7 @@ export class Quaternion {
    * @param mat - 目标矩阵
    * @returns
    */
-  toMatrix4 (mat: Matrix4): Matrix4 {
+  toMatrix4(mat: Matrix4): Matrix4 {
     const zero = new Vector3();
     const one = new Vector3(1, 1, 1);
 
@@ -705,7 +723,7 @@ export class Quaternion {
    * @param euler - 欧拉角
    * @returns 四元数
    */
-  static fromEuler (euler: Euler): Quaternion {
+  static fromEuler(euler: Euler): Quaternion {
     return new Quaternion().setFromEuler(euler.x, euler.y, euler.z);
   }
 
@@ -715,7 +733,7 @@ export class Quaternion {
    * @param angle - 旋转角（弧度值）
    * @returns 四元数
    */
-  static fromAxisAngle (axis: Vector3, angle: number): Quaternion {
+  static fromAxisAngle(axis: Vector3, angle: number): Quaternion {
     return new Quaternion().setFromAxisAngle(axis, angle);
   }
 
@@ -724,7 +742,7 @@ export class Quaternion {
    * @param v - Vector4Like
    * @returns 四元数
    */
-  static fromVector4 (v: Vector4Like): Quaternion {
+  static fromVector4(v: Vector4Like): Quaternion {
     return new Quaternion().setFromVector4(v);
   }
 
@@ -734,7 +752,7 @@ export class Quaternion {
    * @param [offset=0] - 起始偏移值
    * @returns 四元数
    */
-  static fromArray (array: number[], offset = 0): Quaternion {
+  static fromArray(array: number[], offset = 0): Quaternion {
     return new Quaternion().setFromArray(array, offset);
   }
 
@@ -743,7 +761,7 @@ export class Quaternion {
    * @param m - 旋转矩阵
    * @returns 四元数
    */
-  static fromRotationMatrix (m: Matrix4): Quaternion {
+  static fromRotationMatrix(m: Matrix4): Quaternion {
     return new Quaternion().setFromRotationMatrix(m);
   }
 
@@ -753,7 +771,7 @@ export class Quaternion {
    * @param to - 结束向量
    * @returns
    */
-  static fromUnitVectors (from: Vector3, to: Vector3): Quaternion {
+  static fromUnitVectors(from: Vector3, to: Vector3): Quaternion {
     return new Quaternion().setFromUnitVectors(from, to);
   }
 
@@ -764,7 +782,7 @@ export class Quaternion {
    * @param z - Z轴旋转角度(弧度)
    * @returns 返回自身，用于链式调用
    */
-  fromEulerAngles (x: number, y: number, z: number): this {
+  fromEulerAngles(x: number, y: number, z: number): this {
     // 半角
     const halfX = x * 0.5;
     const halfY = y * 0.5;

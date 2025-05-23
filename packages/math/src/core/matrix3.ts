@@ -13,17 +13,9 @@ let matrix3PoolIndex = 0;
  * 三维矩阵（列优先矩阵）
  */
 export class Matrix3 {
-  static readonly IDENTITY = Object.freeze(new Matrix3(
-    1, 0, 0,
-    0, 1, 0,
-    0, 0, 1,
-  ));
+  static readonly IDENTITY = Object.freeze(new Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1));
 
-  static readonly ZERO = Object.freeze(new Matrix3(
-    0, 0, 0,
-    0, 0, 0,
-    0, 0, 0,
-  ));
+  static readonly ZERO = Object.freeze(new Matrix3(0, 0, 0, 0, 0, 0, 0, 0, 0));
 
   /**
    * 矩阵值数组 - 使用 TypedArray 提高性能
@@ -42,16 +34,8 @@ export class Matrix3 {
    * @param [m23=0] - 第 2 行，第 3 列
    * @param [m33=1] - 第 3 行，第 3 列
    */
-  constructor (
-    m11 = 1, m21 = 0, m31 = 0,
-    m12 = 0, m22 = 1, m32 = 0,
-    m13 = 0, m23 = 0, m33 = 1,
-  ) {
-    this.elements = new Float32Array([
-      m11, m21, m31,
-      m12, m22, m32,
-      m13, m23, m33,
-    ]);
+  constructor(m11 = 1, m21 = 0, m31 = 0, m12 = 0, m22 = 1, m32 = 0, m13 = 0, m23 = 0, m33 = 1) {
+    this.elements = new Float32Array([m11, m21, m31, m12, m22, m32, m13, m23, m33]);
   }
 
   /**
@@ -67,16 +51,28 @@ export class Matrix3 {
    * @param m33 - 第 3 行，第 3 列
    * @returns
    */
-  set (
-    m11: number, m21: number, m31: number,
-    m12: number, m22: number, m32: number,
-    m13: number, m23: number, m33: number,
+  set(
+    m11: number,
+    m21: number,
+    m31: number,
+    m12: number,
+    m22: number,
+    m32: number,
+    m13: number,
+    m23: number,
+    m33: number
   ): this {
     const e = this.elements;
 
-    e[0] = m11; e[3] = m12; e[6] = m13;
-    e[1] = m21; e[4] = m22; e[7] = m23;
-    e[2] = m31; e[5] = m32; e[8] = m33;
+    e[0] = m11;
+    e[3] = m12;
+    e[6] = m13;
+    e[1] = m21;
+    e[4] = m22;
+    e[7] = m23;
+    e[2] = m31;
+    e[5] = m32;
+    e[8] = m33;
 
     return this;
   }
@@ -94,16 +90,28 @@ export class Matrix3 {
    * @param m33 - 第 3 行，第 3 列
    * @returns 矩阵
    */
-  setFromRowMajorData (
-    m11: number, m12: number, m13: number,
-    m21: number, m22: number, m23: number,
-    m31: number, m32: number, m33: number,
+  setFromRowMajorData(
+    m11: number,
+    m12: number,
+    m13: number,
+    m21: number,
+    m22: number,
+    m23: number,
+    m31: number,
+    m32: number,
+    m33: number
   ): this {
     const e = this.elements;
 
-    e[0] = m11; e[3] = m12; e[6] = m13;
-    e[1] = m21; e[4] = m22; e[7] = m23;
-    e[2] = m31; e[5] = m32; e[8] = m33;
+    e[0] = m11;
+    e[3] = m12;
+    e[6] = m13;
+    e[1] = m21;
+    e[4] = m22;
+    e[7] = m23;
+    e[2] = m31;
+    e[5] = m32;
+    e[8] = m33;
 
     return this;
   }
@@ -115,12 +123,8 @@ export class Matrix3 {
    * @param c3 - 第三列
    * @returns 矩阵
    */
-  setFromColumnVectors (c1: Vector3, c2: Vector3, c3: Vector3): this {
-    return this.set(
-      c1.x, c1.y, c1.z,
-      c2.x, c2.y, c2.z,
-      c3.x, c3.y, c3.z,
-    );
+  setFromColumnVectors(c1: Vector3, c2: Vector3, c3: Vector3): this {
+    return this.set(c1.x, c1.y, c1.z, c2.x, c2.y, c2.z, c3.x, c3.y, c3.z);
   }
 
   /**
@@ -128,14 +132,10 @@ export class Matrix3 {
    * @param m - 四阶矩阵
    * @returns 矩阵
    */
-  setFromMatrix4 (m: Matrix4): this {
+  setFromMatrix4(m: Matrix4): this {
     const me = m.getElements();
 
-    return this.set(
-      me[0], me[1], me[2],
-      me[4], me[5], me[6],
-      me[8], me[9], me[10]
-    );
+    return this.set(me[0], me[1], me[2], me[4], me[5], me[6], me[8], me[9], me[10]);
   }
 
   /**
@@ -144,7 +144,7 @@ export class Matrix3 {
    * @param [offset=0] - 起始偏移值
    * @returns 矩阵
    */
-  setFromArray (array: Matrix3DataType, offset = 0): this {
+  setFromArray(array: Matrix3DataType, offset = 0): this {
     if (array instanceof Float32Array && offset === 0) {
       this.elements.set(array.subarray(0, 9));
     } else {
@@ -161,7 +161,7 @@ export class Matrix3 {
    * @param quat - 四元数
    * @returns 矩阵
    */
-  setFromQuaternion (quat: Quaternion): this {
+  setFromQuaternion(quat: Quaternion): this {
     const { x, y, z, w } = quat;
     const x2 = x + x;
     const y2 = y + y;
@@ -195,7 +195,7 @@ export class Matrix3 {
    * 矩阵清零
    * @returns 零矩阵
    */
-  setZero (): this {
+  setZero(): this {
     const e = this.elements;
 
     e.fill(0);
@@ -207,19 +207,15 @@ export class Matrix3 {
    * 矩阵单位化
    * @returns 单位矩阵
    */
-  identity (): this {
-    return this.set(
-      1, 0, 0,
-      0, 1, 0,
-      0, 0, 1
-    );
+  identity(): this {
+    return this.set(1, 0, 0, 0, 1, 0, 0, 0, 1);
   }
 
   /**
    * 矩阵克隆，使用对象池
    * @returns 克隆结果
    */
-  clone (): Matrix3 {
+  clone(): Matrix3 {
     return Matrix3.create().copyFrom(this);
   }
 
@@ -228,7 +224,7 @@ export class Matrix3 {
    * @param m - 复制对象
    * @returns 复制结果
    */
-  copyFrom (m: Matrix3): this {
+  copyFrom(m: Matrix3): this {
     this.elements.set(m.elements);
 
     return this;
@@ -239,14 +235,10 @@ export class Matrix3 {
    * @param i - 列向量索引，从 0 开始
    * @returns 列向量
    */
-  getColumnVector (i: number, v: Vector3): Vector3 {
+  getColumnVector(i: number, v: Vector3): Vector3 {
     const e = this.elements;
 
-    return v.set(
-      e[i * 3],
-      e[i * 3 + 1],
-      e[i * 3 + 2]
-    );
+    return v.set(e[i * 3], e[i * 3 + 1], e[i * 3 + 2]);
   }
 
   /**
@@ -255,11 +247,15 @@ export class Matrix3 {
    * @param sy - y 轴缩放分量
    * @returns 缩放结果
    */
-  scale (sx: number, sy: number): this {
+  scale(sx: number, sy: number): this {
     const e = this.elements;
 
-    e[0] *= sx; e[3] *= sx; e[6] *= sx;
-    e[1] *= sy; e[4] *= sy; e[7] *= sy;
+    e[0] *= sx;
+    e[3] *= sx;
+    e[6] *= sx;
+    e[1] *= sy;
+    e[4] *= sy;
+    e[7] *= sy;
 
     return this;
   }
@@ -269,13 +265,17 @@ export class Matrix3 {
    * @param theta - 旋转角度（弧度）
    * @returns 旋转结果
    */
-  rotate (theta: number): this {
+  rotate(theta: number): this {
     const c = Math.cos(theta);
     const s = Math.sin(theta);
     const e = this.elements;
 
-    const m11 = e[0], m12 = e[3], m13 = e[6];
-    const m21 = e[1], m22 = e[4], m23 = e[7];
+    const m11 = e[0],
+      m12 = e[3],
+      m13 = e[6];
+    const m21 = e[1],
+      m22 = e[4],
+      m23 = e[7];
 
     e[0] = c * m11 + s * m21;
     e[3] = c * m12 + s * m22;
@@ -294,7 +294,7 @@ export class Matrix3 {
    * @param y - y 轴平移分量
    * @returns 平移结果
    */
-  translate (x: number, y: number): this {
+  translate(x: number, y: number): this {
     const e = this.elements;
 
     e[0] += x * e[2];
@@ -312,7 +312,7 @@ export class Matrix3 {
    * @param right - 相乘矩阵
    * @returns 右乘结果
    */
-  multiply (right: Matrix3 | number): this {
+  multiply(right: Matrix3 | number): this {
     if (typeof right === 'number') {
       const e = this.elements;
 
@@ -331,7 +331,7 @@ export class Matrix3 {
    * @param left - 相乘矩阵
    * @returns 左乘结果
    */
-  premultiply (left: Matrix3): this {
+  premultiply(left: Matrix3): this {
     return this.multiplyMatrices(left, this);
   }
 
@@ -341,18 +341,30 @@ export class Matrix3 {
    * @param right - 矩阵
    * @returns 相乘结果
    */
-  multiplyMatrices (left: Matrix3, right: Matrix3): this {
+  multiplyMatrices(left: Matrix3, right: Matrix3): this {
     const ae = left.elements;
     const be = right.elements;
     const te = this.elements;
 
-    const a11 = ae[0], a12 = ae[3], a13 = ae[6];
-    const a21 = ae[1], a22 = ae[4], a23 = ae[7];
-    const a31 = ae[2], a32 = ae[5], a33 = ae[8];
+    const a11 = ae[0],
+      a12 = ae[3],
+      a13 = ae[6];
+    const a21 = ae[1],
+      a22 = ae[4],
+      a23 = ae[7];
+    const a31 = ae[2],
+      a32 = ae[5],
+      a33 = ae[8];
 
-    const b11 = be[0], b12 = be[3], b13 = be[6];
-    const b21 = be[1], b22 = be[4], b23 = be[7];
-    const b31 = be[2], b32 = be[5], b33 = be[8];
+    const b11 = be[0],
+      b12 = be[3],
+      b13 = be[6];
+    const b21 = be[1],
+      b22 = be[4],
+      b23 = be[7];
+    const b31 = be[2],
+      b32 = be[5],
+      b33 = be[8];
 
     te[0] = a11 * b11 + a12 * b21 + a13 * b31;
     te[3] = a11 * b12 + a12 * b22 + a13 * b32;
@@ -373,28 +385,36 @@ export class Matrix3 {
    * 矩阵求行列式值
    * @returns 行列式结果
    */
-  determinant (): number {
+  determinant(): number {
     const e = this.elements;
-    const m11 = e[0], m21 = e[3], m31 = e[6];
-    const m12 = e[1], m22 = e[4], m32 = e[7];
-    const m13 = e[2], m23 = e[5], m33 = e[8];
+    const m11 = e[0],
+      m21 = e[3],
+      m31 = e[6];
+    const m12 = e[1],
+      m22 = e[4],
+      m32 = e[7];
+    const m13 = e[2],
+      m23 = e[5],
+      m33 = e[8];
 
-    return (
-      m11 * (m22 * m33 - m23 * m32) +
-      m12 * (m23 * m31 - m21 * m33) +
-      m13 * (m21 * m32 - m22 * m31)
-    );
+    return m11 * (m22 * m33 - m23 * m32) + m12 * (m23 * m31 - m21 * m33) + m13 * (m21 * m32 - m22 * m31);
   }
 
   /**
    * 矩阵求逆
    * @returns 逆矩阵
    */
-  invert (): this {
+  invert(): this {
     const e = this.elements;
-    const m11 = e[0], m12 = e[3], m13 = e[6];
-    const m21 = e[1], m22 = e[4], m23 = e[7];
-    const m31 = e[2], m32 = e[5], m33 = e[8];
+    const m11 = e[0],
+      m12 = e[3],
+      m13 = e[6];
+    const m21 = e[1],
+      m22 = e[4],
+      m23 = e[7];
+    const m31 = e[2],
+      m32 = e[5],
+      m33 = e[8];
     const t11 = m33 * m22 - m32 * m23;
     const t12 = m32 * m13 - m33 * m12;
     const t13 = m23 * m12 - m22 * m13;
@@ -425,13 +445,19 @@ export class Matrix3 {
    * 矩阵转置
    * @returns 转置结果
    */
-  transpose (): this {
+  transpose(): this {
     let t: number;
     const e = this.elements;
 
-    t = e[1]; e[1] = e[3]; e[3] = t;
-    t = e[2]; e[2] = e[6]; e[6] = t;
-    t = e[5]; e[5] = e[7]; e[7] = t;
+    t = e[1];
+    e[1] = e[3];
+    e[3] = t;
+    t = e[2];
+    e[2] = e[6];
+    e[6] = t;
+    t = e[5];
+    e[5] = e[7];
+    e[7] = t;
 
     return this;
   }
@@ -442,7 +468,7 @@ export class Matrix3 {
    * @param out - 输出点，如果没有会覆盖输入的数据
    * @returns 变换后的结果
    */
-  transformPoint (v: Vector3, out?: Vector3): Vector3 {
+  transformPoint(v: Vector3, out?: Vector3): Vector3 {
     const { x, y, z } = v;
     const e = this.elements;
 
@@ -461,7 +487,7 @@ export class Matrix3 {
    * @param out - 输出向量，如果没有会覆盖输入的数据
    * @returns 变换后的结果
    */
-  transformNormal (v: Vector3, out?: Vector3): Vector3 {
+  transformNormal(v: Vector3, out?: Vector3): Vector3 {
     return this.transformPoint(v, out).normalize();
   }
 
@@ -470,7 +496,7 @@ export class Matrix3 {
    * @param matrix - 矩阵
    * @returns 判等结果
    */
-  equals (matrix: Matrix3): boolean {
+  equals(matrix: Matrix3): boolean {
     const te = this.elements;
     const me = matrix.elements;
 
@@ -487,7 +513,7 @@ export class Matrix3 {
    * 矩阵转为数组
    * @returns
    */
-  toArray (): mat3 {
+  toArray(): mat3 {
     return Array.from(this.elements) as mat3;
   }
 
@@ -496,7 +522,7 @@ export class Matrix3 {
    * @param array 目标数组
    * @param offset 偏移值
    */
-  fill (array: number[] | Float32Array, offset = 0) {
+  fill(array: number[] | Float32Array, offset = 0) {
     const e = this.elements;
 
     if (array instanceof Float32Array && offset === 0 && array.length >= 9) {
@@ -519,7 +545,7 @@ export class Matrix3 {
   /**
    * 从对象池获取一个 Matrix3 实例
    */
-  static create (): Matrix3 {
+  static create(): Matrix3 {
     if (matrix3PoolIndex < matrix3Pool.length) {
       return matrix3Pool[matrix3PoolIndex++].identity();
     }
@@ -530,7 +556,7 @@ export class Matrix3 {
   /**
    * 将 Matrix3 实例释放回对象池
    */
-  static release (matrix: Matrix3): void {
+  static release(matrix: Matrix3): void {
     if (matrix3PoolIndex > 0 && matrix3Pool.length < MATRIX3_POOL_SIZE) {
       matrix3PoolIndex--;
       matrix3Pool[matrix3PoolIndex] = matrix;
@@ -540,7 +566,7 @@ export class Matrix3 {
   /**
    * 预分配对象池
    */
-  static preallocate (count: number): void {
+  static preallocate(count: number): void {
     const initialSize = matrix3Pool.length;
 
     for (let i = 0; i < count && matrix3Pool.length < MATRIX3_POOL_SIZE; i++) {
@@ -553,7 +579,7 @@ export class Matrix3 {
    * 创建单位阵
    * @returns 单位矩阵
    */
-  static fromIdentity (): Matrix3 {
+  static fromIdentity(): Matrix3 {
     return Matrix3.create();
   }
 
@@ -564,7 +590,7 @@ export class Matrix3 {
    * @param c3 - 第三列
    * @returns 矩阵
    */
-  static fromColumnVectors (c1: Vector3, c2: Vector3, c3: Vector3): Matrix3 {
+  static fromColumnVectors(c1: Vector3, c2: Vector3, c3: Vector3): Matrix3 {
     return Matrix3.create().setFromColumnVectors(c1, c2, c3);
   }
 
@@ -573,7 +599,7 @@ export class Matrix3 {
    * @param m - 四阶矩阵
    * @returns 矩阵
    */
-  static fromMatrix4 (m: Matrix4): Matrix3 {
+  static fromMatrix4(m: Matrix4): Matrix3 {
     return Matrix3.create().setFromMatrix4(m);
   }
 
@@ -583,7 +609,7 @@ export class Matrix3 {
    * @param [offset=0] - 起始偏移值
    * @returns 矩阵
    */
-  static fromArray (array: Matrix3DataType, offset = 0): Matrix3 {
+  static fromArray(array: Matrix3DataType, offset = 0): Matrix3 {
     return Matrix3.create().setFromArray(array, offset);
   }
 
@@ -592,7 +618,7 @@ export class Matrix3 {
    * @param quat - 四元数
    * @returns 矩阵
    */
-  static fromQuaternion (quat: Quaternion): Matrix3 {
+  static fromQuaternion(quat: Quaternion): Matrix3 {
     return Matrix3.create().setFromQuaternion(quat);
   }
 
@@ -609,15 +635,17 @@ export class Matrix3 {
    * @param m33 - 第 3 行，第 3 列
    * @returns 矩阵
    */
-  static fromRowMajorData (
-    m11: number, m12: number, m13: number,
-    m21: number, m22: number, m23: number,
-    m31: number, m32: number, m33: number,
+  static fromRowMajorData(
+    m11: number,
+    m12: number,
+    m13: number,
+    m21: number,
+    m22: number,
+    m23: number,
+    m31: number,
+    m32: number,
+    m33: number
   ): Matrix3 {
-    return Matrix3.create().set(
-      m11, m21, m31,
-      m12, m22, m32,
-      m13, m23, m33,
-    );
+    return Matrix3.create().set(m11, m21, m31, m12, m22, m32, m13, m23, m33);
   }
 }

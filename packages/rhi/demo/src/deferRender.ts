@@ -210,50 +210,68 @@ const lightingFragmentShader = device.createShaderModule({
 const cubeVertices = new Float32Array([
   // 格式: x, y, z, u, v, nx, ny, nz
   // 前面 (Z+)
-  -0.5, -0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0,
-  0.5, -0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 1.0,
-  0.5, 0.5, 0.5, 1.0, 1.0, 0.0, 0.0, 1.0,
-  -0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 1.0,
+  -0.5, -0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.5, -0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 1.0, 0.5, 0.5, 0.5, 1.0, 1.0, 0.0, 0.0,
+  1.0, -0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 1.0,
 
   // 后面 (Z-)
-  -0.5, -0.5, -0.5, 1.0, 0.0, 0.0, 0.0, -1.0,
-  -0.5, 0.5, -0.5, 1.0, 1.0, 0.0, 0.0, -1.0,
-  0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 0.0, -1.0,
-  0.5, -0.5, -0.5, 0.0, 0.0, 0.0, 0.0, -1.0,
+  -0.5, -0.5, -0.5, 1.0, 0.0, 0.0, 0.0, -1.0, -0.5, 0.5, -0.5, 1.0, 1.0, 0.0, 0.0, -1.0, 0.5, 0.5, -0.5, 0.0, 1.0, 0.0,
+  0.0, -1.0, 0.5, -0.5, -0.5, 0.0, 0.0, 0.0, 0.0, -1.0,
 
   // 上面 (Y+)
-  -0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 1.0, 0.0,
-  -0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0, 0.0,
-  0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 1.0, 0.0,
-  0.5, 0.5, -0.5, 1.0, 1.0, 0.0, 1.0, 0.0,
+  -0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 1.0, 0.0, -0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 1.0,
+  0.0, 0.5, 0.5, -0.5, 1.0, 1.0, 0.0, 1.0, 0.0,
 
   // 下面 (Y-)
-  -0.5, -0.5, -0.5, 0.0, 0.0, 0.0, -1.0, 0.0,
-  0.5, -0.5, -0.5, 1.0, 0.0, 0.0, -1.0, 0.0,
-  0.5, -0.5, 0.5, 1.0, 1.0, 0.0, -1.0, 0.0,
-  -0.5, -0.5, 0.5, 0.0, 1.0, 0.0, -1.0, 0.0,
+  -0.5, -0.5, -0.5, 0.0, 0.0, 0.0, -1.0, 0.0, 0.5, -0.5, -0.5, 1.0, 0.0, 0.0, -1.0, 0.0, 0.5, -0.5, 0.5, 1.0, 1.0, 0.0,
+  -1.0, 0.0, -0.5, -0.5, 0.5, 0.0, 1.0, 0.0, -1.0, 0.0,
 
   // 右面 (X+)
-  0.5, -0.5, -0.5, 1.0, 0.0, 1.0, 0.0, 0.0,
-  0.5, 0.5, -0.5, 1.0, 1.0, 1.0, 0.0, 0.0,
-  0.5, 0.5, 0.5, 0.0, 1.0, 1.0, 0.0, 0.0,
-  0.5, -0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0,
+  0.5, -0.5, -0.5, 1.0, 0.0, 1.0, 0.0, 0.0, 0.5, 0.5, -0.5, 1.0, 1.0, 1.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.0, 1.0, 1.0, 0.0,
+  0.0, 0.5, -0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0,
 
   // 左面 (X-)
-  -0.5, -0.5, -0.5, 0.0, 0.0, -1.0, 0.0, 0.0,
-  -0.5, -0.5, 0.5, 1.0, 0.0, -1.0, 0.0, 0.0,
-  -0.5, 0.5, 0.5, 1.0, 1.0, -1.0, 0.0, 0.0,
-  -0.5, 0.5, -0.5, 0.0, 1.0, -1.0, 0.0, 0.0,
+  -0.5, -0.5, -0.5, 0.0, 0.0, -1.0, 0.0, 0.0, -0.5, -0.5, 0.5, 1.0, 0.0, -1.0, 0.0, 0.0, -0.5, 0.5, 0.5, 1.0, 1.0, -1.0,
+  0.0, 0.0, -0.5, 0.5, -0.5, 0.0, 1.0, -1.0, 0.0, 0.0,
 ]);
 
 // 立方体索引数据
 const cubeIndices = new Uint16Array([
-  0, 1, 2, 2, 3, 0,  // 前面
-  4, 5, 6, 6, 7, 4,  // 后面
-  8, 9, 10, 10, 11, 8,  // 上面
-  12, 13, 14, 14, 15, 12, // 下面
-  16, 17, 18, 18, 19, 16, // 右面
-  20, 21, 22, 22, 23, 20,  // 左面
+  0,
+  1,
+  2,
+  2,
+  3,
+  0, // 前面
+  4,
+  5,
+  6,
+  6,
+  7,
+  4, // 后面
+  8,
+  9,
+  10,
+  10,
+  11,
+  8, // 上面
+  12,
+  13,
+  14,
+  14,
+  15,
+  12, // 下面
+  16,
+  17,
+  18,
+  18,
+  19,
+  16, // 右面
+  20,
+  21,
+  22,
+  22,
+  23,
+  20, // 左面
 ]);
 
 // 创建顶点和索引缓冲区
@@ -276,15 +294,10 @@ const cubeIndexBuffer = device.createBuffer({
 // 创建全屏四边形顶点数据
 const quadVertices = new Float32Array([
   // 位置(x, y, z), 纹理坐标(u, v)
-  -1.0, -1.0, 0.0, 0.0, 0.0,
-  1.0, -1.0, 0.0, 1.0, 0.0,
-  1.0, 1.0, 0.0, 1.0, 1.0,
-  -1.0, 1.0, 0.0, 0.0, 1.0,
+  -1.0, -1.0, 0.0, 0.0, 0.0, 1.0, -1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, -1.0, 1.0, 0.0, 0.0, 1.0,
 ]);
 
-const quadIndices = new Uint16Array([
-  0, 1, 2, 2, 3, 0,
-]);
+const quadIndices = new Uint16Array([0, 1, 2, 2, 3, 0]);
 
 // 创建四边形顶点和索引缓冲区
 const quadVertexBuffer = device.createBuffer({
@@ -315,15 +328,15 @@ for (let y = 0; y < textureSize; y++) {
 
     // 两种不同的颜色，使用饱和度更高的颜色
     if (isCheckerboard) {
-      textureData[index] = 220;     // R
-      textureData[index + 1] = 80;  // G
-      textureData[index + 2] = 80;  // B
+      textureData[index] = 220; // R
+      textureData[index + 1] = 80; // G
+      textureData[index + 2] = 80; // B
     } else {
-      textureData[index] = 80;      // R
-      textureData[index + 1] = 80;  // G
+      textureData[index] = 80; // R
+      textureData[index + 1] = 80; // G
       textureData[index + 2] = 220; // B
     }
-    textureData[index + 3] = 255;   // A
+    textureData[index + 3] = 255; // A
   }
 }
 
@@ -363,10 +376,16 @@ console.log('G-Buffer纹理格式:', {
 });
 
 // 使用之前确定的纹理格式，保持一致性
-const positionFormat = supportsFloat ? RHITextureFormat.RGBA16_FLOAT :
-  (supportsHalfFloat ? RHITextureFormat.RGBA16_FLOAT : RHITextureFormat.RGBA8_UNORM);
-const normalFormat = supportsFloat ? RHITextureFormat.RGBA16_FLOAT :
-  (supportsHalfFloat ? RHITextureFormat.RGBA16_FLOAT : RHITextureFormat.RGBA8_UNORM);
+const positionFormat = supportsFloat
+  ? RHITextureFormat.RGBA16_FLOAT
+  : supportsHalfFloat
+    ? RHITextureFormat.RGBA16_FLOAT
+    : RHITextureFormat.RGBA8_UNORM;
+const normalFormat = supportsFloat
+  ? RHITextureFormat.RGBA16_FLOAT
+  : supportsHalfFloat
+    ? RHITextureFormat.RGBA16_FLOAT
+    : RHITextureFormat.RGBA8_UNORM;
 
 // 创建G-Buffer纹理
 // 1. 位置缓冲区
@@ -470,10 +489,10 @@ viewMatrix.elements[15] = 1;
 
 // 使用更明确的投影矩阵参数
 projectionMatrix.perspective(
-  45,                        // 视场角
+  45, // 视场角
   canvas.width / canvas.height, // 宽高比
-  0.1,                      // 近平面
-  100.0                     // 远平面
+  0.1, // 近平面
+  100.0 // 远平面
 );
 
 // 创建uniform缓冲区
@@ -579,84 +598,90 @@ cameraPositionBuffer.update(cameraPosition);
 
 // ==================== 创建绑定组布局和管线布局 ====================
 // G-Buffer 阶段绑定组布局
-const gbufferBindGroupLayout = device.createBindGroupLayout([
-  {
-    binding: 0,
-    visibility: RHIShaderStage.VERTEX,
-    buffer: { type: 'uniform' },
-    name: 'uModelMatrix',
-  },
-  {
-    binding: 1,
-    visibility: RHIShaderStage.VERTEX,
-    buffer: { type: 'uniform' },
-    name: 'uViewMatrix',
-  },
-  {
-    binding: 2,
-    visibility: RHIShaderStage.VERTEX,
-    buffer: { type: 'uniform' },
-    name: 'uProjectionMatrix',
-  },
-  {
-    binding: 3,
-    visibility: RHIShaderStage.FRAGMENT,
-    texture: { sampleType: 'float', viewDimension: '2d' },
-    name: 'uAlbedoTexture',
-  },
-  {
-    binding: 4,
-    visibility: RHIShaderStage.FRAGMENT,
-    sampler: { type: 'filtering' },
-    name: 'uTextureSampler',
-  },
-], 'GBuffer Bind Group Layout');
+const gbufferBindGroupLayout = device.createBindGroupLayout(
+  [
+    {
+      binding: 0,
+      visibility: RHIShaderStage.VERTEX,
+      buffer: { type: 'uniform' },
+      name: 'uModelMatrix',
+    },
+    {
+      binding: 1,
+      visibility: RHIShaderStage.VERTEX,
+      buffer: { type: 'uniform' },
+      name: 'uViewMatrix',
+    },
+    {
+      binding: 2,
+      visibility: RHIShaderStage.VERTEX,
+      buffer: { type: 'uniform' },
+      name: 'uProjectionMatrix',
+    },
+    {
+      binding: 3,
+      visibility: RHIShaderStage.FRAGMENT,
+      texture: { sampleType: 'float', viewDimension: '2d' },
+      name: 'uAlbedoTexture',
+    },
+    {
+      binding: 4,
+      visibility: RHIShaderStage.FRAGMENT,
+      sampler: { type: 'filtering' },
+      name: 'uTextureSampler',
+    },
+  ],
+  'GBuffer Bind Group Layout'
+);
 
 // 光照处理阶段绑定组布局
-const lightingBindGroupLayout = device.createBindGroupLayout([
-  {
-    binding: 0,
-    visibility: RHIShaderStage.FRAGMENT,
-    texture: { sampleType: 'float', viewDimension: '2d' },
-    name: 'uPositionBuffer',
-  },
-  {
-    binding: 1,
-    visibility: RHIShaderStage.FRAGMENT,
-    texture: { sampleType: 'float', viewDimension: '2d' },
-    name: 'uNormalBuffer',
-  },
-  {
-    binding: 2,
-    visibility: RHIShaderStage.FRAGMENT,
-    texture: { sampleType: 'float', viewDimension: '2d' },
-    name: 'uAlbedoBuffer',
-  },
-  {
-    binding: 3,
-    visibility: RHIShaderStage.FRAGMENT,
-    sampler: { type: 'filtering' },
-    name: 'uGBufferSampler',
-  },
-  {
-    binding: 4,
-    visibility: RHIShaderStage.FRAGMENT,
-    buffer: { type: 'uniform' },
-    name: 'uLightPosition',
-  },
-  {
-    binding: 5,
-    visibility: RHIShaderStage.FRAGMENT,
-    buffer: { type: 'uniform' },
-    name: 'uLightColor',
-  },
-  {
-    binding: 6,
-    visibility: RHIShaderStage.FRAGMENT,
-    buffer: { type: 'uniform' },
-    name: 'uCameraPosition',
-  },
-], 'Lighting Bind Group Layout');
+const lightingBindGroupLayout = device.createBindGroupLayout(
+  [
+    {
+      binding: 0,
+      visibility: RHIShaderStage.FRAGMENT,
+      texture: { sampleType: 'float', viewDimension: '2d' },
+      name: 'uPositionBuffer',
+    },
+    {
+      binding: 1,
+      visibility: RHIShaderStage.FRAGMENT,
+      texture: { sampleType: 'float', viewDimension: '2d' },
+      name: 'uNormalBuffer',
+    },
+    {
+      binding: 2,
+      visibility: RHIShaderStage.FRAGMENT,
+      texture: { sampleType: 'float', viewDimension: '2d' },
+      name: 'uAlbedoBuffer',
+    },
+    {
+      binding: 3,
+      visibility: RHIShaderStage.FRAGMENT,
+      sampler: { type: 'filtering' },
+      name: 'uGBufferSampler',
+    },
+    {
+      binding: 4,
+      visibility: RHIShaderStage.FRAGMENT,
+      buffer: { type: 'uniform' },
+      name: 'uLightPosition',
+    },
+    {
+      binding: 5,
+      visibility: RHIShaderStage.FRAGMENT,
+      buffer: { type: 'uniform' },
+      name: 'uLightColor',
+    },
+    {
+      binding: 6,
+      visibility: RHIShaderStage.FRAGMENT,
+      buffer: { type: 'uniform' },
+      name: 'uCameraPosition',
+    },
+  ],
+  'Lighting Bind Group Layout'
+);
 
 // 创建管线布局
 const gbufferPipelineLayout = device.createPipelineLayout([gbufferBindGroupLayout], 'GBuffer Pipeline Layout');
@@ -780,74 +805,84 @@ const lightingPipeline = device.createRenderPipeline({
     format: RHITextureFormat.DEPTH16_UNORM,
   },
   colorBlendState: {
-    attachments: [{
-      color: {
-        enable: false,
+    attachments: [
+      {
+        color: {
+          enable: false,
+        },
+        alpha: {
+          enable: false,
+        },
       },
-      alpha: {
-        enable: false,
-      },
-    }],
+    ],
   },
   label: 'Lighting Render Pipeline',
 });
 
 // ==================== 创建绑定组 ====================
 // G-Buffer 绑定组
-const gbufferBindGroup = device.createBindGroup(gbufferBindGroupLayout, [
-  {
-    binding: 0,
-    resource: modelMatrixBuffer,
-  },
-  {
-    binding: 1,
-    resource: viewMatrixBuffer,
-  },
-  {
-    binding: 2,
-    resource: projectionMatrixBuffer,
-  },
-  {
-    binding: 3,
-    resource: albedoTextureView,
-  },
-  {
-    binding: 4,
-    resource: sampler,
-  },
-], 'GBuffer Bind Group');
+const gbufferBindGroup = device.createBindGroup(
+  gbufferBindGroupLayout,
+  [
+    {
+      binding: 0,
+      resource: modelMatrixBuffer,
+    },
+    {
+      binding: 1,
+      resource: viewMatrixBuffer,
+    },
+    {
+      binding: 2,
+      resource: projectionMatrixBuffer,
+    },
+    {
+      binding: 3,
+      resource: albedoTextureView,
+    },
+    {
+      binding: 4,
+      resource: sampler,
+    },
+  ],
+  'GBuffer Bind Group'
+);
 
 // 光照处理绑定组
-let lightingBindGroup = device.createBindGroup(lightingBindGroupLayout, [
-  {
-    binding: 0,
-    resource: positionBuffer.createView(),
-  },
-  {
-    binding: 1,
-    resource: normalBuffer.createView(),
-  },
-  {
-    binding: 2,
-    resource: albedoBuffer.createView(),
-  },
-  {
-    binding: 3,
-    resource: sampler,
-  },
-  {
-    binding: 4,
-    resource: lightPositionBuffer,
-  },
-  {
-    binding: 5,
-    resource: lightColorBuffer,
-  },
-  {
-    binding: 6,
-    resource: cameraPositionBuffer,
-  },
-], 'Lighting Bind Group');
+let lightingBindGroup = device.createBindGroup(
+  lightingBindGroupLayout,
+  [
+    {
+      binding: 0,
+      resource: positionBuffer.createView(),
+    },
+    {
+      binding: 1,
+      resource: normalBuffer.createView(),
+    },
+    {
+      binding: 2,
+      resource: albedoBuffer.createView(),
+    },
+    {
+      binding: 3,
+      resource: sampler,
+    },
+    {
+      binding: 4,
+      resource: lightPositionBuffer,
+    },
+    {
+      binding: 5,
+      resource: lightColorBuffer,
+    },
+    {
+      binding: 6,
+      resource: cameraPositionBuffer,
+    },
+  ],
+  'Lighting Bind Group'
+);
 
 // ==================== 调试UI ====================
 // 添加一个调试面板和控制按钮
@@ -889,7 +924,7 @@ let rotation = 0;
 let lastFrameTime = performance.now();
 
 // 添加检查Framebuffer完整性的函数
-function checkFramebufferStatus (gl, framebuffer) {
+function checkFramebufferStatus(gl, framebuffer) {
   gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
   const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
 
@@ -923,7 +958,7 @@ function checkFramebufferStatus (gl, framebuffer) {
   return true;
 }
 
-function render () {
+function render() {
   // 计算和显示FPS
   const now = performance.now();
   const frameTime = now - lastFrameTime;
@@ -1132,21 +1167,11 @@ function render () {
 
       break;
     case 2: // 法线缓冲
-      debugRenderPass(
-        commandEncoder,
-        normalBuffer.createView(),
-        canvas,
-        `${debugModes[currentDebugMode]} - 表面法线`
-      );
+      debugRenderPass(commandEncoder, normalBuffer.createView(), canvas, `${debugModes[currentDebugMode]} - 表面法线`);
 
       break;
     case 3: // 反照率缓冲
-      debugRenderPass(
-        commandEncoder,
-        albedoBuffer.createView(),
-        canvas,
-        `${debugModes[currentDebugMode]} - 材质颜色`
-      );
+      debugRenderPass(commandEncoder, albedoBuffer.createView(), canvas, `${debugModes[currentDebugMode]} - 材质颜色`);
 
       break;
   }
@@ -1217,36 +1242,40 @@ window.addEventListener('resize', () => {
   });
 
   // 更新光照绑定组
-  lightingBindGroup = device.createBindGroup(lightingBindGroupLayout, [
-    {
-      binding: 0,
-      resource: positionBuffer.createView(),
-    },
-    {
-      binding: 1,
-      resource: normalBuffer.createView(),
-    },
-    {
-      binding: 2,
-      resource: albedoBuffer.createView(),
-    },
-    {
-      binding: 3,
-      resource: sampler,
-    },
-    {
-      binding: 4,
-      resource: lightPositionBuffer,
-    },
-    {
-      binding: 5,
-      resource: lightColorBuffer,
-    },
-    {
-      binding: 6,
-      resource: cameraPositionBuffer,
-    },
-  ], 'Lighting Bind Group');
+  lightingBindGroup = device.createBindGroup(
+    lightingBindGroupLayout,
+    [
+      {
+        binding: 0,
+        resource: positionBuffer.createView(),
+      },
+      {
+        binding: 1,
+        resource: normalBuffer.createView(),
+      },
+      {
+        binding: 2,
+        resource: albedoBuffer.createView(),
+      },
+      {
+        binding: 3,
+        resource: sampler,
+      },
+      {
+        binding: 4,
+        resource: lightPositionBuffer,
+      },
+      {
+        binding: 5,
+        resource: lightColorBuffer,
+      },
+      {
+        binding: 6,
+        resource: cameraPositionBuffer,
+      },
+    ],
+    'Lighting Bind Group'
+  );
 
   // 更新投影矩阵
   projectionMatrix.perspective(45, canvas.width / canvas.height, 0.1, 100.0);
@@ -1256,7 +1285,7 @@ window.addEventListener('resize', () => {
 });
 
 // 创建一些函数来调试G-Buffer
-function debugRenderPass (commandEncoder, gbufferView, targetView, label) {
+function debugRenderPass(commandEncoder, gbufferView, targetView, label) {
   // 创建一个简单的渲染通道，直接将G-Buffer复制到目标
   const debugPassDescriptor = {
     colorAttachments: [
@@ -1303,7 +1332,7 @@ function debugRenderPass (commandEncoder, gbufferView, targetView, label) {
 }
 
 // 添加键盘快捷键
-document.addEventListener('keydown', event => {
+document.addEventListener('keydown', (event) => {
   // 数字键1-4控制调试模式
   if (event.key >= '1' && event.key <= '4') {
     currentDebugMode = parseInt(event.key) - 1;
