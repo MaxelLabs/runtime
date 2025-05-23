@@ -9,7 +9,7 @@ export enum CullFace {
   /** 裁剪背面 */
   Back,
   /** 裁剪所有面 */
-  FrontAndBack
+  FrontAndBack,
 }
 
 /**
@@ -23,7 +23,7 @@ export enum BlendMode {
   /** 叠加 */
   Additive,
   /** 自定义 */
-  Custom
+  Custom,
 }
 
 /**
@@ -45,5 +45,5 @@ export enum DepthFunc {
   /** 大于等于时通过 */
   GreaterEqual,
   /** 永远通过 */
-  Always
+  Always,
 }

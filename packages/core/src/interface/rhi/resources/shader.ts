@@ -12,22 +12,22 @@ export interface IRHIShaderModule {
   /**
    * 着色器代码
    */
-  readonly code: string,
+  readonly code: string;
 
   /**
    * 着色器语言
    */
-  readonly language: 'glsl' | 'wgsl' | 'spirv',
+  readonly language: 'glsl' | 'wgsl' | 'spirv';
 
   /**
    * 着色器阶段
    */
-  readonly stage: RHIShaderStage,
+  readonly stage: RHIShaderStage;
 
   /**
    * 着色器标签
    */
-  readonly label?: string,
+  readonly label?: string;
 
   /**
    * 反射信息 - 包含着色器中定义的绑定等信息
@@ -40,28 +40,28 @@ export interface IRHIShaderModule {
       /**
        * 绑定名称
        */
-      name: string,
+      name: string;
 
       /**
        * 绑定索引
        */
-      binding: number,
+      binding: number;
 
       /**
        * 绑定组
        */
-      group: number,
+      group: number;
 
       /**
        * 绑定类型
        */
-      type: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture',
+      type: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture';
 
       /**
        * 数组大小 (如适用)
        */
-      arraySize?: number,
-    }>,
+      arraySize?: number;
+    }>;
 
     /**
      * 入口点信息
@@ -70,22 +70,22 @@ export interface IRHIShaderModule {
       /**
        * 入口点名称
        */
-      name: string,
+      name: string;
 
       /**
        * 入口点阶段
        */
-      stage: 'vertex' | 'fragment' | 'compute',
+      stage: 'vertex' | 'fragment' | 'compute';
 
       /**
        * 计算着色器工作组大小(如适用)
        */
-      workgroupSize?: [number, number, number],
-    }>,
-  },
+      workgroupSize?: [number, number, number];
+    }>;
+  };
 
   /**
    * 销毁资源
    */
-  destroy(): void,
+  destroy(): void;
 }

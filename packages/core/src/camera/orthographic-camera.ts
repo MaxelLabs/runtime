@@ -15,7 +15,7 @@ export class OrthographicCamera extends Camera {
    * @param near 近裁剪面（默认0.1）
    * @param far 远裁剪面（默认1000）
    */
-  constructor (entity: Entity, size: number = 5, aspect: number = 16 / 9, near: number = 0.1, far: number = 1000) {
+  constructor(entity: Entity, size: number = 5, aspect: number = 16 / 9, near: number = 0.1, far: number = 1000) {
     super(entity);
 
     // 设置为正交投影类型
@@ -33,7 +33,7 @@ export class OrthographicCamera extends Camera {
    * @param far 远裁剪面
    * @returns 当前实例，用于链式调用
    */
-  setOrthographic (size: number, aspect: number, near: number, far: number): this {
+  setOrthographic(size: number, aspect: number, near: number, far: number): this {
     this.setOrthographicSize(size);
     this.setAspect(aspect);
     this.setNear(near);
@@ -61,7 +61,7 @@ export class OrthographicCamera extends Camera {
    * @param far 远裁剪面
    * @returns 当前实例，用于链式调用
    */
-  setOrthographicRect (left: number, right: number, bottom: number, top: number, near: number, far: number): this {
+  setOrthographicRect(left: number, right: number, bottom: number, top: number, near: number, far: number): this {
     // 计算宽高比和正交大小
     const width = right - left;
     const height = top - bottom;
@@ -74,7 +74,12 @@ export class OrthographicCamera extends Camera {
     // 派发事件通知正交参数已更新
     this.eventDispatcher.dispatchEvent(CameraEvent.PROJECTION_MATRIX_UPDATED, {
       camera: this,
-      left, right, bottom, top, near, far,
+      left,
+      right,
+      bottom,
+      top,
+      near,
+      far,
     });
 
     return this;

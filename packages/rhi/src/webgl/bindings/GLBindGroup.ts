@@ -5,7 +5,13 @@ import { WebGLTextureView } from '../resources/GLTextureView';
 import { WebGLBindGroupLayout } from './GLBindGroupLayout';
 
 // Helper function to apply uniform data based on name (temporary solution)
-function applyKnownUniformFromBufferData (gl: WebGLRenderingContext | WebGL2RenderingContext, location: WebGLUniformLocation | null, data: ArrayBuffer, uniformName: string, glBuffer?: GLBuffer) {
+function applyKnownUniformFromBufferData(
+  gl: WebGLRenderingContext | WebGL2RenderingContext,
+  location: WebGLUniformLocation | null,
+  data: ArrayBuffer,
+  uniformName: string,
+  glBuffer?: GLBuffer
+) {
   if (!location) {
     console.warn(`无法设置uniform ${uniformName}：location为null`);
 
@@ -85,10 +91,11 @@ function applyKnownUniformFromBufferData (gl: WebGLRenderingContext | WebGL2Rend
 
     // 基于名称的自动检测 (向后兼容)
     const isMatrix = uniformName.includes('Matrix');
-    const isVector = uniformName.includes('Position') ||
-                    uniformName.includes('Direction') ||
-                    uniformName.includes('Color') ||
-                    uniformName.includes('Factor');
+    const isVector =
+      uniformName.includes('Position') ||
+      uniformName.includes('Direction') ||
+      uniformName.includes('Color') ||
+      uniformName.includes('Factor');
 
     if (isMatrix) {
       // 检查矩阵大小 - 假设是4x4矩阵
@@ -189,10 +196,17 @@ export class WebGLBindGroup implements IRHIBindGroup {
    * @param entries 绑定资源条目 (IRHIBindGroupEntry[])
    * @param label 可选标签
    */
-  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, layout: IRHIBindGroupLayout, entries: IRHIBindGroupEntry[], label?: string) {
+  constructor(
+    gl: WebGLRenderingContext | WebGL2RenderingContext,
+    layout: IRHIBindGroupLayout,
+    entries: IRHIBindGroupEntry[],
+    label?: string
+  ) {
     this.gl = gl;
     if (!(layout instanceof WebGLBindGroupLayout)) {
-      throw new Error(`[${label || 'WebGLBindGroup'}] Constructor expects layout to be an instance of WebGLBindGroupLayout.`);
+      throw new Error(
+        `[${label || 'WebGLBindGroup'}] Constructor expects layout to be an instance of WebGLBindGroupLayout.`
+      );
     }
     this.layout = layout;
     this.entries = entries;
@@ -201,18 +215,18 @@ export class WebGLBindGroup implements IRHIBindGroup {
     this.validateResourcesAgainstLayout();
   }
 
-  getLayout (): IRHIBindGroupLayout {
+  getLayout(): IRHIBindGroupLayout {
     return this.layout;
   }
 
-  getEntries (): IRHIBindGroupEntry[] {
+  getEntries(): IRHIBindGroupEntry[] {
     return this.entries;
   }
 
   /**
    * 验证绑定资源条目与布局的兼容性
    */
-  private validateResourcesAgainstLayout (): void {
+  private validateResourcesAgainstLayout(): void {
     for (const entry of this.entries) {
       const layoutEntry = this.layout.getDetailedBindingEntry(entry.binding);
 
@@ -229,20 +243,30 @@ export class WebGLBindGroup implements IRHIBindGroup {
 
       if (layoutEntry.buffer) {
         if (!(actualResourceObject instanceof GLBuffer)) {
-          throw new Error(`[${this.label || 'WebGLBindGroup'}] Binding ${entry.binding} (${layoutEntry.name || 'Buffer'}): Layout expects a Buffer, but got ${actualResourceObject?.constructor?.name}.`);
+          throw new Error(
+            `[${this.label || 'WebGLBindGroup'}] Binding ${entry.binding} (${layoutEntry.name || 'Buffer'}): Layout expects a Buffer, but got ${actualResourceObject?.constructor?.name}.`
+          );
         }
       } else if (layoutEntry.texture) {
         if (!(actualResourceObject instanceof WebGLTextureView)) {
-          throw new Error(`[${this.label || 'WebGLBindGroup'}] Binding ${entry.binding} (${layoutEntry.name || 'Texture'}): Layout expects a TextureView, but got ${actualResourceObject?.constructor?.name}.`);
+          throw new Error(
+            `[${this.label || 'WebGLBindGroup'}] Binding ${entry.binding} (${layoutEntry.name || 'Texture'}): Layout expects a TextureView, but got ${actualResourceObject?.constructor?.name}.`
+          );
         }
       } else if (layoutEntry.sampler) {
         if (!(actualResourceObject instanceof GLSampler)) {
-          throw new Error(`[${this.label || 'WebGLBindGroup'}] Binding ${entry.binding} (${layoutEntry.name || 'Sampler'}): Layout expects a Sampler, but got ${actualResourceObject?.constructor?.name}.`);
+          throw new Error(
+            `[${this.label || 'WebGLBindGroup'}] Binding ${entry.binding} (${layoutEntry.name || 'Sampler'}): Layout expects a Sampler, but got ${actualResourceObject?.constructor?.name}.`
+          );
         }
       } else if (layoutEntry.storageTexture) {
-        console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${entry.binding} (${layoutEntry.name || 'StorageTexture'}): 'storageTexture' validation is minimal as it's not standard in WebGL.`);
+        console.warn(
+          `[${this.label || 'WebGLBindGroup'}] Binding ${entry.binding} (${layoutEntry.name || 'StorageTexture'}): 'storageTexture' validation is minimal as it's not standard in WebGL.`
+        );
       } else {
-        throw new Error(`[${this.label || 'WebGLBindGroup'}] Binding ${entry.binding}: Layout definition is unclear (no buffer, texture, or sampler specified).`);
+        throw new Error(
+          `[${this.label || 'WebGLBindGroup'}] Binding ${entry.binding}: Layout definition is unclear (no buffer, texture, or sampler specified).`
+        );
       }
     }
   }
@@ -254,7 +278,7 @@ export class WebGLBindGroup implements IRHIBindGroup {
    * @param program WebGL程序对象
    * @param dynamicOffsets (Currently not fully implemented for UBO dynamic offsets here)
    */
-  public applyBindings (program: WebGLProgram, dynamicOffsets?: Uint32Array | number[]): void {
+  public applyBindings(program: WebGLProgram, dynamicOffsets?: Uint32Array | number[]): void {
     if (this.isDestroyed) {
       console.error(`[${this.label || 'WebGLBindGroup'}] Attempting to use a destroyed bind group.`);
 
@@ -268,7 +292,9 @@ export class WebGLBindGroup implements IRHIBindGroup {
       const layoutEntry = this.layout.getDetailedBindingEntry(binding);
 
       if (!layoutEntry) {
-        console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding}: No detailed layout entry found. Skipping.`);
+        console.warn(
+          `[${this.label || 'WebGLBindGroup'}] Binding ${binding}: No detailed layout entry found. Skipping.`
+        );
         continue;
       }
 
@@ -284,7 +310,11 @@ export class WebGLBindGroup implements IRHIBindGroup {
       let bufferBindOffset: number = 0;
       let bufferBindSize: number | undefined;
 
-      if (boundResourceItem && (boundResourceItem as any).buffer && (boundResourceItem as any).buffer instanceof GLBuffer) {
+      if (
+        boundResourceItem &&
+        (boundResourceItem as any).buffer &&
+        (boundResourceItem as any).buffer instanceof GLBuffer
+      ) {
         actualResource = (boundResourceItem as any).buffer as GLBuffer;
         bufferBindOffset = (boundResourceItem as any).offset || 0;
         bufferBindSize = (boundResourceItem as any).size;
@@ -292,7 +322,9 @@ export class WebGLBindGroup implements IRHIBindGroup {
 
       if (layoutEntry.buffer && actualResource instanceof GLBuffer) {
         if (!uniformName) {
-          console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Buffer): Layout entry missing 'name' for uniform/UBO. Skipping.`);
+          console.warn(
+            `[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Buffer): Layout entry missing 'name' for uniform/UBO. Skipping.`
+          );
           continue;
         }
         const glBuffer = actualResource;
@@ -308,8 +340,10 @@ export class WebGLBindGroup implements IRHIBindGroup {
             gl.uniformBlockBinding(program, blockIndex, binding);
             const bufferActualSize = glBuffer.getSize() ? glBuffer.getSize() : glBuffer.size; // Adapt based on GLBuffer API
 
-            if (typeof bufferActualSize !== 'number') {throw new Error ('Cannot get buffer size for UBO binding');}
-            const effectiveSize = bufferBindSize !== undefined ? bufferBindSize : (bufferActualSize - bufferBindOffset);
+            if (typeof bufferActualSize !== 'number') {
+              throw new Error('Cannot get buffer size for UBO binding');
+            }
+            const effectiveSize = bufferBindSize !== undefined ? bufferBindSize : bufferActualSize - bufferBindOffset;
 
             if (bufferBindOffset !== 0 || bufferBindSize !== undefined) {
               gl.bindBufferRange(gl.UNIFORM_BUFFER, binding, glBuffer.getGLBuffer(), bufferBindOffset, effectiveSize);
@@ -325,7 +359,9 @@ export class WebGLBindGroup implements IRHIBindGroup {
         // Fallback: If not a successful UBO path, treat as source for standard uniform(s)
         if (!uboPathSuccess) {
           if (!uniformLocation) {
-            console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Buffer '${uniformName}'): Could not find location for standard uniform. Skipping manual update.`);
+            console.warn(
+              `[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Buffer '${uniformName}'): Could not find location for standard uniform. Skipping manual update.`
+            );
             continue; // Skip if we can't find the uniform location
           }
           // console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Buffer '${uniformName}'): Applying as standard uniform(s). Mapping buffer to read data. Consider using UBOs if possible.`);
@@ -334,13 +370,17 @@ export class WebGLBindGroup implements IRHIBindGroup {
           const bufferActualSize = glBuffer.getSize ? glBuffer.getSize() : glBuffer.size;
 
           if (typeof bufferActualSize !== 'number') {
-            console.error(`[${this.label || 'WebGLBindGroup'}] Cannot get buffer size for uniform '${uniformName}'. Skipping manual update.`);
+            console.error(
+              `[${this.label || 'WebGLBindGroup'}] Cannot get buffer size for uniform '${uniformName}'. Skipping manual update.`
+            );
             continue;
           }
-          const sizeToMap = bufferBindSize !== undefined ? bufferBindSize : (bufferActualSize - bufferBindOffset);
+          const sizeToMap = bufferBindSize !== undefined ? bufferBindSize : bufferActualSize - bufferBindOffset;
 
           if (sizeToMap <= 0) {
-            console.warn(`[${this.label || 'WebGLBindGroup'}] Calculated size to map for uniform '${uniformName}' is <= 0. Skipping.`);
+            console.warn(
+              `[${this.label || 'WebGLBindGroup'}] Calculated size to map for uniform '${uniformName}' is <= 0. Skipping.`
+            );
             continue;
           }
 
@@ -356,24 +396,31 @@ export class WebGLBindGroup implements IRHIBindGroup {
               }
             } else {
               // 如果没有getData方法，回退到异步map（但可能会导致时序问题）
-              console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Buffer '${uniformName}'): 使用异步map方法，这可能导致uniform设置时序问题。`);
-              glBuffer.map('read', bufferBindOffset, sizeToMap)
-                .then(mappedData => {
+              console.warn(
+                `[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Buffer '${uniformName}'): 使用异步map方法，这可能导致uniform设置时序问题。`
+              );
+              glBuffer
+                .map('read', bufferBindOffset, sizeToMap)
+                .then((mappedData) => {
                   applyKnownUniformFromBufferData(gl, uniformLocation, mappedData, uniformName, glBuffer);
                   glBuffer.unmap();
                 })
-                .catch(error => {
-                  console.error(`[${this.label || 'WebGLBindGroup'}] Failed to map buffer for uniform '${uniformName}':`, error);
+                .catch((error) => {
+                  console.error(
+                    `[${this.label || 'WebGLBindGroup'}] Failed to map buffer for uniform '${uniformName}':`,
+                    error
+                  );
                 });
             }
           } catch (err) {
             console.error(`[${this.label || 'WebGLBindGroup'}] 无法访问uniform缓冲区数据 '${uniformName}':`, err);
           }
         }
-
       } else if (layoutEntry.texture && actualResource instanceof WebGLTextureView) {
         if (!uniformName || !uniformLocation) {
-          console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Texture '${uniformName || 'Unnamed'}'): Missing uniform name in layout or location not found. Skipping.`);
+          console.warn(
+            `[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Texture '${uniformName || 'Unnamed'}'): Missing uniform name in layout or location not found. Skipping.`
+          );
           continue;
         }
         const textureView = actualResource;
@@ -384,7 +431,9 @@ export class WebGLBindGroup implements IRHIBindGroup {
           gl.bindTexture(textureView.getGLTextureTarget(), textureView.getGLTexture());
           gl.uniform1i(uniformLocation, textureUnit);
         } else {
-          console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Texture '${uniformName}'): No texture unit assigned in layout.`);
+          console.warn(
+            `[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Texture '${uniformName}'): No texture unit assigned in layout.`
+          );
         }
       } else if (layoutEntry.sampler && actualResource instanceof GLSampler) {
         const sampler = actualResource;
@@ -394,7 +443,7 @@ export class WebGLBindGroup implements IRHIBindGroup {
           const textureUnitForSampler = this.layout.getTextureUnitForBinding(associatedTextureBinding);
 
           if (textureUnitForSampler !== undefined) {
-            const associatedTextureEntry = this.entries.find(e => e.binding === associatedTextureBinding);
+            const associatedTextureEntry = this.entries.find((e) => e.binding === associatedTextureBinding);
 
             if (associatedTextureEntry?.resource instanceof WebGLTextureView) {
               const associatedTextureView = associatedTextureEntry.resource as WebGLTextureView;
@@ -403,23 +452,33 @@ export class WebGLBindGroup implements IRHIBindGroup {
               if (typeof sampler.applyToTexture === 'function') {
                 sampler.applyToTexture(associatedTextureView.getGLTextureTarget());
               } else {
-                console.error(`[${this.label || 'WebGLBindGroup'}] Sampler@${binding}: Missing 'applyToTexture' method on WebGLSampler instance.`);
+                console.error(
+                  `[${this.label || 'WebGLBindGroup'}] Sampler@${binding}: Missing 'applyToTexture' method on WebGLSampler instance.`
+                );
               }
             } else {
-              console.warn(`[${this.label || 'WebGLBindGroup'}] Sampler@${binding}: Could not find associated TextureView for binding ${associatedTextureBinding} to apply sampler parameters.`);
+              console.warn(
+                `[${this.label || 'WebGLBindGroup'}] Sampler@${binding}: Could not find associated TextureView for binding ${associatedTextureBinding} to apply sampler parameters.`
+              );
             }
 
             if (uniformName && uniformLocation) {
               gl.uniform1i(uniformLocation, textureUnitForSampler);
             }
           } else {
-            console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Sampler '${uniformName || 'Unnamed'}'): Could not get texture unit for associated texture binding ${associatedTextureBinding}.`);
+            console.warn(
+              `[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Sampler '${uniformName || 'Unnamed'}'): Could not get texture unit for associated texture binding ${associatedTextureBinding}.`
+            );
           }
         } else {
-          console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Sampler '${uniformName || 'Unnamed'}'): No associated texture binding found in layout. Sampler parameters may not be applied correctly.`);
+          console.warn(
+            `[${this.label || 'WebGLBindGroup'}] Binding ${binding} (Sampler '${uniformName || 'Unnamed'}'): No associated texture binding found in layout. Sampler parameters may not be applied correctly.`
+          );
         }
       } else if (layoutEntry.storageTexture) {
-        console.warn(`[${this.label || 'WebGLBindGroup'}] Binding ${binding}: 'storageTexture' is not standard in WebGL and its binding behavior is undefined here.`);
+        console.warn(
+          `[${this.label || 'WebGLBindGroup'}] Binding ${binding}: 'storageTexture' is not standard in WebGL and its binding behavior is undefined here.`
+        );
       }
     }
   }
@@ -427,7 +486,7 @@ export class WebGLBindGroup implements IRHIBindGroup {
   /**
    * 销毁资源
    */
-  destroy (): void {
+  destroy(): void {
     if (this.isDestroyed) {
       return;
     }

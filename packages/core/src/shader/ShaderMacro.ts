@@ -71,8 +71,10 @@ export class ShaderMacro {
     }
 
     const id = ShaderMacro._macroIDCounter++;
+
     ShaderMacro._nameToIDMap.set(name, id);
     ShaderMacro._idToNameMap.set(id, name);
+
     return id;
   }
 
@@ -83,11 +85,11 @@ export class ShaderMacro {
    */
   static getByName(name: string): ShaderMacro {
     const id = ShaderMacro._getIDByName(name);
-    
+
     if (ShaderMacro._idToMacroMap.has(id)) {
       return ShaderMacro._idToMacroMap.get(id);
     }
-    
+
     return new ShaderMacro(name);
   }
 
@@ -109,12 +111,13 @@ export class ShaderMacro {
     if (ShaderMacro._idToMacroMap.has(id)) {
       return ShaderMacro._idToMacroMap.get(id);
     }
-    
+
     const name = ShaderMacro.getNameById(id);
+
     if (name) {
       return new ShaderMacro(name);
     }
-    
+
     return null;
   }
 
@@ -153,4 +156,4 @@ export class ShaderMacro {
     ShaderMacro.getByName('ENGINE_ENABLE_HDR');
     ShaderMacro.getByName('ENGINE_ENABLE_PBR');
   }
-} 
+}

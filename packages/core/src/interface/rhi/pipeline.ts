@@ -15,17 +15,17 @@ export interface IRHIPipelineLayout {
   /**
    * 绑定组布局
    */
-  readonly bindGroupLayouts: IRHIBindGroupLayout[],
+  readonly bindGroupLayouts: IRHIBindGroupLayout[];
 
   /**
    * 管线布局标签
    */
-  readonly label?: string,
+  readonly label?: string;
 
   /**
    * 销毁资源
    */
-  destroy(): void,
+  destroy(): void;
 }
 
 /**
@@ -35,52 +35,52 @@ export interface IRHIRenderPipeline {
   /**
    * 顶点着色器
    */
-  readonly vertexShader: IRHIShaderModule,
+  readonly vertexShader: IRHIShaderModule;
 
   /**
    * 片段着色器
    */
-  readonly fragmentShader: IRHIShaderModule,
+  readonly fragmentShader: IRHIShaderModule;
 
   /**
    * 顶点布局
    */
-  readonly vertexLayout: RHIVertexLayout,
+  readonly vertexLayout: RHIVertexLayout;
 
   /**
    * 图元类型
    */
-  readonly primitiveTopology: RHIPrimitiveTopology,
+  readonly primitiveTopology: RHIPrimitiveTopology;
 
   /**
    * 光栅化状态
    */
-  readonly rasterizationState: RHIRasterizationState,
+  readonly rasterizationState: RHIRasterizationState;
 
   /**
    * 深度模板状态
    */
-  readonly depthStencilState?: RHIDepthStencilState,
+  readonly depthStencilState?: RHIDepthStencilState;
 
   /**
    * 颜色混合状态
    */
-  readonly colorBlendState?: RHIColorBlendState,
+  readonly colorBlendState?: RHIColorBlendState;
 
   /**
    * 管线布局
    */
-  readonly layout: IRHIPipelineLayout,
+  readonly layout: IRHIPipelineLayout;
 
   /**
    * 管线标签
    */
-  readonly label?: string,
+  readonly label?: string;
 
   /**
    * 销毁资源
    */
-  destroy(): void,
+  destroy(): void;
 }
 
 /**
@@ -90,25 +90,25 @@ export interface IRHIComputePipeline {
   /**
    * 计算着色器
    */
-  readonly computeShader: IRHIShaderModule,
+  readonly computeShader: IRHIShaderModule;
 
   /**
    * 入口点
    */
-  readonly entryPoint: string,
+  readonly entryPoint: string;
 
   /**
    * 管线布局
    */
-  readonly layout: IRHIPipelineLayout,
+  readonly layout: IRHIPipelineLayout;
 
   /**
    * 管线标签
    */
-  readonly label?: string,
+  readonly label?: string;
 
   /**
    * 销毁资源
    */
-  destroy(): void,
+  destroy(): void;
 }

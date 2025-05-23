@@ -21,7 +21,7 @@ export enum ShaderPropertyType {
   /** 结构体 */
   Struct = 8,
   /** 数组 */
-  Array = 9
+  Array = 9,
 }
 
 /**
@@ -47,7 +47,7 @@ export class ShaderProperty {
    * @param nameOrID 属性名称或ID
    * @param type 属性类型
    */
-  constructor (nameOrID: string | number, type: ShaderPropertyType = ShaderPropertyType.Float) {
+  constructor(nameOrID: string | number, type: ShaderPropertyType = ShaderPropertyType.Float) {
     if (typeof nameOrID === 'string') {
       this._name = nameOrID;
       this._id = ShaderProperty.getIDByName(nameOrID);
@@ -61,21 +61,21 @@ export class ShaderProperty {
   /**
    * 获取属性ID
    */
-  get id (): number {
+  get id(): number {
     return this._id;
   }
 
   /**
    * 获取属性名称
    */
-  get name (): string {
+  get name(): string {
     return this._name;
   }
 
   /**
    * 获取属性类型
    */
-  get type (): ShaderPropertyType {
+  get type(): ShaderPropertyType {
     return this._type;
   }
 
@@ -84,7 +84,7 @@ export class ShaderProperty {
    * @param name 属性名称
    * @returns 属性ID
    */
-  static getIDByName (name: string): number {
+  static getIDByName(name: string): number {
     if (ShaderProperty._nameToIDMap.has(name)) {
       return ShaderProperty._nameToIDMap.get(name);
     }
@@ -102,7 +102,7 @@ export class ShaderProperty {
    * @param id 属性ID
    * @returns 属性名称
    */
-  static getNameById (id: number): string {
+  static getNameById(id: number): string {
     return ShaderProperty._idToNameMap.get(id) || '';
   }
 
@@ -111,7 +111,7 @@ export class ShaderProperty {
    * @param id 属性ID
    * @returns 是否存在
    */
-  static hasID (id: number): boolean {
+  static hasID(id: number): boolean {
     return ShaderProperty._idToNameMap.has(id);
   }
 
@@ -120,7 +120,7 @@ export class ShaderProperty {
    * @param name 属性名称
    * @returns 是否存在
    */
-  static hasName (name: string): boolean {
+  static hasName(name: string): boolean {
     return ShaderProperty._nameToIDMap.has(name);
   }
 
@@ -128,14 +128,14 @@ export class ShaderProperty {
    * 获取所有属性名称
    * @returns 属性名称数组
    */
-  static getAllPropertyNames (): string[] {
+  static getAllPropertyNames(): string[] {
     return Array.from(ShaderProperty._nameToIDMap.keys());
   }
 
   /**
    * 创建常用的内置着色器属性
    */
-  static createBuiltins (): void {
+  static createBuiltins(): void {
     // 创建常用的内置着色器属性
     // 矩阵
     ShaderProperty.getIDByName('modelMatrix');

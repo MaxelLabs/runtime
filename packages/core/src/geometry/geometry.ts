@@ -20,7 +20,7 @@ export enum AttributeType {
   /** 骨骼索引 */
   BoneIndex,
   /** 自定义属性 */
-  Custom
+  Custom,
 }
 
 /**
@@ -28,15 +28,15 @@ export enum AttributeType {
  */
 export interface GeometryAttribute {
   /** 属性类型 */
-  type: AttributeType,
+  type: AttributeType;
   /** 属性名称（用于自定义属性） */
-  name?: string,
+  name?: string;
   /** 每个顶点的分量数 */
-  size: number,
+  size: number;
   /** 属性数据 */
-  data: Float32Array,
+  data: Float32Array;
   /** 是否需要更新 */
-  dirty?: boolean,
+  dirty?: boolean;
 }
 
 /**
@@ -61,7 +61,7 @@ export class Geometry extends ReferResource {
   /**
    * 创建一个新的几何体
    */
-  constructor () {
+  constructor() {
     super();
   }
 
@@ -69,10 +69,8 @@ export class Geometry extends ReferResource {
    * 设置顶点位置属性
    * @param positions 顶点位置数据，每3个值表示一个顶点的xyz坐标
    */
-  setPositions (positions: Float32Array | number[]): void {
-    const data = positions instanceof Float32Array
-      ? positions
-      : new Float32Array(positions);
+  setPositions(positions: Float32Array | number[]): void {
+    const data = positions instanceof Float32Array ? positions : new Float32Array(positions);
 
     this._attributes.set(AttributeType.Position, {
       type: AttributeType.Position,
@@ -89,7 +87,7 @@ export class Geometry extends ReferResource {
    * 获取顶点位置数据
    * @returns 顶点位置数据
    */
-  getPositions (): Float32Array | null {
+  getPositions(): Float32Array | null {
     const attr = this._attributes.get(AttributeType.Position);
 
     return attr ? attr.data : null;
@@ -99,10 +97,8 @@ export class Geometry extends ReferResource {
    * 设置顶点法线属性
    * @param normals 顶点法线数据，每3个值表示一个顶点的法线向量
    */
-  setNormals (normals: Float32Array | number[]): void {
-    const data = normals instanceof Float32Array
-      ? normals
-      : new Float32Array(normals);
+  setNormals(normals: Float32Array | number[]): void {
+    const data = normals instanceof Float32Array ? normals : new Float32Array(normals);
 
     this._attributes.set(AttributeType.Normal, {
       type: AttributeType.Normal,
@@ -116,7 +112,7 @@ export class Geometry extends ReferResource {
    * 获取顶点法线数据
    * @returns 顶点法线数据
    */
-  getNormals (): Float32Array | null {
+  getNormals(): Float32Array | null {
     const attr = this._attributes.get(AttributeType.Normal);
 
     return attr ? attr.data : null;
@@ -126,10 +122,8 @@ export class Geometry extends ReferResource {
    * 设置纹理坐标属性
    * @param uvs 纹理坐标数据，每2个值表示一个顶点的uv坐标
    */
-  setUVs (uvs: Float32Array | number[]): void {
-    const data = uvs instanceof Float32Array
-      ? uvs
-      : new Float32Array(uvs);
+  setUVs(uvs: Float32Array | number[]): void {
+    const data = uvs instanceof Float32Array ? uvs : new Float32Array(uvs);
 
     this._attributes.set(AttributeType.UV, {
       type: AttributeType.UV,
@@ -143,7 +137,7 @@ export class Geometry extends ReferResource {
    * 获取纹理坐标数据
    * @returns 纹理坐标数据
    */
-  getUVs (): Float32Array | null {
+  getUVs(): Float32Array | null {
     const attr = this._attributes.get(AttributeType.UV);
 
     return attr ? attr.data : null;
@@ -153,10 +147,8 @@ export class Geometry extends ReferResource {
    * 设置顶点颜色属性
    * @param colors 顶点颜色数据，每4个值表示一个顶点的rgba颜色
    */
-  setColors (colors: Float32Array | number[]): void {
-    const data = colors instanceof Float32Array
-      ? colors
-      : new Float32Array(colors);
+  setColors(colors: Float32Array | number[]): void {
+    const data = colors instanceof Float32Array ? colors : new Float32Array(colors);
 
     this._attributes.set(AttributeType.Color, {
       type: AttributeType.Color,
@@ -170,7 +162,7 @@ export class Geometry extends ReferResource {
    * 获取顶点颜色数据
    * @returns 顶点颜色数据
    */
-  getColors (): Float32Array | null {
+  getColors(): Float32Array | null {
     const attr = this._attributes.get(AttributeType.Color);
 
     return attr ? attr.data : null;
@@ -180,10 +172,8 @@ export class Geometry extends ReferResource {
    * 设置顶点切线属性
    * @param tangents 顶点切线数据，每4个值表示一个顶点的切线向量和手性
    */
-  setTangents (tangents: Float32Array | number[]): void {
-    const data = tangents instanceof Float32Array
-      ? tangents
-      : new Float32Array(tangents);
+  setTangents(tangents: Float32Array | number[]): void {
+    const data = tangents instanceof Float32Array ? tangents : new Float32Array(tangents);
 
     this._attributes.set(AttributeType.Tangent, {
       type: AttributeType.Tangent,
@@ -197,7 +187,7 @@ export class Geometry extends ReferResource {
    * 获取顶点切线数据
    * @returns 顶点切线数据
    */
-  getTangents (): Float32Array | null {
+  getTangents(): Float32Array | null {
     const attr = this._attributes.get(AttributeType.Tangent);
 
     return attr ? attr.data : null;
@@ -209,10 +199,8 @@ export class Geometry extends ReferResource {
    * @param size 每个顶点的分量数
    * @param data 属性数据
    */
-  setCustomAttribute (name: string, size: number, data: Float32Array | number[]): void {
-    const attributeData = data instanceof Float32Array
-      ? data
-      : new Float32Array(data);
+  setCustomAttribute(name: string, size: number, data: Float32Array | number[]): void {
+    const attributeData = data instanceof Float32Array ? data : new Float32Array(data);
 
     const attribute: GeometryAttribute = {
       type: AttributeType.Custom,
@@ -230,7 +218,7 @@ export class Geometry extends ReferResource {
    * @param name 属性名称
    * @returns 属性数据
    */
-  getCustomAttribute (name: string): Float32Array | null {
+  getCustomAttribute(name: string): Float32Array | null {
     const attr = this._customAttributes.get(name);
 
     return attr ? attr.data : null;
@@ -240,7 +228,7 @@ export class Geometry extends ReferResource {
    * 设置索引数据
    * @param indices 索引数据
    */
-  setIndices (indices: Uint16Array | Uint32Array | number[]): void {
+  setIndices(indices: Uint16Array | Uint32Array | number[]): void {
     if (indices instanceof Uint16Array || indices instanceof Uint32Array) {
       this._indices = indices;
     } else {
@@ -260,7 +248,7 @@ export class Geometry extends ReferResource {
    * 获取索引数据
    * @returns 索引数据
    */
-  getIndices (): Uint16Array | Uint32Array | null {
+  getIndices(): Uint16Array | Uint32Array | null {
     return this._indices;
   }
 
@@ -268,7 +256,7 @@ export class Geometry extends ReferResource {
    * 获取顶点数量
    * @returns 顶点数量
    */
-  getVertexCount (): number {
+  getVertexCount(): number {
     const positions = this.getPositions();
 
     return positions ? positions.length / 3 : 0;
@@ -278,7 +266,7 @@ export class Geometry extends ReferResource {
    * 获取索引数量
    * @returns 索引数量
    */
-  getIndexCount (): number {
+  getIndexCount(): number {
     return this._indices ? this._indices.length : 0;
   }
 
@@ -286,7 +274,7 @@ export class Geometry extends ReferResource {
    * 计算表面法线
    * 根据顶点位置和索引计算每个顶点的法线
    */
-  computeNormals (): void {
+  computeNormals(): void {
     const positions = this.getPositions();
     const indices = this.getIndices();
 
@@ -376,7 +364,7 @@ export class Geometry extends ReferResource {
    * 计算切线
    * 根据顶点位置、UV坐标和索引计算每个顶点的切线
    */
-  computeTangents (): void {
+  computeTangents(): void {
     const positions = this.getPositions();
     const normals = this.getNormals();
     const uvs = this.getUVs();
@@ -407,21 +395,9 @@ export class Geometry extends ReferResource {
       const i3 = indices[i + 2];
 
       // 三角形的三个顶点位置
-      const p1 = new Vector3(
-        positions[i1 * 3],
-        positions[i1 * 3 + 1],
-        positions[i1 * 3 + 2]
-      );
-      const p2 = new Vector3(
-        positions[i2 * 3],
-        positions[i2 * 3 + 1],
-        positions[i2 * 3 + 2]
-      );
-      const p3 = new Vector3(
-        positions[i3 * 3],
-        positions[i3 * 3 + 1],
-        positions[i3 * 3 + 2]
-      );
+      const p1 = new Vector3(positions[i1 * 3], positions[i1 * 3 + 1], positions[i1 * 3 + 2]);
+      const p2 = new Vector3(positions[i2 * 3], positions[i2 * 3 + 1], positions[i2 * 3 + 2]);
+      const p3 = new Vector3(positions[i3 * 3], positions[i3 * 3 + 1], positions[i3 * 3 + 2]);
 
       // 三角形的三个顶点UV坐标
       const uv1 = new Vector2(uvs[i1 * 2], uvs[i1 * 2 + 1]);
@@ -463,11 +439,7 @@ export class Geometry extends ReferResource {
 
     // 计算每个顶点的最终切线（正交化并计算手性）
     for (let i = 0; i < vertexCount; i++) {
-      const n = new Vector3(
-        normals[i * 3],
-        normals[i * 3 + 1],
-        normals[i * 3 + 2]
-      );
+      const n = new Vector3(normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]);
 
       const t = tempTangents[i];
 
@@ -494,7 +466,7 @@ export class Geometry extends ReferResource {
   /**
    * 计算包围盒
    */
-  computeBoundingBox (): void {
+  computeBoundingBox(): void {
     const positions = this.getPositions();
 
     if (!positions || positions.length === 0) {
@@ -506,17 +478,9 @@ export class Geometry extends ReferResource {
     }
 
     // 初始化边界为第一个顶点
-    const min = new Vector3(
-      positions[0],
-      positions[1],
-      positions[2]
-    );
+    const min = new Vector3(positions[0], positions[1], positions[2]);
 
-    const max = new Vector3(
-      positions[0],
-      positions[1],
-      positions[2]
-    );
+    const max = new Vector3(positions[0], positions[1], positions[2]);
 
     // 遍历所有顶点，更新边界
     for (let i = 3; i < positions.length; i += 3) {
@@ -544,7 +508,7 @@ export class Geometry extends ReferResource {
    * 获取包围盒最小点
    * @returns 包围盒最小点
    */
-  getBoundingBoxMin (): Vector3 {
+  getBoundingBoxMin(): Vector3 {
     if (this._boundingBoxDirty) {
       this.computeBoundingBox();
     }
@@ -556,7 +520,7 @@ export class Geometry extends ReferResource {
    * 获取包围盒最大点
    * @returns 包围盒最大点
    */
-  getBoundingBoxMax (): Vector3 {
+  getBoundingBoxMax(): Vector3 {
     if (this._boundingBoxDirty) {
       this.computeBoundingBox();
     }
@@ -568,7 +532,7 @@ export class Geometry extends ReferResource {
    * 获取所有顶点属性
    * @returns 属性映射
    */
-  getAttributes (): Map<AttributeType, GeometryAttribute> {
+  getAttributes(): Map<AttributeType, GeometryAttribute> {
     return new Map(this._attributes);
   }
 
@@ -576,14 +540,14 @@ export class Geometry extends ReferResource {
    * 获取所有自定义属性
    * @returns 自定义属性映射
    */
-  getCustomAttributes (): Map<string, GeometryAttribute> {
+  getCustomAttributes(): Map<string, GeometryAttribute> {
     return new Map(this._customAttributes);
   }
 
   /**
    * 清除几何体数据
    */
-  clear (): void {
+  clear(): void {
     this._attributes.clear();
     this._customAttributes.clear();
     this._indices = null;
@@ -597,7 +561,7 @@ export class Geometry extends ReferResource {
    * 复制几何体
    * @returns 几何体副本
    */
-  clone (): Geometry {
+  clone(): Geometry {
     const geometry = new Geometry();
 
     // 复制所有属性
@@ -628,9 +592,8 @@ export class Geometry extends ReferResource {
 
     // 复制索引
     if (this._indices) {
-      geometry._indices = this._indices instanceof Uint16Array
-        ? new Uint16Array(this._indices)
-        : new Uint32Array(this._indices);
+      geometry._indices =
+        this._indices instanceof Uint16Array ? new Uint16Array(this._indices) : new Uint32Array(this._indices);
       geometry._indicesDirty = true;
     }
 
@@ -650,7 +613,7 @@ export class Geometry extends ReferResource {
    * 释放几何体资源
    * 重写ReferResource的onDispose方法
    */
-  protected override onDestroy (): void {
+  protected override onDestroy(): void {
     this.clear();
   }
 }

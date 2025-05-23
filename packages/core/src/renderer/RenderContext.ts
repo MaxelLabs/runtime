@@ -1,10 +1,10 @@
 import { Matrix4, Vector4 } from '@maxellabs/math';
-import { Camera } from '../camera/Camera';
-import { Scene } from '../scene/Scene';
-import { ShaderData } from '../shader/ShaderData';
+import type { Camera } from '../camera/Camera';
+import type { Scene } from '../scene/Scene';
+import type { ShaderData } from '../shader/ShaderData';
 import { ShaderMacroCollection } from '../shader/ShaderMacroCollection';
 import { Container, ServiceKeys } from '../base/IOC';
-import { CullingResults } from './CullingResults';
+import type { CullingResults } from './CullingResults';
 
 /**
  * 渲染上下文类，包含渲染所需的各种上下文信息
@@ -58,7 +58,7 @@ export class RenderContext {
    */
   constructor() {
     this.container = Container.getInstance();
-    
+
     // 注册自身到IOC容器
     this.container.register(ServiceKeys.RENDER_CONTEXT, this);
   }
@@ -129,10 +129,10 @@ export class RenderContext {
     if (!this.camera) {
       return;
     }
-    
+
     this.viewMatrix.copyFrom(this.camera.viewMatrix);
     this.projMatrix.copyFrom(this.camera.projectionMatrix);
-    
+
     Matrix4.multiply(this.projMatrix, this.viewMatrix, this.viewProjMatrix);
   }
 
@@ -142,9 +142,9 @@ export class RenderContext {
    */
   updateModelMatrix(modelMatrix: Matrix4): void {
     this.modelMatrix.copyFrom(modelMatrix);
-    
+
     Matrix4.multiply(this.viewMatrix, this.modelMatrix, this.modelViewMatrix);
-    
+
     Matrix4.multiply(this.projMatrix, this.modelViewMatrix, this.mvpMatrix);
   }
-} 
+}

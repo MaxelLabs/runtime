@@ -6,7 +6,7 @@ import type { IRHIBindGroupLayout, IRHIBindGroupLayoutEntry } from '@maxellabs/c
 
 // Define a more detailed internal layout entry interface
 interface IWebGLDetailedBindGroupLayoutEntry extends IRHIBindGroupLayoutEntry {
-  name?: string, // Uniform/Sampler/Texture name in the shader, provided by the user
+  name?: string; // Uniform/Sampler/Texture name in the shader, provided by the user
   // Example: if a sampler is associated with a texture, you might define it here
   // associatedTextureBinding?: number;
 }
@@ -29,7 +29,7 @@ export class WebGLBindGroupLayout implements IRHIBindGroupLayout {
    * @param entries 绑定条目数组 (expected to be IWebGLDetailedBindGroupLayoutEntry compatible)
    * @param label 可选标签
    */
-  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, entries: any[], label?: string) {
+  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, entries: any[], label?: string) {
     this.gl = gl;
     this.detailedEntries = entries as IWebGLDetailedBindGroupLayoutEntry[];
     this._label = label; // Assign to private field
@@ -44,7 +44,7 @@ export class WebGLBindGroupLayout implements IRHIBindGroupLayout {
   /**
    * 验证绑定组布局条目并分配纹理单元
    */
-  private validateAndProcessDetailedEntries (): void {
+  private validateAndProcessDetailedEntries(): void {
     const bindingSet = new Set<number>();
     const maxCombinedTextureImageUnits = this.gl.getParameter(this.gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 
@@ -53,10 +53,14 @@ export class WebGLBindGroupLayout implements IRHIBindGroupLayout {
         throw new Error(`[${this._label || 'WebGLBindGroupLayout'}] Layout entry must include 'binding' field.`);
       }
       if (typeof entry.binding !== 'number' || entry.binding < 0 || !Number.isInteger(entry.binding)) {
-        throw new Error(`[${this._label || 'WebGLBindGroupLayout'}] Invalid binding value: ${entry.binding}, must be a non-negative integer.`);
+        throw new Error(
+          `[${this._label || 'WebGLBindGroupLayout'}] Invalid binding value: ${entry.binding}, must be a non-negative integer.`
+        );
       }
       if (bindingSet.has(entry.binding)) {
-        throw new Error(`[${this._label || 'WebGLBindGroupLayout'}] Binding point ${entry.binding} is duplicated. Bindings must be unique.`);
+        throw new Error(
+          `[${this._label || 'WebGLBindGroupLayout'}] Binding point ${entry.binding} is duplicated. Bindings must be unique.`
+        );
       }
       bindingSet.add(entry.binding);
 
@@ -67,25 +71,35 @@ export class WebGLBindGroupLayout implements IRHIBindGroupLayout {
       const hasStorageTexture = !!entry.storageTexture;
 
       if (!(hasBuffer || hasTexture || hasSampler || hasStorageTexture)) {
-        throw new Error(`[${this._label || 'WebGLBindGroupLayout'}] Binding ${entry.binding}: Entry must define one of buffer, texture, sampler, or storageTexture.`);
+        throw new Error(
+          `[${this._label || 'WebGLBindGroupLayout'}] Binding ${entry.binding}: Entry must define one of buffer, texture, sampler, or storageTexture.`
+        );
       }
 
       // 进一步验证子属性（例如，entry.buffer.type）
       if (hasBuffer && entry.buffer!.type === undefined) {
-        throw new Error(`[${this._label || 'WebGLBindGroupLayout'}] Binding ${entry.binding}: Buffer entry missing 'type'.`);
+        throw new Error(
+          `[${this._label || 'WebGLBindGroupLayout'}] Binding ${entry.binding}: Buffer entry missing 'type'.`
+        );
       }
       if (hasTexture && (entry.texture!.sampleType === undefined || entry.texture!.viewDimension === undefined)) {
-        throw new Error(`[${this._label || 'WebGLBindGroupLayout'}] Binding ${entry.binding}: Texture entry missing 'sampleType' or 'viewDimension'.`);
+        throw new Error(
+          `[${this._label || 'WebGLBindGroupLayout'}] Binding ${entry.binding}: Texture entry missing 'sampleType' or 'viewDimension'.`
+        );
       }
       if (hasSampler && entry.sampler!.type === undefined) {
-        throw new Error(`[${this._label || 'WebGLBindGroupLayout'}] Binding ${entry.binding}: Sampler entry missing 'type'.`);
+        throw new Error(
+          `[${this._label || 'WebGLBindGroupLayout'}] Binding ${entry.binding}: Sampler entry missing 'type'.`
+        );
       }
       // Add more checks for storageTexture if it's actively used
 
       // Assign texture units for texture bindings
       if (hasTexture) {
         if (this.nextAvailableTextureUnit >= maxCombinedTextureImageUnits) {
-          console.warn(`[${this._label || 'WebGLBindGroupLayout'}] Binding ${entry.binding}: Max texture units (${maxCombinedTextureImageUnits}) reached. Cannot assign unit.`);
+          console.warn(
+            `[${this._label || 'WebGLBindGroupLayout'}] Binding ${entry.binding}: Max texture units (${maxCombinedTextureImageUnits}) reached. Cannot assign unit.`
+          );
         } else {
           this.textureBindingToUnitMap.set(entry.binding, this.nextAvailableTextureUnit);
           this.nextAvailableTextureUnit++;
@@ -97,8 +111,8 @@ export class WebGLBindGroupLayout implements IRHIBindGroupLayout {
   /**
    * 获取绑定组布局条目 (符合公共接口)
    */
-  getEntries (): IRHIBindGroupLayoutEntry[] {
-    return this.detailedEntries.map(de => {
+  getEntries(): IRHIBindGroupLayoutEntry[] {
+    return this.detailedEntries.map((de) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { name: _name, ...publicEntryFields } = de; // Ignore 'name' by prefixing with _
 
@@ -109,7 +123,7 @@ export class WebGLBindGroupLayout implements IRHIBindGroupLayout {
   /**
    * 获取绑定组布局标签
    */
-  get label (): string | undefined {
+  get label(): string | undefined {
     return this._label;
   }
 
@@ -118,8 +132,8 @@ export class WebGLBindGroupLayout implements IRHIBindGroupLayout {
    * @param binding 绑定点
    * @returns 详细的绑定条目或undefined
    */
-  public getDetailedBindingEntry (binding: number): IWebGLDetailedBindGroupLayoutEntry | undefined {
-    return this.detailedEntries.find(entry => entry.binding === binding);
+  public getDetailedBindingEntry(binding: number): IWebGLDetailedBindGroupLayoutEntry | undefined {
+    return this.detailedEntries.find((entry) => entry.binding === binding);
   }
 
   /**
@@ -127,7 +141,7 @@ export class WebGLBindGroupLayout implements IRHIBindGroupLayout {
    * @param textureBinding 纹理绑定点
    * @returns 分配的纹理单元索引或undefined
    */
-  public getTextureUnitForBinding (textureBinding: number): number | undefined {
+  public getTextureUnitForBinding(textureBinding: number): number | undefined {
     return this.textureBindingToUnitMap.get(textureBinding);
   }
 
@@ -137,7 +151,7 @@ export class WebGLBindGroupLayout implements IRHIBindGroupLayout {
    * @param samplerBinding 采样器绑定点
    * @returns 关联的纹理绑定点或undefined
    */
-  public getAssociatedTextureBindingForSampler (samplerBinding: number): number | undefined {
+  public getAssociatedTextureBindingForSampler(samplerBinding: number): number | undefined {
     const samplerEntry = this.getDetailedBindingEntry(samplerBinding);
 
     // This logic is highly dependent on your engine's conventions.
@@ -157,7 +171,9 @@ export class WebGLBindGroupLayout implements IRHIBindGroupLayout {
         return potentialTextureBinding;
       }
     }
-    console.warn(`[${this._label || 'WebGLBindGroupLayout'}] Could not determine associated texture for sampler binding ${samplerBinding}. This may affect sampler parameter application.`);
+    console.warn(
+      `[${this._label || 'WebGLBindGroupLayout'}] Could not determine associated texture for sampler binding ${samplerBinding}. This may affect sampler parameter application.`
+    );
 
     return undefined;
   }
@@ -165,7 +181,7 @@ export class WebGLBindGroupLayout implements IRHIBindGroupLayout {
   /**
    * 销毁资源
    */
-  destroy (): void {
+  destroy(): void {
     if (this.isDestroyed) {
       return;
     }

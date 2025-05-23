@@ -4,7 +4,7 @@
  * @param value
  * @returns
  */
-export function nearestPowerIntegerOfTwo (value: number) {
+export function nearestPowerIntegerOfTwo(value: number) {
   if (isNaN(value) || value === Infinity || value === -Infinity || value <= 1) {
     return 1;
   }

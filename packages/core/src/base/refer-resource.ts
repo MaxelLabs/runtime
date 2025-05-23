@@ -8,19 +8,19 @@ export interface IReferable {
   /**
    * 引用计数
    */
-  readonly refCount: number,
+  readonly refCount: number;
 
   /**
    * 增加引用计数
    * @returns 增加后的引用计数
    */
-  addRef(): number,
+  addRef(): number;
 
   /**
    * 减少引用计数
    * @returns 减少后的引用计数
    */
-  release(): number,
+  release(): number;
 }
 
 /**
@@ -50,7 +50,7 @@ export class ReferResource extends MaxObject implements IReferable {
    * 获取当前引用计数
    * @readonly
    */
-  get refCount (): number {
+  get refCount(): number {
     return this.referenceCount;
   }
 
@@ -58,7 +58,7 @@ export class ReferResource extends MaxObject implements IReferable {
    * 增加引用计数
    * @returns 增加后的引用计数
    */
-  addRef (): number {
+  addRef(): number {
     if (this.isDestroyed()) {
       console.warn(`[ReferResource] 尝试增加已销毁资源的引用计数: ${this.tag}(${this.name})`);
 
@@ -72,7 +72,7 @@ export class ReferResource extends MaxObject implements IReferable {
    * 减少引用计数，当计数为0时销毁资源
    * @returns 减少后的引用计数
    */
-  release (): number {
+  release(): number {
     if (this.isDestroyed()) {
       return 0;
     }
@@ -90,7 +90,7 @@ export class ReferResource extends MaxObject implements IReferable {
    * 设置资源URL
    * @param url 资源URL
    */
-  setUrl (url: string): void {
+  setUrl(url: string): void {
     this.url = url;
   }
 
@@ -98,7 +98,7 @@ export class ReferResource extends MaxObject implements IReferable {
    * 获取资源URL
    * @returns 资源URL
    */
-  getUrl (): string {
+  getUrl(): string {
     return this.url;
   }
 
@@ -106,7 +106,7 @@ export class ReferResource extends MaxObject implements IReferable {
    * 设置资源大小
    * @param size 资源大小(字节)
    */
-  setSize (size: number): void {
+  setSize(size: number): void {
     this.size = Math.max(0, size);
   }
 
@@ -114,7 +114,7 @@ export class ReferResource extends MaxObject implements IReferable {
    * 获取资源大小
    * @returns 资源大小(字节)
    */
-  getSize (): number {
+  getSize(): number {
     return this.size;
   }
 
@@ -122,7 +122,7 @@ export class ReferResource extends MaxObject implements IReferable {
    * 检查资源是否已加载
    * @returns 是否已加载
    */
-  loaded (): boolean {
+  loaded(): boolean {
     return this.isLoaded;
   }
 
@@ -130,7 +130,7 @@ export class ReferResource extends MaxObject implements IReferable {
    * 标记资源为已加载状态
    * @param loaded 加载状态
    */
-  setLoaded (loaded: boolean): void {
+  setLoaded(loaded: boolean): void {
     this.isLoaded = loaded;
   }
 
@@ -138,7 +138,7 @@ export class ReferResource extends MaxObject implements IReferable {
    * 销毁资源，释放内存
    * 如果资源有引用，会输出警告但仍会强制销毁
    */
-  override destroy (): void {
+  override destroy(): void {
     if (this.isDestroyed()) {
       return;
     }
@@ -158,7 +158,7 @@ export class ReferResource extends MaxObject implements IReferable {
    * 资源销毁时调用，子类应重写此方法释放特定资源
    * @protected
    */
-  protected onResourceDestroy (): void {
+  protected onResourceDestroy(): void {
     // 子类实现特定资源的释放逻辑
   }
 }

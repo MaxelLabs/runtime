@@ -43,14 +43,16 @@ export class Utils {
     }
 
     if (obj instanceof Array) {
-      return obj.map(item => Utils.deepClone(item)) as any;
+      return obj.map((item) => Utils.deepClone(item)) as any;
     }
 
     if (obj instanceof Object) {
       const copy = {} as any;
-      Object.keys(obj).forEach(key => {
+
+      Object.keys(obj).forEach((key) => {
         copy[key] = Utils.deepClone((obj as any)[key]);
       });
+
       return copy;
     }
 
@@ -65,6 +67,7 @@ export class Utils {
   static generateUUID(prefix: string = ''): string {
     const timestamp = Date.now().toString(36);
     const randomStr = Math.random().toString(36).substr(2, 9);
+
     return prefix ? `${prefix}_${timestamp}_${randomStr}` : `${timestamp}_${randomStr}`;
   }
 
@@ -74,7 +77,7 @@ export class Utils {
    * @returns 弧度值
    */
   static degToRad(degrees: number): number {
-    return degrees * Math.PI / 180;
+    return (degrees * Math.PI) / 180;
   }
 
   /**
@@ -83,7 +86,7 @@ export class Utils {
    * @returns 角度值
    */
   static radToDeg(radians: number): number {
-    return radians * 180 / Math.PI;
+    return (radians * 180) / Math.PI;
   }
 
   /**
@@ -92,13 +95,10 @@ export class Utils {
    * @param delay 延迟时间(毫秒)
    * @returns 去抖动处理后的函数
    */
-  static debounce<T extends (...args: any[]) => any>(
-    fn: T,
-    delay: number
-  ): DebouncedFunction<T> {
+  static debounce<T extends (...args: any[]) => any>(fn: T, delay: number): DebouncedFunction<T> {
     let timer: number | null = null;
 
-    const debouncedFn = function(this: any, ...args: Parameters<T>): void {
+    const debouncedFn = function (this: any, ...args: Parameters<T>): void {
       if (timer !== null) {
         window.clearTimeout(timer);
       }
@@ -108,7 +108,7 @@ export class Utils {
       }, delay);
     } as DebouncedFunction<T>;
 
-    debouncedFn.cancel = function(): void {
+    debouncedFn.cancel = function (): void {
       if (timer !== null) {
         window.clearTimeout(timer);
         timer = null;
@@ -124,25 +124,23 @@ export class Utils {
    * @param limit 时间限制(毫秒)
    * @returns 节流处理后的函数
    */
-  static throttle<T extends (...args: any[]) => any>(
-    fn: T,
-    limit: number
-  ): ThrottledFunction<T> {
+  static throttle<T extends (...args: any[]) => any>(fn: T, limit: number): ThrottledFunction<T> {
     let timer: number | null = null;
     let lastRun: number = 0;
 
-    const throttledFn = function(this: any, ...args: Parameters<T>): void {
+    const throttledFn = function (this: any, ...args: Parameters<T>): void {
       const now = Date.now();
-      
+
       if (lastRun === 0) {
         fn.apply(this, args);
         lastRun = now;
+
         return;
       }
-      
+
       if (timer === null) {
         const remaining = limit - (now - lastRun);
-        
+
         if (remaining <= 0) {
           lastRun = now;
           fn.apply(this, args);
@@ -156,7 +154,7 @@ export class Utils {
       }
     } as ThrottledFunction<T>;
 
-    throttledFn.cancel = function(): void {
+    throttledFn.cancel = function (): void {
       if (timer !== null) {
         window.clearTimeout(timer);
         timer = null;
@@ -207,10 +205,13 @@ export class Utils {
    */
   static shuffle<T>(array: T[]): T[] {
     const result = [...array];
+
     for (let i = result.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
+
       [result[i], result[j]] = [result[j], result[i]];
     }
+
     return result;
   }
 
@@ -230,18 +231,19 @@ export class Utils {
   static parseQueryParams(url: string): Record<string, string> {
     const params: Record<string, string> = {};
     const queryString = url.split('?')[1];
-    
+
     if (!queryString) {
       return params;
     }
-    
+
     const pairs = queryString.split('&');
-    
+
     for (const pair of pairs) {
       const [key, value] = pair.split('=');
+
       params[decodeURIComponent(key)] = decodeURIComponent(value || '');
     }
-    
+
     return params;
   }
 
@@ -254,13 +256,13 @@ export class Utils {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
-    
+
     const parts = [
       hrs > 0 ? String(hrs).padStart(2, '0') : null,
       String(mins).padStart(2, '0'),
-      String(secs).padStart(2, '0')
+      String(secs).padStart(2, '0'),
     ].filter(Boolean);
-    
+
     return parts.join(':');
   }
 }

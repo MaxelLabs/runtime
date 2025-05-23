@@ -45,16 +45,19 @@ export class WebGLTextureView implements IRHITextureView {
    * @param gl WebGL上下文
    * @param descriptor 纹理视图描述符
    */
-  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: {
-    texture: IRHITexture,
-    format?: RHITextureFormat,
-    dimension?: '1d' | '2d' | '3d' | 'cube' | '2d-array' | 'cube-array',
-    baseMipLevel?: number,
-    mipLevelCount?: number,
-    baseArrayLayer?: number,
-    arrayLayerCount?: number,
-    label?: string,
-  }) {
+  constructor(
+    gl: WebGLRenderingContext | WebGL2RenderingContext,
+    descriptor: {
+      texture: IRHITexture;
+      format?: RHITextureFormat;
+      dimension?: '1d' | '2d' | '3d' | 'cube' | '2d-array' | 'cube-array';
+      baseMipLevel?: number;
+      mipLevelCount?: number;
+      baseArrayLayer?: number;
+      arrayLayerCount?: number;
+      label?: string;
+    }
+  ) {
     this.gl = gl;
     this.texture = descriptor.texture;
 
@@ -81,16 +84,13 @@ export class WebGLTextureView implements IRHITextureView {
     this.baseMipLevel = baseMipLevel;
 
     // 正确处理mipLevelCount，确保不会因为传入0而跳转到默认逻辑
-    this.mipLevelCount = mipLevelCount !== undefined
-      ? mipLevelCount
-      : (sourceMipLevelCount - this.baseMipLevel);
+    this.mipLevelCount = mipLevelCount !== undefined ? mipLevelCount : sourceMipLevelCount - this.baseMipLevel;
 
     this.baseArrayLayer = baseArrayLayer;
 
     // 正确处理arrayLayerCount，确保不会因为传入0而跳转到默认逻辑
-    this.arrayLayerCount = arrayLayerCount !== undefined
-      ? arrayLayerCount
-      : (sourceDepthOrArrayLayers - this.baseArrayLayer);
+    this.arrayLayerCount =
+      arrayLayerCount !== undefined ? arrayLayerCount : sourceDepthOrArrayLayers - this.baseArrayLayer;
 
     this.label = label;
 
@@ -104,14 +104,20 @@ export class WebGLTextureView implements IRHITextureView {
    * @param sourceMipLevelCount 源纹理的MIP级别数
    * @param sourceDepthOrArrayLayers 源纹理的深度或数组层数
    */
-  private validateParameters (sourceMipLevelCount: number, sourceDepthOrArrayLayers: number, sourceDimension: '1d' | '2d' | '3d' | 'cube' | '2d-array' | 'cube-array'): void {
+  private validateParameters(
+    sourceMipLevelCount: number,
+    sourceDepthOrArrayLayers: number,
+    sourceDimension: '1d' | '2d' | '3d' | 'cube' | '2d-array' | 'cube-array'
+  ): void {
     // 检查mip级别范围
     if (this.baseMipLevel < 0 || this.baseMipLevel >= sourceMipLevelCount) {
       throw new Error(`基础MIP级别 ${this.baseMipLevel} 超出源纹理的有效范围 [0, ${sourceMipLevelCount - 1}]`);
     }
 
     if (this.baseMipLevel + this.mipLevelCount > sourceMipLevelCount) {
-      throw new Error(`MIP级别范围 [${this.baseMipLevel}, ${this.baseMipLevel + this.mipLevelCount - 1}] 超出源纹理的MIP级别范围 [0, ${sourceMipLevelCount - 1}]`);
+      throw new Error(
+        `MIP级别范围 [${this.baseMipLevel}, ${this.baseMipLevel + this.mipLevelCount - 1}] 超出源纹理的MIP级别范围 [0, ${sourceMipLevelCount - 1}]`
+      );
     }
 
     // 检查数组层范围
@@ -120,7 +126,9 @@ export class WebGLTextureView implements IRHITextureView {
     }
 
     if (this.baseArrayLayer + this.arrayLayerCount > sourceDepthOrArrayLayers) {
-      throw new Error(`数组层范围 [${this.baseArrayLayer}, ${this.baseArrayLayer + this.arrayLayerCount - 1}] 超出源纹理的数组层范围 [0, ${sourceDepthOrArrayLayers - 1}]`);
+      throw new Error(
+        `数组层范围 [${this.baseArrayLayer}, ${this.baseArrayLayer + this.arrayLayerCount - 1}] 超出源纹理的数组层范围 [0, ${sourceDepthOrArrayLayers - 1}]`
+      );
     }
 
     // 检查维度与源纹理兼容性
@@ -133,8 +141,10 @@ export class WebGLTextureView implements IRHITextureView {
     }
 
     // 检查2D数组和立方体数组视图（WebGL2特性）
-    if ((this.dimension === '2d-array' || this.dimension === 'cube-array') &&
-        !(this.gl instanceof WebGL2RenderingContext)) {
+    if (
+      (this.dimension === '2d-array' || this.dimension === 'cube-array') &&
+      !(this.gl instanceof WebGL2RenderingContext)
+    ) {
       throw new Error(`WebGL1不支持${this.dimension}纹理视图`);
     }
   }
@@ -142,56 +152,56 @@ export class WebGLTextureView implements IRHITextureView {
   /**
    * 获取源纹理
    */
-  getTexture (): IRHITexture {
+  getTexture(): IRHITexture {
     return this.texture;
   }
 
   /**
    * 获取视图格式
    */
-  getFormat (): RHITextureFormat {
+  getFormat(): RHITextureFormat {
     return this.format;
   }
 
   /**
    * 获取视图维度
    */
-  getDimension (): '1d' | '2d' | '3d' | 'cube' | '2d-array' | 'cube-array' {
+  getDimension(): '1d' | '2d' | '3d' | 'cube' | '2d-array' | 'cube-array' {
     return this.dimension;
   }
 
   /**
    * 获取基础MIP级别
    */
-  getBaseMipLevel (): number {
+  getBaseMipLevel(): number {
     return this.baseMipLevel;
   }
 
   /**
    * 获取MIP级别数
    */
-  getMipLevelCount (): number {
+  getMipLevelCount(): number {
     return this.mipLevelCount;
   }
 
   /**
    * 获取基础数组层
    */
-  getBaseArrayLayer (): number {
+  getBaseArrayLayer(): number {
     return this.baseArrayLayer;
   }
 
   /**
    * 获取数组层数
    */
-  getArrayLayerCount (): number {
+  getArrayLayerCount(): number {
     return this.arrayLayerCount;
   }
 
   /**
    * 获取视图标签
    */
-  getLabel (): string | undefined {
+  getLabel(): string | undefined {
     return this.label;
   }
 
@@ -215,7 +225,7 @@ export class WebGLTextureView implements IRHITextureView {
    * );
    * ```
    */
-  getGLTexture (): WebGLTexture | null {
+  getGLTexture(): WebGLTexture | null {
     return (this.texture as GLTexture).getGLTexture();
   }
 
@@ -225,7 +235,7 @@ export class WebGLTextureView implements IRHITextureView {
    * 注意：对于立方体贴图的2D视图，应该使用 TEXTURE_CUBE_MAP_POSITIVE_X + baseArrayLayer
    * 作为实际的目标，而不是这个方法返回的目标。
    */
-  getGLTextureTarget (): number {
+  getGLTextureTarget(): number {
     // 特殊处理：立方体贴图的2D视图
     if (this.dimension === '2d' && (this.texture as GLTexture).getDimension() === 'cube') {
       const gl = this.gl;
@@ -241,7 +251,7 @@ export class WebGLTextureView implements IRHITextureView {
    *
    * 这个方法简化了将纹理视图附加到帧缓冲时的逻辑，自动处理立方体贴图面的选择等。
    */
-  getFramebufferTarget (): number {
+  getFramebufferTarget(): number {
     const sourceTexture = this.texture as GLTexture;
     const sourceDimension = sourceTexture.getDimension();
     const gl = this.gl;
@@ -264,7 +274,7 @@ export class WebGLTextureView implements IRHITextureView {
    * 销毁资源
    * 注意：WebGL纹理视图不拥有底层资源，销毁视图不会销毁底层纹理
    */
-  destroy (): void {
+  destroy(): void {
     if (this.isDestroyed) {
       return;
     }

@@ -40,7 +40,7 @@ export class Entity extends ReferResource {
    * @param name 实体的名称
    * @param scene 实体所属的场景
    */
-  constructor (name: string = 'Entity', scene: Scene | null = null) {
+  constructor(name: string = 'Entity', scene: Scene | null = null) {
     super();
     this.name = name;
     this.scene = scene;
@@ -55,7 +55,7 @@ export class Entity extends ReferResource {
    * 获取实体激活状态
    * 实体只有在自身和所有父级都激活时才真正激活
    */
-  getActive (): boolean {
+  getActive(): boolean {
     if (!this.active) {
       return false;
     }
@@ -76,7 +76,7 @@ export class Entity extends ReferResource {
   /**
    * 设置实体的激活状态
    */
-  setActive (value: boolean): void {
+  setActive(value: boolean): void {
     if (this.active === value) {
       return;
     }
@@ -88,21 +88,21 @@ export class Entity extends ReferResource {
   /**
    * 获取实体的父级
    */
-  getParent (): Entity | null {
+  getParent(): Entity | null {
     return this.parent;
   }
 
   /**
    * 获取实体的子级列表（只读）
    */
-  getChildren (): ReadonlyArray<Entity> {
+  getChildren(): ReadonlyArray<Entity> {
     return this.children;
   }
 
   /**
    * 获取实体所属的场景
    */
-  getScene (): Scene | null {
+  getScene(): Scene | null {
     return this.scene;
   }
 
@@ -110,7 +110,7 @@ export class Entity extends ReferResource {
    * 设置实体所属的场景
    * @internal 内部使用，不应直接调用
    */
-  private setScene (scene: Scene | null): void {
+  private setScene(scene: Scene | null): void {
     if (this.scene === scene) {
       return;
     }
@@ -132,7 +132,7 @@ export class Entity extends ReferResource {
    * 更新实体的激活状态
    * @private
    */
-  private updateActiveState (): void {
+  private updateActiveState(): void {
     const isReallyActive = this.getActive();
 
     // 更新所有组件状态
@@ -157,7 +157,7 @@ export class Entity extends ReferResource {
    * @param parent 新的父级实体
    * @returns 此实体，用于链式调用
    */
-  setParent (parent: Entity | null): this {
+  setParent(parent: Entity | null): this {
     if (this.parent === parent) {
       return this;
     }
@@ -212,7 +212,7 @@ export class Entity extends ReferResource {
    * @param child 要添加的子实体
    * @returns 此实体，用于链式调用
    */
-  addChild (child: Entity): this {
+  addChild(child: Entity): this {
     if (child === this) {
       console.error('[Entity] 无法将实体添加为自身的子级');
 
@@ -229,7 +229,7 @@ export class Entity extends ReferResource {
    * @param child 要移除的子实体
    * @returns 此实体，用于链式调用
    */
-  removeChild (child: Entity): this {
+  removeChild(child: Entity): this {
     if (!child || child.parent !== this) {
       return this;
     }
@@ -245,7 +245,7 @@ export class Entity extends ReferResource {
    * @param recursive 是否递归查找
    * @returns 找到的实体，未找到则返回null
    */
-  findChild (name: string, recursive: boolean = false): Entity | null {
+  findChild(name: string, recursive: boolean = false): Entity | null {
     // 直接子级中查找
     for (const child of this.children) {
       if (child.name === name) {
@@ -343,14 +343,14 @@ export class Entity extends ReferResource {
    * @returns 找到的组件，未找到则返回null
    */
   getComponent<T extends Component>(type: new (entity: Entity) => T): T | null {
-    return this.components.get(type.name) as T || null;
+    return (this.components.get(type.name) as T) || null;
   }
 
   /**
    * 获取实体上的所有组件
    * @returns 组件数组
    */
-  getComponents (): Component[] {
+  getComponents(): Component[] {
     return Array.from(this.components.values());
   }
 
@@ -381,7 +381,7 @@ export class Entity extends ReferResource {
    * @param active 是否激活
    * @returns 此实体，用于链式调用
    */
-  activate (active: boolean): this {
+  activate(active: boolean): this {
     this.setActive(active);
 
     return this;
@@ -390,7 +390,7 @@ export class Entity extends ReferResource {
   /**
    * 销毁实体及其所有组件
    */
-  override destroy (): void {
+  override destroy(): void {
     if (this.isDestroyed()) {
       return;
     }
@@ -415,8 +415,7 @@ export class Entity extends ReferResource {
     }
 
     // 销毁所有组件（先销毁非Transform组件）
-    const componentsToDestroy = Array.from(this.components.values())
-      .filter(comp => !(comp instanceof Transform));
+    const componentsToDestroy = Array.from(this.components.values()).filter((comp) => !(comp instanceof Transform));
 
     for (const component of componentsToDestroy) {
       component.destroy();

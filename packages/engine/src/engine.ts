@@ -1,6 +1,5 @@
-import { EventDispatcher, Scene, SceneManager, Time, 
-  ResourceManager, RenderContext, RendererOptions, 
-  RendererType } from '@maxellabs/core';
+import type { Scene, RendererOptions } from '@maxellabs/core';
+import { EventDispatcher, SceneManager, Time, ResourceManager, RenderContext, RendererType } from '@maxellabs/core';
 import { Container, ServiceKeys } from '@maxellabs/core';
 import { DeviceManager } from './deviceManager';
 import { RendererFactory } from '@maxellabs/core';
@@ -18,7 +17,7 @@ export enum EngineState {
   /** 暂停 */
   PAUSED = 'paused',
   /** 已销毁 */
-  DESTROYED = 'destroyed'
+  DESTROYED = 'destroyed',
 }
 
 /**
@@ -26,15 +25,15 @@ export enum EngineState {
  */
 export interface EngineOptions extends RendererOptions {
   /** 目标帧率 */
-  targetFrameRate?: number,
+  targetFrameRate?: number;
   /** 是否自动启动引擎 */
-  autoStart?: boolean,
+  autoStart?: boolean;
   /** 是否启用物理系统 */
-  enablePhysics?: boolean,
+  enablePhysics?: boolean;
   /** 是否启用音频系统 */
-  enableAudio?: boolean,
+  enableAudio?: boolean;
   /** 是否启用调试模式 */
-  debug?: boolean,
+  debug?: boolean;
 }
 
 /**
@@ -84,10 +83,10 @@ export class Engine extends EventDispatcher {
     this.frameInterval = 1000 / this.targetFrameRate;
     this.debugMode = options.debug || false;
     this.container = Container.getInstance();
-    
+
     // 注册自身到IOC容器
     this.container.register(ServiceKeys.ENGINE, this);
-    
+
     // 获取设备管理器
     this.deviceManager = DeviceManager.getInstance();
   }
@@ -99,6 +98,7 @@ export class Engine extends EventDispatcher {
   async initialize(): Promise<void> {
     if (this.state !== EngineState.UNINITIALIZED) {
       console.warn('引擎已经初始化或正在初始化');
+
       return;
     }
 
@@ -123,10 +123,11 @@ export class Engine extends EventDispatcher {
 
       // 获取画布并创建设备
       const canvas = this.options.canvas;
+
       if (!canvas) {
         throw new Error('初始化引擎需要提供画布元素');
       }
-      
+
       // 创建WebGL设备
       this.deviceManager.createDevice(canvas, {
         antialias: this.options.antialias !== undefined ? this.options.antialias : true,
@@ -139,6 +140,7 @@ export class Engine extends EventDispatcher {
 
       // 创建渲染器
       const renderer = await RendererFactory.createRenderer(this.options, this);
+
       this.container.register(ServiceKeys.RENDERER, renderer);
 
       // 初始化完成后，自动启动引擎(如果配置了autoStart)
@@ -167,6 +169,7 @@ export class Engine extends EventDispatcher {
 
     if (this.state === EngineState.UNINITIALIZED) {
       console.warn('引擎未初始化，请先调用initialize()方法');
+
       return;
     }
 
@@ -225,6 +228,7 @@ export class Engine extends EventDispatcher {
     // 如果帧率限制开启且未达到指定帧间隔，则等待下一帧
     if (this.targetFrameRate > 0 && deltaTime < this.frameInterval) {
       this.animationFrameId = requestAnimationFrame(this.mainLoop.bind(this));
+
       return;
     }
 
@@ -262,6 +266,7 @@ export class Engine extends EventDispatcher {
   private updateScene(deltaTime: number): void {
     // 获取当前活动场景
     const activeScene = this.sceneManager.getActiveScene();
+
     if (!activeScene) {
       return;
     }
@@ -276,18 +281,21 @@ export class Engine extends EventDispatcher {
   private renderScene(): void {
     // 获取当前活动场景
     const activeScene = this.sceneManager.getActiveScene();
+
     if (!activeScene) {
       return;
     }
 
     // 获取主摄像机
     const mainCamera = activeScene.getMainCamera();
+
     if (!mainCamera) {
       return;
     }
 
     // 获取渲染器
     const renderer = this.container.resolve(ServiceKeys.RENDERER);
+
     if (!renderer) {
       return;
     }
@@ -335,6 +343,7 @@ export class Engine extends EventDispatcher {
 
     // 获取渲染器并销毁
     const renderer = this.container.resolve(ServiceKeys.RENDERER);
+
     if (renderer) {
       renderer.dispose();
     }

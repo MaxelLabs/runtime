@@ -6,7 +6,7 @@ import { Vector3, Quaternion } from '@maxellabs/math';
 /**
  * 创建一个基础的演示场景
  */
-export function createDemoScene (): Scene {
+export function createDemoScene(): Scene {
   // 创建场景
   const scene = new Scene('DemoScene');
 
@@ -70,7 +70,10 @@ export function createDemoScene (): Scene {
  * @param options 引擎选项
  * @returns 初始化的引擎实例
  */
-export async function createDemoEngine (canvas: HTMLCanvasElement, options: Partial<EngineOptions> = {}): Promise<Engine> {
+export async function createDemoEngine(
+  canvas: HTMLCanvasElement,
+  options: Partial<EngineOptions> = {}
+): Promise<Engine> {
   // 合并默认选项
   const defaultOptions: EngineOptions = {
     canvas,
@@ -126,7 +129,7 @@ export async function createDemoEngine (canvas: HTMLCanvasElement, options: Part
  * 启动演示
  * @param containerId 容器元素ID
  */
-export function startDemo (containerId: string = 'app'): void {
+export function startDemo(containerId: string = 'app'): void {
   // 获取容器元素
   const container = document.getElementById(containerId);
 
@@ -148,10 +151,10 @@ export function startDemo (containerId: string = 'app'): void {
 
   // 创建并启动引擎
   createDemoEngine(canvas)
-    .then(engine => {
+    .then((engine) => {
       console.log('演示引擎启动成功');
     })
-    .catch(error => {
+    .catch((error) => {
       console.error('演示引擎启动失败:', error);
     });
 }

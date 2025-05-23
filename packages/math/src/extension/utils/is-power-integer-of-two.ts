@@ -4,7 +4,7 @@
  * @param value
  * @returns
  */
-export function isPowerIntegerOfTwo (testNum: number) {
+export function isPowerIntegerOfTwo(testNum: number) {
   return (
     !isNaN(testNum) &&
     testNum !== Infinity &&

@@ -6,12 +6,7 @@
 import type { IRHIBindGroupLayout } from '../bindings';
 import type { IRHIPipelineLayout } from '../pipeline';
 import type { IRHIShaderModule } from '../resources';
-import type {
-  RHIBufferUsage,
-  RHITextureFormat,
-  RHITextureUsage,
-  RHIPrimitiveTopology,
-} from './enums';
+import type { RHIBufferUsage, RHITextureFormat, RHITextureUsage, RHIPrimitiveTopology } from './enums';
 import type { RHIVertexLayout, RHIColorBlendState, RHIDepthStencilState, RHIRasterizationState } from './states';
 
 /**
@@ -21,33 +16,33 @@ export interface RHIBufferDescriptor {
   /**
    * 缓冲区字节大小
    */
-  size: number,
+  size: number;
 
   /**
    * 缓冲区用途
    */
-  usage: RHIBufferUsage,
+  usage: RHIBufferUsage;
 
   /**
    * 初始数据，如果提供则在创建时填充
    */
-  initialData?: BufferSource,
+  initialData?: BufferSource;
 
   /**
    * WebGL兼容性选项：使用方式提示
    * 在WebGPU中被忽略
    */
-  hint?: 'static' | 'dynamic' | 'stream',
+  hint?: 'static' | 'dynamic' | 'stream';
 
   /**
    * 可选标签，用于调试
    */
-  label?: string,
+  label?: string;
 
   /**
    * 扩展信息，用于存储平台或实现特定的额外信息
    */
-  extension?: Record<string, any>,
+  extension?: Record<string, any>;
 }
 
 /**
@@ -57,43 +52,43 @@ export interface RHITextureDescriptor {
   /**
    * 纹理宽度
    */
-  width: number,
+  width: number;
 
   /**
    * 纹理高度
    */
-  height: number,
+  height: number;
 
   /**
    * 纹理深度或数组层数
    */
-  depthOrArrayLayers?: number,
+  depthOrArrayLayers?: number;
 
   /**
    * MIP等级数
    */
-  mipLevelCount?: number,
+  mipLevelCount?: number;
 
   /**
    * 纹理格式
    */
-  format: RHITextureFormat,
+  format: RHITextureFormat;
 
   /**
    * 纹理用途
    */
-  usage: RHITextureUsage,
+  usage: RHITextureUsage;
 
   /**
    * 采样数量(多重采样)
    */
-  sampleCount?: number,
+  sampleCount?: number;
 
   /**
    * WebGL兼容性选项：纹理类型
    * 在WebGPU中根据其他属性推断
    */
-  dimension?: '1d' | '2d' | '3d' | 'cube',
+  dimension?: '1d' | '2d' | '3d' | 'cube';
 
   /**
    * 硬件API兼容性选项
@@ -102,12 +97,12 @@ export interface RHITextureDescriptor {
    * @remarks
    * 该属性在未来的版本中可能会被移除，请使用其他选项替代。
    */
-  extension?: Record<string, any>,
+  extension?: Record<string, any>;
 
   /**
    * 可选标签，用于调试
    */
-  label?: string,
+  label?: string;
 }
 
 /**
@@ -117,62 +112,62 @@ export interface RHISamplerDescriptor {
   /**
    * 缩小过滤器
    */
-  minFilter?: 'nearest' | 'linear',
+  minFilter?: 'nearest' | 'linear';
 
   /**
    * 放大过滤器
    */
-  magFilter?: 'nearest' | 'linear',
+  magFilter?: 'nearest' | 'linear';
 
   /**
    * Mipmap过滤器
    */
-  mipmapFilter?: 'nearest' | 'linear',
+  mipmapFilter?: 'nearest' | 'linear';
 
   /**
    * 寻址模式U
    */
-  addressModeU?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border',
+  addressModeU?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border';
 
   /**
    * 寻址模式V
    */
-  addressModeV?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border',
+  addressModeV?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border';
 
   /**
    * 寻址模式W
    */
-  addressModeW?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border',
+  addressModeW?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border';
 
   /**
    * 边框颜色
    */
-  borderColor?: [number, number, number, number],
+  borderColor?: [number, number, number, number];
 
   /**
    * 各向异性过滤级别
    */
-  maxAnisotropy?: number,
+  maxAnisotropy?: number;
 
   /**
    * 比较函数
    */
-  compareFunction?: 'never' | 'less' | 'equal' | 'less-equal' | 'greater' | 'not-equal' | 'greater-equal' | 'always',
+  compareFunction?: 'never' | 'less' | 'equal' | 'less-equal' | 'greater' | 'not-equal' | 'greater-equal' | 'always';
 
   /**
    * LOD最小值
    */
-  lodMinClamp?: number,
+  lodMinClamp?: number;
 
   /**
    * LOD最大值
    */
-  lodMaxClamp?: number,
+  lodMaxClamp?: number;
 
   /**
    * 可选标签，用于调试
    */
-  label?: string,
+  label?: string;
 }
 
 /**
@@ -182,47 +177,47 @@ export interface RHIRenderPipelineDescriptor {
   /**
    * 顶点着色器
    */
-  vertexShader: IRHIShaderModule,
+  vertexShader: IRHIShaderModule;
 
   /**
    * 片段着色器
    */
-  fragmentShader: IRHIShaderModule,
+  fragmentShader: IRHIShaderModule;
 
   /**
    * 顶点输入布局
    */
-  vertexLayout: RHIVertexLayout,
+  vertexLayout: RHIVertexLayout;
 
   /**
    * 图元类型
    */
-  primitiveTopology: RHIPrimitiveTopology,
+  primitiveTopology: RHIPrimitiveTopology;
 
   /**
    * 光栅化状态
    */
-  rasterizationState?: RHIRasterizationState,
+  rasterizationState?: RHIRasterizationState;
 
   /**
    * 深度模板状态
    */
-  depthStencilState?: RHIDepthStencilState,
+  depthStencilState?: RHIDepthStencilState;
 
   /**
    * 颜色混合状态
    */
-  colorBlendState?: RHIColorBlendState,
+  colorBlendState?: RHIColorBlendState;
 
   /**
    * 管线布局
    */
-  layout: IRHIPipelineLayout,
+  layout: IRHIPipelineLayout;
 
   /**
    * 可选标签，用于调试
    */
-  label?: string,
+  label?: string;
 }
 
 /**
@@ -232,22 +227,22 @@ export interface RHIComputePipelineDescriptor {
   /**
    * 计算着色器
    */
-  computeShader: IRHIShaderModule,
+  computeShader: IRHIShaderModule;
 
   /**
    * 入口点名称
    */
-  entryPoint: string,
+  entryPoint: string;
 
   /**
    * 绑定组布局
    */
-  bindGroupLayouts: IRHIBindGroupLayout[],
+  bindGroupLayouts: IRHIBindGroupLayout[];
 
   /**
    * 可选标签，用于调试
    */
-  label?: string,
+  label?: string;
 }
 
 /**
@@ -257,20 +252,20 @@ export interface RHIShaderModuleDescriptor {
   /**
    * 着色器代码
    */
-  code: string,
+  code: string;
 
   /**
    * 着色器语言
    */
-  language: 'glsl' | 'wgsl' | 'spirv',
+  language: 'glsl' | 'wgsl' | 'spirv';
 
   /**
    * 着色器阶段
    */
-  stage: 'vertex' | 'fragment' | 'compute',
+  stage: 'vertex' | 'fragment' | 'compute';
 
   /**
    * 可选标签，用于调试
    */
-  label?: string,
+  label?: string;
 }

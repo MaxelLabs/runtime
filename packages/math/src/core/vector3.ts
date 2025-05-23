@@ -36,40 +36,40 @@ export class Vector3 {
    * @param [y=0]
    * @param [z=0]
    */
-  constructor (x = 0, y = 0, z = 0) {
+  constructor(x = 0, y = 0, z = 0) {
     this.elements = new Float32Array([x, y, z]);
   }
 
   /**
    * x坐标访问器
    */
-  get x (): number {
+  get x(): number {
     return this.elements[0];
   }
 
-  set x (value: number) {
+  set x(value: number) {
     this.elements[0] = value;
   }
 
   /**
    * y坐标访问器
    */
-  get y (): number {
+  get y(): number {
     return this.elements[1];
   }
 
-  set y (value: number) {
+  set y(value: number) {
     this.elements[1] = value;
   }
 
   /**
    * z坐标访问器
    */
-  get z (): number {
+  get z(): number {
     return this.elements[2];
   }
 
-  set z (value: number) {
+  set z(value: number) {
     this.elements[2] = value;
   }
 
@@ -80,7 +80,7 @@ export class Vector3 {
    * @param z - z 轴分量
    * @returns 向量
    */
-  set (x: number, y: number, z: number): this {
+  set(x: number, y: number, z: number): this {
     this.elements[0] = x;
     this.elements[1] = y;
     this.elements[2] = z;
@@ -92,7 +92,7 @@ export class Vector3 {
    * 设置零向量
    * @returns 向量
    */
-  setZero (): this {
+  setZero(): this {
     this.elements[0] = 0;
     this.elements[1] = 0;
     this.elements[2] = 0;
@@ -105,7 +105,7 @@ export class Vector3 {
    * @param num - 数值
    * @returns 向量
    */
-  setFromNumber (num: number): this {
+  setFromNumber(num: number): this {
     this.elements[0] = num;
     this.elements[1] = num;
     this.elements[2] = num;
@@ -119,7 +119,7 @@ export class Vector3 {
    * @param [offset=0] - 起始偏移值
    * @returns 向量
    */
-  setFromArray (array: Vector3DataType, offset = 0): this {
+  setFromArray(array: Vector3DataType, offset = 0): this {
     this.elements[0] = array[offset] ?? 0;
     this.elements[1] = array[offset + 1] ?? 0;
     this.elements[2] = array[offset + 2] ?? 0;
@@ -132,7 +132,7 @@ export class Vector3 {
    * @param v - 源向量
    * @returns 返回自身，用于链式调用
    */
-  copyFrom (v: Readonly<Vector3> | Vector3Like): this {
+  copyFrom(v: Readonly<Vector3> | Vector3Like): this {
     this.x = v.x;
     this.y = v.y;
     this.z = v.z;
@@ -151,7 +151,7 @@ export class Vector3 {
    * 克隆向量，使用对象池
    * @returns 新的向量
    */
-  clone (): Vector3 {
+  clone(): Vector3 {
     return Vector3.create(this.x, this.y, this.z);
   }
 
@@ -161,7 +161,7 @@ export class Vector3 {
    * @param value - 数字
    * @returns 向量
    */
-  setElement (index: number, value: number): this {
+  setElement(index: number, value: number): this {
     if (index >= 0 && index <= 2) {
       this.elements[index] = value;
     } else {
@@ -176,7 +176,7 @@ export class Vector3 {
    * @param index - 下标
    * @returns 向量分量
    */
-  getElement (index: number): number {
+  getElement(index: number): number {
     if (index >= 0 && index <= 2) {
       return this.elements[index];
     }
@@ -190,7 +190,7 @@ export class Vector3 {
    * @param right - 向量 | 数字
    * @returns 相加结果
    */
-  add (right: number | vec3 | Vector3): this {
+  add(right: number | vec3 | Vector3): this {
     const e = this.elements;
 
     if (typeof right === 'number') {
@@ -216,7 +216,7 @@ export class Vector3 {
    * @param right - 向量
    * @returns 相加结果
    */
-  addVectors (left: Vector3, right: Vector3): this {
+  addVectors(left: Vector3, right: Vector3): this {
     const e = this.elements;
 
     e[0] = left.x + right.x;
@@ -232,7 +232,7 @@ export class Vector3 {
    * @param s - 比例
    * @returns 相加结果
    */
-  addScaledVector (right: Vector3, s: number): this {
+  addScaledVector(right: Vector3, s: number): this {
     const e = this.elements;
 
     e[0] += right.x * s;
@@ -247,7 +247,7 @@ export class Vector3 {
    * @param right - 向量 | 数字
    * @returns 相减结果
    */
-  subtract (right: number | vec3 | Vector3): this {
+  subtract(right: number | vec3 | Vector3): this {
     const e = this.elements;
 
     if (typeof right === 'number') {
@@ -273,7 +273,7 @@ export class Vector3 {
    * @param right - 向量
    * @returns 相减结果
    */
-  subtractVectors (left: Vector3, right: Vector3): this {
+  subtractVectors(left: Vector3, right: Vector3): this {
     const e = this.elements;
 
     e[0] = left.x - right.x;
@@ -288,7 +288,7 @@ export class Vector3 {
    * @param right - 相乘对象，对象 | 数字
    * @returns 向量
    */
-  multiply (right: number | vec3 | Vector3): this {
+  multiply(right: number | vec3 | Vector3): this {
     const e = this.elements;
 
     if (typeof right === 'number') {
@@ -314,7 +314,7 @@ export class Vector3 {
    * @param right - 向量
    * @returns 向量
    */
-  multiplyVectors (left: Vector3, right: Vector3): this {
+  multiplyVectors(left: Vector3, right: Vector3): this {
     const e = this.elements;
 
     e[0] = left.x * right.x;
@@ -328,9 +328,11 @@ export class Vector3 {
    * 向量长度
    * @returns 长度
    */
-  length (): number {
+  length(): number {
     const e = this.elements;
-    const x = e[0], y = e[1], z = e[2];
+    const x = e[0],
+      y = e[1],
+      z = e[2];
 
     return Math.sqrt(x * x + y * y + z * z);
   }
@@ -339,16 +341,18 @@ export class Vector3 {
    * 向量长度平方
    * @returns 长度平方
    */
-  lengthSquared (): number {
+  lengthSquared(): number {
     return this.x * this.x + this.y * this.y + this.z * this.z;
   }
 
   /**
    * 向量归一化（优化版本）
    */
-  normalize (): this {
+  normalize(): this {
     const e = this.elements;
-    const x = e[0], y = e[1], z = e[2];
+    const x = e[0],
+      y = e[1],
+      z = e[2];
     const len = x * x + y * y + z * z;
 
     if (len > 0) {
@@ -368,19 +372,19 @@ export class Vector3 {
    * @param v - 向量
    * @returns 点积结果
    */
-  dot (v: Vector3): number {
+  dot(v: Vector3): number {
     const e = this.elements;
 
     return e[0] * v.x + e[1] * v.y + e[2] * v.z;
   }
 
   /**
- * 应用四元数旋转到向量
- * @param q - 要应用的四元数
- * @returns 返回this，用于链式调用
- */
-  applyQuaternion (q: Quaternion): this {
-  // 保存当前值以便计算
+   * 应用四元数旋转到向量
+   * @param q - 要应用的四元数
+   * @returns 返回this，用于链式调用
+   */
+  applyQuaternion(q: Quaternion): this {
+    // 保存当前值以便计算
     const x = this.x;
     const y = this.y;
     const z = this.z;
@@ -399,9 +403,9 @@ export class Vector3 {
     const iw = -qx * x - qy * y - qz * z;
 
     // 计算 (q * v) * q^-1
-    this.x = ix * qw + iw * (-qx) + iy * (-qz) - iz * (-qy);
-    this.y = iy * qw + iw * (-qy) + iz * (-qx) - ix * (-qz);
-    this.z = iz * qw + iw * (-qz) + ix * (-qy) - iy * (-qx);
+    this.x = ix * qw + iw * -qx + iy * -qz - iz * -qy;
+    this.y = iy * qw + iw * -qy + iz * -qx - ix * -qz;
+    this.z = iz * qw + iw * -qz + ix * -qy - iy * -qx;
 
     if (this.elements) {
       this.elements[0] = this.x;
@@ -417,7 +421,7 @@ export class Vector3 {
    * @param right - 向量
    * @returns 叉积结果
    */
-  cross (right: Vector3): this {
+  cross(right: Vector3): this {
     return this.crossVectors(this, right);
   }
 
@@ -427,10 +431,14 @@ export class Vector3 {
    * @param right - 向量
    * @returns 叉积结果
    */
-  crossVectors (left: Vector3, right: Vector3): this {
+  crossVectors(left: Vector3, right: Vector3): this {
     const e = this.elements;
-    const ax = left.x, ay = left.y, az = left.z;
-    const bx = right.x, by = right.y, bz = right.z;
+    const ax = left.x,
+      ay = left.y,
+      az = left.z;
+    const bx = right.x,
+      by = right.y,
+      bz = right.z;
 
     e[0] = ay * bz - az * by;
     e[1] = az * bx - ax * bz;
@@ -444,7 +452,7 @@ export class Vector3 {
    * @param v 另一个向量
    * @returns 距离
    */
-  distanceTo (v: Vector3): number {
+  distanceTo(v: Vector3): number {
     return Math.sqrt(this.distanceToSquared(v));
   }
 
@@ -453,7 +461,7 @@ export class Vector3 {
    * @param v 另一个向量
    * @returns 距离平方
    */
-  distanceToSquared (v: Vector3): number {
+  distanceToSquared(v: Vector3): number {
     const dx = this.x - v.x;
     const dy = this.y - v.y;
     const dz = this.z - v.z;
@@ -466,7 +474,7 @@ export class Vector3 {
    * @param v - 数字
    * @returns 缩放结果
    */
-  scale (v: number): this {
+  scale(v: number): this {
     const e = this.elements;
 
     e[0] *= v;
@@ -480,7 +488,7 @@ export class Vector3 {
    * 向量转数组
    * @returns 数组
    */
-  toArray (): [x: number, y: number, z: number] {
+  toArray(): [x: number, y: number, z: number] {
     const e = this.elements;
 
     return [e[0], e[1], e[2]];
@@ -490,7 +498,7 @@ export class Vector3 {
    * 转换为Vector2类型
    * @returns Vector2对象
    */
-  toVector2 (): Vector2 {
+  toVector2(): Vector2 {
     return new Vector2(this.x, this.y);
   }
 
@@ -499,7 +507,7 @@ export class Vector3 {
    * @param array 目标数组
    * @param offset 偏移值
    */
-  fill (array: number[] | Float32Array, offset = 0) {
+  fill(array: number[] | Float32Array, offset = 0) {
     const e = this.elements;
 
     array[offset] = e[0];
@@ -512,7 +520,7 @@ export class Vector3 {
    * @param v - 向量
    * @returns 判等结果
    */
-  equals (v: Vector3): boolean {
+  equals(v: Vector3): boolean {
     return this.x === v.x && this.y === v.y && this.z === v.z;
   }
 
@@ -520,7 +528,7 @@ export class Vector3 {
    * 是否零向量
    * @returns 是否零向量
    */
-  isZero (): boolean {
+  isZero(): boolean {
     const eps = NumberEpsilon;
     const { x, y, z } = this;
 
@@ -532,7 +540,7 @@ export class Vector3 {
    * @param v - 向量
    * @returns 最小值
    */
-  min (v: Vector3 | number): this {
+  min(v: Vector3 | number): this {
     const e = this.elements;
 
     if (typeof v === 'number') {
@@ -553,7 +561,7 @@ export class Vector3 {
    * @param v - 向量
    * @returns 最大值
    */
-  max (v: Vector3 | number): this {
+  max(v: Vector3 | number): this {
     const e = this.elements;
 
     if (typeof v === 'number') {
@@ -575,7 +583,7 @@ export class Vector3 {
    * @param max - 极大值
    * @returns 向量
    */
-  clamp (min: Vector3 | number, max: Vector3 | number): this {
+  clamp(min: Vector3 | number, max: Vector3 | number): this {
     return this.max(min).min(max);
   }
 
@@ -583,7 +591,7 @@ export class Vector3 {
    * 向量向下取整
    * @returns 取整结果
    */
-  floor (): this {
+  floor(): this {
     const e = this.elements;
 
     e[0] = Math.floor(e[0]);
@@ -597,7 +605,7 @@ export class Vector3 {
    * 向量向上取整
    * @returns 取整结果
    */
-  ceil (): this {
+  ceil(): this {
     const e = this.elements;
 
     e[0] = Math.ceil(e[0]);
@@ -611,7 +619,7 @@ export class Vector3 {
    * 向量四舍五入
    * @returns 取整结果
    */
-  round (): this {
+  round(): this {
     const e = this.elements;
 
     e[0] = Math.round(e[0]);
@@ -625,7 +633,7 @@ export class Vector3 {
    * 向量取绝对值
    * @returns 向量
    */
-  abs (): this {
+  abs(): this {
     const e = this.elements;
 
     e[0] = Math.abs(e[0]);
@@ -639,7 +647,7 @@ export class Vector3 {
    * 向量取反
    * @returns 取反结果
    */
-  negate (): this {
+  negate(): this {
     const e = this.elements;
 
     e[0] = -e[0];
@@ -654,7 +662,7 @@ export class Vector3 {
    * @param length - 长度
    * @returns 向量
    */
-  setLength (length: number): this {
+  setLength(length: number): this {
     return this.normalize().scale(length);
   }
 
@@ -664,7 +672,7 @@ export class Vector3 {
    * @param alpha - 插值比例
    * @returns 插值结果
    */
-  lerp (v: Vector3, alpha: number): this {
+  lerp(v: Vector3, alpha: number): this {
     const e = this.elements;
 
     e[0] += (v.x - e[0]) * alpha;
@@ -681,7 +689,7 @@ export class Vector3 {
    * @param alpha - 插值比例
    * @returns 插值结果
    */
-  lerpVectors (v1: Vector3, v2: Vector3, alpha: number): this {
+  lerpVectors(v1: Vector3, v2: Vector3, alpha: number): this {
     const e = this.elements;
 
     e[0] = v1.x + (v2.x - v1.x) * alpha;
@@ -696,7 +704,7 @@ export class Vector3 {
    * @param matrix - 变换矩阵
    * @returns 向量
    */
-  applyMatrix (matrix: Matrix4): this {
+  applyMatrix(matrix: Matrix4): this {
     const e = this.elements;
     const x = e[0];
     const y = e[1];
@@ -716,7 +724,7 @@ export class Vector3 {
    * @param matrix - 变换矩阵
    * @returns 向量
    */
-  applyProjectionMatrix (matrix: Matrix4): this {
+  applyProjectionMatrix(matrix: Matrix4): this {
     const e = this.elements;
     const x = e[0];
     const y = e[1];
@@ -725,7 +733,7 @@ export class Vector3 {
 
     // 应用投影矩阵变换并进行齐次坐标除法
     const w = m[3] * x + m[7] * y + m[11] * z + m[15];
-    const invW = (Math.abs(w) < 1e-8) ? 1 : 1 / w;
+    const invW = Math.abs(w) < 1e-8 ? 1 : 1 / w;
 
     e[0] = (m[0] * x + m[4] * y + m[8] * z + m[12]) * invW;
     e[1] = (m[1] * x + m[5] * y + m[9] * z + m[13]) * invW;
@@ -739,7 +747,7 @@ export class Vector3 {
    * @param matrix - 变换矩阵
    * @returns 向量
    */
-  applyNormalMatrix (matrix: Matrix4): this {
+  applyNormalMatrix(matrix: Matrix4): this {
     // 法线向量变换需要使用矩阵的伴随转置矩阵
     // 对于刚体变换，可以直接使用旋转部分
     const e = this.elements;
@@ -760,7 +768,7 @@ export class Vector3 {
   /**
    * 从对象池获取或创建新的 Vector3 实例
    */
-  static create (x = 0, y = 0, z = 0): Vector3 {
+  static create(x = 0, y = 0, z = 0): Vector3 {
     if (poolIndex < pool.length) {
       const vector = pool[poolIndex++];
 
@@ -775,7 +783,7 @@ export class Vector3 {
   /**
    * 释放 Vector3 实例到对象池
    */
-  static release (vector: Vector3): void {
+  static release(vector: Vector3): void {
     if (poolIndex > 0 && pool.length < POOL_SIZE) {
       poolIndex--;
       pool[poolIndex] = vector;
@@ -785,7 +793,7 @@ export class Vector3 {
   /**
    * 预分配对象池
    */
-  static preallocate (count: number): void {
+  static preallocate(count: number): void {
     const initialSize = pool.length;
 
     for (let i = 0; i < count && pool.length < POOL_SIZE; i++) {
@@ -797,7 +805,7 @@ export class Vector3 {
   /**
    * 清空对象池
    */
-  static clearPool (): void {
+  static clearPool(): void {
     pool.length = 0;
     poolIndex = 0;
   }
@@ -808,15 +816,15 @@ export class Vector3 {
    * @param b - 第二个向量
    * @returns 叉积向量
    */
-  static cross (a: Vector3, b: Vector3): Vector3 {
-    const ax = a.x, ay = a.y, az = a.z;
-    const bx = b.x, by = b.y, bz = b.z;
+  static cross(a: Vector3, b: Vector3): Vector3 {
+    const ax = a.x,
+      ay = a.y,
+      az = a.z;
+    const bx = b.x,
+      by = b.y,
+      bz = b.z;
 
-    return new Vector3(
-      ay * bz - az * by,
-      az * bx - ax * bz,
-      ax * by - ay * bx
-    );
+    return new Vector3(ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx);
   }
 
   /**
@@ -825,19 +833,15 @@ export class Vector3 {
    * @param b - 第二个向量
    * @returns 差值向量 (a - b)
    */
-  static subtract (a: Vector3, b: Vector3): Vector3 {
-    return new Vector3(
-      a.x - b.x,
-      a.y - b.y,
-      a.z - b.z
-    );
+  static subtract(a: Vector3, b: Vector3): Vector3 {
+    return new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
   }
 
   /**
    * 返回一个归一化后的新向量
    * @returns 归一化后的新向量
    */
-  normalized (): Vector3 {
+  normalized(): Vector3 {
     const len = this.length();
 
     if (len < NumberEpsilon) {
@@ -846,11 +850,7 @@ export class Vector3 {
 
     const scale = 1 / len;
 
-    return new Vector3(
-      this.x * scale,
-      this.y * scale,
-      this.z * scale
-    );
+    return new Vector3(this.x * scale, this.y * scale, this.z * scale);
   }
 
   /**
@@ -858,11 +858,7 @@ export class Vector3 {
    * @param scalar - 标量值
    * @returns 新向量
    */
-  multiplyScalar (scalar: number): Vector3 {
-    return new Vector3(
-      this.x * scalar,
-      this.y * scalar,
-      this.z * scalar
-    );
+  multiplyScalar(scalar: number): Vector3 {
+    return new Vector3(this.x * scalar, this.y * scalar, this.z * scalar);
   }
 }

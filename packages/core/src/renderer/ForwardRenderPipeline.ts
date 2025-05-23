@@ -3,7 +3,7 @@ import { OpaqueRenderPass } from './passes/OpaqueRenderPass';
 import { TransparentRenderPass } from './passes/TransparentRenderPass';
 import { ShadowRenderPass } from './passes/ShadowRenderPass';
 import { UIRenderPass } from './passes/UIRenderPass';
-import type { Engine } from '../Engine';
+import type { Engine } from '../engine';
 import type { Scene } from '../scene/Scene';
 import type { Camera } from '../camera/Camera';
 import { CullingResults } from './CullingResults';
@@ -47,15 +47,15 @@ export class ForwardRenderPipeline extends RenderPipeline {
    */
   constructor(engine: Engine, options: ForwardRenderPipelineOptions = {}) {
     super(engine);
-    
+
     this._enableShadow = options.enableShadow ?? false;
-    
+
     // 创建剔除结果
     this._cullingResults = new CullingResults();
-    
+
     // 创建批处理管理器
     this._batcherManager = new BatcherManager(engine);
-    
+
     // 创建各种渲染通道
     this._createRenderPasses();
   }
@@ -66,20 +66,20 @@ export class ForwardRenderPipeline extends RenderPipeline {
   private _createRenderPasses(): void {
     // 创建阴影渲染通道
     if (this._enableShadow) {
-      this._shadowPass = new ShadowRenderPass("ShadowPass", 0);
+      this._shadowPass = new ShadowRenderPass('ShadowPass', 0);
       this.addRenderPass(this._shadowPass);
     }
 
     // 创建不透明物体渲染通道
-    this._opaquePass = new OpaqueRenderPass("OpaquePass", 100);
+    this._opaquePass = new OpaqueRenderPass('OpaquePass', 100);
     this.addRenderPass(this._opaquePass);
-    
+
     // 创建透明物体渲染通道
-    this._transparentPass = new TransparentRenderPass("TransparentPass", 200);
+    this._transparentPass = new TransparentRenderPass('TransparentPass', 200);
     this.addRenderPass(this._transparentPass);
-    
+
     // 创建UI渲染通道
-    this._uiPass = new UIRenderPass("UIPass", 300);
+    this._uiPass = new UIRenderPass('UIPass', 300);
     this.addRenderPass(this._uiPass);
   }
 
@@ -91,23 +91,23 @@ export class ForwardRenderPipeline extends RenderPipeline {
   protected override preRender(scene: Scene, camera: Camera): void {
     // 设置渲染上下文的阴影标志
     this.renderContext.enableShadow = this._enableShadow && scene.castShadows;
-    
+
     // 如果场景中没有主光源，则关闭阴影
     if (this.renderContext.enableShadow && !scene.mainLight) {
       this.renderContext.enableShadow = false;
     }
-    
+
     // 如果启用了阴影，则启用阴影通道
     if (this._shadowPass) {
       this._shadowPass.enabled = this.renderContext.enableShadow;
     }
-    
+
     // 执行场景剔除
     this._cullingResults.cull(scene, camera);
-    
+
     // 执行批处理
     this._cullingResults.sortBatch(this._batcherManager);
-    
+
     // 将剔除结果设置到渲染上下文中
     this.renderContext.cullingResults = this._cullingResults;
   }
@@ -129,39 +129,39 @@ export class ForwardRenderPipeline extends RenderPipeline {
   setEnableShadow(enable: boolean): void {
     if (this._enableShadow !== enable) {
       this._enableShadow = enable;
-      
+
       // 如果切换到启用状态，但还没有创建阴影通道，则创建
       if (enable && !this._shadowPass) {
-        this._shadowPass = new ShadowRenderPass("ShadowPass", 0);
+        this._shadowPass = new ShadowRenderPass('ShadowPass', 0);
         this.addRenderPass(this._shadowPass);
       }
-      
+
       // 如果切换到禁用状态，但有阴影通道，则禁用
       if (!enable && this._shadowPass) {
         this._shadowPass.enabled = false;
       }
     }
   }
-  
+
   /**
    * 获取是否启用阴影
    */
   getEnableShadow(): boolean {
     return this._enableShadow;
   }
-  
+
   /**
    * 销毁
    */
   override destroy(): void {
     super.destroy();
-    
+
     this._cullingResults.destroy();
     this._batcherManager.destroy();
-    
+
     this._opaquePass = null;
     this._transparentPass = null;
     this._shadowPass = null;
     this._uiPass = null;
   }
-} 
+}

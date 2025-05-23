@@ -16,29 +16,29 @@ export class WebGLRenderPass implements IRHIRenderPass {
   private encoder: WebGLCommandEncoder;
   private framebuffer: WebGLFramebuffer | null;
   private colorAttachments: Array<{
-    view: IRHITextureView,
-    resolveTarget?: IRHITextureView,
-    loadOp: 'load' | 'clear' | 'none',
-    storeOp: 'store' | 'discard',
-    clearColor?: [number, number, number, number],
+    view: IRHITextureView;
+    resolveTarget?: IRHITextureView;
+    loadOp: 'load' | 'clear' | 'none';
+    storeOp: 'store' | 'discard';
+    clearColor?: [number, number, number, number];
   }>;
   private depthStencilAttachment?: {
-    view: IRHITextureView,
-    depthLoadOp: 'load' | 'clear' | 'none',
-    depthStoreOp: 'store' | 'discard',
-    clearDepth?: number,
-    depthWriteEnabled?: boolean,
-    stencilLoadOp?: 'load' | 'clear' | 'none',
-    stencilStoreOp?: 'store' | 'discard',
-    clearStencil?: number,
+    view: IRHITextureView;
+    depthLoadOp: 'load' | 'clear' | 'none';
+    depthStoreOp: 'store' | 'discard';
+    clearDepth?: number;
+    depthWriteEnabled?: boolean;
+    stencilLoadOp?: 'load' | 'clear' | 'none';
+    stencilStoreOp?: 'store' | 'discard';
+    clearStencil?: number;
   };
   private _label?: string;
   private currentPipeline: WebGLRenderPipeline | null = null;
   private currentIndexBuffer: GLBuffer | null = null;
   private currentIndexFormat: RHIIndexFormat = RHIIndexFormat.UINT16;
   private currentIndexOffset: number = 0;
-  private viewport: { x: number, y: number, width: number, height: number, minDepth: number, maxDepth: number };
-  private scissorRect: { x: number, y: number, width: number, height: number };
+  private viewport: { x: number; y: number; width: number; height: number; minDepth: number; maxDepth: number };
+  private scissorRect: { x: number; y: number; width: number; height: number };
   private blendConstant: [number, number, number, number] = [0, 0, 0, 0];
   private stencilReference: number = 0;
   private isActive: boolean = true;
@@ -51,26 +51,30 @@ export class WebGLRenderPass implements IRHIRenderPass {
    * @param options 渲染通道选项
    * @param encoder 命令编码器
    */
-  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, options: {
-    colorAttachments: Array<{
-      view: IRHITextureView,
-      resolveTarget?: IRHITextureView,
-      loadOp: 'load' | 'clear' | 'none',
-      storeOp: 'store' | 'discard',
-      clearColor?: [number, number, number, number],
-    }>,
-    depthStencilAttachment?: {
-      view: IRHITextureView,
-      depthLoadOp: 'load' | 'clear' | 'none',
-      depthStoreOp: 'store' | 'discard',
-      clearDepth?: number,
-      depthWriteEnabled?: boolean,
-      stencilLoadOp?: 'load' | 'clear' | 'none',
-      stencilStoreOp?: 'store' | 'discard',
-      clearStencil?: number,
+  constructor(
+    gl: WebGLRenderingContext | WebGL2RenderingContext,
+    options: {
+      colorAttachments: Array<{
+        view: IRHITextureView;
+        resolveTarget?: IRHITextureView;
+        loadOp: 'load' | 'clear' | 'none';
+        storeOp: 'store' | 'discard';
+        clearColor?: [number, number, number, number];
+      }>;
+      depthStencilAttachment?: {
+        view: IRHITextureView;
+        depthLoadOp: 'load' | 'clear' | 'none';
+        depthStoreOp: 'store' | 'discard';
+        clearDepth?: number;
+        depthWriteEnabled?: boolean;
+        stencilLoadOp?: 'load' | 'clear' | 'none';
+        stencilStoreOp?: 'store' | 'discard';
+        clearStencil?: number;
+      };
+      label?: string;
     },
-    label?: string,
-  }, encoder: WebGLCommandEncoder) {
+    encoder: WebGLCommandEncoder
+  ) {
     this.gl = gl;
     this.isWebGL2 = gl instanceof WebGL2RenderingContext;
     this.encoder = encoder;
@@ -95,7 +99,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 开始渲染通道
    */
-  private beginPass (): void {
+  private beginPass(): void {
     const gl = this.gl;
 
     // 创建帧缓冲
@@ -113,13 +117,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
         ? (gl as WebGL2RenderingContext).COLOR_ATTACHMENT0 + i
         : gl.COLOR_ATTACHMENT0;
 
-      gl.framebufferTexture2D(
-        gl.FRAMEBUFFER,
-        attachmentPoint,
-        gl.TEXTURE_2D,
-        textureView.getGLTexture(),
-        0
-      );
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, textureView.getGLTexture(), 0);
 
       drawBuffers.push(attachmentPoint);
 
@@ -219,46 +217,56 @@ export class WebGLRenderPass implements IRHIRenderPass {
   }
 
   /**
- * 判断纹理格式是否包含模板部分
- */
-  private hasStencilComponent (format: number): boolean {
-  // 根据RHITextureFormat枚举检查是否是带有模板部分的格式
-    return format === RHITextureFormat.DEPTH24_UNORM_STENCIL8 || // 36
-         format === RHITextureFormat.DEPTH32_FLOAT_STENCIL8;   // 37
+   * 判断纹理格式是否包含模板部分
+   */
+  private hasStencilComponent(format: number): boolean {
+    // 根据RHITextureFormat枚举检查是否是带有模板部分的格式
+    return (
+      format === RHITextureFormat.DEPTH24_UNORM_STENCIL8 || // 36
+      format === RHITextureFormat.DEPTH32_FLOAT_STENCIL8
+    ); // 37
   }
 
   /**
- * 判断纹理格式是否包含深度部分
- */
-  private hasDepthComponent (format: number): boolean {
-  // 根据RHITextureFormat枚举检查是否是深度格式
-    return format === RHITextureFormat.DEPTH16_UNORM ||         // 33
-         format === RHITextureFormat.DEPTH24_UNORM ||         // 34
-         format === RHITextureFormat.DEPTH32_FLOAT ||         // 35
-         format === RHITextureFormat.DEPTH24_UNORM_STENCIL8 || // 36
-         format === RHITextureFormat.DEPTH32_FLOAT_STENCIL8;   // 37
+   * 判断纹理格式是否包含深度部分
+   */
+  private hasDepthComponent(format: number): boolean {
+    // 根据RHITextureFormat枚举检查是否是深度格式
+    return (
+      format === RHITextureFormat.DEPTH16_UNORM || // 33
+      format === RHITextureFormat.DEPTH24_UNORM || // 34
+      format === RHITextureFormat.DEPTH32_FLOAT || // 35
+      format === RHITextureFormat.DEPTH24_UNORM_STENCIL8 || // 36
+      format === RHITextureFormat.DEPTH32_FLOAT_STENCIL8
+    ); // 37
   }
 
   /**
    * 获取帧缓冲状态的字符串描述
    */
-  private getFramebufferStatusString (status: number): string {
+  private getFramebufferStatusString(status: number): string {
     const gl = this.gl;
 
     switch (status) {
-      case gl.FRAMEBUFFER_COMPLETE: return 'FRAMEBUFFER_COMPLETE';
-      case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT: return 'FRAMEBUFFER_INCOMPLETE_ATTACHMENT';
-      case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: return 'FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT';
-      case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS: return 'FRAMEBUFFER_INCOMPLETE_DIMENSIONS';
-      case gl.FRAMEBUFFER_UNSUPPORTED: return 'FRAMEBUFFER_UNSUPPORTED';
-      default: return `Unknown status: ${status}`;
+      case gl.FRAMEBUFFER_COMPLETE:
+        return 'FRAMEBUFFER_COMPLETE';
+      case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+        return 'FRAMEBUFFER_INCOMPLETE_ATTACHMENT';
+      case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+        return 'FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT';
+      case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+        return 'FRAMEBUFFER_INCOMPLETE_DIMENSIONS';
+      case gl.FRAMEBUFFER_UNSUPPORTED:
+        return 'FRAMEBUFFER_UNSUPPORTED';
+      default:
+        return `Unknown status: ${status}`;
     }
   }
 
   /**
    * 应用当前视口和裁剪矩形设置
    */
-  private applyViewportAndScissor (): void {
+  private applyViewportAndScissor(): void {
     const gl = this.gl;
     const { x, y, width, height, minDepth, maxDepth } = this.viewport;
 
@@ -274,7 +282,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 结束渲染通道
    */
-  end (): void {
+  end(): void {
     if (this.isEnded) {
       throw new Error('渲染通道已结束');
     }
@@ -287,7 +295,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 设置渲染管线
    */
-  setPipeline (pipeline: IRHIRenderPipeline): void {
+  setPipeline(pipeline: IRHIRenderPipeline): void {
     if (this.isEnded) {
       throw new Error('渲染通道已结束，无法设置渲染管线');
     }
@@ -307,7 +315,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 设置索引缓冲区
    */
-  setIndexBuffer (buffer: IRHIBuffer, indexFormat: RHIIndexFormat, offset: number = 0): void {
+  setIndexBuffer(buffer: IRHIBuffer, indexFormat: RHIIndexFormat, offset: number = 0): void {
     if (!this.isActive) {
       throw new Error('渲染通道已结束，无法设置索引缓冲区');
     }
@@ -327,7 +335,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 设置顶点缓冲区
    */
-  setVertexBuffer (slot: number, buffer: IRHIBuffer, offset: number = 0): void {
+  setVertexBuffer(slot: number, buffer: IRHIBuffer, offset: number = 0): void {
     if (!this.currentPipeline) {
       console.error('没有设置渲染管线，无法设置顶点缓冲区');
 
@@ -362,11 +370,11 @@ export class WebGLRenderPass implements IRHIRenderPass {
     });
   }
 
-  setVertexBuffers (
+  setVertexBuffers(
     firstSlot: number,
     buffers: Array<{
-      buffer: IRHIBuffer,
-      offset?: number,
+      buffer: IRHIBuffer;
+      offset?: number;
     }>
   ): void {
     if (!this.currentPipeline) {
@@ -410,7 +418,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 设置绑定组
    */
-  setBindGroup (slot: number, bindGroup: IRHIBindGroup, dynamicOffsets?: number[]): void {
+  setBindGroup(slot: number, bindGroup: IRHIBindGroup, dynamicOffsets?: number[]): void {
     if (!this.currentPipeline) {
       console.error('没有设置渲染管线，无法设置绑定组');
 
@@ -439,12 +447,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 绘制图元
    */
-  draw (
-    vertexCount: number,
-    instanceCount: number = 1,
-    firstVertex: number = 0,
-    firstInstance: number = 0
-  ): void {
+  draw(vertexCount: number, instanceCount: number = 1, firstVertex: number = 0, firstInstance: number = 0): void {
     if (this.isEnded) {
       throw new Error('渲染通道已结束，无法执行绘制命令');
     }
@@ -472,7 +475,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 使用索引绘制几何体
    */
-  drawIndexed (
+  drawIndexed(
     indexCount: number,
     instanceCount: number = 1,
     firstIndex: number = 0,
@@ -496,7 +499,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
       const primitiveType = this.utils.primitiveTopologyToGL(this.currentPipeline.primitiveTopology);
       const indexType = this.currentIndexFormat === RHIIndexFormat.UINT16 ? gl.UNSIGNED_SHORT : gl.UNSIGNED_INT;
       const bytesPerIndex = this.currentIndexFormat === RHIIndexFormat.UINT16 ? 2 : 4;
-      const offset = this.currentIndexOffset + (firstIndex * bytesPerIndex);
+      const offset = this.currentIndexOffset + firstIndex * bytesPerIndex;
 
       // baseVertex不直接被WebGL支持，需要在顶点着色器中处理
 
@@ -516,13 +519,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
           const ext = gl.getExtension('ANGLE_instanced_arrays');
 
           if (ext) {
-            ext.drawElementsInstancedANGLE(
-              primitiveType,
-              indexCount,
-              indexType,
-              offset,
-              instanceCount
-            );
+            ext.drawElementsInstancedANGLE(primitiveType, indexCount, indexType, offset, instanceCount);
           } else {
             console.error('当前WebGL环境不支持实例化绘制');
             gl.drawElements(primitiveType, indexCount, indexType, offset);
@@ -538,14 +535,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 设置视口
    */
-  setViewport (
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    minDepth: number = 0,
-    maxDepth: number = 1
-  ): void {
+  setViewport(x: number, y: number, width: number, height: number, minDepth: number = 0, maxDepth: number = 1): void {
     if (!this.isActive) {
       throw new Error('渲染通道已结束，无法设置视口');
     }
@@ -564,7 +554,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 设置裁剪矩形
    */
-  setScissorRect (x: number, y: number, width: number, height: number): void {
+  setScissorRect(x: number, y: number, width: number, height: number): void {
     if (!this.isActive) {
       throw new Error('渲染通道已结束，无法设置裁剪矩形');
     }
@@ -583,7 +573,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 设置混合常量
    */
-  setBlendConstant (color: [number, number, number, number]): void {
+  setBlendConstant(color: [number, number, number, number]): void {
     if (!this.isActive) {
       throw new Error('渲染通道已结束，无法设置混合常量');
     }
@@ -601,7 +591,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 设置模板参考值
    */
-  setStencilReference (reference: number): void {
+  setStencilReference(reference: number): void {
     if (!this.isActive) {
       throw new Error('渲染通道已结束，无法设置模板参考值');
     }
@@ -620,21 +610,21 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 执行间接绘制
    */
-  drawIndirect (indirectBuffer: IRHIBuffer, indirectOffset: number): void {
+  drawIndirect(indirectBuffer: IRHIBuffer, indirectOffset: number): void {
     throw new Error('WebGL不支持间接绘制');
   }
 
   /**
    * 执行间接索引绘制
    */
-  drawIndexedIndirect (indirectBuffer: IRHIBuffer, indirectOffset: number): void {
+  drawIndexedIndirect(indirectBuffer: IRHIBuffer, indirectOffset: number): void {
     throw new Error('WebGL不支持间接索引绘制');
   }
 
   /**
    * 执行推送常量更新
    */
-  pushConstants (offset: number, data: ArrayBufferView): void {
+  pushConstants(offset: number, data: ArrayBufferView): void {
     if (!this.isActive) {
       throw new Error('渲染通道已结束，无法推送常量');
     }
@@ -656,7 +646,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 获取标签
    */
-  get label (): string | undefined {
+  get label(): string | undefined {
     return this._label;
   }
 }

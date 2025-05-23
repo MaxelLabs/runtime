@@ -12,26 +12,26 @@ export interface IRHIBuffer {
   /**
    * 缓冲区大小（字节）
    */
-  readonly size: number,
+  readonly size: number;
 
   /**
    * 缓冲区用途
    */
-  readonly usage: RHIBufferUsage,
+  readonly usage: RHIBufferUsage;
 
   /**
    * 缓冲区标签
    */
-  readonly label?: string,
+  readonly label?: string;
 
   /**
    * 更新缓冲区数据
    * @param data 源数据
    * @param offset 目标偏移量（字节）
    */
-  update(data: BufferSource, offset?: number): void,
+  update(data: BufferSource, offset?: number): void;
 
-  getGLBuffer():any,
+  getGLBuffer(): any;
 
   /**
    * 映射缓冲区以进行CPU访问
@@ -39,15 +39,15 @@ export interface IRHIBuffer {
    * @param offset 映射偏移量（字节）
    * @param size 映射大小（字节）
    */
-  map(mode: 'read' | 'write' | 'read-write', offset?: number, size?: number): Promise<ArrayBuffer>,
+  map(mode: 'read' | 'write' | 'read-write', offset?: number, size?: number): Promise<ArrayBuffer>;
 
   /**
    * 取消映射缓冲区
    */
-  unmap(): void,
+  unmap(): void;
 
   /**
    * 销毁资源
    */
-  destroy(): void,
+  destroy(): void;
 }

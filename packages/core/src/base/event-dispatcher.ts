@@ -5,13 +5,13 @@ import { Event } from './event';
  */
 export interface EventListener {
   /** 回调函数 */
-  callback: Function,
+  callback: Function;
   /** 上下文对象 */
-  target?: any,
+  target?: any;
   /** 优先级，数值越大越先执行 */
-  priority: number,
+  priority: number;
   /** 是否只执行一次 */
-  once: boolean,
+  once: boolean;
 }
 
 /**
@@ -42,7 +42,7 @@ export class EventDispatcher extends MaxObject {
    * @param id 派发器ID
    * @param tag 派发器标签
    */
-  constructor (id?: string, tag?: string) {
+  constructor(id?: string, tag?: string) {
     super();
     this.eventDispatcherId = id || `dispatcher-${Math.floor(Math.random() * 10000)}`;
     this.tag = tag || '';
@@ -53,7 +53,7 @@ export class EventDispatcher extends MaxObject {
    * @param type 事件类型
    * @param listener 回调函数
    */
-  on (type: string, listener: Function): void {
+  on(type: string, listener: Function): void {
     if (!this.listeners.has(type)) {
       this.listeners.set(type, new Set());
     }
@@ -65,7 +65,7 @@ export class EventDispatcher extends MaxObject {
    * @param type 事件类型
    * @param listener 回调函数
    */
-  once (type: string, listener: Function): void {
+  once(type: string, listener: Function): void {
     const onceWrapper = (event: Event) => {
       this.off(type, onceWrapper);
       listener(event);
@@ -79,7 +79,7 @@ export class EventDispatcher extends MaxObject {
    * @param type 事件类型
    * @param listener 回调函数
    */
-  off (type: string, listener: Function): void {
+  off(type: string, listener: Function): void {
     const listeners = this.listeners.get(type);
 
     if (listeners) {
@@ -96,7 +96,7 @@ export class EventDispatcher extends MaxObject {
    * @param data 事件数据
    * @param bubbles 是否允许冒泡
    */
-  emit (type: string, data?: any, bubbles: boolean = false): boolean {
+  emit(type: string, data?: any, bubbles: boolean = false): boolean {
     const event = new Event(type, bubbles, data);
 
     return this.dispatchEvent(event);
@@ -108,7 +108,7 @@ export class EventDispatcher extends MaxObject {
    * @param data 事件数据
    * @returns 事件是否成功派发
    */
-  dispatchEvent (typeOrEvent: string | Event, data?: any): boolean {
+  dispatchEvent(typeOrEvent: string | Event, data?: any): boolean {
     if (this.paused) {
       return false;
     }
@@ -157,7 +157,7 @@ export class EventDispatcher extends MaxObject {
       if (listeners) {
         const remainingListeners = new Set(listeners);
 
-        remainingListeners.forEach(listener => {
+        remainingListeners.forEach((listener) => {
           if (listener instanceof Function) {
             try {
               listener(event);
@@ -181,7 +181,7 @@ export class EventDispatcher extends MaxObject {
    * @param event 事件对象
    * @returns 事件是否成功派发
    */
-  private dispatchToLocalListeners (event: Event): boolean {
+  private dispatchToLocalListeners(event: Event): boolean {
     const type = event.type;
 
     if (!type) {
@@ -200,7 +200,7 @@ export class EventDispatcher extends MaxObject {
     if (listeners) {
       const remainingListeners = new Set(listeners);
 
-      remainingListeners.forEach(listener => {
+      remainingListeners.forEach((listener) => {
         if (listener instanceof Function) {
           try {
             listener(event);
@@ -224,7 +224,7 @@ export class EventDispatcher extends MaxObject {
    * @param event 事件对象
    * @returns 事件是否成功派发
    */
-  private dispatchCaptureEvent (event: Event): boolean {
+  private dispatchCaptureEvent(event: Event): boolean {
     if (this.paused || event.isPropagationStopped()) {
       return false;
     }
@@ -247,7 +247,7 @@ export class EventDispatcher extends MaxObject {
         if (captureListeners) {
           const remainingListeners = new Set(captureListeners);
 
-          remainingListeners.forEach(listener => {
+          remainingListeners.forEach((listener) => {
             if (listener instanceof Function) {
               try {
                 listener(event);
@@ -273,7 +273,7 @@ export class EventDispatcher extends MaxObject {
    * @param event 事件对象
    * @returns 事件是否成功派发
    */
-  private dispatchBubbleEvent (event: Event): boolean {
+  private dispatchBubbleEvent(event: Event): boolean {
     if (this.paused || event.isPropagationStopped()) {
       return false;
     }
@@ -296,7 +296,7 @@ export class EventDispatcher extends MaxObject {
    * @param type 事件类型
    * @returns 是否有该类型的监听器
    */
-  hasEventListener (type: string): boolean {
+  hasEventListener(type: string): boolean {
     return this.listeners.has(type) && (this.listeners.get(type) ?? new Set()).size > 0;
   }
 
@@ -305,7 +305,7 @@ export class EventDispatcher extends MaxObject {
    * @param type 事件类型，如果为空则返回所有监听器总数
    * @returns 监听器数量
    */
-  getEventListenerCount (type?: string): number {
+  getEventListenerCount(type?: string): number {
     if (!type) {
       let count = 0;
 
@@ -327,7 +327,7 @@ export class EventDispatcher extends MaxObject {
    * 设置父事件分发器
    * @param parent 父分发器
    */
-  setParent (parent: EventDispatcher): void {
+  setParent(parent: EventDispatcher): void {
     // 如果已经有父级，先移除自己
     if (this.parent) {
       this.parent.removeChild(this);
@@ -345,7 +345,7 @@ export class EventDispatcher extends MaxObject {
    * 添加子事件分发器
    * @param child 子分发器
    */
-  addChild (child: EventDispatcher): void {
+  addChild(child: EventDispatcher): void {
     if (child === this) {
       return; // 防止循环引用
     }
@@ -362,7 +362,7 @@ export class EventDispatcher extends MaxObject {
    * 移除子事件分发器
    * @param child 子分发器
    */
-  removeChild (child: EventDispatcher): void {
+  removeChild(child: EventDispatcher): void {
     if (this.children.has(child)) {
       this.children.delete(child);
 
@@ -376,14 +376,14 @@ export class EventDispatcher extends MaxObject {
   /**
    * 暂停事件分发
    */
-  pauseEvents (): void {
+  pauseEvents(): void {
     this.paused = true;
   }
 
   /**
    * 恢复事件分发
    */
-  resumeEvents (): void {
+  resumeEvents(): void {
     this.paused = false;
   }
 
@@ -391,7 +391,7 @@ export class EventDispatcher extends MaxObject {
    * 启用或禁用事件捕获
    * @param enabled 是否启用
    */
-  enableCapture (enabled: boolean): void {
+  enableCapture(enabled: boolean): void {
     this.captureEnabled = enabled;
   }
 
@@ -399,15 +399,17 @@ export class EventDispatcher extends MaxObject {
    * 启用或禁用事件冒泡
    * @param enabled 是否启用
    */
-  enableBubbling (enabled: boolean): void {
+  enableBubbling(enabled: boolean): void {
     this.bubbleEnabled = enabled;
   }
 
   /**
    * 销毁事件分发器
    */
-  override destroy (): void {
-    if (this.destroyed) {return;}
+  override destroy(): void {
+    if (this.destroyed) {
+      return;
+    }
     // 移除所有监听器
     this.listeners.clear();
 

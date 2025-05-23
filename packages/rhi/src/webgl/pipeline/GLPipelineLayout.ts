@@ -16,7 +16,11 @@ export class WebGLPipelineLayout implements IRHIPipelineLayout {
    * @param bindGroupLayouts 绑定组布局数组
    * @param label 可选标签
    */
-  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, bindGroupLayouts: IRHIBindGroupLayout[], label?: string) {
+  constructor(
+    gl: WebGLRenderingContext | WebGL2RenderingContext,
+    bindGroupLayouts: IRHIBindGroupLayout[],
+    label?: string
+  ) {
     this.gl = gl;
     this.bindGroupLayouts = bindGroupLayouts;
     this.label = label;
@@ -28,7 +32,7 @@ export class WebGLPipelineLayout implements IRHIPipelineLayout {
   /**
    * 验证绑定组布局的兼容性
    */
-  private validateLayouts (): void {
+  private validateLayouts(): void {
     // 在WebGL中，需要验证绑定组布局的兼容性
     // 例如，检查绑定点是否重叠或冲突
     // const isWebGL2 = this.gl instanceof WebGL2RenderingContext;
@@ -38,7 +42,6 @@ export class WebGLPipelineLayout implements IRHIPipelineLayout {
       const entries = layout.getEntries();
 
       for (const entry of entries) {
-
         if (bindingSet.has(entry.binding)) {
           throw new Error(`绑定点 ${entry.binding} 在多个绑定组布局中出现，这在WebGL中不被支持`);
         }
@@ -58,14 +61,14 @@ export class WebGLPipelineLayout implements IRHIPipelineLayout {
   /**
    * 获取绑定组布局
    */
-  getBindGroupLayouts (): IRHIBindGroupLayout[] {
+  getBindGroupLayouts(): IRHIBindGroupLayout[] {
     return this.bindGroupLayouts;
   }
 
   /**
    * 获取管线布局标签
    */
-  getLabel (): string | undefined {
+  getLabel(): string | undefined {
     return this.label;
   }
 
@@ -74,14 +77,14 @@ export class WebGLPipelineLayout implements IRHIPipelineLayout {
    *
    * @param index 绑定组索引
    */
-  getBindGroupLayout (index: number): IRHIBindGroupLayout | undefined {
+  getBindGroupLayout(index: number): IRHIBindGroupLayout | undefined {
     return this.bindGroupLayouts[index];
   }
 
   /**
    * 销毁资源
    */
-  destroy (): void {
+  destroy(): void {
     if (this.isDestroyed) {
       return;
     }

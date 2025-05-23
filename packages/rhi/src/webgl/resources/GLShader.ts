@@ -18,26 +18,26 @@ export class GLShader implements IRHIShaderModule {
   label?: string;
   reflection: {
     bindings: Array<{
-      name: string,
-      binding: number,
-      group: number,
-      type: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture',
-      arraySize?: number,
-    }>,
+      name: string;
+      binding: number;
+      group: number;
+      type: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture';
+      arraySize?: number;
+    }>;
     entryPoints: Array<{
-      name: string,
-      stage: 'vertex' | 'fragment' | 'compute',
-      workgroupSize?: [number, number, number],
-    }>,
+      name: string;
+      stage: 'vertex' | 'fragment' | 'compute';
+      workgroupSize?: [number, number, number];
+    }>;
     attributes?: Array<{
-      name: string,
-      location: number,
-      type: string,
-    }>,
+      name: string;
+      location: number;
+      type: string;
+    }>;
     varyings?: Array<{
-      name: string,
-      type: string,
-    }>,
+      name: string;
+      type: string;
+    }>;
   };
   private isDestroyed = false;
 
@@ -47,7 +47,7 @@ export class GLShader implements IRHIShaderModule {
    * @param gl WebGL上下文
    * @param descriptor 着色器描述符
    */
-  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHIShaderModuleDescriptor) {
+  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHIShaderModuleDescriptor) {
     this.gl = gl;
     this.isWebGL2 = gl instanceof WebGL2RenderingContext;
     this.code = descriptor.code;
@@ -75,10 +75,12 @@ export class GLShader implements IRHIShaderModule {
   /**
    * 从描述符的阶段获取RHI着色器阶段
    */
-  private getShaderStage (stage: 'vertex' | 'fragment' | 'compute'): RHIShaderStage {
+  private getShaderStage(stage: 'vertex' | 'fragment' | 'compute'): RHIShaderStage {
     switch (stage) {
-      case 'vertex': return RHIShaderStage.VERTEX;
-      case 'fragment': return RHIShaderStage.FRAGMENT;
+      case 'vertex':
+        return RHIShaderStage.VERTEX;
+      case 'fragment':
+        return RHIShaderStage.FRAGMENT;
       case 'compute':
         // 虽然我们在构造函数中对计算着色器进行了验证，
         // 但仍然返回正确的枚举值以保持API一致性
@@ -91,7 +93,7 @@ export class GLShader implements IRHIShaderModule {
   /**
    * 编译着色器
    */
-  private compileShader (): WebGLShader | null {
+  private compileShader(): WebGLShader | null {
     const gl = this.gl;
     const glStage = this.stage === RHIShaderStage.VERTEX ? gl.VERTEX_SHADER : gl.FRAGMENT_SHADER;
 
@@ -123,7 +125,7 @@ export class GLShader implements IRHIShaderModule {
   /**
    * 预处理着色器代码，处理版本声明和其他兼容性问题
    */
-  private preprocessShaderCode (code: string): string {
+  private preprocessShaderCode(code: string): string {
     let processedCode = code;
 
     // 移除现有的版本声明
@@ -149,7 +151,7 @@ export class GLShader implements IRHIShaderModule {
   /**
    * 将着色器代码适配为WebGL2兼容
    */
-  private adaptCodeForWebGL2 (code: string): string {
+  private adaptCodeForWebGL2(code: string): string {
     // 在这里可以进行WebGL2特定的转换
     // 例如：可以将texture2D调用替换为texture等
     let adapted = code;
@@ -174,7 +176,7 @@ export class GLShader implements IRHIShaderModule {
   /**
    * 将着色器代码适配为WebGL1兼容
    */
-  private adaptCodeForWebGL1 (code: string): string {
+  private adaptCodeForWebGL1(code: string): string {
     // 在这里处理WebGL1特定的转换
     // 例如：移除WebGL2特有关键字等
     let adapted = code;
@@ -203,7 +205,7 @@ export class GLShader implements IRHIShaderModule {
   /**
    * 格式化着色器编译错误信息
    */
-  private formatShaderError (shader: WebGLShader, code: string): string {
+  private formatShaderError(shader: WebGLShader, code: string): string {
     const gl = this.gl;
     const infoLog = gl.getShaderInfoLog(shader);
     const shaderType = this.stage === RHIShaderStage.VERTEX ? 'Vertex' : 'Fragment';
@@ -213,11 +215,13 @@ export class GLShader implements IRHIShaderModule {
 
     // 添加行号并显示源码
     const lines = code.split('\n');
-    const formattedCode = lines.map((line, index) => {
-      const lineNum = `${index + 1}`.padStart(4, ' ');
+    const formattedCode = lines
+      .map((line, index) => {
+        const lineNum = `${index + 1}`.padStart(4, ' ');
 
-      return `${lineNum}: ${line}`;
-    }).join('\n');
+        return `${lineNum}: ${line}`;
+      })
+      .join('\n');
 
     return errorMsg + formattedCode;
   }
@@ -226,46 +230,46 @@ export class GLShader implements IRHIShaderModule {
    * 通过解析GLSL代码进行反射分析
    * 提取uniform、attribute、varying等变量信息
    */
-  private reflectShader (): {
+  private reflectShader(): {
     bindings: Array<{
-      name: string,
-      binding: number,
-      group: number,
-      type: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture',
-      arraySize?: number,
-    }>,
+      name: string;
+      binding: number;
+      group: number;
+      type: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture';
+      arraySize?: number;
+    }>;
     entryPoints: Array<{
-      name: string,
-      stage: 'vertex' | 'fragment' | 'compute',
-      workgroupSize?: [number, number, number],
-    }>,
+      name: string;
+      stage: 'vertex' | 'fragment' | 'compute';
+      workgroupSize?: [number, number, number];
+    }>;
     attributes?: Array<{
-      name: string,
-      location: number,
-      type: string,
-    }>,
+      name: string;
+      location: number;
+      type: string;
+    }>;
     varyings?: Array<{
-      name: string,
-      type: string,
-    }>,
+      name: string;
+      type: string;
+    }>;
   } {
     const bindings: Array<{
-      name: string,
-      binding: number,
-      group: number,
-      type: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture',
-      arraySize?: number,
+      name: string;
+      binding: number;
+      group: number;
+      type: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture';
+      arraySize?: number;
     }> = [];
 
     const attributes: Array<{
-      name: string,
-      location: number,
-      type: string,
+      name: string;
+      location: number;
+      type: string;
     }> = [];
 
     const varyings: Array<{
-      name: string,
-      type: string,
+      name: string;
+      type: string;
     }> = [];
 
     // 提取uniform声明
@@ -280,15 +284,17 @@ export class GLShader implements IRHIShaderModule {
     this.extractVaryings(this.code, varyings);
 
     // 提取入口点 - 在GLSL中通常不显式定义，使用main函数
-    const stage = this.stage === RHIShaderStage.VERTEX ? 'vertex' :
-      (this.stage === RHIShaderStage.FRAGMENT ? 'fragment' : 'compute');
+    const stage =
+      this.stage === RHIShaderStage.VERTEX ? 'vertex' : this.stage === RHIShaderStage.FRAGMENT ? 'fragment' : 'compute';
 
     return {
       bindings,
-      entryPoints: [{
-        name: 'main',
-        stage,
-      }],
+      entryPoints: [
+        {
+          name: 'main',
+          stage,
+        },
+      ],
       attributes: attributes.length > 0 ? attributes : undefined,
       varyings: varyings.length > 0 ? varyings : undefined,
     };
@@ -297,7 +303,7 @@ export class GLShader implements IRHIShaderModule {
   /**
    * 从着色器代码中提取uniform声明
    */
-  private extractUniforms (code: string, bindings: Array<any>): void {
+  private extractUniforms(code: string, bindings: Array<any>): void {
     // 移除注释以避免错误匹配
     const codeWithoutComments = this.removeComments(code);
 
@@ -311,7 +317,8 @@ export class GLShader implements IRHIShaderModule {
       const arraySize = match[4] ? parseInt(match[4], 10) : undefined;
 
       // 确定绑定类型
-      let bindingType: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture' = 'uniform-buffer';
+      let bindingType: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture' =
+        'uniform-buffer';
 
       if (/sampler\w+/.test(type)) {
         bindingType = 'sampler';
@@ -330,7 +337,8 @@ export class GLShader implements IRHIShaderModule {
 
     // 匹配WebGL2的layout限定符uniform声明
     if (this.isWebGL2) {
-      const layoutUniformRegex = /layout\s*\(\s*(?:binding\s*=\s*(\d+))(?:\s*,\s*set\s*=\s*(\d+))?\s*\)\s*uniform\s+(\w+)(?:\s+(\w+))?\s+(\w+)(?:\[(\d+)\])?/g;
+      const layoutUniformRegex =
+        /layout\s*\(\s*(?:binding\s*=\s*(\d+))(?:\s*,\s*set\s*=\s*(\d+))?\s*\)\s*uniform\s+(\w+)(?:\s+(\w+))?\s+(\w+)(?:\[(\d+)\])?/g;
 
       while ((match = layoutUniformRegex.exec(codeWithoutComments)) !== null) {
         const binding = match[1] ? parseInt(match[1], 10) : 0;
@@ -340,7 +348,8 @@ export class GLShader implements IRHIShaderModule {
         const arraySize = match[6] ? parseInt(match[6], 10) : undefined;
 
         // 确定绑定类型
-        let bindingType: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture' = 'uniform-buffer';
+        let bindingType: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture' =
+          'uniform-buffer';
 
         if (/sampler\w+/.test(type)) {
           bindingType = 'sampler';
@@ -364,7 +373,7 @@ export class GLShader implements IRHIShaderModule {
   /**
    * 从着色器代码中提取attribute/in变量（顶点着色器）
    */
-  private extractAttributes (code: string, attributes: Array<any>): void {
+  private extractAttributes(code: string, attributes: Array<any>): void {
     // 移除注释以避免错误匹配
     const codeWithoutComments = this.removeComments(code);
 
@@ -407,7 +416,7 @@ export class GLShader implements IRHIShaderModule {
         // 跳过已经通过layout声明的变量
         const name = match[2];
 
-        if (!attributes.some(attr => attr.name === name)) {
+        if (!attributes.some((attr) => attr.name === name)) {
           const type = match[1];
 
           attributes.push({
@@ -423,7 +432,7 @@ export class GLShader implements IRHIShaderModule {
   /**
    * 从着色器代码中提取varying/out/in变量
    */
-  private extractVaryings (code: string, varyings: Array<any>): void {
+  private extractVaryings(code: string, varyings: Array<any>): void {
     // 移除注释以避免错误匹配
     const codeWithoutComments = this.removeComments(code);
 
@@ -457,7 +466,7 @@ export class GLShader implements IRHIShaderModule {
   /**
    * 从代码中移除注释
    */
-  private removeComments (code: string): string {
+  private removeComments(code: string): string {
     // 移除单行注释
     let result = code.replace(/\/\/.*$/gm, '');
 
@@ -471,7 +480,7 @@ export class GLShader implements IRHIShaderModule {
    * 创建临时程序对象以获取更详细的着色器变量信息
    * 用于提取更详细的uniform信息
    */
-  createTemporaryProgramForReflection (): WebGLProgram | null {
+  createTemporaryProgramForReflection(): WebGLProgram | null {
     // 如果程序已创建但需要更新，先删除旧程序
     if (this.glProgram && !this.isDestroyed) {
       this.gl.deleteProgram(this.glProgram);
@@ -498,13 +507,15 @@ export class GLShader implements IRHIShaderModule {
     let emptyCode: string;
 
     if (this.isWebGL2) {
-      emptyCode = this.stage === RHIShaderStage.VERTEX
-        ? '#version 300 es\nvoid main() { }\n'
-        : '#version 300 es\nout vec4 fragColor;\nvoid main() { fragColor = vec4(1.0); }\n';
+      emptyCode =
+        this.stage === RHIShaderStage.VERTEX
+          ? '#version 300 es\nvoid main() { }\n'
+          : '#version 300 es\nout vec4 fragColor;\nvoid main() { fragColor = vec4(1.0); }\n';
     } else {
-      emptyCode = this.stage === RHIShaderStage.VERTEX
-        ? 'void main() { gl_Position = vec4(0.0, 0.0, 0.0, 1.0); }'
-        : 'void main() { gl_FragColor = vec4(1.0); }';
+      emptyCode =
+        this.stage === RHIShaderStage.VERTEX
+          ? 'void main() { gl_Position = vec4(0.0, 0.0, 0.0, 1.0); }'
+          : 'void main() { gl_FragColor = vec4(1.0); }';
     }
 
     gl.shaderSource(emptyShader, emptyCode);
@@ -554,63 +565,63 @@ export class GLShader implements IRHIShaderModule {
   /**
    * 获取WebGL着色器对象
    */
-  getGLShader (): WebGLShader | null {
+  getGLShader(): WebGLShader | null {
     return this.glShader;
   }
 
   /**
    * 获取着色器代码
    */
-  getCode (): string {
+  getCode(): string {
     return this.code;
   }
 
   /**
    * 获取着色器语言
    */
-  getLanguage (): 'glsl' | 'wgsl' | 'spirv' {
+  getLanguage(): 'glsl' | 'wgsl' | 'spirv' {
     return this.language;
   }
 
   /**
    * 获取着色器阶段
    */
-  getStage (): RHIShaderStage {
+  getStage(): RHIShaderStage {
     return this.stage;
   }
 
   /**
    * 获取着色器标签
    */
-  getLabel (): string | undefined {
+  getLabel(): string | undefined {
     return this.label;
   }
 
   /**
    * 获取反射信息
    */
-  getReflection (): {
+  getReflection(): {
     bindings: Array<{
-      name: string,
-      binding: number,
-      group: number,
-      type: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture',
-      arraySize?: number,
-    }>,
+      name: string;
+      binding: number;
+      group: number;
+      type: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture';
+      arraySize?: number;
+    }>;
     entryPoints: Array<{
-      name: string,
-      stage: 'vertex' | 'fragment' | 'compute',
-      workgroupSize?: [number, number, number],
-    }>,
+      name: string;
+      stage: 'vertex' | 'fragment' | 'compute';
+      workgroupSize?: [number, number, number];
+    }>;
     attributes?: Array<{
-      name: string,
-      location: number,
-      type: string,
-    }>,
+      name: string;
+      location: number;
+      type: string;
+    }>;
     varyings?: Array<{
-      name: string,
-      type: string,
-    }>,
+      name: string;
+      type: string;
+    }>;
   } {
     return this.reflection;
   }
@@ -618,7 +629,7 @@ export class GLShader implements IRHIShaderModule {
   /**
    * 销毁资源
    */
-  destroy (): void {
+  destroy(): void {
     if (this.isDestroyed) {
       console.debug(`着色器已被销毁: ${this.label || '未命名'}`);
 

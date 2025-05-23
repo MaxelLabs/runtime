@@ -47,39 +47,39 @@ export class CullingResults {
    */
   cull(scene: Scene, camera: Camera): void {
     this.reset();
-    
+
     // 获取场景中的所有实体
     const entities = scene.entities;
-    
+
     // 遍历所有实体进行视锥体剔除
     for (const entity of entities) {
       // 跳过已处理的实体
       if (this.processedEntities.has(entity)) {
         continue;
       }
-      
+
       // 标记实体为已处理
       this.processedEntities.add(entity);
-      
+
       // 如果实体不可见或已禁用，则跳过
       if (!entity.active) {
         continue;
       }
-      
+
       // 执行视锥体剔除
       if (this.isVisible(entity, camera)) {
         // 获取实体的渲染元素
         const renderElements = this.getRenderElements(entity);
-        
+
         // 将渲染元素添加到对应的渲染队列中
         for (const element of renderElements) {
           if (!element.visible) {
             continue;
           }
-          
+
           // 计算与相机的距离，用于排序
           this.calculateDistanceForSort(element, camera);
-          
+
           // 根据材质判断渲染队列
           if (element.material.transparent) {
             this.transparentQueue.pushRenderElement(element);
@@ -102,7 +102,7 @@ export class CullingResults {
   private isVisible(entity: Entity, camera: Camera): boolean {
     // 简单实现：判断包围盒是否在视锥体内
     // 真实实现会更复杂，包括包围盒与视锥体相交测试
-    
+
     // 默认为可见，具体实现会在后续完善
     return true;
   }
@@ -115,21 +115,22 @@ export class CullingResults {
   private getRenderElements(entity: Entity): RenderElement[] {
     // 简单实现：返回实体绑定的所有渲染元素
     // 真实实现会从实体的渲染组件中获取渲染元素
-    
+
     // 获取实体上的MeshRenderer组件
     const renderers = entity.getComponentsOfType('MeshRenderer');
     const elements: RenderElement[] = [];
-    
+
     for (const renderer of renderers) {
       if (renderer.isActive && renderer.material && renderer.mesh) {
         // 创建渲染元素
         const element = renderer.getRenderElement();
+
         if (element) {
           elements.push(element);
         }
       }
     }
-    
+
     return elements;
   }
 
@@ -142,13 +143,13 @@ export class CullingResults {
     // 计算物体中心点到相机的距离
     const worldPosition = element.worldMatrix.getTranslation();
     const cameraPosition = camera.transform.worldPosition;
-    
+
     // 使用距离平方作为排序值（避免开方操作）
-    const distanceSquared = 
+    const distanceSquared =
       (worldPosition.x - cameraPosition.x) ** 2 +
       (worldPosition.y - cameraPosition.y) ** 2 +
       (worldPosition.z - cameraPosition.z) ** 2;
-    
+
     element.setDistanceForSort(distanceSquared);
   }
 
@@ -159,10 +160,10 @@ export class CullingResults {
   sortBatch(batcherManager: BatcherManager): void {
     // 对不透明队列进行排序（从近到远）
     this.opaqueQueue.sortBatch(RenderQueue.compareForOpaque, batcherManager);
-    
+
     // 对Alpha测试队列进行排序（从近到远）
     this.alphaTestQueue.sortBatch(RenderQueue.compareForOpaque, batcherManager);
-    
+
     // 对透明队列进行排序（从远到近）
     this.transparentQueue.sortBatch(RenderQueue.compareForTransparent, batcherManager);
   }
@@ -176,4 +177,4 @@ export class CullingResults {
     this.transparentQueue.destroy();
     this.processedEntities.clear();
   }
-} 
+}

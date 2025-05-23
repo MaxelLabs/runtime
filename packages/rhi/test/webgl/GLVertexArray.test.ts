@@ -45,15 +45,7 @@ describe('GLVertexArray', () => {
 
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-    vao.setAttribute(
-      'aPosition',
-      buffer as WebGLBuffer,
-      2,
-      GLConstants.DATA_TYPE.FLOAT,
-      false,
-      0,
-      0
-    );
+    vao.setAttribute('aPosition', buffer as WebGLBuffer, 2, GLConstants.DATA_TYPE.FLOAT, false, 0, 0);
 
     // 由于WebGL上下文是模拟的，我们无法直接验证顶点属性是否正确设置
     // 但可以验证方法是否被调用

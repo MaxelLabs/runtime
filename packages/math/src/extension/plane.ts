@@ -7,16 +7,13 @@ export class Plane {
   distance: number;
   normal: Vector3;
 
-  constructor (
-    distance = 0,
-    normal = new Vector3(0, 0, 1),
-  ) {
+  constructor(distance = 0, normal = new Vector3(0, 0, 1)) {
     this.distance = distance;
     this.normal = normal.clone();
     this.set(distance, normal);
   }
 
-  set (distance: number, normal: Vector3): Plane {
+  set(distance: number, normal: Vector3): Plane {
     this.normal.copyFrom(normal);
 
     const length = this.normal.length();
@@ -31,34 +28,34 @@ export class Plane {
     return this;
   }
 
-  copyFrom (target: Plane): Plane {
+  copyFrom(target: Plane): Plane {
     this.distance = target.distance;
     this.normal.copyFrom(target.normal);
 
     return this;
   }
 
-  static setFromNormalAndCoplanarPoint (point: Vector3, normal: Vector3) {
-    const distance = - point.dot(normal);
+  static setFromNormalAndCoplanarPoint(point: Vector3, normal: Vector3) {
+    const distance = -point.dot(normal);
     const plane = new Plane(distance, normal);
 
     return plane;
   }
 
-  setFromNormalAndCoplanarPoint (point: Vector3, normal: Vector3) {
+  setFromNormalAndCoplanarPoint(point: Vector3, normal: Vector3) {
     this.normal.copyFrom(normal);
-    this.distance = - point.dot(this.normal);
+    this.distance = -point.dot(this.normal);
 
     return this;
   }
 
-  clone (): Plane {
+  clone(): Plane {
     const plane = new Plane(this.distance, this.normal.clone());
 
     return plane;
   }
 
-  distanceToPoint (point: Vector3): number {
+  distanceToPoint(point: Vector3): number {
     return this.normal.dot(point) + this.distance;
   }
 }

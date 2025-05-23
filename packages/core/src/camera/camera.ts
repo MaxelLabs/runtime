@@ -29,7 +29,7 @@ export enum ProjectionType {
   /** 透视投影 */
   Perspective,
   /** 正交投影 */
-  Orthographic
+  Orthographic,
 }
 
 /**
@@ -70,7 +70,7 @@ export class Camera extends Component {
   private static readonly matrixPool = new ObjectPool<Matrix4>(
     'cameraMatrixPool',
     () => new Matrix4(),
-    matrix => matrix.identity(),
+    (matrix) => matrix.identity(),
     10,
     50
   );
@@ -78,7 +78,7 @@ export class Camera extends Component {
   private static readonly vectorPool = new ObjectPool<Vector3>(
     'cameraVectorPool',
     () => new Vector3(),
-    vector => vector.set(0, 0, 0),
+    (vector) => vector.set(0, 0, 0),
     10,
     50
   );
@@ -89,21 +89,21 @@ export class Camera extends Component {
    * 创建一个新的摄像机组件
    * @param entity 所属实体
    */
-  constructor (entity: Entity) {
+  constructor(entity: Entity) {
     super(entity);
   }
 
   /**
    * 获取视野角度（度数）
    */
-  getFov (): number {
+  getFov(): number {
     return this.fov;
   }
 
   /**
    * 设置视野角度（度数）
    */
-  setFov (value: number): this {
+  setFov(value: number): this {
     if (this.fov !== value) {
       this.fov = value;
       this.projectionDirty = true;
@@ -115,14 +115,14 @@ export class Camera extends Component {
   /**
    * 获取近裁剪面距离
    */
-  getNear (): number {
+  getNear(): number {
     return this.near;
   }
 
   /**
    * 设置近裁剪面距离
    */
-  setNear (value: number): this {
+  setNear(value: number): this {
     if (this.near !== value) {
       this.near = value;
       this.projectionDirty = true;
@@ -134,14 +134,14 @@ export class Camera extends Component {
   /**
    * 获取远裁剪面距离
    */
-  getFar (): number {
+  getFar(): number {
     return this.far;
   }
 
   /**
    * 设置远裁剪面距离
    */
-  setFar (value: number): this {
+  setFar(value: number): this {
     if (this.far !== value) {
       this.far = value;
       this.projectionDirty = true;
@@ -153,14 +153,14 @@ export class Camera extends Component {
   /**
    * 获取宽高比
    */
-  getAspect (): number {
+  getAspect(): number {
     return this.aspect;
   }
 
   /**
    * 设置宽高比
    */
-  setAspect (value: number): this {
+  setAspect(value: number): this {
     if (this.aspect !== value) {
       this.aspect = value;
       this.projectionDirty = true;
@@ -172,14 +172,14 @@ export class Camera extends Component {
   /**
    * 获取投影类型
    */
-  getProjectionType (): ProjectionType {
+  getProjectionType(): ProjectionType {
     return this.projectionType;
   }
 
   /**
    * 设置投影类型
    */
-  setProjectionType (value: ProjectionType): this {
+  setProjectionType(value: ProjectionType): this {
     if (this.projectionType !== value) {
       this.projectionType = value;
       this.projectionDirty = true;
@@ -191,14 +191,14 @@ export class Camera extends Component {
   /**
    * 获取正交投影尺寸（高度的一半）
    */
-  getOrthographicSize (): number {
+  getOrthographicSize(): number {
     return this.orthographicSize;
   }
 
   /**
    * 设置正交投影尺寸（高度的一半）
    */
-  setOrthographicSize (value: number): this {
+  setOrthographicSize(value: number): this {
     if (this.orthographicSize !== value) {
       this.orthographicSize = value;
       this.projectionDirty = true;
@@ -210,14 +210,14 @@ export class Camera extends Component {
   /**
    * 获取视口矩形（x, y, width, height）
    */
-  getViewport (): [number, number, number, number] {
+  getViewport(): [number, number, number, number] {
     return [...this.viewport];
   }
 
   /**
    * 设置视口矩形（x, y, width, height）
    */
-  setViewport (value: [number, number, number, number]): this {
+  setViewport(value: [number, number, number, number]): this {
     this.viewport = [...value];
 
     return this;
@@ -226,14 +226,14 @@ export class Camera extends Component {
   /**
    * 获取渲染优先级（数值越小优先级越高）
    */
-  getPriority (): number {
+  getPriority(): number {
     return this.priority;
   }
 
   /**
    * 设置渲染优先级（数值越小优先级越高）
    */
-  setPriority (value: number): this {
+  setPriority(value: number): this {
     this.priority = value;
 
     return this;
@@ -242,14 +242,14 @@ export class Camera extends Component {
   /**
    * 获取背景颜色
    */
-  getBackgroundColor (): [number, number, number, number] {
+  getBackgroundColor(): [number, number, number, number] {
     return [...this.backgroundColor];
   }
 
   /**
    * 设置背景颜色
    */
-  setBackgroundColor (value: [number, number, number, number]): this {
+  setBackgroundColor(value: [number, number, number, number]): this {
     this.backgroundColor = [...value];
 
     return this;
@@ -258,14 +258,14 @@ export class Camera extends Component {
   /**
    * 获取是否清除深度缓冲
    */
-  getClearDepth (): boolean {
+  getClearDepth(): boolean {
     return this.clearDepth;
   }
 
   /**
    * 设置是否清除深度缓冲
    */
-  setClearDepth (value: boolean): this {
+  setClearDepth(value: boolean): this {
     this.clearDepth = value;
 
     return this;
@@ -274,14 +274,14 @@ export class Camera extends Component {
   /**
    * 获取是否清除颜色缓冲
    */
-  getClearColor (): boolean {
+  getClearColor(): boolean {
     return this.clearColor;
   }
 
   /**
    * 设置是否清除颜色缓冲
    */
-  setClearColor (value: boolean): this {
+  setClearColor(value: boolean): this {
     this.clearColor = value;
 
     return this;
@@ -290,7 +290,7 @@ export class Camera extends Component {
   /**
    * 获取投影矩阵
    */
-  getProjectionMatrix (): Matrix4 {
+  getProjectionMatrix(): Matrix4 {
     if (this.projectionDirty) {
       this.updateProjectionMatrix();
     }
@@ -306,7 +306,7 @@ export class Camera extends Component {
   /**
    * 获取视图矩阵
    */
-  getViewMatrix (): Matrix4 {
+  getViewMatrix(): Matrix4 {
     if (this.viewDirty) {
       this.updateViewMatrix();
     }
@@ -322,7 +322,7 @@ export class Camera extends Component {
   /**
    * 获取视图投影矩阵（VP矩阵）
    */
-  getViewProjectionMatrix (): Matrix4 {
+  getViewProjectionMatrix(): Matrix4 {
     const projMatrix = this.getProjectionMatrix();
     const viewMatrix = this.getViewMatrix();
 
@@ -337,28 +337,16 @@ export class Camera extends Component {
   /**
    * 更新投影矩阵
    */
-  private updateProjectionMatrix (): void {
+  private updateProjectionMatrix(): void {
     if (this.projectionType === ProjectionType.Perspective) {
       // 透视投影
-      this.projectionMatrix.perspective(
-        this.fov,
-        this.aspect,
-        this.near,
-        this.far
-      );
+      this.projectionMatrix.perspective(this.fov, this.aspect, this.near, this.far);
     } else {
       // 正交投影
       const height = this.orthographicSize * 2;
       const width = height * this.aspect;
 
-      this.projectionMatrix.orthographic(
-        -width / 2,
-        width / 2,
-        -height / 2,
-        height / 2,
-        this.near,
-        this.far
-      );
+      this.projectionMatrix.orthographic(-width / 2, width / 2, -height / 2, height / 2, this.near, this.far);
     }
     this.projectionDirty = false;
 
@@ -369,7 +357,7 @@ export class Camera extends Component {
   /**
    * 更新视图矩阵
    */
-  private updateViewMatrix (): void {
+  private updateViewMatrix(): void {
     // 获取实体的世界矩阵并求逆
     const worldMatrix = this.entity.transform.getWorldMatrix();
 
@@ -387,7 +375,7 @@ export class Camera extends Component {
    * @param screenHeight 屏幕高度
    * @returns 屏幕坐标点[x, y]，x和y范围都是0到1
    */
-  worldToScreenPoint (worldPosition: Vector3, screenWidth: number, screenHeight: number): [number, number] {
+  worldToScreenPoint(worldPosition: Vector3, screenWidth: number, screenHeight: number): [number, number] {
     // 获取对象池中的向量和矩阵
     const tempVec = Camera.vectorPool.get();
     const vpMatrix = this.getViewProjectionMatrix();
@@ -417,7 +405,7 @@ export class Camera extends Component {
    * @param screenY 屏幕Y坐标(0-1)
    * @returns 射线{origin, direction}
    */
-  screenPointToRay (screenX: number, screenY: number): { origin: Vector3, direction: Vector3 } {
+  screenPointToRay(screenX: number, screenY: number): { origin: Vector3; direction: Vector3 } {
     // 使用对象池获取向量
     const origin = Camera.vectorPool.get();
     const direction = Camera.vectorPool.get();
@@ -459,7 +447,7 @@ export class Camera extends Component {
   /**
    * 组件启用时调用
    */
-  override onEnable (): void {
+  override onEnable(): void {
     super.onEnable();
 
     // 标记矩阵需要更新
@@ -474,7 +462,7 @@ export class Camera extends Component {
    * 更新组件
    * @param deltaTime 时间增量
    */
-  override update (deltaTime: number): void {
+  override update(deltaTime: number): void {
     // 如果Transform有变化，标记视图矩阵需要更新
     if (this.entity.transform.isDirty()) {
       this.viewDirty = true;
@@ -487,7 +475,7 @@ export class Camera extends Component {
   /**
    * 销毁组件
    */
-  override destroy (): void {
+  override destroy(): void {
     // 派发销毁前事件
     this.eventDispatcher.dispatchEvent(CameraEvent.BEFORE_CAMERA_DESTROY, { camera: this });
 

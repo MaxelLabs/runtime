@@ -11,11 +11,11 @@ class Spherical {
    * @param [phi=0] - 极角，y 轴弧度
    * @param [theta=0] - 方位角，z轴 弧度
    */
-  constructor (
+  constructor(
     public radius = 1,
     public phi = 0,
-    public theta = 0,
-  ) { }
+    public theta = 0
+  ) {}
 
   /**
    * 设置球坐标
@@ -24,7 +24,7 @@ class Spherical {
    * @param theta - 方位角
    * @returns 球坐标
    */
-  set (radius: number, phi: number, theta: number): this {
+  set(radius: number, phi: number, theta: number): this {
     this.radius = radius;
     this.phi = phi;
     this.theta = theta;
@@ -37,7 +37,7 @@ class Spherical {
    * @param other - 球坐标
    * @returns 复制结果
    */
-  copyFrom (other: Spherical): this {
+  copyFrom(other: Spherical): this {
     this.radius = other.radius;
     this.phi = other.phi;
     this.theta = other.theta;
@@ -50,7 +50,7 @@ class Spherical {
    * 球坐标有效判断
    * @returns 有效判断结果
    */
-  makeSafe (): this {
+  makeSafe(): this {
     const EPS = 0.000001;
 
     this.phi = Math.max(EPS, Math.min(Math.PI - EPS, this.phi));
@@ -62,7 +62,7 @@ class Spherical {
    * 初始化球坐标
    * @returns 初始球坐标
    */
-  makeEmpty (): this {
+  makeEmpty(): this {
     this.radius = 1;
     this.phi = 0;
     this.theta = 0;
@@ -75,7 +75,7 @@ class Spherical {
    * @param v - 空间坐标
    * @returns 球坐标
    */
-  setFromVec3 (v: Vector3): Spherical {
+  setFromVec3(v: Vector3): Spherical {
     return this.setFromCartesianCoords(v.x, v.y, v.z);
   }
 
@@ -86,7 +86,7 @@ class Spherical {
    * @param z - 笛卡尔坐标系z轴坐标
    * @returns 球坐标
    */
-  setFromCartesianCoords (x: number, y: number, z: number): this {
+  setFromCartesianCoords(x: number, y: number, z: number): this {
     this.radius = Math.sqrt(x * x + y * y + z * z);
 
     if (this.radius === 0) {
@@ -94,7 +94,7 @@ class Spherical {
       this.phi = 0;
     } else {
       this.theta = Math.atan2(x, z);
-      this.phi = Math.acos(clamp(y / this.radius, - 1, 1));
+      this.phi = Math.acos(clamp(y / this.radius, -1, 1));
     }
 
     return this;
@@ -104,11 +104,11 @@ class Spherical {
    * 克隆球坐标
    * @returns 克隆结果
    */
-  clone () {
+  clone() {
     return new Spherical().copyFrom(this);
   }
 
-  getCartesianCoords (): Vector3 {
+  getCartesianCoords(): Vector3 {
     return new Vector3();
   }
 }

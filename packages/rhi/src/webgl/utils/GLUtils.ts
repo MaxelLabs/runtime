@@ -30,7 +30,7 @@ export class WebGLUtils {
    * @param gl WebGL上下文
    * @param extension 已请求的WebGL扩展对象
    */
-  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, extension?: Record<string, any>) {
+  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, extension?: Record<string, any>) {
     this.gl = gl;
     this.isWebGL2 = gl instanceof WebGL2RenderingContext;
     this.extension = extension || {};
@@ -45,7 +45,7 @@ export class WebGLUtils {
    * 加载常用的WebGL扩展
    * 注意：这不会覆盖已有的扩展
    */
-  private loadCommonExtensions (): void {
+  private loadCommonExtensions(): void {
     const gl = this.gl;
     const commonExtensions = [
       // 纹理相关扩展
@@ -94,7 +94,7 @@ export class WebGLUtils {
    * @param name 扩展名称
    * @returns 扩展对象或null（如果不可用）
    */
-  getExtension (name: string): any {
+  getExtension(name: string): any {
     if (this.extension[name]) {
       return this.extension[name];
     }
@@ -116,18 +116,18 @@ export class WebGLUtils {
    * 2. 对于深度纹理，提供更好的降级选项
    * 3. 增加详细的调试信息，帮助理解降级原因
    */
-  textureFormatToGL (format: RHITextureFormat): {
-    internalFormat: number,
-    format: number,
-    type: number,
+  textureFormatToGL(format: RHITextureFormat): {
+    internalFormat: number;
+    format: number;
+    type: number;
   } {
     const gl = this.gl;
 
     // 默认值
     let result: {
-      internalFormat: number,
-      format: number,
-      type: number,
+      internalFormat: number;
+      format: number;
+      type: number;
     } = {
       internalFormat: gl.RGBA,
       format: gl.RGBA,
@@ -258,9 +258,11 @@ export class WebGLUtils {
       case RHITextureFormat.DEPTH24_UNORM_STENCIL8:
         return this.tryDepthStencilTextureFormat(24) || this.fallbackForDepthTexture();
       case RHITextureFormat.DEPTH32_FLOAT_STENCIL8:
-        return this.tryDepthFloatStencilTextureFormat() ||
-               this.tryDepthStencilTextureFormat(24) ||
-               this.fallbackForDepthTexture();
+        return (
+          this.tryDepthFloatStencilTextureFormat() ||
+          this.tryDepthStencilTextureFormat(24) ||
+          this.fallbackForDepthTexture()
+        );
       default:
         console.warn(`未知或不支持的纹理格式: ${format}，使用默认RGBA格式`);
 
@@ -274,10 +276,10 @@ export class WebGLUtils {
   /**
    * 尝试使用浮点纹理格式
    */
-  private tryFloatTextureFormat (): {
-    internalFormat: number,
-    format: number,
-    type: number,
+  private tryFloatTextureFormat(): {
+    internalFormat: number;
+    format: number;
+    type: number;
   } | null {
     const gl = this.gl;
     const floatTextureExt = this.getExtension('OES_texture_float');
@@ -298,10 +300,10 @@ export class WebGLUtils {
   /**
    * 尝试使用半浮点纹理格式
    */
-  private tryHalfFloatTextureFormat (): {
-    internalFormat: number,
-    format: number,
-    type: number,
+  private tryHalfFloatTextureFormat(): {
+    internalFormat: number;
+    format: number;
+    type: number;
   } | null {
     const gl = this.gl;
     const halfFloatExt = this.getExtension('OES_texture_half_float');
@@ -322,10 +324,10 @@ export class WebGLUtils {
   /**
    * 默认的RGBA8格式
    */
-  private defaultRGBA8Format (): {
-    internalFormat: number,
-    format: number,
-    type: number,
+  private defaultRGBA8Format(): {
+    internalFormat: number;
+    format: number;
+    type: number;
   } {
     const gl = this.gl;
 
@@ -341,17 +343,18 @@ export class WebGLUtils {
   /**
    * 尝试创建深度纹理格式
    */
-  private tryDepthTextureFormat (bits: number): {
-    internalFormat: number,
-    format: number,
-    type: number,
+  private tryDepthTextureFormat(bits: number): {
+    internalFormat: number;
+    format: number;
+    type: number;
   } | null {
     const gl = this.gl;
 
     if (this.isWebGL2) {
-      const format = bits === 16
-        ? (gl as WebGL2RenderingContext).DEPTH_COMPONENT16
-        : (gl as WebGL2RenderingContext).DEPTH_COMPONENT24;
+      const format =
+        bits === 16
+          ? (gl as WebGL2RenderingContext).DEPTH_COMPONENT16
+          : (gl as WebGL2RenderingContext).DEPTH_COMPONENT24;
 
       return {
         internalFormat: format,
@@ -377,10 +380,10 @@ export class WebGLUtils {
   /**
    * 尝试创建浮点深度纹理格式
    */
-  private tryDepthFloatTextureFormat (): {
-    internalFormat: number,
-    format: number,
-    type: number,
+  private tryDepthFloatTextureFormat(): {
+    internalFormat: number;
+    format: number;
+    type: number;
   } | null {
     const gl = this.gl;
 
@@ -410,10 +413,10 @@ export class WebGLUtils {
   /**
    * 尝试创建深度模板纹理格式
    */
-  private tryDepthStencilTextureFormat (depthBits: number): {
-    internalFormat: number,
-    format: number,
-    type: number,
+  private tryDepthStencilTextureFormat(depthBits: number): {
+    internalFormat: number;
+    format: number;
+    type: number;
   } | null {
     const gl = this.gl;
 
@@ -442,10 +445,10 @@ export class WebGLUtils {
   /**
    * 尝试创建浮点深度模板纹理格式
    */
-  private tryDepthFloatStencilTextureFormat (): {
-    internalFormat: number,
-    format: number,
-    type: number,
+  private tryDepthFloatStencilTextureFormat(): {
+    internalFormat: number;
+    format: number;
+    type: number;
   } | null {
     const gl = this.gl;
 
@@ -465,10 +468,10 @@ export class WebGLUtils {
    * 当深度纹理不可用时的降级处理
    * 返回一个RGBA格式，开发者可以在着色器中手动实现深度计算
    */
-  private fallbackForDepthTexture (): {
-    internalFormat: number,
-    format: number,
-    type: number,
+  private fallbackForDepthTexture(): {
+    internalFormat: number;
+    format: number;
+    type: number;
   } {
     console.warn('深度纹理不可用，降级为RGBA格式。可以在着色器中手动模拟深度。');
 
@@ -486,27 +489,30 @@ export class WebGLUtils {
   /**
    * 转换RHI寻址模式到WebGL寻址模式
    */
-  addressModeToGL (mode: RHIAddressMode): GLenum {
+  addressModeToGL(mode: RHIAddressMode): GLenum {
     const gl = this.gl;
 
     switch (mode) {
-      case RHIAddressMode.REPEAT: return gl.REPEAT;
-      case RHIAddressMode.MIRROR_REPEAT: return gl.MIRRORED_REPEAT;
-      case RHIAddressMode.CLAMP_TO_EDGE: return gl.CLAMP_TO_EDGE;
-      case RHIAddressMode.CLAMP_TO_BORDER:
-      {
+      case RHIAddressMode.REPEAT:
+        return gl.REPEAT;
+      case RHIAddressMode.MIRROR_REPEAT:
+        return gl.MIRRORED_REPEAT;
+      case RHIAddressMode.CLAMP_TO_EDGE:
+        return gl.CLAMP_TO_EDGE;
+      case RHIAddressMode.CLAMP_TO_BORDER: {
         const ext = this.getExtension('EXT_texture_border_clamp');
 
         return ext ? ext.CLAMP_TO_BORDER_EXT : gl.CLAMP_TO_EDGE;
       }
-      default: return gl.CLAMP_TO_EDGE;
+      default:
+        return gl.CLAMP_TO_EDGE;
     }
   }
 
   /**
    * 转换RHI过滤模式到WebGL过滤模式
    */
-  filterModeToGL (mode: RHIFilterMode, useMipmap: boolean = false): number {
+  filterModeToGL(mode: RHIFilterMode, useMipmap: boolean = false): number {
     const gl = this.gl;
 
     if (mode === RHIFilterMode.NEAREST) {
@@ -519,26 +525,35 @@ export class WebGLUtils {
   /**
    * 转换RHI比较函数到WebGL比较函数
    */
-  compareFunctionToGL (func: RHICompareFunction): number {
+  compareFunctionToGL(func: RHICompareFunction): number {
     const gl = this.gl;
 
     switch (func) {
-      case RHICompareFunction.NEVER: return gl.NEVER;
-      case RHICompareFunction.LESS: return gl.LESS;
-      case RHICompareFunction.EQUAL: return gl.EQUAL;
-      case RHICompareFunction.LESS_EQUAL: return gl.LEQUAL;
-      case RHICompareFunction.GREATER: return gl.GREATER;
-      case RHICompareFunction.NOT_EQUAL: return gl.NOTEQUAL;
-      case RHICompareFunction.GREATER_EQUAL: return gl.GEQUAL;
-      case RHICompareFunction.ALWAYS: return gl.ALWAYS;
-      default: return gl.ALWAYS;
+      case RHICompareFunction.NEVER:
+        return gl.NEVER;
+      case RHICompareFunction.LESS:
+        return gl.LESS;
+      case RHICompareFunction.EQUAL:
+        return gl.EQUAL;
+      case RHICompareFunction.LESS_EQUAL:
+        return gl.LEQUAL;
+      case RHICompareFunction.GREATER:
+        return gl.GREATER;
+      case RHICompareFunction.NOT_EQUAL:
+        return gl.NOTEQUAL;
+      case RHICompareFunction.GREATER_EQUAL:
+        return gl.GEQUAL;
+      case RHICompareFunction.ALWAYS:
+        return gl.ALWAYS;
+      default:
+        return gl.ALWAYS;
     }
   }
 
   /**
    * 转换RHI顶点格式到WebGL类型
    */
-  vertexFormatToGL (format: RHIVertexFormat): { type: number, size: number, normalized: boolean } {
+  vertexFormatToGL(format: RHIVertexFormat): { type: number; size: number; normalized: boolean } {
     const gl = this.gl;
 
     switch (format) {
@@ -582,76 +597,99 @@ export class WebGLUtils {
   /**
    * 转换RHI混合因子到WebGL混合因子
    */
-  blendFactorToGL (factor: RHIBlendFactor): number {
+  blendFactorToGL(factor: RHIBlendFactor): number {
     const gl = this.gl;
 
     switch (factor) {
-      case RHIBlendFactor.ZERO: return gl.ZERO;
-      case RHIBlendFactor.ONE: return gl.ONE;
-      case RHIBlendFactor.SRC_COLOR: return gl.SRC_COLOR;
-      case RHIBlendFactor.ONE_MINUS_SRC_COLOR: return gl.ONE_MINUS_SRC_COLOR;
-      case RHIBlendFactor.DST_COLOR: return gl.DST_COLOR;
-      case RHIBlendFactor.ONE_MINUS_DST_COLOR: return gl.ONE_MINUS_DST_COLOR;
-      case RHIBlendFactor.SRC_ALPHA: return gl.SRC_ALPHA;
-      case RHIBlendFactor.ONE_MINUS_SRC_ALPHA: return gl.ONE_MINUS_SRC_ALPHA;
-      case RHIBlendFactor.DST_ALPHA: return gl.DST_ALPHA;
-      case RHIBlendFactor.ONE_MINUS_DST_ALPHA: return gl.ONE_MINUS_DST_ALPHA;
-      case RHIBlendFactor.CONSTANT_COLOR: return gl.CONSTANT_COLOR;
-      case RHIBlendFactor.ONE_MINUS_CONSTANT_COLOR: return gl.ONE_MINUS_CONSTANT_COLOR;
-      case RHIBlendFactor.CONSTANT_ALPHA: return gl.CONSTANT_ALPHA;
-      case RHIBlendFactor.ONE_MINUS_CONSTANT_ALPHA: return gl.ONE_MINUS_CONSTANT_ALPHA;
-      case RHIBlendFactor.SRC_ALPHA_SATURATE: return gl.SRC_ALPHA_SATURATE;
-      default: return gl.ONE;
+      case RHIBlendFactor.ZERO:
+        return gl.ZERO;
+      case RHIBlendFactor.ONE:
+        return gl.ONE;
+      case RHIBlendFactor.SRC_COLOR:
+        return gl.SRC_COLOR;
+      case RHIBlendFactor.ONE_MINUS_SRC_COLOR:
+        return gl.ONE_MINUS_SRC_COLOR;
+      case RHIBlendFactor.DST_COLOR:
+        return gl.DST_COLOR;
+      case RHIBlendFactor.ONE_MINUS_DST_COLOR:
+        return gl.ONE_MINUS_DST_COLOR;
+      case RHIBlendFactor.SRC_ALPHA:
+        return gl.SRC_ALPHA;
+      case RHIBlendFactor.ONE_MINUS_SRC_ALPHA:
+        return gl.ONE_MINUS_SRC_ALPHA;
+      case RHIBlendFactor.DST_ALPHA:
+        return gl.DST_ALPHA;
+      case RHIBlendFactor.ONE_MINUS_DST_ALPHA:
+        return gl.ONE_MINUS_DST_ALPHA;
+      case RHIBlendFactor.CONSTANT_COLOR:
+        return gl.CONSTANT_COLOR;
+      case RHIBlendFactor.ONE_MINUS_CONSTANT_COLOR:
+        return gl.ONE_MINUS_CONSTANT_COLOR;
+      case RHIBlendFactor.CONSTANT_ALPHA:
+        return gl.CONSTANT_ALPHA;
+      case RHIBlendFactor.ONE_MINUS_CONSTANT_ALPHA:
+        return gl.ONE_MINUS_CONSTANT_ALPHA;
+      case RHIBlendFactor.SRC_ALPHA_SATURATE:
+        return gl.SRC_ALPHA_SATURATE;
+      default:
+        return gl.ONE;
     }
   }
 
   /**
    * 转换RHI混合操作到WebGL混合等式
    */
-  blendOperationToGL (operation: RHIBlendOperation): number {
+  blendOperationToGL(operation: RHIBlendOperation): number {
     const gl = this.gl;
 
     switch (operation) {
-      case RHIBlendOperation.ADD: return gl.FUNC_ADD;
-      case RHIBlendOperation.SUBTRACT: return gl.FUNC_SUBTRACT;
-      case RHIBlendOperation.REVERSE_SUBTRACT: return gl.FUNC_REVERSE_SUBTRACT;
-      case RHIBlendOperation.MIN:
-      {
+      case RHIBlendOperation.ADD:
+        return gl.FUNC_ADD;
+      case RHIBlendOperation.SUBTRACT:
+        return gl.FUNC_SUBTRACT;
+      case RHIBlendOperation.REVERSE_SUBTRACT:
+        return gl.FUNC_REVERSE_SUBTRACT;
+      case RHIBlendOperation.MIN: {
         const minExt = this.extension['EXT_blend_minmax'];
 
         return minExt ? minExt.MIN_EXT : gl.FUNC_ADD;
-
       }
-      case RHIBlendOperation.MAX:
-      {
+      case RHIBlendOperation.MAX: {
         const maxExt = this.extension['EXT_blend_minmax'];
 
         return maxExt ? maxExt.MAX_EXT : gl.FUNC_ADD;
       }
-      default: return gl.FUNC_ADD;
+      default:
+        return gl.FUNC_ADD;
     }
   }
 
   /**
    * 转换RHI图元类型到WebGL图元类型
    */
-  primitiveTopologyToGL (topology: RHIPrimitiveTopology): number {
+  primitiveTopologyToGL(topology: RHIPrimitiveTopology): number {
     const gl = this.gl;
 
     switch (topology) {
-      case RHIPrimitiveTopology.POINT_LIST: return gl.POINTS;
-      case RHIPrimitiveTopology.LINE_LIST: return gl.LINES;
-      case RHIPrimitiveTopology.LINE_STRIP: return gl.LINE_STRIP;
-      case RHIPrimitiveTopology.TRIANGLE_LIST: return gl.TRIANGLES;
-      case RHIPrimitiveTopology.TRIANGLE_STRIP: return gl.TRIANGLE_STRIP;
-      default: return gl.TRIANGLES;
+      case RHIPrimitiveTopology.POINT_LIST:
+        return gl.POINTS;
+      case RHIPrimitiveTopology.LINE_LIST:
+        return gl.LINES;
+      case RHIPrimitiveTopology.LINE_STRIP:
+        return gl.LINE_STRIP;
+      case RHIPrimitiveTopology.TRIANGLE_LIST:
+        return gl.TRIANGLES;
+      case RHIPrimitiveTopology.TRIANGLE_STRIP:
+        return gl.TRIANGLE_STRIP;
+      default:
+        return gl.TRIANGLES;
     }
   }
 
   /**
    * 转换RHI剔除模式到WebGL
    */
-  cullModeToGL (mode: RHICullMode): { enable: boolean, mode: number } {
+  cullModeToGL(mode: RHICullMode): { enable: boolean; mode: number } {
     const gl = this.gl;
 
     switch (mode) {
@@ -669,7 +707,7 @@ export class WebGLUtils {
   /**
    * 转换RHI正面方向到WebGL
    */
-  frontFaceToGL (face: RHIFrontFace): number {
+  frontFaceToGL(face: RHIFrontFace): number {
     const gl = this.gl;
 
     return face === RHIFrontFace.CW ? gl.CW : gl.CCW;
@@ -678,19 +716,28 @@ export class WebGLUtils {
   /**
    * 转换RHI模板操作到WebGL
    */
-  stencilOperationToGL (operation: RHIStencilOperation): number {
+  stencilOperationToGL(operation: RHIStencilOperation): number {
     const gl = this.gl;
 
     switch (operation) {
-      case RHIStencilOperation.KEEP: return gl.KEEP;
-      case RHIStencilOperation.ZERO: return gl.ZERO;
-      case RHIStencilOperation.REPLACE: return gl.REPLACE;
-      case RHIStencilOperation.INCR_CLAMP: return gl.INCR;
-      case RHIStencilOperation.DECR_CLAMP: return gl.DECR;
-      case RHIStencilOperation.INVERT: return gl.INVERT;
-      case RHIStencilOperation.INCR_WRAP: return gl.INCR_WRAP;
-      case RHIStencilOperation.DECR_WRAP: return gl.DECR_WRAP;
-      default: return gl.KEEP;
+      case RHIStencilOperation.KEEP:
+        return gl.KEEP;
+      case RHIStencilOperation.ZERO:
+        return gl.ZERO;
+      case RHIStencilOperation.REPLACE:
+        return gl.REPLACE;
+      case RHIStencilOperation.INCR_CLAMP:
+        return gl.INCR;
+      case RHIStencilOperation.DECR_CLAMP:
+        return gl.DECR;
+      case RHIStencilOperation.INVERT:
+        return gl.INVERT;
+      case RHIStencilOperation.INCR_WRAP:
+        return gl.INCR_WRAP;
+      case RHIStencilOperation.DECR_WRAP:
+        return gl.DECR_WRAP;
+      default:
+        return gl.KEEP;
     }
   }
 }

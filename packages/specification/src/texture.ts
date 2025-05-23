@@ -1,6 +1,4 @@
-export interface Texture {
-
-}
+export interface Texture {}
 /**
  * Wrapping mode of the texture.
  */
@@ -10,7 +8,7 @@ export enum TextureWrapMode {
   /** Repeating mode. tiling will be repeated if it exceeds the texture boundary. */
   Repeat = 1,
   /** Mirror repeat mode. tiling will be mirrored and repeated if it exceeds the texture boundary. */
-  Mirror = 2
+  Mirror = 2,
 }
 
 /**
@@ -32,5 +30,5 @@ export enum TextureDepthCompareFunction {
   /** pass if the compare value is greater than or equal to the sample value. */
   GreaterEqual,
   /** always pass. */
-  Always
+  Always,
 }

@@ -1,5 +1,5 @@
 import { EventDispatcher } from '../base/event-dispatcher';
-import type { Engine } from '../Engine';
+import type { Engine } from '../engine';
 
 /**
  * 资源加载状态枚举
@@ -12,7 +12,7 @@ export enum ResourceLoadState {
   /** 已加载 */
   Loaded,
   /** 加载失败 */
-  Failed
+  Failed,
 }
 
 /**
@@ -20,25 +20,25 @@ export enum ResourceLoadState {
  */
 export interface IResource {
   /** 资源ID */
-  id: string,
+  id: string;
   /** 资源名称 */
-  name: string,
+  name: string;
   /** 资源类型 */
-  type: ResourceType,
+  type: ResourceType;
   /** 资源URL */
-  url: string,
+  url: string;
   /** 资源数据 */
-  data: any,
+  data: any;
   /** 是否已加载 */
-  loaded: boolean,
+  loaded: boolean;
   /** 引用计数 */
-  referenceCount: number,
+  referenceCount: number;
   /** 资源大小(字节) */
-  size: number,
+  size: number;
   /** 加载时间戳 */
-  loadTime: number,
+  loadTime: number;
   /** 销毁资源 */
-  destroy(): void,
+  destroy(): void;
 }
 
 /**
@@ -46,19 +46,19 @@ export interface IResource {
  */
 export interface ResourceLoadOptions {
   /** 是否异步加载 */
-  async?: boolean,
+  async?: boolean;
   /** 超时时间(毫秒) */
-  timeout?: number,
+  timeout?: number;
   /** 是否使用缓存 */
-  useCache?: boolean,
+  useCache?: boolean;
   /** 重试次数 */
-  retries?: number,
+  retries?: number;
   /** 优先级 */
-  priority?: number,
+  priority?: number;
   /** 是否跨域 */
-  crossOrigin?: boolean,
+  crossOrigin?: boolean;
   /** 加载进度回调 */
-  onProgress?: (loaded: number, total: number) => void,
+  onProgress?: (loaded: number, total: number) => void;
 }
 
 /**
@@ -78,7 +78,7 @@ export enum ResourceManagerEventType {
   /** 垃圾回收开始 */
   GC_START = 'gc-start',
   /** 垃圾回收完成 */
-  GC_COMPLETE = 'gc-complete'
+  GC_COMPLETE = 'gc-complete',
 }
 
 /**
@@ -94,7 +94,7 @@ export enum ResourceType {
   JSON = 'json',
   TEXT = 'text',
   BINARY = 'binary',
-  OTHER = 'other'
+  OTHER = 'other',
 }
 
 /**
@@ -126,7 +126,7 @@ export class ResourceManager extends EventDispatcher {
   /** 上次垃圾回收时间 */
   private lastGCTime: number = 0;
   /** 资源预加载队列 */
-  private preloadQueue: Array<{ type: ResourceType, path: string, priority: number }> = [];
+  private preloadQueue: Array<{ type: ResourceType; path: string; priority: number }> = [];
   /** 是否开启自动垃圾回收 */
   private autoGC: boolean = true;
   /** 资源加载策略 */
@@ -138,7 +138,7 @@ export class ResourceManager extends EventDispatcher {
    * 创建增强的资源管理器
    * @param engine 引擎实例
    */
-  constructor (engine: Engine) {
+  constructor(engine: Engine) {
     super();
     this.engine = engine;
   }
@@ -148,7 +148,7 @@ export class ResourceManager extends EventDispatcher {
    * @param path 资源路径
    * @returns 资源对象，如果不存在则返回null
    */
-  getResource (path: string): IResource | null {
+  getResource(path: string): IResource | null {
     // 检查路径别名
     const actualPath = this.aliases.get(path) || path;
 
@@ -176,10 +176,10 @@ export class ResourceManager extends EventDispatcher {
     type: ResourceType,
     path: string,
     options: {
-      cache?: boolean,
-      priority?: number,
-      onProgress?: (progress: number) => void,
-      timeout?: number,
+      cache?: boolean;
+      priority?: number;
+      onProgress?: (progress: number) => void;
+      timeout?: number;
     } = {}
   ): Promise<T> {
     const actualPath = this.aliases.get(path) || path;
@@ -232,49 +232,51 @@ export class ResourceManager extends EventDispatcher {
       }, finalOptions.timeout);
 
       // 加载资源
-      resource.load().then(() => {
-        // 清除超时计时器
-        clearTimeout(timeoutId);
+      resource
+        .load()
+        .then(() => {
+          // 清除超时计时器
+          clearTimeout(timeoutId);
 
-        // 更新状态
-        resource.loadState = ResourceLoadState.Loaded;
+          // 更新状态
+          resource.loadState = ResourceLoadState.Loaded;
 
-        // 如果需要缓存，则添加到缓存中
-        if (finalOptions.cache) {
-          this.cache.set(actualPath, resource);
-        }
+          // 如果需要缓存，则添加到缓存中
+          if (finalOptions.cache) {
+            this.cache.set(actualPath, resource);
+          }
 
-        // 减少加载计数
-        this.loadingCounter--;
+          // 减少加载计数
+          this.loadingCounter--;
 
-        // 触发加载完成事件
-        this.dispatchEvent(ResourceManagerEventType.RESOURCE_LOADED, { resource });
+          // 触发加载完成事件
+          this.dispatchEvent(ResourceManagerEventType.RESOURCE_LOADED, { resource });
 
-        // 完成Promise
-        resolve(resource as T);
+          // 完成Promise
+          resolve(resource as T);
 
-        // 从加载Promise映射中移除
-        this.loadingPromises.delete(actualPath);
+          // 从加载Promise映射中移除
+          this.loadingPromises.delete(actualPath);
+        })
+        .catch((error: Error) => {
+          // 清除超时计时器
+          clearTimeout(timeoutId);
 
-      }).catch((error: Error) => {
-        // 清除超时计时器
-        clearTimeout(timeoutId);
+          // 更新状态
+          resource.loadState = ResourceLoadState.Failed;
 
-        // 更新状态
-        resource.loadState = ResourceLoadState.Failed;
+          // 减少加载计数
+          this.loadingCounter--;
 
-        // 减少加载计数
-        this.loadingCounter--;
+          // 触发加载失败事件
+          this.dispatchEvent(ResourceManagerEventType.RESOURCE_LOAD_FAILED, { resource, error });
 
-        // 触发加载失败事件
-        this.dispatchEvent(ResourceManagerEventType.RESOURCE_LOAD_FAILED, { resource, error });
+          // 拒绝Promise
+          reject(error);
 
-        // 拒绝Promise
-        reject(error);
-
-        // 从加载Promise映射中移除
-        this.loadingPromises.delete(actualPath);
-      });
+          // 从加载Promise映射中移除
+          this.loadingPromises.delete(actualPath);
+        });
     });
 
     // 存储加载Promise
@@ -289,7 +291,7 @@ export class ResourceManager extends EventDispatcher {
    * @param path 资源路径
    * @returns 资源实例
    */
-  private createResourceInstance (type: ResourceType, path: string): IResource {
+  private createResourceInstance(type: ResourceType, path: string): IResource {
     // 此方法需要实现具体的资源创建逻辑
     // 简化示例，实际实现需根据不同类型创建不同资源
     return {
@@ -301,8 +303,8 @@ export class ResourceManager extends EventDispatcher {
       referenceCount: 0,
       isGCIgnored: false,
       load: () => Promise.resolve(null),
-      unload: () => { },
-      destroy: () => { },
+      unload: () => {},
+      destroy: () => {},
     } as IResource;
   }
 
@@ -311,8 +313,10 @@ export class ResourceManager extends EventDispatcher {
    * @param resource 资源
    * @param owner 引用资源的对象
    */
-  addReference (resource: IResource, owner: any): void {
-    if (!resource) {return;}
+  addReference(resource: IResource, owner: any): void {
+    if (!resource) {
+      return;
+    }
 
     // 增加资源引用计数
     resource.referenceCount++;
@@ -330,8 +334,10 @@ export class ResourceManager extends EventDispatcher {
    * @param resource 资源
    * @param owner 引用资源的对象
    */
-  removeReference (resource: IResource, owner: any): void {
-    if (!resource) {return;}
+  removeReference(resource: IResource, owner: any): void {
+    if (!resource) {
+      return;
+    }
 
     // 减少资源引用计数
     resource.referenceCount = Math.max(0, resource.referenceCount - 1);
@@ -354,14 +360,20 @@ export class ResourceManager extends EventDispatcher {
    * @param resource 要释放的资源
    * @param force 是否强制释放，即使引用计数大于0
    */
-  releaseResource (resource: IResource, force: boolean = false): void {
-    if (!resource) {return;}
+  releaseResource(resource: IResource, force: boolean = false): void {
+    if (!resource) {
+      return;
+    }
 
     // 内置资源不释放
-    if (resource.isInternal) {return;}
+    if (resource.isInternal) {
+      return;
+    }
 
     // 如果引用计数大于0且不强制释放，则不执行
-    if (resource.referenceCount > 0 && !force) {return;}
+    if (resource.referenceCount > 0 && !force) {
+      return;
+    }
 
     // 从缓存中移除
     this.cache.delete(resource.path);
@@ -383,10 +395,12 @@ export class ResourceManager extends EventDispatcher {
    * 释放依赖资源
    * @param parentPath 父资源路径
    */
-  private releaseDependencies (parentPath: string): void {
+  private releaseDependencies(parentPath: string): void {
     const deps = this.dependencies.get(parentPath);
 
-    if (!deps) {return;}
+    if (!deps) {
+      return;
+    }
 
     // 遍历所有依赖
     for (const depPath of deps) {
@@ -410,9 +424,11 @@ export class ResourceManager extends EventDispatcher {
   /**
    * 垃圾回收，释放未被引用的资源
    */
-  garbageCollect (): void {
+  garbageCollect(): void {
     // 如果已经在进行GC，则不执行
-    if (this.isGarbageCollecting) {return;}
+    if (this.isGarbageCollecting) {
+      return;
+    }
 
     this.isGarbageCollecting = true;
     this.dispatchEvent(ResourceManagerEventType.GC_START);
@@ -423,7 +439,9 @@ export class ResourceManager extends EventDispatcher {
     // 检查所有缓存的资源
     for (const [resource] of this.cache.entries()) {
       // 跳过内置资源和GC忽略的资源
-      if (resource.isInternal || resource.isGCIgnored) {continue;}
+      if (resource.isInternal || resource.isGCIgnored) {
+        continue;
+      }
 
       // 如果引用计数为0，则添加到释放列表
       if (resource.referenceCount === 0) {
@@ -447,7 +465,7 @@ export class ResourceManager extends EventDispatcher {
    * 更新资源管理器，进行自动垃圾回收
    * @param time 当前时间戳
    */
-  update (time: number): void {
+  update(time: number): void {
     // 如果启用了自动GC，并且超过了GC间隔，则执行GC
     if (this.autoGC && time - this.lastGCTime > this.gcInterval) {
       this.garbageCollect();
@@ -460,7 +478,7 @@ export class ResourceManager extends EventDispatcher {
   /**
    * 处理预加载队列
    */
-  private processPreloadQueue (): void {
+  private processPreloadQueue(): void {
     // 如果队列为空或达到最大并发数，则不处理
     if (this.preloadQueue.length === 0 || this.loadingCounter >= this.maxConcurrentLoads) {
       return;
@@ -495,7 +513,7 @@ export class ResourceManager extends EventDispatcher {
    * @param path 资源路径
    * @param priority 加载优先级
    */
-  preloadResource (type: ResourceType, path: string, priority: number = 0): void {
+  preloadResource(type: ResourceType, path: string, priority: number = 0): void {
     this.preloadQueue.push({ type, path, priority });
   }
 
@@ -504,7 +522,7 @@ export class ResourceManager extends EventDispatcher {
    * @param alias 别名
    * @param path 实际路径
    */
-  setAlias (alias: string, path: string): void {
+  setAlias(alias: string, path: string): void {
     this.aliases.set(alias, path);
   }
 
@@ -513,7 +531,7 @@ export class ResourceManager extends EventDispatcher {
    * @param alias 别名
    * @returns 实际路径
    */
-  getAliasPath (alias: string): string {
+  getAliasPath(alias: string): string {
     return this.aliases.get(alias) || alias;
   }
 
@@ -522,7 +540,7 @@ export class ResourceManager extends EventDispatcher {
    * @param parentPath 父资源路径
    * @param dependencies 依赖资源路径数组
    */
-  setDependencies (parentPath: string, dependencies: string[]): void {
+  setDependencies(parentPath: string, dependencies: string[]): void {
     // 创建依赖集合
     if (!this.dependencies.has(parentPath)) {
       this.dependencies.set(parentPath, new Set());
@@ -546,7 +564,7 @@ export class ResourceManager extends EventDispatcher {
   /**
    * 销毁资源管理器
    */
-  destroy (): void {
+  destroy(): void {
     // 释放所有资源
     for (const [path, resource] of this.cache.entries()) {
       if (!resource.isInternal) {

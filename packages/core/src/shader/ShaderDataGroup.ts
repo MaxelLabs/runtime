@@ -13,5 +13,5 @@ export enum ShaderDataGroup {
   /** 着色器渲染状态组 */
   RenderState = 4,
   /** 着色器全局变量组 */
-  Global = 5
+  Global = 5,
 }

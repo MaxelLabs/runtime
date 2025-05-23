@@ -10,11 +10,7 @@ describe('GLTexture', () => {
   beforeEach(() => {
     canvas = document.createElement('canvas');
     gl = canvas.getContext('webgl') as WebGLRenderingContext;
-    texture = new GLTexture(
-      gl,
-      GLConstants.TEXTURE_FORMAT.RGBA,
-      GLConstants.DATA_TYPE.UNSIGNED_BYTE
-    );
+    texture = new GLTexture(gl, GLConstants.TEXTURE_FORMAT.RGBA, GLConstants.DATA_TYPE.UNSIGNED_BYTE);
   });
 
   afterEach(() => {
@@ -32,9 +28,9 @@ describe('GLTexture', () => {
     const data = new Uint8Array(4 * 4 * 4);
 
     for (let i = 0; i < data.length; i += 4) {
-      data[i] = 255;     // R
-      data[i + 1] = 0;   // G
-      data[i + 2] = 0;   // B
+      data[i] = 255; // R
+      data[i + 1] = 0; // G
+      data[i + 2] = 0; // B
       data[i + 3] = 255; // A
     }
     texture.setData(data, 4, 4);

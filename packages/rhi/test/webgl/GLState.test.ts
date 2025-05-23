@@ -21,10 +21,7 @@ describe('GLState', () => {
   });
 
   test('设置混合函数', () => {
-    state.setBlendFunc(
-      GLConstants.BLEND_FUNC.SRC_ALPHA,
-      GLConstants.BLEND_FUNC.ONE_MINUS_SRC_ALPHA
-    );
+    state.setBlendFunc(GLConstants.BLEND_FUNC.SRC_ALPHA, GLConstants.BLEND_FUNC.ONE_MINUS_SRC_ALPHA);
     // 由于WebGL上下文是模拟的，我们无法直接验证混合函数是否正确设置
     // 但可以验证方法是否被调用
   });

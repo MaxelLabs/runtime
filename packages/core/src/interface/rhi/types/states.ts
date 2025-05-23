@@ -21,24 +21,24 @@ export interface RHIVertexAttribute {
   /**
    * 属性名称
    */
-  name?: string,
+  name?: string;
 
   /**
    * 属性格式
    */
-  format: RHIVertexFormat,
+  format: RHIVertexFormat;
 
   /**
    * 属性在顶点中的偏移量(字节)
    */
-  offset: number,
+  offset: number;
 
   /**
    * 属性的语义索引(在着色器中的位置)
    * WebGL中会尝试通过name找到，如果找不到则使用此值
    * WebGPU中直接使用此值
    */
-  shaderLocation: number,
+  shaderLocation: number;
 }
 
 /**
@@ -48,22 +48,22 @@ export interface RHIVertexBufferLayout {
   /**
    * 顶点缓冲区的索引
    */
-  index: number,
+  index: number;
 
   /**
    * 顶点缓冲区的属性列表
    */
-  attributes: RHIVertexAttribute[],
+  attributes: RHIVertexAttribute[];
 
   /**
    * 顶点步长(字节)
    */
-  stride: number,
+  stride: number;
 
   /**
    * 步进模式
    */
-  stepMode?: 'vertex' | 'instance',
+  stepMode?: 'vertex' | 'instance';
 }
 
 /**
@@ -73,7 +73,7 @@ export interface RHIVertexLayout {
   /**
    * 顶点缓冲区列表
    */
-  buffers: RHIVertexBufferLayout[],
+  buffers: RHIVertexBufferLayout[];
 }
 
 /**
@@ -83,22 +83,22 @@ export interface RHIBlendComponent {
   /**
    * 是否启用混合
    */
-  enable?: boolean,
+  enable?: boolean;
 
   /**
    * 源混合因子
    */
-  srcFactor?: RHIBlendFactor,
+  srcFactor?: RHIBlendFactor;
 
   /**
    * 目标混合因子
    */
-  dstFactor?: RHIBlendFactor,
+  dstFactor?: RHIBlendFactor;
 
   /**
    * 混合操作
    */
-  operation?: RHIBlendOperation,
+  operation?: RHIBlendOperation;
 }
 
 /**
@@ -108,12 +108,12 @@ export interface RHIColorBlendAttachment {
   /**
    * 颜色混合参数
    */
-  color: RHIBlendComponent,
+  color: RHIBlendComponent;
 
   /**
    * Alpha混合参数
    */
-  alpha: RHIBlendComponent,
+  alpha: RHIBlendComponent;
 }
 
 /**
@@ -123,66 +123,66 @@ export interface RHIColorBlendState {
   /**
    * 渲染目标的混合状态
    */
-  attachments: RHIColorBlendAttachment[],
+  attachments: RHIColorBlendAttachment[];
 
   /**
    * 颜色混合常量
    */
-  blendConstants?: [number, number, number, number],
+  blendConstants?: [number, number, number, number];
 
   /**
    * 是否启用混合，WebGL中使用
    */
-  blendEnabled?: boolean,
+  blendEnabled?: boolean;
 
   /**
    * 颜色混合操作，WebGL中使用
    * 在GL中用于blendEquationSeparate的第一个参数
    */
-  colorBlendOperation?: RHIBlendOperation,
+  colorBlendOperation?: RHIBlendOperation;
 
   /**
    * Alpha混合操作，WebGL中使用
    * 在GL中用于blendEquationSeparate的第二个参数
    */
-  alphaBlendOperation?: RHIBlendOperation,
+  alphaBlendOperation?: RHIBlendOperation;
 
   /**
    * 源颜色因子，WebGL中使用
    * 在GL中用于blendFuncSeparate的第一个参数
    */
-  srcColorFactor?: RHIBlendFactor,
+  srcColorFactor?: RHIBlendFactor;
 
   /**
    * 目标颜色因子，WebGL中使用
    * 在GL中用于blendFuncSeparate的第二个参数
    */
-  dstColorFactor?: RHIBlendFactor,
+  dstColorFactor?: RHIBlendFactor;
 
   /**
    * 源Alpha因子，WebGL中使用
    * 在GL中用于blendFuncSeparate的第三个参数
    */
-  srcAlphaFactor?: RHIBlendFactor,
+  srcAlphaFactor?: RHIBlendFactor;
 
   /**
    * 目标Alpha因子，WebGL中使用
    * 在GL中用于blendFuncSeparate的第四个参数
    */
-  dstAlphaFactor?: RHIBlendFactor,
+  dstAlphaFactor?: RHIBlendFactor;
 
   /**
    * 混合颜色，WebGL中使用
    * 在GL中用于blendColor函数
    */
-  blendColor?: [number, number, number, number],
+  blendColor?: [number, number, number, number];
 
   /**
    * 颜色写入掩码，WebGL中使用
    * 在GL中用于colorMask函数
    * 0x1: 红, 0x2: 绿, 0x4: 蓝, 0x8: Alpha
    */
-  writeMask?: number,
+  writeMask?: number;
 }
 
 /**
@@ -192,58 +192,58 @@ export interface RHIDepthStencilState {
   /**
    * 深度格式
    */
-  format: RHITextureFormat,
+  format: RHITextureFormat;
 
   /**
    * 是否启用深度测试
    * 在WebGL中决定是否调用gl.enable(gl.DEPTH_TEST)
    */
-  depthTestEnabled?: boolean,
+  depthTestEnabled?: boolean;
 
   /**
    * 是否启用深度写入
    */
-  depthWriteEnabled?: boolean,
+  depthWriteEnabled?: boolean;
 
   /**
    * 深度比较函数
    */
-  depthCompare?: RHICompareFunction,
+  depthCompare?: RHICompareFunction;
 
   /**
    * 前向面模板状态
    */
-  stencilFront?: RHIStencilFaceState,
+  stencilFront?: RHIStencilFaceState;
 
   /**
    * 后向面模板状态
    */
-  stencilBack?: RHIStencilFaceState,
+  stencilBack?: RHIStencilFaceState;
 
   /**
    * 模板读取掩码
    */
-  stencilReadMask?: number,
+  stencilReadMask?: number;
 
   /**
    * 模板写入掩码
    */
-  stencilWriteMask?: number,
+  stencilWriteMask?: number;
 
   /**
    * 深度偏移
    */
-  depthBias?: number,
+  depthBias?: number;
 
   /**
    * 深度偏移斜率缩放
    */
-  depthBiasSlopeScale?: number,
+  depthBiasSlopeScale?: number;
 
   /**
    * 深度偏移钳制值
    */
-  depthBiasClamp?: number,
+  depthBiasClamp?: number;
 }
 
 /**
@@ -253,40 +253,40 @@ export interface RHIStencilFaceState {
   /**
    * 比较函数
    */
-  compare?: RHICompareFunction,
+  compare?: RHICompareFunction;
 
   /**
    * 失败操作
    */
-  failOp?: RHIStencilOperation,
+  failOp?: RHIStencilOperation;
 
   /**
    * 深度失败操作
    */
-  depthFailOp?: RHIStencilOperation,
+  depthFailOp?: RHIStencilOperation;
 
   /**
    * 通过操作
    */
-  passOp?: RHIStencilOperation,
+  passOp?: RHIStencilOperation;
 
   /**
    * 模板参考值，WebGL中使用
    * 在GL中的glStencilFuncSeparate的第二个参数
    */
-  reference?: number,
+  reference?: number;
 
   /**
    * 模板读取掩码，WebGL中使用
    * 在GL中的glStencilFuncSeparate的第三个参数
    */
-  readMask?: number,
+  readMask?: number;
 
   /**
    * 模板写入掩码，WebGL中使用
    * 在GL中用于glStencilMaskSeparate的第二个参数
    */
-  writeMask?: number,
+  writeMask?: number;
 }
 
 /**
@@ -296,37 +296,37 @@ export interface RHIRasterizationState {
   /**
    * 正面方向
    */
-  frontFace?: RHIFrontFace,
+  frontFace?: RHIFrontFace;
 
   /**
    * 剔除模式
    */
-  cullMode?: RHICullMode,
+  cullMode?: RHICullMode;
 
   /**
    * 是否启用多重采样
    */
-  multisampleEnabled?: boolean,
+  multisampleEnabled?: boolean;
 
   /**
    * 线宽
    */
-  lineWidth?: number,
+  lineWidth?: number;
 
   /**
    * 是否启用深度偏置
    */
-  depthBiasEnabled?: boolean,
+  depthBiasEnabled?: boolean;
 
   /**
    * 深度偏移值，WebGL中使用
    * 在GL中polygonOffset的第二个参数
    */
-  depthBias?: number,
+  depthBias?: number;
 
   /**
    * 深度偏移斜率缩放，WebGL中使用
    * 在GL中polygonOffset的第一个参数
    */
-  depthBiasSlopeScale?: number,
+  depthBiasSlopeScale?: number;
 }

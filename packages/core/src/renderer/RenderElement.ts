@@ -1,8 +1,8 @@
 import { Matrix4 } from '@maxellabs/math';
-import { Mesh } from '../geometry/Mesh';
-import { Material } from '../material/Material';
+import type { Mesh } from '../geometry/Mesh';
+import type { Material } from '../material/Material';
 import { ShaderData } from '../shader/ShaderData';
-import { Entity } from '../base/Entity';
+import type { Entity } from '../base/Entity';
 import { SubRenderElement } from './SubRenderElement';
 
 /**
@@ -22,7 +22,7 @@ export enum RenderElementType {
   /** 贴花 */
   Decal = 5,
   /** 自定义 */
-  Custom = 100
+  Custom = 100,
 }
 
 /**
@@ -80,7 +80,7 @@ export class RenderElement {
     this.entity = entity;
     this.mesh = mesh;
     this.material = material;
-    
+
     // 创建一个默认的子渲染元素
     this.createDefaultSubRenderElement();
   }
@@ -90,8 +90,10 @@ export class RenderElement {
    */
   private createDefaultSubRenderElement(): void {
     const component = this.entity.getComponent('MeshRenderer') || this.entity.getComponent('SkinnedMeshRenderer');
+
     if (component && this.mesh && this.material) {
       const subElement = new SubRenderElement(component, this.material, this.mesh);
+
       this.subRenderElements.push(subElement);
     }
   }
@@ -103,6 +105,7 @@ export class RenderElement {
    */
   setSubMaterialIndex(index: number): RenderElement {
     this.subMaterialIndex = index;
+
     return this;
   }
 
@@ -113,6 +116,7 @@ export class RenderElement {
    */
   setVisible(visible: boolean): RenderElement {
     this.visible = visible;
+
     return this;
   }
 
@@ -123,6 +127,7 @@ export class RenderElement {
    */
   setReceiveShadow(receive: boolean): RenderElement {
     this.receiveShadow = receive;
+
     return this;
   }
 
@@ -133,6 +138,7 @@ export class RenderElement {
    */
   setCastShadow(cast: boolean): RenderElement {
     this.castShadow = cast;
+
     return this;
   }
 
@@ -143,6 +149,7 @@ export class RenderElement {
    */
   setRenderLayer(layer: number): RenderElement {
     this.renderLayer = layer;
+
     return this;
   }
 
@@ -153,6 +160,7 @@ export class RenderElement {
    */
   setSortingValue(value: number): RenderElement {
     this.sortingValue = value;
+
     return this;
   }
 
@@ -168,6 +176,7 @@ export class RenderElement {
         subElement.setPriority(priority);
       }
     }
+
     return this;
   }
 
@@ -183,6 +192,7 @@ export class RenderElement {
         subElement.setDistanceForSort(distance);
       }
     }
+
     return this;
   }
 
@@ -193,6 +203,7 @@ export class RenderElement {
    */
   setWorldMatrix(matrix: Matrix4): RenderElement {
     this.worldMatrix.copyFrom(matrix);
+
     return this;
   }
 
@@ -203,6 +214,7 @@ export class RenderElement {
    */
   setElementType(type: RenderElementType): RenderElement {
     this.elementType = type;
+
     return this;
   }
 
@@ -217,6 +229,7 @@ export class RenderElement {
     this.useInstancing = useInstancing;
     this.instanceCount = instanceCount;
     this.instanceBuffer = instanceBuffer;
+
     return this;
   }
 
@@ -227,6 +240,7 @@ export class RenderElement {
    */
   setCustomRender(renderFunction: ((renderElement: RenderElement) => void) | null): RenderElement {
     this.customRender = renderFunction;
+
     return this;
   }
 
@@ -241,7 +255,7 @@ export class RenderElement {
       while (this.instanceShaderData.length <= instanceIndex) {
         this.instanceShaderData.push(new ShaderData());
       }
-      
+
       // 合并着色器数据
       this.instanceShaderData[instanceIndex] = data;
     }
@@ -253,7 +267,7 @@ export class RenderElement {
    */
   clone(): RenderElement {
     const result = new RenderElement(this.entity, this.mesh, this.material);
-    
+
     result.subMaterialIndex = this.subMaterialIndex;
     result.visible = this.visible;
     result.receiveShadow = this.receiveShadow;
@@ -267,27 +281,29 @@ export class RenderElement {
     result.customRender = this.customRender;
     result.priority = this.priority;
     result.distanceForSort = this.distanceForSort;
-    
+
     // 复制着色器数据
     for (const key of this.shaderData.getData()) {
       result.shaderData.setData(key, this.shaderData.getData()[key]);
     }
-    
+
     // 复制实例化着色器数据
     for (let i = 0; i < this.instanceShaderData.length; i++) {
       const data = this.instanceShaderData[i];
+
       if (data) {
         const newData = new ShaderData();
+
         for (const key of data.getData()) {
           newData.setData(key, data.getData()[key]);
         }
         result.instanceShaderData[i] = newData;
       }
     }
-    
+
     // 复制子渲染元素
-    result.subRenderElements = this.subRenderElements.map(subElement => subElement.clone());
-    
+    result.subRenderElements = this.subRenderElements.map((subElement) => subElement.clone());
+
     return result;
   }
-} 
+}

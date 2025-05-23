@@ -5,11 +5,11 @@ import type { Camera } from '../camera/camera';
  * 渲染器设置接口
  */
 export interface RendererOptions {
-  canvas: HTMLCanvasElement,
-  width?: number,
-  height?: number,
-  clearColor?: [number, number, number, number],
-  antialias?: boolean,
+  canvas: HTMLCanvasElement;
+  width?: number;
+  height?: number;
+  clearColor?: [number, number, number, number];
+  antialias?: boolean;
 }
 
 /**
@@ -23,7 +23,7 @@ export abstract class Renderer {
   protected antialias: boolean = true;
   protected isInitialized: boolean = false;
 
-  constructor (options: RendererOptions) {
+  constructor(options: RendererOptions) {
     this.canvas = options.canvas;
     this.width = options.width || this.canvas.width;
     this.height = options.height || this.canvas.height;
@@ -40,12 +40,12 @@ export abstract class Renderer {
   /**
    * 初始化渲染器
    */
-  public abstract initialize (): void;
+  public abstract initialize(): void;
 
   /**
    * 调整渲染器大小
    */
-  public setSize (width: number, height: number): void {
+  public setSize(width: number, height: number): void {
     this.width = width;
     this.height = height;
     this.canvas.width = width;
@@ -58,20 +58,20 @@ export abstract class Renderer {
   /**
    * 更新视口
    */
-  protected abstract updateViewport (): void;
+  protected abstract updateViewport(): void;
 
   /**
    * 渲染场景
    */
-  public abstract render (scene: Scene, camera: Camera): void;
+  public abstract render(scene: Scene, camera: Camera): void;
 
   /**
    * 清除场景
    */
-  protected abstract clear (): void;
+  protected abstract clear(): void;
 
   /**
    * 销毁渲染器并释放资源
    */
-  public abstract dispose (): void;
+  public abstract dispose(): void;
 }

@@ -40,7 +40,10 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   private _layout: IRHIPipelineLayout;
   private _label?: string;
   private attributeLocations: Map<string, number> = new Map();
-  private attributeBufferLayouts: Map<number, { name: string, stride: number, offset: number, format: { type: number, size: number, normalized: boolean } }[]> = new Map();
+  private attributeBufferLayouts: Map<
+    number,
+    { name: string; stride: number; offset: number; format: { type: number; size: number; normalized: boolean } }[]
+  > = new Map();
   private isDestroyed: boolean = false;
   private utils: WebGLUtils;
 
@@ -49,10 +52,10 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
    * @param gl WebGL上下文
    * @param descriptor 渲染管线描述符
    */
-  constructor (gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHIRenderPipelineDescriptor) {
+  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHIRenderPipelineDescriptor) {
     this.gl = gl;
     this.isWebGL2 = gl instanceof WebGL2RenderingContext;
-    this.utils = new WebGLUtils(gl, { 'EXT_blend_minmax': this.gl.getExtension('EXT_blend_minmax') });
+    this.utils = new WebGLUtils(gl, { EXT_blend_minmax: this.gl.getExtension('EXT_blend_minmax') });
     this._vertexShader = descriptor.vertexShader;
     this._fragmentShader = descriptor.fragmentShader;
     this._vertexLayout = descriptor.vertexLayout;
@@ -79,7 +82,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 获取默认的光栅化状态
    */
-  private getDefaultRasterizationState (): RHIRasterizationState {
+  private getDefaultRasterizationState(): RHIRasterizationState {
     return {
       cullMode: RHICullMode.BACK,
       frontFace: RHIFrontFace.CCW,
@@ -93,7 +96,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 创建并链接着色器程序
    */
-  private createProgram (): WebGLProgram | null {
+  private createProgram(): WebGLProgram | null {
     const gl = this.gl;
     const vertexShaderInstance = this._vertexShader as any as GLShader;
     const fragmentShaderInstance = this._fragmentShader as any as GLShader;
@@ -134,7 +137,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 从程序中提取顶点属性位置
    */
-  private extractAttributeLocations (): void {
+  private extractAttributeLocations(): void {
     if (!this.program) {
       return;
     }
@@ -156,9 +159,12 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 准备顶点布局信息
    */
-  private prepareVertexLayout (): void {
+  private prepareVertexLayout(): void {
     if (!this._vertexLayout?.buffers || !Array.isArray(this._vertexLayout.buffers)) {
-      console.error(`[${this._label || 'WebGLRenderPipeline'}] RHIVertexLayout.buffers is invalid.`, this._vertexLayout?.buffers);
+      console.error(
+        `[${this._label || 'WebGLRenderPipeline'}] RHIVertexLayout.buffers is invalid.`,
+        this._vertexLayout?.buffers
+      );
       this.attributeBufferLayouts.clear();
 
       return;
@@ -170,65 +176,94 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
 
     for (const bufferLayout of this._vertexLayout.buffers) {
       if (bufferLayout === null || bufferLayout === undefined) {
-        console.error(`[${this._label || 'WebGLRenderPipeline'}] Encountered null or undefined bufferLayout in RHIVertexLayout.buffers.`);
+        console.error(
+          `[${this._label || 'WebGLRenderPipeline'}] Encountered null or undefined bufferLayout in RHIVertexLayout.buffers.`
+        );
         continue;
       }
       const { index, stride, attributes } = bufferLayout;
 
       if (typeof index !== 'number') {
-        console.error(`[${this._label || 'WebGLRenderPipeline'}] bufferLayout is missing a valid 'index' (slot). Received:`, bufferLayout);
+        console.error(
+          `[${this._label || 'WebGLRenderPipeline'}] bufferLayout is missing a valid 'index' (slot). Received:`,
+          bufferLayout
+        );
         continue;
       }
       if (!attributes || !Array.isArray(attributes)) {
-        console.error(`[${this._label || 'WebGLRenderPipeline'}] RHIVertexBufferLayout.attributes for slot ${index} is undefined, null, or not an array. Received:`, attributes);
+        console.error(
+          `[${this._label || 'WebGLRenderPipeline'}] RHIVertexBufferLayout.attributes for slot ${index} is undefined, null, or not an array. Received:`,
+          attributes
+        );
         continue; // Skip this bufferLayout if attributes are invalid
       }
 
-      const attributeLayouts = attributes.map(attr => {
-        if (!attr) {
-          console.error(`[${this._label || 'WebGLRenderPipeline'}] Encountered null/undefined attribute in slot ${index}.`);
+      const attributeLayouts = attributes
+        .map((attr) => {
+          if (!attr) {
+            console.error(
+              `[${this._label || 'WebGLRenderPipeline'}] Encountered null/undefined attribute in slot ${index}.`
+            );
 
-          return null;
-        }
-        if (attr.format === undefined) {
-          console.error(`[${this._label || 'WebGLRenderPipeline'}] Attribute in slot ${index} missing 'format'.`, attr);
-
-          return null;
-        }
-        const formatInfo = this.utils.vertexFormatToGL(attr.format);
-
-        if (!formatInfo) {
-          console.error(`[${this._label || 'WebGLRenderPipeline'}] Could not get GL format for RHIVertexFormat '${attr.format}' (attribute '${attr.name || 'unnamed'}' in slot ${index}).`);
-
-          return null;
-        }
-        const attributeName = attr.name || `attr_slot${index}_loc${attr.shaderLocation}`;
-
-        if (!this.attributeLocations.has(attributeName) && attr.name && this.program) {
-          const loc = this.gl.getAttribLocation(this.program, attr.name);
-
-          if (loc !== -1) {
-            this.attributeLocations.set(attr.name, loc);
+            return null;
           }
-        } else if (!attr.name && this.program && attr.shaderLocation !== undefined) {
-          console.warn(`[${this._label || 'WebGLRenderPipeline'}] Attribute in slot ${index} at location ${attr.shaderLocation} is missing a 'name'.`);
-        }
+          if (attr.format === undefined) {
+            console.error(
+              `[${this._label || 'WebGLRenderPipeline'}] Attribute in slot ${index} missing 'format'.`,
+              attr
+            );
 
-        return {
-          name: attributeName,
-          stride: stride,
-          offset: attr.offset,
-          format: formatInfo,
-          index: index,
-        };
-      }).filter(Boolean);
+            return null;
+          }
+          const formatInfo = this.utils.vertexFormatToGL(attr.format);
+
+          if (!formatInfo) {
+            console.error(
+              `[${this._label || 'WebGLRenderPipeline'}] Could not get GL format for RHIVertexFormat '${attr.format}' (attribute '${attr.name || 'unnamed'}' in slot ${index}).`
+            );
+
+            return null;
+          }
+          const attributeName = attr.name || `attr_slot${index}_loc${attr.shaderLocation}`;
+
+          if (!this.attributeLocations.has(attributeName) && attr.name && this.program) {
+            const loc = this.gl.getAttribLocation(this.program, attr.name);
+
+            if (loc !== -1) {
+              this.attributeLocations.set(attr.name, loc);
+            }
+          } else if (!attr.name && this.program && attr.shaderLocation !== undefined) {
+            console.warn(
+              `[${this._label || 'WebGLRenderPipeline'}] Attribute in slot ${index} at location ${attr.shaderLocation} is missing a 'name'.`
+            );
+          }
+
+          return {
+            name: attributeName,
+            stride: stride,
+            offset: attr.offset,
+            format: formatInfo,
+            index: index,
+          };
+        })
+        .filter(Boolean);
 
       // Only set if there were original attributes and we successfully mapped some, or if original attributes was empty
       if (attributeLayouts.length > 0 || attributes.length === 0) {
-        this.attributeBufferLayouts.set(index, attributeLayouts as { name: string, stride: number, offset: number, format: { type: number, size: number, normalized: boolean } }[]); // `as any[]` because filter(Boolean) typing can be tricky
+        this.attributeBufferLayouts.set(
+          index,
+          attributeLayouts as {
+            name: string;
+            stride: number;
+            offset: number;
+            format: { type: number; size: number; normalized: boolean };
+          }[]
+        ); // `as any[]` because filter(Boolean) typing can be tricky
         // console.log(`[${this._label || 'WebGLRenderPipeline'}] Prepared attribute layouts for slot ${index}:`, attributeLayouts);
       } else if (attributes.length > 0 && attributeLayouts.length === 0) {
-        console.error(`[${this._label || 'WebGLRenderPipeline'}] Failed to process any attributes for slot ${index}, although ${attributes.length} original attributes were present.`);
+        console.error(
+          `[${this._label || 'WebGLRenderPipeline'}] Failed to process any attributes for slot ${index}, although ${attributes.length} original attributes were present.`
+        );
       }
     }
   }
@@ -236,7 +271,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 创建顶点数组对象
    */
-  private createVertexArrayObject (): void {
+  private createVertexArrayObject(): void {
     // VAO在WebGL2中原生支持，WebGL1需要扩展
     if (this.isWebGL2) {
       this.vertexArrayObject = (this.gl as WebGL2RenderingContext).createVertexArray();
@@ -261,7 +296,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 绑定顶点数组对象
    */
-  private bindVertexArrayObject (vao: WebGLVertexArrayObject | null): void {
+  private bindVertexArrayObject(vao: WebGLVertexArrayObject | null): void {
     if (this.isWebGL2) {
       (this.gl as WebGL2RenderingContext).bindVertexArray(vao);
     } else {
@@ -278,14 +313,14 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 解绑顶点数组对象
    */
-  private unbindVertexArrayObject (): void {
+  private unbindVertexArrayObject(): void {
     this.bindVertexArrayObject(null); // Use the unified binder with null
   }
 
   /**
    * 应用管线状态
    */
-  apply (): void {
+  apply(): void {
     if (this.isDestroyed) {
       console.error(`[${this._label || 'WebGLRenderPipeline'}] Attempting to apply a destroyed pipeline.`);
 
@@ -316,7 +351,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 应用光栅化状态
    */
-  private applyRasterizationState (): void {
+  private applyRasterizationState(): void {
     const gl = this.gl;
     const state = this._rasterizationState || {};
     const cullMode = state.cullMode ?? RHICullMode.NONE;
@@ -348,12 +383,12 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 应用深度模板状态
    */
-  private applyDepthStencilState (state: RHIDepthStencilState): void {
+  private applyDepthStencilState(state: RHIDepthStencilState): void {
     const gl = this.gl;
 
     // Use optional chaining and defaults for potentially missing properties
     const depthCompare = state.depthCompare ?? RHICompareFunction.ALWAYS;
-    const depthTestEnabled = state.depthTestEnabled ?? (depthCompare !== RHICompareFunction.ALWAYS);
+    const depthTestEnabled = state.depthTestEnabled ?? depthCompare !== RHICompareFunction.ALWAYS;
     const depthWriteEnabled = state.depthWriteEnabled ?? true;
     const stencilTestEnabled = !!(state.stencilFront || state.stencilBack);
 
@@ -375,18 +410,13 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
       if (front) {
         const compare = front.compare ?? RHICompareFunction.ALWAYS;
         const reference = front.reference ?? 0;
-        const readMask = front.readMask ?? 0xFF;
+        const readMask = front.readMask ?? 0xff;
         const failOp = front.failOp ?? RHIStencilOperation.KEEP;
         const depthFailOp = front.depthFailOp ?? RHIStencilOperation.KEEP;
         const passOp = front.passOp ?? RHIStencilOperation.KEEP;
-        const writeMask = front.writeMask ?? 0xFF;
+        const writeMask = front.writeMask ?? 0xff;
 
-        gl.stencilFuncSeparate(
-          gl.FRONT,
-          this.utils.compareFunctionToGL(compare),
-          reference,
-          readMask
-        );
+        gl.stencilFuncSeparate(gl.FRONT, this.utils.compareFunctionToGL(compare), reference, readMask);
         gl.stencilOpSeparate(
           gl.FRONT,
           this.utils.stencilOperationToGL(failOp),
@@ -399,18 +429,13 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
       if (back) {
         const compare = back.compare ?? RHICompareFunction.ALWAYS;
         const reference = back.reference ?? 0;
-        const readMask = back.readMask ?? 0xFF;
+        const readMask = back.readMask ?? 0xff;
         const failOp = back.failOp ?? RHIStencilOperation.KEEP;
         const depthFailOp = back.depthFailOp ?? RHIStencilOperation.KEEP;
         const passOp = back.passOp ?? RHIStencilOperation.KEEP;
-        const writeMask = back.writeMask ?? 0xFF;
+        const writeMask = back.writeMask ?? 0xff;
 
-        gl.stencilFuncSeparate(
-          gl.BACK,
-          this.utils.compareFunctionToGL(compare),
-          reference,
-          readMask
-        );
+        gl.stencilFuncSeparate(gl.BACK, this.utils.compareFunctionToGL(compare), reference, readMask);
         gl.stencilOpSeparate(
           gl.BACK,
           this.utils.stencilOperationToGL(failOp),
@@ -427,7 +452,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 应用颜色混合状态
    */
-  private applyColorBlendState (state: RHIColorBlendState): void {
+  private applyColorBlendState(state: RHIColorBlendState): void {
     const gl = this.gl;
     const blendEnabled = state.blendEnabled ?? false;
     const colorOp = state.colorBlendOperation ?? RHIBlendOperation.ADD;
@@ -437,15 +462,12 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
     const srcAlpha = state.srcAlphaFactor ?? RHIBlendFactor.ONE;
     const dstAlpha = state.dstAlphaFactor ?? RHIBlendFactor.ZERO;
     const blendColor = state.blendColor;
-    const writeMask = state.writeMask ?? 0xF;
+    const writeMask = state.writeMask ?? 0xf;
 
     if (blendEnabled) {
       gl.enable(gl.BLEND);
 
-      gl.blendEquationSeparate(
-        this.utils.blendOperationToGL(colorOp),
-        this.utils.blendOperationToGL(alphaOp)
-      );
+      gl.blendEquationSeparate(this.utils.blendOperationToGL(colorOp), this.utils.blendOperationToGL(alphaOp));
 
       gl.blendFuncSeparate(
         this.utils.blendFactorToGL(srcColor),
@@ -455,20 +477,10 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
       );
 
       if (blendColor && Array.isArray(blendColor) && blendColor.length === 4) {
-        gl.blendColor(
-          blendColor[0],
-          blendColor[1],
-          blendColor[2],
-          blendColor[3]
-        );
+        gl.blendColor(blendColor[0], blendColor[1], blendColor[2], blendColor[3]);
       }
 
-      gl.colorMask(
-        (writeMask & 1) !== 0,
-        (writeMask & 2) !== 0,
-        (writeMask & 4) !== 0,
-        (writeMask & 8) !== 0
-      );
+      gl.colorMask((writeMask & 1) !== 0, (writeMask & 2) !== 0, (writeMask & 4) !== 0, (writeMask & 8) !== 0);
     } else {
       gl.disable(gl.BLEND);
       gl.colorMask(true, true, true, true);
@@ -481,7 +493,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
    * @param buffer WebGL缓冲区
    * @param offset 偏移量（字节）
    */
-  setVertexBuffer (slot: number, buffer: GLBuffer, offset: number = 0): void {
+  setVertexBuffer(slot: number, buffer: GLBuffer, offset: number = 0): void {
     if (this.isDestroyed) {
       console.error(`[${this._label || 'WebGLRenderPipeline'}] Attempting to set vertex buffer on destroyed pipeline.`);
 
@@ -493,7 +505,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 获取WebGL程序对象
    */
-  getProgram (): WebGLProgram | null {
+  getProgram(): WebGLProgram | null {
     if (this.isDestroyed) {
       return null;
     }
@@ -504,7 +516,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 获取顶点数组对象
    */
-  getVertexArrayObject (): WebGLVertexArrayObject | null {
+  getVertexArrayObject(): WebGLVertexArrayObject | null {
     if (this.isDestroyed) {
       return null;
     }
@@ -518,7 +530,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
    * @param buffer WebGL缓冲区
    * @param offset 偏移量
    */
-  applyVertexBufferLayout (slot: number, buffer: IRHIBuffer, bufferOffsetInBytes: number = 0): void {
+  applyVertexBufferLayout(slot: number, buffer: IRHIBuffer, bufferOffsetInBytes: number = 0): void {
     const gl = this.gl;
     const layoutsForSlot = this.attributeBufferLayouts.get(slot);
 
@@ -549,7 +561,9 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
     }
 
     if (!nativeBuffer) {
-      console.error(`[${this._label || 'WebGLRenderPipeline'}] Failed to get native WebGLBuffer from buffer object for slot ${slot}.`);
+      console.error(
+        `[${this._label || 'WebGLRenderPipeline'}] Failed to get native WebGLBuffer from buffer object for slot ${slot}.`
+      );
 
       return; // Cannot proceed without native buffer
     }
@@ -584,70 +598,70 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 获取顶点着色器
    */
-  get vertexShader (): IRHIShaderModule {
+  get vertexShader(): IRHIShaderModule {
     return this._vertexShader;
   }
 
   /**
    * 获取片段着色器
    */
-  get fragmentShader (): IRHIShaderModule {
+  get fragmentShader(): IRHIShaderModule {
     return this._fragmentShader;
   }
 
   /**
    * 获取顶点布局
    */
-  get vertexLayout (): RHIVertexLayout {
+  get vertexLayout(): RHIVertexLayout {
     return this._vertexLayout;
   }
 
   /**
    * 获取图元类型
    */
-  get primitiveTopology (): RHIPrimitiveTopology {
+  get primitiveTopology(): RHIPrimitiveTopology {
     return this._primitiveTopology;
   }
 
   /**
    * 获取光栅化状态
    */
-  get rasterizationState (): RHIRasterizationState {
+  get rasterizationState(): RHIRasterizationState {
     return this._rasterizationState;
   }
 
   /**
    * 获取深度模板状态
    */
-  get depthStencilState (): RHIDepthStencilState | undefined {
+  get depthStencilState(): RHIDepthStencilState | undefined {
     return this._depthStencilState;
   }
 
   /**
    * 获取颜色混合状态
    */
-  get colorBlendState (): RHIColorBlendState | undefined {
+  get colorBlendState(): RHIColorBlendState | undefined {
     return this._colorBlendState;
   }
 
   /**
    * 获取管线布局
    */
-  get layout (): IRHIPipelineLayout {
+  get layout(): IRHIPipelineLayout {
     return this._layout;
   }
 
   /**
    * 获取标签
    */
-  get label (): string | undefined {
+  get label(): string | undefined {
     return this._label;
   }
 
   /**
    * 销毁资源
    */
-  destroy (): void {
+  destroy(): void {
     if (this.isDestroyed) {
       return;
     }

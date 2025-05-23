@@ -1,5 +1,6 @@
 {
   "name": "monorepo-root",
+  "type": "module",
   "private": true,
   "scripts": {
     "dev": "pnpm --filter @galacean/effects-demo dev",
@@ -12,7 +13,7 @@
     "build:docs": "pnpm build && pnpm build:plugins && typedoc",
     "dev:core": "pnpm --parallel --filter \"@maxellabs/specification\" --filter \"@maxellabs/math\" dev",
     "dev:all": "pnpm --parallel dev",
-    "lint": "eslint --ext .ts .",
+    "lint": "eslint packages --fix",
     "lint:fix": "eslint --fix --ext .ts .",
     "test": "pnpm --filter @maxellabs/test test",
     "version": "node ./scripts/update-version",
@@ -38,9 +39,17 @@
     "plugin-packages/*"
   ],
   "dependencies": {
-    "string-hash": "^1.1.3"
+    "@eslint/js": "^9.27.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-prettier": "^5.4.0",
+    "string-hash": "^1.1.3",
+    "typescript-eslint": "^8.32.1"
   },
   "devDependencies": {
+    "@babel/core": "7.24.0",
+    "@babel/preset-env": "7.24.0",
+    "@babel/preset-typescript": "7.23.3",
     "@commitlint/cli": "^19.4.1",
     "@commitlint/config-conventional": "^19.4.1",
     "@manypkg/get-packages": "^2.2.0",
@@ -88,10 +97,7 @@
     "typescript": "5.4.3",
     "vite": "4.5.3",
     "vite-plugin-externals": "^0.6.2",
-    "vite-tsconfig-paths": "^4.2.2",
-    "@babel/core": "7.24.0",
-    "@babel/preset-env": "7.24.0",
-    "@babel/preset-typescript": "7.23.3"
+    "vite-tsconfig-paths": "^4.2.2"
   },
   "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39"
 }
