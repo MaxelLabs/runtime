@@ -1,0 +1,92 @@
+{
+  "typeName": "MeshGeometry",
+  "name": "Triangle",
+  "description": "基础三角形几何体示例",
+  "version": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0
+  },
+  "attributes": {
+    "points": {
+      "type": "Point3f[]",
+      "value": [
+        [0.0, 1.0, 0.0],
+        [-1.0, -1.0, 0.0],
+        [1.0, -1.0, 0.0]
+      ],
+      "description": "三角形的三个顶点坐标"
+    },
+    "faceVertexIndices": {
+      "type": "int[]",
+      "value": [0, 1, 2],
+      "description": "面的顶点索引"
+    },
+    "faceVertexCounts": {
+      "type": "int[]",
+      "value": [3],
+      "description": "每个面的顶点数量"
+    },
+    "normals": {
+      "type": "Normal3f[]",
+      "value": [
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0]
+      ],
+      "description": "顶点法线向量"
+    },
+    "uvs": {
+      "type": "float2[]",
+      "value": [
+        [0.5, 1.0],
+        [0.0, 0.0],
+        [1.0, 0.0]
+      ],
+      "description": "纹理坐标"
+    },
+    "colors": {
+      "type": "Color3f[]",
+      "value": [
+        [1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0]
+      ],
+      "description": "顶点颜色（红、绿、蓝）"
+    }
+  },
+  "properties": {
+    "boundingBox": {
+      "min": [-1.0, -1.0, 0.0],
+      "max": [1.0, 1.0, 0.0],
+      "center": [0.0, 0.0, 0.0],
+      "size": [2.0, 2.0, 0.0]
+    },
+    "boundingSphere": {
+      "center": [0.0, 0.0, 0.0],
+      "radius": 1.1547
+    },
+    "vertexCount": 3,
+    "faceCount": 1,
+    "triangleCount": 1,
+    "geometryType": "mesh",
+    "topology": "triangles",
+    "isClosed": false,
+    "hasUVs": true,
+    "hasNormals": true,
+    "hasVertexColors": true
+  },
+  "materialBinding": [
+    {
+      "materialPath": "/materials/basic",
+      "bindingStrength": "strong",
+      "purpose": "default"
+    }
+  ],
+  "renderingHints": {
+    "renderLevel": "high",
+    "blendingMode": "normal",
+    "sideMode": "front",
+    "maskMode": "none"
+  }
+}

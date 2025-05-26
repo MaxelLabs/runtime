@@ -1,0 +1,62 @@
+{
+  "typeName": "SpriteLayer",
+  "name": "BasicLayer",
+  "description": "基础图层元素示例",
+  "version": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0
+  },
+  "itemType": "sprite",
+  "transform": {
+    "position": [0.0, 0.0, 0.0],
+    "rotation": [0.0, 0.0, 0.0, 1.0],
+    "scale": [1.0, 1.0, 1.0]
+  },
+  "properties": {
+    "visible": true,
+    "opacity": 1.0,
+    "blendingMode": "normal",
+    "maskMode": "none",
+    "renderOrder": 0
+  },
+  "texture": {
+    "path": "/textures/sprite.png",
+    "format": "rgba8",
+    "colorSpace": "srgb",
+    "filtering": {
+      "minFilter": "linear",
+      "magFilter": "linear",
+      "wrapS": "clamp",
+      "wrapT": "clamp"
+    }
+  },
+  "animation": {
+    "enabled": true,
+    "duration": 2.0,
+    "loop": true,
+    "keyframes": [
+      {
+        "time": 0.0,
+        "opacity": 0.0,
+        "position": [0.0, 0.0, 0.0]
+      },
+      {
+        "time": 1.0,
+        "opacity": 1.0,
+        "position": [100.0, 0.0, 0.0]
+      },
+      {
+        "time": 2.0,
+        "opacity": 0.0,
+        "position": [200.0, 0.0, 0.0]
+      }
+    ]
+  },
+  "boundingBox": {
+    "min": [-50.0, -50.0, 0.0],
+    "max": [50.0, 50.0, 0.0],
+    "center": [0.0, 0.0, 0.0],
+    "size": [100.0, 100.0, 0.0]
+  }
+} 
