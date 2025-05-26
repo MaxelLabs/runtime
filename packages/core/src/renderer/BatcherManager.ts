@@ -1,4 +1,4 @@
-import type { Engine } from '../engine';
+import type { Engine } from '../engine-ob';
 import type { Component } from '../base/component';
 import type { RenderQueue } from './RenderQueue';
 import type { SubRenderElement } from './SubRenderElement';

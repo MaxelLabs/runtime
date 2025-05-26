@@ -1,4 +1,4 @@
-import type { Engine } from '../engine';
+import type { Engine } from '../engine-ob';
 import type { Scene } from '../scene/Scene';
 import type { Camera } from '../camera/Camera';
 import type { RenderContext } from './RenderContext';

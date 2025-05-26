@@ -3,7 +3,7 @@ import { OpaqueRenderPass } from './passes/OpaqueRenderPass';
 import { TransparentRenderPass } from './passes/TransparentRenderPass';
 import { ShadowRenderPass } from './passes/ShadowRenderPass';
 import { UIRenderPass } from './passes/UIRenderPass';
-import type { Engine } from '../engine';
+import type { Engine } from '../engine-ob';
 import type { Scene } from '../scene/Scene';
 import type { Camera } from '../camera/Camera';
 import { CullingResults } from './CullingResults';
