@@ -1,7 +1,7 @@
 {
-  "name": "@maxellabs/demo",
+  "name": "@maxellabs/test",
   "version": "1.0.0",
-  "description": "maxellabs demo",
+  "description": "WebGL渲染接口性能测试工具",
   "type": "module",
   "main": "index.js",
   "scripts": {

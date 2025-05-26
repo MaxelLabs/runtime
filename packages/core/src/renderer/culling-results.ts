@@ -3,10 +3,10 @@ import type { Mesh } from './mesh';
 import type { Camera } from '../camera/Camera';
 import type { Scene } from '../scene/Scene';
 import type { Material } from '../material/Material';
-import type { RenderElement } from './RenderElement';
-import type { BatcherManager } from './BatcherManager';
-import { RenderQueue } from './RenderQueue';
-import { RenderQueueType } from './RendererType';
+import type { RenderElement } from './render-element';
+import type { BatcherManager } from './batcher-manager';
+import { RenderQueue } from './render-queue';
+import { RenderQueueType } from './renderer-type';
 
 /**
  * 剔除结果类，用于存储和管理场景剔除后的渲染元素

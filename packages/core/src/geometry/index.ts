@@ -1,2 +1,2 @@
 export * from './geometry';
-export * from './GeometryUtils';
+export * from './geometry-utils';

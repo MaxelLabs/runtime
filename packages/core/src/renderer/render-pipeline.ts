@@ -1,8 +1,8 @@
 import type { Engine } from '../engine';
 import type { Scene } from '../scene/Scene';
 import type { Camera } from '../camera/Camera';
-import type { RenderContext } from './RenderContext';
-import type { RenderPass } from './RenderPass';
+import type { RenderContext } from './render-context';
+import type { RenderPass } from './render-pass';
 
 /**
  * 渲染管线基类，定义了渲染流程的基本结构

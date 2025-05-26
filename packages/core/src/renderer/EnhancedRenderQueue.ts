@@ -1,5 +1,5 @@
-import type { RenderElement } from './RenderElement';
-import { SubRenderElement } from './SubRenderElement';
+import type { RenderElement } from './render-element';
+import { SubRenderElement } from './sub-render-element';
 import type { Material } from '../material/Material';
 import { Shader } from '../shader/Shader';
 import { ObjectPoolManager } from '../base/object-pool-manager';

@@ -1,7 +1,7 @@
 import { Vector2, Vector3, Vector4, Matrix4, Color } from '@maxellabs/math';
-import { Texture } from '../texture/Texture';
-import { ShaderProperty } from './ShaderProperty';
-import { ShaderDataGroup } from './ShaderDataGroup';
+import { Texture } from '../texture/texture';
+import { ShaderProperty } from './shader-property';
+import { ShaderDataGroup } from './shader-data-group';
 import { ObjectPool } from '../base/object-pool';
 import { ObjectPoolManager } from '../base/object-pool-manager';
 

@@ -1,7 +1,7 @@
 import type { Engine } from '../engine';
 import type { Component } from '../base/component';
-import type { RenderQueue } from './RenderQueue';
-import type { SubRenderElement } from './SubRenderElement';
+import type { RenderQueue } from './render-queue';
+import type { SubRenderElement } from './sub-render-element';
 
 /**
  * 批处理管理器，负责对渲染元素进行批处理以提高性能

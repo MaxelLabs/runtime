@@ -1,7 +1,7 @@
 import type { Component } from '../base/component';
 import type { Material } from '../material/Material';
 import type { Mesh } from './mesh';
-import { RenderQueueFlags } from './RenderQueue';
+import { RenderQueueFlags } from './render-queue';
 
 /**
  * 子渲染元素，表示一个渲染元素的子部分

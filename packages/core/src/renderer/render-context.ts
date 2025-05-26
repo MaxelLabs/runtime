@@ -1,10 +1,10 @@
 import { Matrix4, Vector4 } from '@maxellabs/math';
 import type { Camera } from '../camera/Camera';
 import type { Scene } from '../scene/Scene';
-import type { ShaderData } from '../shader/ShaderData';
-import { ShaderMacroCollection } from '../shader/ShaderMacroCollection';
+import type { ShaderData } from '../shader/shader-data';
+import { ShaderMacroCollection } from '../shader/shader-macro-collection';
 import { Container, ServiceKeys } from '../base/IOC';
-import type { CullingResults } from './CullingResults';
+import type { CullingResults } from './culling-results';
 
 /**
  * 渲染上下文类，包含渲染所需的各种上下文信息

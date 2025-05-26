@@ -1,4 +1,4 @@
-import type { RenderContext } from './RenderContext';
+import type { RenderContext } from './render-context';
 import type { RenderTarget } from '../texture/RenderTarget';
 
 /**

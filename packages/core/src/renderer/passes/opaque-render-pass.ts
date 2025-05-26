@@ -1,5 +1,5 @@
-import { RenderPass, RenderPassType } from '../RenderPass';
-import type { RenderContext } from '../RenderContext';
+import { RenderPass, RenderPassType } from '../render-pass';
+import type { RenderContext } from '../render-context';
 
 /**
  * 不透明物体渲染通道，用于渲染场景中的不透明物体

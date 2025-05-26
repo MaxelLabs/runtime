@@ -1,8 +1,8 @@
-import type { BatcherManager } from './BatcherManager';
-import type { RenderElement } from './RenderElement';
-import type { RenderContext } from './RenderContext';
-import type { SubRenderElement } from './SubRenderElement';
-import type { RenderQueueType } from './RendererType';
+import type { BatcherManager } from './batcher-manager';
+import type { RenderElement } from './render-element';
+import type { RenderContext } from './render-context';
+import type { SubRenderElement } from './sub-render-element';
+import type { RenderQueueType } from './renderer-type';
 
 /**
  * 渲染队列标记类型
