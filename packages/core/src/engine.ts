@@ -1,6 +1,6 @@
 import { EventDispatcher } from './base/event-dispatcher';
 import { Container, ServiceKeys } from './base/IOC';
-import type { Time } from './base/Time-obc';
+import type { Time } from './base/time';
 import type { Scene } from './scene/Scene';
 import type { SceneManager } from './scene/scene-manager';
 import type { ResourceManager } from './resource/resource-manager';
