@@ -5,15 +5,10 @@
     "rootDir": "./src",
     "baseUrl": ".",
     "paths": {
-      "@maxellabs/rhi": ["../../packages/rhi/src"],
-      "@maxellabs/core": ["../../packages/core/src"],
+      "@maxellabs/engine": ["../../packages/engine/src"],
       "@maxellabs/math": ["../../packages/math/src"]
     }
   },
   "include": ["src/**/*"],
-  "references": [
-    { "path": "../../packages/rhi" },
-    { "path": "../../packages/core" },
-    { "path": "../../packages/math" }
-  ]
+  "references": [{ "path": "../../packages/engine" }, { "path": "../../packages/math" }]
 }
