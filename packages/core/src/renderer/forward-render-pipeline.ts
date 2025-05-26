@@ -1,4 +1,4 @@
-import { RenderPipeline } from './RenderPipeline';
+import { RenderPipeline } from './render-pipeline';
 import { OpaqueRenderPass } from './passes/opaque-render-pass';
 import { TransparentRenderPass } from './passes/TransparentRenderPass';
 import { ShadowRenderPass } from './passes/ShadowRenderPass';

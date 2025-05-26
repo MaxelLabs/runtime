@@ -1,1 +1,1 @@
-export * from './Texture-object';
+export * from './texture';

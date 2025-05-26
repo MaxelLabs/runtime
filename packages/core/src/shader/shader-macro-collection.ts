@@ -1,4 +1,4 @@
-import { ShaderMacro } from './ShaderMacro';
+import { ShaderMacro } from './shader-macro';
 
 /**
  * 着色器宏定义集合类，用于管理一组着色器宏定义
