@@ -5,7 +5,7 @@ export * from './entity';
 export * from './component';
 export * from './transform';
 export * from './canvas';
-export * from './time-obc';
+export * from './Time';
 export * from './object-pool';
 export * from './object-pool-manager';
 export * from './refer-resource';
