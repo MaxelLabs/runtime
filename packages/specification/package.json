@@ -1,7 +1,7 @@
 {
   "name": "@maxellabs/specification",
   "version": "0.0.6",
-  "description": "类型定义",
+  "description": "基于 OpenUSD 格式的全流程数据描述包，支持 3D 引擎、动效引擎、Figma 设计数据和图标数据",
   "type": "module",
   "module": "./dist/index.mjs",
   "main": "./dist/index.js",
