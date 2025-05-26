@@ -27,7 +27,7 @@ export class SceneManager extends EventDispatcher {
   /** 场景列表 */
   private scenes: Map<string, Scene> = new Map();
   /** 当前活动场景 */
-  private activeScene: Scene | null = null;
+  activeScene: Scene | null = null;
   /** IOC容器 */
   private container: Container;
   /** 数组对象池 - 用于返回场景列表 */

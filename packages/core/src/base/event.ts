@@ -3,7 +3,7 @@
  */
 export class Event {
   /** 事件类型 */
-  type: string | null;
+  type: string | null = null;
   /** 事件目标 */
   target: any;
   /** 事件当前目标 */

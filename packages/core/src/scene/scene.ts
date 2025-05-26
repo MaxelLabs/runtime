@@ -80,13 +80,13 @@ export class Scene extends EventDispatcher {
    * @returns 当前场景实例，用于链式调用
    */
   addEntity(entity: Entity): this {
-    if (this.entities.has(entity.getId())) {
-      console.warn(`实体 ${entity.getId()} 已存在于场景中`);
+    if (this.entities.has(entity.tag)) {
+      console.warn(`实体 ${entity.tag} 已存在于场景中`);
 
       return this;
     }
 
-    this.entities.set(entity.getId(), entity);
+    this.entities.set(entity.tag, entity);
     entity.setScene(this);
 
     // 派发实体添加事件
@@ -101,7 +101,7 @@ export class Scene extends EventDispatcher {
    * @returns 当前场景实例，用于链式调用
    */
   removeEntity(entity: Entity | string): this {
-    const entityId = typeof entity === 'string' ? entity : entity.getId();
+    const entityId = typeof entity === 'string' ? entity : entity.tag;
     const targetEntity = this.entities.get(entityId);
 
     if (!targetEntity) {

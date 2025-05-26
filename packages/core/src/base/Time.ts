@@ -22,8 +22,6 @@ export class Time {
   maximumDeltaTime: number = 0.3333333; // 默认最低3FPS
   /** 固定更新累积器 */
   fixedTimeAccumulator: number = 0;
-  /** 上一次实际更新时间（毫秒） */
-  lastRealTimestamp: number = 0;
 
   /**
    * 创建时间管理器
@@ -38,35 +36,35 @@ export class Time {
   reset(): void {
     const now = performance.now() / 1000; // 转换为秒
 
-    this.time = now;
+    this.time = 0;
     this.lastTime = now;
     this.sinceStartup = 0;
     this.deltaTime = 0;
     this.unscaledDeltaTime = 0;
     this.frameCount = 0;
     this.fixedTimeAccumulator = 0;
-    this.lastRealTimestamp = now;
   }
 
   /**
    * 更新时间
+   * @param deltaTime 传入的时间差（毫秒）
    */
-  update(): void {
-    const now = performance.now() / 1000; // 转换为秒
-    const realDeltaTime = now - this.lastTime;
+  update(deltaTime: number): void {
+    // 将毫秒转换为秒
+    const deltaTimeInSeconds = deltaTime / 1000;
 
-    // 限制最大时间步长
-    this.unscaledDeltaTime = Math.min(realDeltaTime, this.maximumDeltaTime);
+    // 限制最大时间步长，防止时间跳跃过大
+    this.unscaledDeltaTime = Math.min(deltaTimeInSeconds, this.maximumDeltaTime);
 
     // 应用时间缩放
     this.deltaTime = this.unscaledDeltaTime * this.timeScale;
 
-    // 更新时间
+    // 更新累积时间
     this.time += this.deltaTime;
     this.sinceStartup += this.unscaledDeltaTime;
 
-    // 更新上一帧时间
-    this.lastTime = now;
+    // 更新当前帧时间（用于下次计算）
+    this.lastTime = performance.now() / 1000;
 
     // 更新帧数
     this.frameCount++;
@@ -88,5 +86,40 @@ export class Time {
    */
   performFixedUpdate(): void {
     this.fixedTimeAccumulator -= this.fixedDeltaTime;
+  }
+
+  /**
+   * 获取当前时间（秒）
+   */
+  get currentTime(): number {
+    return this.time;
+  }
+
+  /**
+   * 获取引擎启动以来的时间（秒）
+   */
+  get timeSinceStartup(): number {
+    return this.sinceStartup;
+  }
+
+  /**
+   * 获取当前帧数
+   */
+  get frame(): number {
+    return this.frameCount;
+  }
+
+  /**
+   * 获取未缩放的时间增量
+   */
+  get unscaledDelta(): number {
+    return this.unscaledDeltaTime;
+  }
+
+  /**
+   * 计算当前帧率
+   */
+  get fps(): number {
+    return this.deltaTime > 0 ? 1 / this.deltaTime : 0;
   }
 }
