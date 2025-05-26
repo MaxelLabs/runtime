@@ -1,5 +1,5 @@
 import { EventDispatcher } from '../base/event-dispatcher';
-import type { Engine } from '../engine-ob';
+import type { Engine } from '../engine';
 
 /**
  * 资源加载状态枚举
