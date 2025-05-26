@@ -1,13 +1,13 @@
 import { RenderPipeline } from './RenderPipeline';
-import { OpaqueRenderPass } from './passes/OpaqueRenderPass';
+import { OpaqueRenderPass } from './passes/opaque-render-pass';
 import { TransparentRenderPass } from './passes/TransparentRenderPass';
 import { ShadowRenderPass } from './passes/ShadowRenderPass';
 import { UIRenderPass } from './passes/UIRenderPass';
 import type { Engine } from '../engine';
 import type { Scene } from '../scene/Scene';
 import type { Camera } from '../camera/Camera';
-import { CullingResults } from './CullingResults';
-import { BatcherManager } from './BatcherManager';
+import { CullingResults } from './culling-results';
+import { BatcherManager } from './batcher-manager';
 
 /**
  * 前向渲染管线配置
