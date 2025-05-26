@@ -14,9 +14,6 @@ import { ReferResource } from './refer-resource';
  * 4. 实体可以被激活/禁用，影响其所有组件和子实体
  */
 export class Entity extends ReferResource {
-  /** 实体的标签，用于快速查找 */
-  tag: string = '';
-
   /** 实体是否激活 */
   private active: boolean = true;
 
@@ -108,9 +105,8 @@ export class Entity extends ReferResource {
 
   /**
    * 设置实体所属的场景
-   * @internal 内部使用，不应直接调用
    */
-  private setScene(scene: Scene | null): void {
+  setScene(scene: Scene | null): void {
     if (this.scene === scene) {
       return;
     }

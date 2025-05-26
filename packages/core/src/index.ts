@@ -10,11 +10,17 @@ export * from '@maxellabs/math';
 // 全局常量
 export * from './constants';
 
+// 基础系统
+export * from './base';
+
 // 相机系统
 export * from './camera';
 
 // 几何系统
 export * from './geometry';
+
+// 输入系统
+export * from './input';
 
 // 材质系统
 export * from './material';

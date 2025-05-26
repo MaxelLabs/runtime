@@ -1,11 +1,11 @@
 import { EventDispatcher } from './base/event-dispatcher';
 import { Container, ServiceKeys } from './base/IOC';
-import { Time } from './base/time';
+import type { Time } from './base/time';
 import type { Scene } from './scene/Scene';
-import { SceneManager } from './scene/SceneManager';
-import { ResourceManager } from './resource/resource-manager';
-import { RenderContext } from './renderer/RenderContext';
-import { InputManager } from './input/InputManager';
+import type { SceneManager } from './scene/SceneManager';
+import type { ResourceManager } from './resource/resource-manager';
+import type { RenderContext } from './renderer/RenderContext';
+import type { InputManager } from './input/InputManager';
 
 /**
  * 引擎配置选项
@@ -93,52 +93,41 @@ export class Engine extends EventDispatcher {
    * @returns Promise<void>
    */
   async initialize(): Promise<void> {
-    if (this.state !== EngineState.UNINITIALIZED) {
-      console.warn('Engine already initialized or initializing');
-
-      return;
-    }
-
-    this.state = EngineState.INITIALIZING;
-
-    try {
-      // 创建时间管理器
-      this.time = new Time();
-      this.container.register(ServiceKeys.TIME, this.time);
-
-      // 创建渲染上下文
-      this.renderContext = new RenderContext();
-      this.container.register(ServiceKeys.RENDER_CONTEXT, this.renderContext);
-
-      // 创建资源管理器
-      this.resourceManager = new ResourceManager();
-      this.container.register(ServiceKeys.RESOURCE_MANAGER, this.resourceManager);
-
-      // 创建场景管理器
-      this.sceneManager = new SceneManager();
-      this.container.register(ServiceKeys.SCENE_MANAGER, this.sceneManager);
-
-      // 创建输入管理器
-      this.inputManager = new InputManager();
-      this.container.register(ServiceKeys.INPUT_MANAGER, this.inputManager);
-
-      // 创建渲染器
-      this.renderer = await RendererFactory.createRenderer(this.options);
-
-      // 初始化完成后，自动启动引擎(如果配置了autoStart)
-      if (this.options.autoStart) {
-        this.start();
-      }
-
-      this.state = EngineState.PAUSED;
-
-      // 触发初始化完成事件
-      this.dispatchEvent('initialized');
-    } catch (error) {
-      console.error('Failed to initialize engine:', error);
-      this.state = EngineState.UNINITIALIZED;
-      throw error;
-    }
+    // if (this.state !== EngineState.UNINITIALIZED) {
+    //   console.warn('Engine already initialized or initializing');
+    //   return;
+    // }
+    // this.state = EngineState.INITIALIZING;
+    // try {
+    //   // 创建时间管理器
+    //   this.time = new Time();
+    //   this.container.register(ServiceKeys.TIME, this.time);
+    //   // 创建渲染上下文
+    //   this.renderContext = new RenderContext();
+    //   this.container.register(ServiceKeys.RENDER_CONTEXT, this.renderContext);
+    //   // 创建资源管理器
+    //   this.resourceManager = new ResourceManager(this);
+    //   this.container.register(ServiceKeys.RESOURCE_MANAGER, this.resourceManager);
+    //   // 创建场景管理器
+    //   this.sceneManager = new SceneManager();
+    //   this.container.register(ServiceKeys.SCENE_MANAGER, this.sceneManager);
+    //   // 创建输入管理器
+    //   this.inputManager = new InputManager();
+    //   this.container.register(ServiceKeys.INPUT_MANAGER, this.inputManager);
+    //   // 创建渲染器
+    //   this.renderer = await RendererFactory.createRenderer(this.options);
+    //   // 初始化完成后，自动启动引擎(如果配置了autoStart)
+    //   if (this.options.autoStart) {
+    //     this.start();
+    //   }
+    //   this.state = EngineState.PAUSED;
+    //   // 触发初始化完成事件
+    //   this.dispatchEvent('initialized');
+    // } catch (error) {
+    //   console.error('Failed to initialize engine:', error);
+    //   this.state = EngineState.UNINITIALIZED;
+    //   throw error;
+    // }
   }
 
   /**
