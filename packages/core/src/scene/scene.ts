@@ -1,6 +1,6 @@
 import { EventDispatcher } from '../base/event-dispatcher';
 import { Entity } from '../base/entity';
-import { ShaderData } from '../shader/ShaderData';
+import { ShaderData } from '../shader/shader-data';
 import { Container, ServiceKeys } from '../base/IOC';
 import type { Component } from '../base/component';
 import { ObjectPool } from '../base/object-pool';

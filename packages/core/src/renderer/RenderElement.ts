@@ -1,7 +1,7 @@
 import { Matrix4 } from '@maxellabs/math';
 import type { Mesh } from '../geometry/Mesh';
 import type { Material } from '../material/Material';
-import { ShaderData } from '../shader/ShaderData';
+import { ShaderData } from '../shader/shader-data';
 import type { Entity } from '../base/Entity';
 import { SubRenderElement } from './SubRenderElement';
 
