@@ -90,20 +90,6 @@ export enum ImageFormat {
 }
 
 /**
- * 颜色空间
- */
-export enum ColorSpace {
-  sRGB = 'srgb',
-  AdobeRGB = 'adobe-rgb',
-  ProPhotoRGB = 'prophoto-rgb',
-  DisplayP3 = 'display-p3',
-  Rec2020 = 'rec2020',
-  CMYK = 'cmyk',
-  LAB = 'lab',
-  XYZ = 'xyz',
-}
-
-/**
  * 图像元数据
  */
 export interface ImageMetadata {

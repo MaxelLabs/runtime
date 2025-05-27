@@ -1,0 +1,180 @@
+#usda 1.0
+(
+    defaultPrim = "FireParticles"
+    doc = "Maxellabs 3D引擎 - 火焰粒子系统示例"
+    metersPerUnit = 1
+    timeCodesPerSecond = 24
+    upAxis = "Y"
+    customLayerData = {
+        string creator = "Maxellabs Team"
+        string version = "1.0.0"
+        string[] tags = ["particles", "fire", "effects"]
+        dictionary maxellabs = {
+            string engineVersion = "1.0.0"
+            string renderPipeline = "forward"
+            string blendMode = "add"
+        }
+    }
+)
+
+def Points "FireParticles" (
+    kind = "component"
+    doc = "火焰粒子系统"
+)
+{
+    # 基础粒子属性
+    point3f[] points = []
+    float[] widths = []
+    color3f[] primvars:displayColor = []
+    float[] primvars:displayOpacity = []
+    
+    # 边界框
+    float3 extent = [(-2, 0, -2), (2, 5, 2)]
+    
+    # 材质绑定
+    rel material:binding = </Materials/ParticleMaterial>
+    
+    # Maxellabs 粒子系统扩展
+    custom string maxellabs:particleType = "fire"
+    custom bool maxellabs:visible = true
+    custom int maxellabs:renderOrder = 100
+    custom string maxellabs:blendMode = "add"
+    custom bool maxellabs:castShadows = false
+    custom bool maxellabs:receiveShadows = false
+    
+    # 发射器配置
+    custom string maxellabs:emitter:shape = "sphere"
+    custom float maxellabs:emitter:radius = 0.5
+    custom float maxellabs:emitter:arc = 360.0
+    custom string maxellabs:emitter:arcMode = "random"
+    
+    # 发射参数
+    custom float maxellabs:emission:rateOverTime = 50.0
+    custom float maxellabs:emission:rateOverDistance = 0.0
+    custom int maxellabs:emission:burstCount = 100
+    custom float maxellabs:emission:burstInterval = 0.1
+    
+    # 主要参数
+    custom float maxellabs:main:duration = 5.0
+    custom bool maxellabs:main:looping = true
+    custom bool maxellabs:main:prewarm = false
+    custom float maxellabs:main:startLifetime = 2.0
+    custom float maxellabs:main:startSpeed = 5.0
+    custom float maxellabs:main:startSize = 0.1
+    custom float maxellabs:main:gravityModifier = 0.1
+    custom string maxellabs:main:simulationSpace = "world"
+    custom int maxellabs:main:maxParticles = 1000
+    
+    # 生命周期颜色变化
+    custom color4f[] maxellabs:colorOverLifetime:gradient = [
+        (1.0, 1.0, 0.5, 1.0),
+        (1.0, 0.6, 0.2, 0.9),
+        (0.8, 0.3, 0.1, 0.5),
+        (0.5, 0.1, 0.0, 0.0)
+    ]
+    custom float[] maxellabs:colorOverLifetime:times = [0.0, 0.3, 0.7, 1.0]
+    
+    # 生命周期大小变化
+    custom float[] maxellabs:sizeOverLifetime:curve = [0.0, 0.2, 0.3, 1.0, 0.7, 1.2, 1.0, 0.0]
+    custom float[] maxellabs:sizeOverLifetime:times = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+    
+    # 速度随时间变化
+    custom float3[] maxellabs:velocityOverLifetime:velocity = [(0, 5, 0), (2, 0, 0), (0, 0, 0)]
+    custom float[] maxellabs:velocityOverLifetime:times = [0.0, 0.5, 1.0]
+    
+    # 纹理动画
+    custom bool maxellabs:textureAnimation:enabled = true
+    custom int2 maxellabs:textureAnimation:tiles = (4, 4)
+    custom string maxellabs:textureAnimation:mode = "wholeSheet"
+    custom float maxellabs:textureAnimation:frameRate = 16.0
+    
+    # 渲染设置
+    custom string maxellabs:renderer:renderMode = "billboard"
+    custom string maxellabs:renderer:alignment = "view"
+    custom float maxellabs:renderer:sortingFudge = 0.0
+    custom float maxellabs:renderer:normalDirection = 1.0
+}
+
+def Scope "Materials"
+{
+    def Material "ParticleMaterial"
+    {
+        token outputs:surface.connect = </Materials/ParticleMaterial/ParticleShader.outputs:surface>
+        
+        def Shader "ParticleShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (1, 0.8, 0.2)
+            float inputs:metallic = 0.0
+            float inputs:roughness = 1.0
+            float inputs:opacity = 0.8
+            color3f inputs:emissiveColor = (1, 0.6, 0.1)
+            token outputs:surface
+            
+            # 纹理输入
+            asset inputs:diffuseColor.connect = </Materials/ParticleMaterial/FireTexture.outputs:rgb>
+            
+            # Maxellabs 扩展
+            custom string maxellabs:blendMode = "add"
+            custom bool maxellabs:doubleSided = true
+            custom bool maxellabs:unlit = true
+        }
+        
+        def Shader "FireTexture"
+        {
+            uniform token info:id = "UsdUVTexture"
+            asset inputs:file = @./textures/fire_particle.png@
+            float2 inputs:st.connect = </Materials/ParticleMaterial/Primvar.outputs:result>
+            token outputs:rgb
+            float outputs:a
+        }
+        
+        def Shader "Primvar"
+        {
+            uniform token info:id = "UsdPrimvarReader_float2"
+            string inputs:varname = "st"
+            float2 outputs:result
+        }
+    }
+}
+
+def Scope "Animations"
+{
+    def "ParticleAnimation"
+    {
+        custom string maxellabs:targetPrim = "/FireParticles"
+        custom bool maxellabs:autoPlay = true
+        custom float maxellabs:duration = 5.0
+        custom bool maxellabs:loop = true
+        custom string maxellabs:easing = "linear"
+        
+        # 发射器旋转动画
+        custom float[] maxellabs:emitterRotation:keyframes = [0, 360]
+        custom float[] maxellabs:emitterRotation:times = [0, 5]
+    }
+}
+
+def Scope "Metadata"
+{
+    custom dictionary maxellabs:performance = {
+        string qualityLevel = "high"
+        int maxParticleCount = 1000
+        bool enableGPUSimulation = true
+        bool enableInstancing = true
+    }
+    
+    custom dictionary maxellabs:physics = {
+        bool enableCollision = false
+        bool enableForces = true
+        float3 gravity = (0, -9.81, 0)
+        float airResistance = 0.1
+    }
+    
+    custom dictionary maxellabs:audio = {
+        bool enableAudio = true
+        asset audioClip = @./audio/fire_crackling.wav@
+        float volume = 0.8
+        bool spatial = true
+        float maxDistance = 10.0
+    }
+} 

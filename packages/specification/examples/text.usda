@@ -1,0 +1,568 @@
+#usda 1.0
+(
+    defaultPrim = "TextDemo"
+    doc = "Maxellabs 3D引擎 - 3D文本渲染示例"
+    metersPerUnit = 1
+    timeCodesPerSecond = 24
+    upAxis = "Y"
+    customLayerData = {
+        string creator = "Maxellabs Team"
+        string version = "1.0.0"
+        string[] tags = ["text", "typography", "3d", "effects"]
+        dictionary maxellabs = {
+            string engineVersion = "1.0.0"
+            string renderPipeline = "forward"
+            string blendMode = "normal"
+            string textType = "3d-text"
+        }
+    }
+)
+
+def Scope "TextDemo" (
+    kind = "assembly"
+    doc = "3D文本渲染演示"
+)
+{
+    # 文本演示边界框
+    float3 extent = [(-15, -5, -2), (15, 10, 2)]
+    
+    # Maxellabs 文本扩展
+    custom string maxellabs:textType = "3d-text"
+    custom bool maxellabs:visible = true
+    custom string maxellabs:blendMode = "normal"
+    
+    def Scope "BasicText"
+    {
+        def "Title3D"
+        {
+            # 基础文本属性
+            custom string maxellabs:text:content = "Maxellabs 3D Engine"
+            custom string maxellabs:text:fontFamily = "Inter"
+            custom float maxellabs:text:fontSize = 2.0
+            custom int maxellabs:text:fontWeight = 700
+            custom string maxellabs:text:fontStyle = "normal"
+            custom color4f maxellabs:text:color = (1, 1, 1, 1)
+            custom string maxellabs:text:align = "center"
+            
+            # 3D文本特有属性
+            custom float maxellabs:text:depth = 0.3
+            custom float maxellabs:text:bevelSize = 0.05
+            custom int maxellabs:text:bevelSegments = 3
+            custom bool maxellabs:text:curveSegments = 12
+            
+            # 位置和变换
+            double3 xformOp:translate = (0, 6, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+            
+            # 材质绑定
+            rel material:binding = </TextDemo/Materials/GoldTextMaterial>
+            
+            # 渲染属性
+            custom bool maxellabs:castShadows = true
+            custom bool maxellabs:receiveShadows = false
+            custom int maxellabs:renderOrder = 0
+            
+            # 动画属性
+            custom bool maxellabs:animation:enabled = true
+            custom float maxellabs:animation:duration = 3.0
+            custom bool maxellabs:animation:loop = true
+            custom string maxellabs:animation:easing = "ease-in-out"
+            
+            # 旋转动画
+            double3 xformOp:rotateY.timeSamples = {
+                0: 0,
+                72: 360
+            }
+        }
+        
+        def "Subtitle"
+        {
+            custom string maxellabs:text:content = "现代化的WebGL 3D渲染引擎"
+            custom string maxellabs:text:fontFamily = "Inter"
+            custom float maxellabs:text:fontSize = 0.8
+            custom int maxellabs:text:fontWeight = 400
+            custom color4f maxellabs:text:color = (0.8, 0.8, 0.8, 1)
+            custom string maxellabs:text:align = "center"
+            custom float maxellabs:text:depth = 0.1
+            
+            double3 xformOp:translate = (0, 4, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+            
+            rel material:binding = </TextDemo/Materials/SilverTextMaterial>
+        }
+    }
+    
+    def Scope "StyledText"
+    {
+        def "GlowText"
+        {
+            custom string maxellabs:text:content = "GLOW EFFECT"
+            custom string maxellabs:text:fontFamily = "Inter"
+            custom float maxellabs:text:fontSize = 1.5
+            custom int maxellabs:text:fontWeight = 900
+            custom color4f maxellabs:text:color = (0.2, 0.8, 1.0, 1)
+            custom string maxellabs:text:align = "center"
+            custom float maxellabs:text:depth = 0.2
+            
+            double3 xformOp:translate = (-8, 2, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+            
+            # 发光效果
+            custom bool maxellabs:text:effects:glow:enabled = true
+            custom color4f maxellabs:text:effects:glow:color = (0.2, 0.8, 1.0, 1)
+            custom float maxellabs:text:effects:glow:intensity = 2.0
+            custom float maxellabs:text:effects:glow:radius = 0.5
+            
+            # 发光动画
+            custom bool maxellabs:text:effects:glow:animated = true
+            custom float maxellabs:text:effects:glow:pulseSpeed = 2.0
+            custom float2 maxellabs:text:effects:glow:intensityRange = (1.0, 3.0)
+            
+            rel material:binding = </TextDemo/Materials/GlowTextMaterial>
+        }
+        
+        def "OutlineText"
+        {
+            custom string maxellabs:text:content = "OUTLINE"
+            custom string maxellabs:text:fontFamily = "Inter"
+            custom float maxellabs:text:fontSize = 1.2
+            custom int maxellabs:text:fontWeight = 800
+            custom color4f maxellabs:text:color = (1, 1, 1, 1)
+            custom string maxellabs:text:align = "center"
+            custom float maxellabs:text:depth = 0.15
+            
+            double3 xformOp:translate = (0, 2, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+            
+            # 轮廓效果
+            custom bool maxellabs:text:effects:outline:enabled = true
+            custom color4f maxellabs:text:effects:outline:color = (0.2, 0.2, 0.2, 1)
+            custom float maxellabs:text:effects:outline:width = 0.05
+            custom string maxellabs:text:effects:outline:style = "solid"
+            
+            rel material:binding = </TextDemo/Materials/OutlineTextMaterial>
+        }
+        
+        def "GradientText"
+        {
+            custom string maxellabs:text:content = "GRADIENT"
+            custom string maxellabs:text:fontFamily = "Inter"
+            custom float maxellabs:text:fontSize = 1.2
+            custom int maxellabs:text:fontWeight = 700
+            custom string maxellabs:text:align = "center"
+            custom float maxellabs:text:depth = 0.15
+            
+            double3 xformOp:translate = (8, 2, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+            
+            # 渐变填充
+            custom bool maxellabs:text:effects:gradient:enabled = true
+            custom string maxellabs:text:effects:gradient:type = "linear"
+            custom color4f[] maxellabs:text:effects:gradient:colors = [
+                (1.0, 0.2, 0.5, 1),
+                (0.5, 0.2, 1.0, 1),
+                (0.2, 0.8, 1.0, 1)
+            ]
+            custom float[] maxellabs:text:effects:gradient:stops = [0.0, 0.5, 1.0]
+            custom float maxellabs:text:effects:gradient:angle = 45.0
+            
+            rel material:binding = </TextDemo/Materials/GradientTextMaterial>
+        }
+    }
+    
+    def Scope "AnimatedText"
+    {
+        def "TypewriterText"
+        {
+            custom string maxellabs:text:content = "Typewriter Effect..."
+            custom string maxellabs:text:fontFamily = "Roboto Mono"
+            custom float maxellabs:text:fontSize = 0.8
+            custom int maxellabs:text:fontWeight = 400
+            custom color4f maxellabs:text:color = (0.2, 1.0, 0.2, 1)
+            custom string maxellabs:text:align = "left"
+            custom float maxellabs:text:depth = 0.1
+            
+            double3 xformOp:translate = (-6, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+            
+            # 打字机效果
+            custom bool maxellabs:text:effects:typewriter:enabled = true
+            custom float maxellabs:text:effects:typewriter:speed = 0.1
+            custom bool maxellabs:text:effects:typewriter:loop = true
+            custom float maxellabs:text:effects:typewriter:pauseDuration = 2.0
+            custom bool maxellabs:text:effects:typewriter:showCursor = true
+            custom string maxellabs:text:effects:typewriter:cursorChar = "_"
+            custom float maxellabs:text:effects:typewriter:cursorBlinkRate = 1.0
+            
+            rel material:binding = </TextDemo/Materials/MonospaceTextMaterial>
+        }
+        
+        def "WaveText"
+        {
+            custom string maxellabs:text:content = "WAVE ANIMATION"
+            custom string maxellabs:text:fontFamily = "Inter"
+            custom float maxellabs:text:fontSize = 1.0
+            custom int maxellabs:text:fontWeight = 600
+            custom color4f maxellabs:text:color = (1.0, 0.6, 0.2, 1)
+            custom string maxellabs:text:align = "center"
+            custom float maxellabs:text:depth = 0.12
+            
+            double3 xformOp:translate = (6, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+            
+            # 波浪动画
+            custom bool maxellabs:text:effects:wave:enabled = true
+            custom float maxellabs:text:effects:wave:amplitude = 0.3
+            custom float maxellabs:text:effects:wave:frequency = 2.0
+            custom float maxellabs:text:effects:wave:speed = 3.0
+            custom string maxellabs:text:effects:wave:direction = "horizontal"
+            
+            rel material:binding = </TextDemo/Materials/WaveTextMaterial>
+        }
+    }
+    
+    def Scope "RichText"
+    {
+        def "FormattedText"
+        {
+            # 富文本内容
+            custom string maxellabs:richText:content = "This is <b>bold</b>, <i>italic</i>, and <u>underlined</u> text."
+            custom string maxellabs:text:fontFamily = "Inter"
+            custom float maxellabs:text:fontSize = 0.6
+            custom color4f maxellabs:text:color = (0.9, 0.9, 0.9, 1)
+            custom string maxellabs:text:align = "left"
+            custom float maxellabs:text:depth = 0.08
+            custom float maxellabs:text:lineHeight = 1.4
+            custom float maxellabs:text:maxWidth = 8.0
+            
+            double3 xformOp:translate = (-8, -2, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+            
+            # 富文本样式
+            custom color4f maxellabs:richText:styles:bold:color = (1, 1, 1, 1)
+            custom int maxellabs:richText:styles:bold:fontWeight = 700
+            custom color4f maxellabs:richText:styles:italic:color = (0.8, 0.8, 1, 1)
+            custom string maxellabs:richText:styles:italic:fontStyle = "italic"
+            custom color4f maxellabs:richText:styles:underline:color = (1, 0.8, 0.2, 1)
+            custom bool maxellabs:richText:styles:underline:underline = true
+            
+            rel material:binding = </TextDemo/Materials/RichTextMaterial>
+        }
+        
+        def "LinkText"
+        {
+            custom string maxellabs:richText:content = "Visit <a href='https://maxellabs.com'>Maxellabs</a> for more info."
+            custom string maxellabs:text:fontFamily = "Inter"
+            custom float maxellabs:text:fontSize = 0.5
+            custom color4f maxellabs:text:color = (0.8, 0.8, 0.8, 1)
+            custom string maxellabs:text:align = "left"
+            custom float maxellabs:text:depth = 0.06
+            custom float maxellabs:text:maxWidth = 6.0
+            
+            double3 xformOp:translate = (2, -2, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+            
+            # 链接样式
+            custom color4f maxellabs:richText:styles:link:color = (0.3, 0.7, 1, 1)
+            custom bool maxellabs:richText:styles:link:underline = true
+            custom bool maxellabs:richText:styles:link:interactive = true
+            
+            # 链接悬停效果
+            custom color4f maxellabs:richText:styles:link:hoverColor = (0.5, 0.8, 1, 1)
+            custom float maxellabs:richText:styles:link:hoverScale = 1.1
+            
+            rel material:binding = </TextDemo/Materials/LinkTextMaterial>
+        }
+    }
+    
+    def Scope "PathText"
+    {
+        def "CurvedText"
+        {
+            custom string maxellabs:text:content = "TEXT ON CURVED PATH"
+            custom string maxellabs:text:fontFamily = "Inter"
+            custom float maxellabs:text:fontSize = 0.8
+            custom int maxellabs:text:fontWeight = 600
+            custom color4f maxellabs:text:color = (1, 0.8, 0.2, 1)
+            custom string maxellabs:text:align = "center"
+            custom float maxellabs:text:depth = 0.1
+            
+            double3 xformOp:translate = (0, -4, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+            
+            # 路径文本配置
+            custom bool maxellabs:text:pathText:enabled = true
+            custom string maxellabs:text:pathText:type = "arc"
+            custom float maxellabs:text:pathText:radius = 4.0
+            custom float maxellabs:text:pathText:startAngle = -90.0
+            custom float maxellabs:text:pathText:endAngle = 90.0
+            custom bool maxellabs:text:pathText:reverse = false
+            custom float maxellabs:text:pathText:offset = 0.0
+            
+            rel material:binding = </TextDemo/Materials/CurvedTextMaterial>
+        }
+    }
+    
+    def Scope "InteractiveText"
+    {
+        def "ClickableText"
+        {
+            custom string maxellabs:text:content = "CLICK ME!"
+            custom string maxellabs:text:fontFamily = "Inter"
+            custom float maxellabs:text:fontSize = 1.0
+            custom int maxellabs:text:fontWeight = 800
+            custom color4f maxellabs:text:color = (1, 0.3, 0.3, 1)
+            custom string maxellabs:text:align = "center"
+            custom float maxellabs:text:depth = 0.15
+            
+            double3 xformOp:translate = (0, -6, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+            
+            # 交互配置
+            custom bool maxellabs:interaction:enabled = true
+            custom bool maxellabs:interaction:hover:enabled = true
+            custom color4f maxellabs:interaction:hover:highlightColor = (1, 0.5, 0.5, 1)
+            custom float maxellabs:interaction:hover:scaleFactor = 1.2
+            
+            custom bool maxellabs:interaction:click:enabled = true
+            custom string maxellabs:interaction:click:feedbackType = "scale"
+            custom float maxellabs:interaction:click:scaleFactor = 0.9
+            
+            # 点击动画
+            custom bool maxellabs:animation:enabled = true
+            custom float maxellabs:animation:duration = 0.3
+            custom string maxellabs:animation:easing = "ease-out-back"
+            
+            rel material:binding = </TextDemo/Materials/InteractiveTextMaterial>
+        }
+    }
+}
+
+def Scope "Materials"
+{
+    def Material "GoldTextMaterial"
+    {
+        token outputs:surface.connect = </TextDemo/Materials/GoldTextMaterial/Shader.outputs:surface>
+        
+        def Shader "Shader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (1.0, 0.8, 0.2)
+            float inputs:metallic = 0.9
+            float inputs:roughness = 0.1
+            float inputs:opacity = 1.0
+            token outputs:surface
+            
+            custom string maxellabs:blendMode = "normal"
+            custom bool maxellabs:doubleSided = false
+        }
+    }
+    
+    def Material "SilverTextMaterial"
+    {
+        token outputs:surface.connect = </TextDemo/Materials/SilverTextMaterial/Shader.outputs:surface>
+        
+        def Shader "Shader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.8, 0.8, 0.9)
+            float inputs:metallic = 0.8
+            float inputs:roughness = 0.2
+            float inputs:opacity = 1.0
+            token outputs:surface
+        }
+    }
+    
+    def Material "GlowTextMaterial"
+    {
+        token outputs:surface.connect = </TextDemo/Materials/GlowTextMaterial/Shader.outputs:surface>
+        
+        def Shader "Shader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.2, 0.8, 1.0)
+            color3f inputs:emissiveColor = (0.2, 0.8, 1.0)
+            float inputs:metallic = 0.0
+            float inputs:roughness = 0.8
+            float inputs:opacity = 1.0
+            token outputs:surface
+            
+            custom bool maxellabs:unlit = true
+        }
+    }
+    
+    def Material "OutlineTextMaterial"
+    {
+        token outputs:surface.connect = </TextDemo/Materials/OutlineTextMaterial/Shader.outputs:surface>
+        
+        def Shader "Shader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (1, 1, 1)
+            float inputs:metallic = 0.0
+            float inputs:roughness = 0.6
+            float inputs:opacity = 1.0
+            token outputs:surface
+        }
+    }
+    
+    def Material "GradientTextMaterial"
+    {
+        token outputs:surface.connect = </TextDemo/Materials/GradientTextMaterial/Shader.outputs:surface>
+        
+        def Shader "Shader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (1, 0.5, 0.8)
+            float inputs:metallic = 0.2
+            float inputs:roughness = 0.4
+            float inputs:opacity = 1.0
+            token outputs:surface
+        }
+    }
+    
+    def Material "MonospaceTextMaterial"
+    {
+        token outputs:surface.connect = </TextDemo/Materials/MonospaceTextMaterial/Shader.outputs:surface>
+        
+        def Shader "Shader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.2, 1.0, 0.2)
+            color3f inputs:emissiveColor = (0.1, 0.5, 0.1)
+            float inputs:metallic = 0.0
+            float inputs:roughness = 1.0
+            float inputs:opacity = 1.0
+            token outputs:surface
+        }
+    }
+    
+    def Material "WaveTextMaterial"
+    {
+        token outputs:surface.connect = </TextDemo/Materials/WaveTextMaterial/Shader.outputs:surface>
+        
+        def Shader "Shader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (1.0, 0.6, 0.2)
+            float inputs:metallic = 0.3
+            float inputs:roughness = 0.5
+            float inputs:opacity = 1.0
+            token outputs:surface
+        }
+    }
+    
+    def Material "RichTextMaterial"
+    {
+        token outputs:surface.connect = </TextDemo/Materials/RichTextMaterial/Shader.outputs:surface>
+        
+        def Shader "Shader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.9, 0.9, 0.9)
+            float inputs:metallic = 0.0
+            float inputs:roughness = 0.8
+            float inputs:opacity = 1.0
+            token outputs:surface
+        }
+    }
+    
+    def Material "LinkTextMaterial"
+    {
+        token outputs:surface.connect = </TextDemo/Materials/LinkTextMaterial/Shader.outputs:surface>
+        
+        def Shader "Shader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.3, 0.7, 1.0)
+            float inputs:metallic = 0.1
+            float inputs:roughness = 0.6
+            float inputs:opacity = 1.0
+            token outputs:surface
+        }
+    }
+    
+    def Material "CurvedTextMaterial"
+    {
+        token outputs:surface.connect = </TextDemo/Materials/CurvedTextMaterial/Shader.outputs:surface>
+        
+        def Shader "Shader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (1.0, 0.8, 0.2)
+            float inputs:metallic = 0.4
+            float inputs:roughness = 0.3
+            float inputs:opacity = 1.0
+            token outputs:surface
+        }
+    }
+    
+    def Material "InteractiveTextMaterial"
+    {
+        token outputs:surface.connect = </TextDemo/Materials/InteractiveTextMaterial/Shader.outputs:surface>
+        
+        def Shader "Shader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (1.0, 0.3, 0.3)
+            float inputs:metallic = 0.2
+            float inputs:roughness = 0.4
+            float inputs:opacity = 1.0
+            token outputs:surface
+        }
+    }
+}
+
+def Scope "Lighting"
+{
+    def DistantLight "MainLight"
+    {
+        float inputs:intensity = 2.0
+        color3f inputs:color = (1, 0.95, 0.8)
+        float3 xformOp:rotateXYZ = (-30, 30, 0)
+        uniform token[] xformOpOrder = ["xformOp:rotateXYZ"]
+        
+        custom bool maxellabs:castShadows = true
+    }
+    
+    def SphereLight "FillLight"
+    {
+        float inputs:intensity = 0.8
+        color3f inputs:color = (0.6, 0.7, 1.0)
+        float inputs:radius = 50
+        
+        double3 xformOp:translate = (0, 0, 10)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+}
+
+def Scope "Metadata"
+{
+    custom dictionary maxellabs:textDemo = {
+        string name = "3D Text Rendering Demo"
+        string description = "展示3D文本渲染的各种功能和效果"
+        string version = "1.0.0"
+        string[] features = ["3d-text", "effects", "animation", "rich-text", "interaction"]
+        string targetPlatform = "web"
+        string renderPipeline = "forward"
+    }
+    
+    custom dictionary maxellabs:textFeatures = {
+        bool basicText = true
+        bool styledText = true
+        bool animatedText = true
+        bool richText = true
+        bool pathText = true
+        bool interactiveText = true
+        bool multiLanguage = true
+        bool accessibility = true
+    }
+    
+    custom dictionary maxellabs:performance = {
+        string qualityLevel = "high"
+        bool enableTextCaching = true
+        bool enableFontAtlas = true
+        int maxTextInstances = 1000
+        bool enableLOD = true
+    }
+} 

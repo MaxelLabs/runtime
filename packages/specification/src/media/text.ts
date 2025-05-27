@@ -4,6 +4,17 @@
  */
 
 import type { UsdPrim, UsdValue } from '../core/usd';
+import type {
+  BlendMode,
+  Transform,
+  Color,
+  AnimationProperties,
+  InteractionProperties,
+  MaterialProperties,
+  RenderingProperties,
+  PerformanceConfig,
+  CommonMetadata,
+} from '../core/common';
 
 /**
  * 文本基础接口
@@ -38,9 +49,9 @@ export interface TextElement extends TextPrim {
      */
     fontStyle: UsdValue; // FontStyle
     /**
-     * 文本颜色
+     * 文本颜色（使用统一Color）
      */
-    color: UsdValue; // Color4f
+    color: UsdValue; // Color
     /**
      * 文本对齐
      */
@@ -75,9 +86,33 @@ export interface TextElement extends TextPrim {
    */
   effects?: TextEffect[];
   /**
-   * 文本变换
+   * 文本变换（使用统一Transform）
    */
-  transform?: TextTransform;
+  transform?: Transform;
+  /**
+   * 材质属性（使用统一MaterialProperties）
+   */
+  material?: MaterialProperties;
+  /**
+   * 渲染属性（使用统一RenderingProperties）
+   */
+  rendering?: RenderingProperties;
+  /**
+   * 动画属性（使用统一AnimationProperties）
+   */
+  animation?: AnimationProperties;
+  /**
+   * 交互属性（使用统一InteractionProperties）
+   */
+  interaction?: InteractionProperties;
+  /**
+   * 性能配置（使用统一PerformanceConfig）
+   */
+  performance?: PerformanceConfig;
+  /**
+   * 元数据（使用统一CommonMetadata）
+   */
+  metadata?: CommonMetadata;
 }
 
 /**
@@ -179,6 +214,10 @@ export interface TextStyle {
    * 文本选择样式
    */
   selection?: TextSelection;
+  /**
+   * 混合模式（使用统一BlendMode）
+   */
+  blendMode?: BlendMode;
 }
 
 /**
@@ -194,9 +233,9 @@ export interface TextDecoration {
    */
   style?: TextDecorationStyle;
   /**
-   * 装饰线颜色
+   * 装饰线颜色（使用统一Color）
    */
-  color?: [number, number, number, number];
+  color?: Color;
   /**
    * 装饰线厚度
    */
@@ -336,9 +375,9 @@ export interface TextShadow {
    */
   blurRadius: number;
   /**
-   * 阴影颜色
+   * 阴影颜色（使用统一Color）
    */
-  color: [number, number, number, number];
+  color: Color;
 }
 
 /**
@@ -350,9 +389,9 @@ export interface TextStroke {
    */
   width: number;
   /**
-   * 描边颜色
+   * 描边颜色（使用统一Color）
    */
-  color: [number, number, number, number];
+  color: Color;
   /**
    * 描边样式
    */
@@ -408,9 +447,9 @@ export interface TextFill {
    */
   type: TextFillType;
   /**
-   * 颜色填充
+   * 颜色填充（使用统一Color）
    */
-  color?: [number, number, number, number];
+  color?: Color;
   /**
    * 渐变填充
    */
@@ -423,6 +462,10 @@ export interface TextFill {
    * 图像填充
    */
   image?: TextImage;
+  /**
+   * 混合模式（使用统一BlendMode）
+   */
+  blendMode?: BlendMode;
 }
 
 /**
@@ -500,9 +543,9 @@ export interface GradientStop {
    */
   position: number;
   /**
-   * 颜色
+   * 颜色（使用统一Color）
    */
-  color: [number, number, number, number];
+  color: Color;
 }
 
 /**
@@ -576,9 +619,9 @@ export interface TextImage {
  */
 export interface TextBackground {
   /**
-   * 背景颜色
+   * 背景颜色（使用统一Color）
    */
-  color?: [number, number, number, number];
+  color?: Color;
   /**
    * 背景图像
    */
@@ -599,6 +642,10 @@ export interface TextBackground {
    * 背景附着
    */
   attachment?: BackgroundAttachment;
+  /**
+   * 混合模式（使用统一BlendMode）
+   */
+  blendMode?: BlendMode;
 }
 
 /**
@@ -680,17 +727,17 @@ export enum BackgroundAttachment {
 }
 
 /**
- * 文本选择样式
+ * 文本选择
  */
 export interface TextSelection {
   /**
-   * 选择背景色
+   * 选择背景色（使用统一Color）
    */
-  backgroundColor?: [number, number, number, number];
+  backgroundColor?: Color;
   /**
-   * 选择文本色
+   * 选择文本色（使用统一Color）
    */
-  color?: [number, number, number, number];
+  color?: Color;
 }
 
 /**
@@ -788,9 +835,9 @@ export interface TextBorder {
    */
   style: BorderStyle;
   /**
-   * 边框颜色
+   * 边框颜色（使用统一Color）
    */
-  color: [number, number, number, number];
+  color: Color;
   /**
    * 边框圆角
    */
@@ -888,9 +935,9 @@ export interface ColumnRule {
    */
   style: BorderStyle;
   /**
-   * 分隔线颜色
+   * 分隔线颜色（使用统一Color）
    */
-  color: [number, number, number, number];
+  color: Color;
 }
 
 /**
@@ -1105,6 +1152,14 @@ export interface TextEffect {
    * 效果参数
    */
   parameters: Record<string, any>;
+  /**
+   * 混合模式（使用统一BlendMode）
+   */
+  blendMode?: BlendMode;
+  /**
+   * 动画属性（使用统一AnimationProperties）
+   */
+  animation?: AnimationProperties;
 }
 
 /**
@@ -1146,9 +1201,9 @@ export enum TextEffectType {
 }
 
 /**
- * 文本变换
+ * 文本变换（已使用统一Transform，此接口用于特殊文本变换）
  */
-export interface TextTransform {
+export interface TextTransformEffect {
   /**
    * 变换类型
    */
@@ -1157,10 +1212,14 @@ export interface TextTransform {
    * 变换参数
    */
   parameters: Record<string, any>;
+  /**
+   * 动画属性（使用统一AnimationProperties）
+   */
+  animation?: AnimationProperties;
 }
 
 /**
- * 变换类型
+ * 文本变换类型
  */
 export enum TransformType {
   /**
@@ -1209,6 +1268,10 @@ export interface RichText {
    * 文档设置
    */
   settings?: RichTextSettings;
+  /**
+   * 元数据（使用统一CommonMetadata）
+   */
+  metadata?: CommonMetadata;
 }
 
 /**
@@ -1245,6 +1308,10 @@ export interface TextSpan {
    * 标记
    */
   marks?: TextMark[];
+  /**
+   * 交互属性（使用统一InteractionProperties）
+   */
+  interaction?: InteractionProperties;
 }
 
 /**
@@ -1267,6 +1334,10 @@ export interface ParagraphStyle {
    * 列表样式
    */
   listStyle?: ListStyle;
+  /**
+   * 混合模式（使用统一BlendMode）
+   */
+  blendMode?: BlendMode;
 }
 
 /**
@@ -1424,9 +1495,9 @@ export interface RichTextSettings {
    */
   defaultSize?: number;
   /**
-   * 默认颜色
+   * 默认颜色（使用统一Color）
    */
-  defaultColor?: [number, number, number, number];
+  defaultColor?: Color;
   /**
    * 链接样式
    */
@@ -1435,4 +1506,8 @@ export interface RichTextSettings {
    * 选择样式
    */
   selectionStyle?: TextSelection;
+  /**
+   * 性能配置（使用统一PerformanceConfig）
+   */
+  performance?: PerformanceConfig;
 }

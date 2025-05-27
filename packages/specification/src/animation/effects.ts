@@ -3,6 +3,8 @@
  * 动效引擎的特效和缓动函数定义
  */
 
+import type { BlendMode, RenderMode, SortMode } from '../core';
+
 /**
  * 缓动函数类型
  */
@@ -114,7 +116,7 @@ export interface Timeline {
   /**
    * 填充模式
    */
-  fillMode: FillMode;
+  fillMode: AnimationFillMode;
   /**
    * 延迟时间
    */
@@ -152,9 +154,9 @@ export enum PlaybackDirection {
 }
 
 /**
- * 填充模式
+ * 动画填充模式
  */
-export enum FillMode {
+export enum AnimationFillMode {
   /**
    * 无
    */
@@ -637,76 +639,6 @@ export interface ParticleRenderer {
    * 排序模式
    */
   sortMode: SortMode;
-}
-
-/**
- * 渲染模式
- */
-export enum RenderMode {
-  /**
-   * 广告牌
-   */
-  Billboard = 'billboard',
-  /**
-   * 拉伸广告牌
-   */
-  StretchedBillboard = 'stretched-billboard',
-  /**
-   * 水平广告牌
-   */
-  HorizontalBillboard = 'horizontal-billboard',
-  /**
-   * 垂直广告牌
-   */
-  VerticalBillboard = 'vertical-billboard',
-  /**
-   * 网格
-   */
-  Mesh = 'mesh',
-}
-
-/**
- * 混合模式
- */
-export enum BlendMode {
-  /**
-   * 透明
-   */
-  Alpha = 'alpha',
-  /**
-   * 加法
-   */
-  Additive = 'additive',
-  /**
-   * 乘法
-   */
-  Multiply = 'multiply',
-  /**
-   * 预乘透明
-   */
-  Premultiplied = 'premultiplied',
-}
-
-/**
- * 排序模式
- */
-export enum SortMode {
-  /**
-   * 无排序
-   */
-  None = 'none',
-  /**
-   * 按距离排序
-   */
-  Distance = 'distance',
-  /**
-   * 按年龄排序
-   */
-  OldestInFront = 'oldest-in-front',
-  /**
-   * 按年龄排序（新的在前）
-   */
-  YoungestInFront = 'youngest-in-front',
 }
 
 /**

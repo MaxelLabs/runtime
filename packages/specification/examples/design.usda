@@ -1,0 +1,401 @@
+#usda 1.0
+(
+    defaultPrim = "DesignSystem"
+    doc = "Maxellabs 3D引擎 - 设计系统示例"
+    metersPerUnit = 1
+    timeCodesPerSecond = 24
+    upAxis = "Y"
+    customLayerData = {
+        string creator = "Maxellabs Team"
+        string version = "1.0.0"
+        string[] tags = ["design", "ui", "components", "icons"]
+        dictionary maxellabs = {
+            string engineVersion = "1.0.0"
+            string renderPipeline = "forward"
+            string blendMode = "normal"
+            string designType = "ui-system"
+        }
+    }
+)
+
+def Scope "DesignSystem" (
+    kind = "assembly"
+    doc = "完整的UI设计系统"
+)
+{
+    # 设计系统边界框
+    float3 extent = [(-10, -5, 0), (10, 5, 1)]
+    
+    # Maxellabs 设计系统扩展
+    custom string maxellabs:designType = "ui-system"
+    custom bool maxellabs:visible = true
+    custom string maxellabs:blendMode = "normal"
+    
+    # 设计系统元数据
+    custom string maxellabs:system:name = "Maxellabs Design System"
+    custom string maxellabs:system:version = "2.0.0"
+    custom string maxellabs:system:description = "现代化的3D UI设计系统"
+    custom string[] maxellabs:system:tags = ["modern", "3d", "responsive", "accessible"]
+    
+    # 颜色系统
+    custom color4f[] maxellabs:colors:primary:variants = [
+        (0.2, 0.6, 1.0, 1.0),    # primary-500
+        (0.1, 0.4, 0.8, 1.0),    # primary-600
+        (0.05, 0.3, 0.6, 1.0),   # primary-700
+        (0.4, 0.7, 1.0, 1.0),    # primary-400
+        (0.6, 0.8, 1.0, 1.0)     # primary-300
+    ]
+    custom string[] maxellabs:colors:primary:names = ["500", "600", "700", "400", "300"]
+    
+    custom color4f[] maxellabs:colors:semantic:success = [(0.2, 0.8, 0.4, 1.0)]
+    custom color4f[] maxellabs:colors:semantic:warning = [(1.0, 0.7, 0.2, 1.0)]
+    custom color4f[] maxellabs:colors:semantic:error = [(0.9, 0.3, 0.3, 1.0)]
+    custom color4f[] maxellabs:colors:semantic:info = [(0.3, 0.7, 0.9, 1.0)]
+    
+    # 字体系统
+    custom string[] maxellabs:typography:fontFamilies = ["Inter", "Roboto Mono", "Noto Sans"]
+    custom float maxellabs:typography:scale:base = 16.0
+    custom float maxellabs:typography:scale:ratio = 1.25
+    custom float[] maxellabs:typography:scale:sizes = [12, 14, 16, 20, 24, 32, 40, 48]
+    custom string[] maxellabs:typography:scale:names = ["xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl"]
+    
+    # 间距系统
+    custom float maxellabs:spacing:base = 4.0
+    custom float[] maxellabs:spacing:scale = [4, 8, 12, 16, 20, 24, 32, 40, 48, 64]
+    custom string[] maxellabs:spacing:names = ["1", "2", "3", "4", "5", "6", "8", "10", "12", "16"]
+    
+    def Scope "Components"
+    {
+        def "Button" (
+            references = @./components/button.usda@
+        )
+        {
+            custom string maxellabs:component:id = "button"
+            custom string maxellabs:component:name = "Button"
+            custom string maxellabs:component:category = "form"
+            custom string[] maxellabs:component:tags = ["interactive", "form", "action"]
+            custom string maxellabs:component:description = "可交互的按钮组件"
+            
+            # 组件变体
+            custom string[] maxellabs:component:variants = ["primary", "secondary", "outline", "ghost"]
+            custom string[] maxellabs:component:sizes = ["sm", "md", "lg"]
+            custom string[] maxellabs:component:states = ["default", "hover", "active", "disabled"]
+            
+            # 组件属性
+            custom bool maxellabs:component:properties:disabled = false
+            custom string maxellabs:component:properties:text = "Click me"
+            custom string maxellabs:component:properties:variant = "primary"
+            custom string maxellabs:component:properties:size = "md"
+            
+            # 交互配置
+            custom bool maxellabs:interaction:hover:enabled = true
+            custom color4f maxellabs:interaction:hover:highlightColor = (1, 1, 1, 0.1)
+            custom float maxellabs:interaction:hover:scaleFactor = 1.05
+            
+            custom bool maxellabs:interaction:click:enabled = true
+            custom string maxellabs:interaction:click:feedbackType = "ripple"
+            
+            # 动画配置
+            custom bool maxellabs:animation:enabled = true
+            custom float maxellabs:animation:duration = 0.2
+            custom string maxellabs:animation:easing = "ease-out"
+        }
+        
+        def "Card" (
+            references = @./components/card.usda@
+        )
+        {
+            custom string maxellabs:component:id = "card"
+            custom string maxellabs:component:name = "Card"
+            custom string maxellabs:component:category = "layout"
+            custom string[] maxellabs:component:tags = ["container", "content", "surface"]
+            
+            # 卡片样式
+            custom float maxellabs:style:cornerRadius = 8.0
+            custom color4f maxellabs:style:backgroundColor = (1, 1, 1, 1)
+            custom float maxellabs:style:elevation = 2.0
+            custom color4f maxellabs:style:shadowColor = (0, 0, 0, 0.1)
+            
+            # 内边距
+            custom float4 maxellabs:style:padding = (16, 16, 16, 16)
+        }
+        
+        def "Input" (
+            references = @./components/input.usda@
+        )
+        {
+            custom string maxellabs:component:id = "input"
+            custom string maxellabs:component:name = "Input"
+            custom string maxellabs:component:category = "form"
+            
+            # 输入框状态
+            custom string[] maxellabs:component:states = ["default", "focus", "error", "disabled"]
+            custom string maxellabs:component:properties:placeholder = "Enter text..."
+            custom string maxellabs:component:properties:type = "text"
+            
+            # 验证
+            custom bool maxellabs:validation:required = false
+            custom string maxellabs:validation:pattern = ""
+            custom string maxellabs:validation:errorMessage = ""
+        }
+        
+        def "Modal" (
+            references = @./components/modal.usda@
+        )
+        {
+            custom string maxellabs:component:id = "modal"
+            custom string maxellabs:component:name = "Modal"
+            custom string maxellabs:component:category = "overlay"
+            
+            # 模态框配置
+            custom bool maxellabs:modal:closeOnBackdrop = true
+            custom bool maxellabs:modal:closeOnEscape = true
+            custom string maxellabs:modal:size = "md"
+            custom bool maxellabs:modal:centered = true
+            
+            # 背景遮罩
+            custom color4f maxellabs:backdrop:color = (0, 0, 0, 0.5)
+            custom string maxellabs:backdrop:blendMode = "multiply"
+            
+            # 进入/退出动画
+            custom string maxellabs:animation:enter = "fadeIn"
+            custom string maxellabs:animation:exit = "fadeOut"
+            custom float maxellabs:animation:duration = 0.3
+        }
+    }
+    
+    def Scope "Icons"
+    {
+        custom string maxellabs:iconLibrary:name = "Maxellabs Icons"
+        custom string maxellabs:iconLibrary:version = "1.0.0"
+        custom int maxellabs:iconLibrary:totalIcons = 500
+        
+        def "ArrowRight"
+        {
+            custom string maxellabs:icon:id = "arrow-right"
+            custom string maxellabs:icon:name = "Arrow Right"
+            custom string maxellabs:icon:category = "arrows"
+            custom string[] maxellabs:icon:tags = ["arrow", "direction", "navigation"]
+            custom int[] maxellabs:icon:sizes = [16, 20, 24, 32]
+            custom string maxellabs:icon:svg = "<svg viewBox='0 0 24 24'><path d='M5 12h14m-7-7l7 7-7 7'/></svg>"
+            
+            # 图标变体
+            custom string[] maxellabs:icon:variants = ["outline", "filled"]
+            custom string maxellabs:icon:style = "outline"
+        }
+        
+        def "User"
+        {
+            custom string maxellabs:icon:id = "user"
+            custom string maxellabs:icon:name = "User"
+            custom string maxellabs:icon:category = "people"
+            custom string[] maxellabs:icon:tags = ["user", "person", "profile"]
+            custom string maxellabs:icon:svg = "<svg viewBox='0 0 24 24'><circle cx='12' cy='8' r='4'/><path d='M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2'/></svg>"
+        }
+        
+        def "Settings"
+        {
+            custom string maxellabs:icon:id = "settings"
+            custom string maxellabs:icon:name = "Settings"
+            custom string maxellabs:icon:category = "interface"
+            custom string[] maxellabs:icon:tags = ["settings", "config", "gear"]
+            custom string maxellabs:icon:svg = "<svg viewBox='0 0 24 24'><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'/></svg>"
+        }
+    }
+    
+    def Scope "Layouts"
+    {
+        def "Grid"
+        {
+            custom string maxellabs:layout:type = "grid"
+            custom int maxellabs:layout:columns = 12
+            custom float maxellabs:layout:gutter = 16.0
+            custom float maxellabs:layout:margin = 24.0
+            custom float[] maxellabs:layout:breakpoints = [576, 768, 992, 1200, 1400]
+            custom string[] maxellabs:layout:breakpointNames = ["sm", "md", "lg", "xl", "xxl"]
+        }
+        
+        def "Flexbox"
+        {
+            custom string maxellabs:layout:type = "flexbox"
+            custom string maxellabs:layout:direction = "row"
+            custom string maxellabs:layout:justify = "flex-start"
+            custom string maxellabs:layout:align = "stretch"
+            custom float maxellabs:layout:gap = 16.0
+        }
+        
+        def "Stack"
+        {
+            custom string maxellabs:layout:type = "stack"
+            custom string maxellabs:layout:direction = "vertical"
+            custom float maxellabs:layout:spacing = 16.0
+            custom string maxellabs:layout:alignment = "start"
+        }
+    }
+    
+    def Scope "Themes"
+    {
+        def "LightTheme"
+        {
+            custom string maxellabs:theme:name = "Light"
+            custom string maxellabs:theme:type = "light"
+            
+            # 主要颜色
+            custom color4f maxellabs:theme:colors:background = (1, 1, 1, 1)
+            custom color4f maxellabs:theme:colors:surface = (0.98, 0.98, 0.98, 1)
+            custom color4f maxellabs:theme:colors:primary = (0.2, 0.6, 1.0, 1)
+            custom color4f maxellabs:theme:colors:text = (0.1, 0.1, 0.1, 1)
+            custom color4f maxellabs:theme:colors:textSecondary = (0.4, 0.4, 0.4, 1)
+            custom color4f maxellabs:theme:colors:border = (0.9, 0.9, 0.9, 1)
+        }
+        
+        def "DarkTheme"
+        {
+            custom string maxellabs:theme:name = "Dark"
+            custom string maxellabs:theme:type = "dark"
+            
+            # 主要颜色
+            custom color4f maxellabs:theme:colors:background = (0.05, 0.05, 0.05, 1)
+            custom color4f maxellabs:theme:colors:surface = (0.1, 0.1, 0.1, 1)
+            custom color4f maxellabs:theme:colors:primary = (0.3, 0.7, 1.0, 1)
+            custom color4f maxellabs:theme:colors:text = (0.95, 0.95, 0.95, 1)
+            custom color4f maxellabs:theme:colors:textSecondary = (0.7, 0.7, 0.7, 1)
+            custom color4f maxellabs:theme:colors:border = (0.2, 0.2, 0.2, 1)
+        }
+    }
+    
+    def Scope "Animations"
+    {
+        def "Transitions"
+        {
+            custom float maxellabs:transitions:fast = 0.15
+            custom float maxellabs:transitions:normal = 0.25
+            custom float maxellabs:transitions:slow = 0.4
+            
+            custom string[] maxellabs:transitions:easings = [
+                "ease-in", "ease-out", "ease-in-out", 
+                "ease-in-back", "ease-out-back", "ease-in-out-back",
+                "ease-in-bounce", "ease-out-bounce", "ease-in-out-bounce"
+            ]
+        }
+        
+        def "Microinteractions"
+        {
+            # 按钮点击动画
+            custom string maxellabs:button:click:type = "scale"
+            custom float maxellabs:button:click:scale = 0.95
+            custom float maxellabs:button:click:duration = 0.1
+            
+            # 悬停动画
+            custom string maxellabs:hover:type = "lift"
+            custom float maxellabs:hover:translateY = -2.0
+            custom float maxellabs:hover:shadowBlur = 8.0
+            custom float maxellabs:hover:duration = 0.2
+            
+            # 加载动画
+            custom string maxellabs:loading:type = "spin"
+            custom float maxellabs:loading:duration = 1.0
+            custom bool maxellabs:loading:infinite = true
+        }
+    }
+    
+    def Scope "Accessibility"
+    {
+        # 无障碍配置
+        custom bool maxellabs:a11y:highContrast = false
+        custom bool maxellabs:a11y:reducedMotion = false
+        custom float maxellabs:a11y:focusRingWidth = 2.0
+        custom color4f maxellabs:a11y:focusRingColor = (0.2, 0.6, 1.0, 1)
+        
+        # 键盘导航
+        custom bool maxellabs:a11y:keyboardNavigation = true
+        custom string[] maxellabs:a11y:focusableElements = ["button", "input", "select", "textarea", "a"]
+        
+        # 屏幕阅读器
+        custom bool maxellabs:a11y:screenReader = true
+        custom string maxellabs:a11y:ariaLiveRegion = "polite"
+    }
+    
+    def Scope "Responsive"
+    {
+        # 响应式断点
+        custom float[] maxellabs:responsive:breakpoints = [320, 768, 1024, 1440, 1920]
+        custom string[] maxellabs:responsive:names = ["mobile", "tablet", "desktop", "large", "xlarge"]
+        
+        # 响应式字体
+        custom float[] maxellabs:responsive:fontScales = [0.875, 1.0, 1.125, 1.25, 1.375]
+        
+        # 响应式间距
+        custom float[] maxellabs:responsive:spacingScales = [0.75, 1.0, 1.25, 1.5, 1.75]
+    }
+}
+
+def Scope "Materials"
+{
+    def Material "UIGlassMaterial"
+    {
+        token outputs:surface.connect = </DesignSystem/Materials/UIGlassMaterial/Shader.outputs:surface>
+        
+        def Shader "Shader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (1, 1, 1)
+            float inputs:metallic = 0.0
+            float inputs:roughness = 0.1
+            float inputs:opacity = 0.8
+            float inputs:ior = 1.5
+            token outputs:surface
+            
+            custom string maxellabs:blendMode = "transparent"
+            custom bool maxellabs:doubleSided = true
+            custom bool maxellabs:unlit = false
+        }
+    }
+    
+    def Material "UICardMaterial"
+    {
+        token outputs:surface.connect = </DesignSystem/Materials/UICardMaterial/Shader.outputs:surface>
+        
+        def Shader "Shader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.98, 0.98, 0.98)
+            float inputs:metallic = 0.0
+            float inputs:roughness = 0.8
+            float inputs:opacity = 1.0
+            token outputs:surface
+            
+            custom string maxellabs:blendMode = "normal"
+            custom bool maxellabs:doubleSided = false
+        }
+    }
+}
+
+def Scope "Metadata"
+{
+    custom dictionary maxellabs:designSystem = {
+        string name = "Maxellabs Design System"
+        string version = "2.0.0"
+        string description = "现代化的3D UI设计系统"
+        string[] features = ["components", "icons", "themes", "animations", "responsive", "accessibility"]
+        string targetPlatform = "web"
+        string designTool = "figma"
+    }
+    
+    custom dictionary maxellabs:statistics = {
+        int componentCount = 50
+        int iconCount = 500
+        int themeCount = 2
+        int colorTokens = 100
+        int typographyTokens = 20
+        int spacingTokens = 10
+    }
+    
+    custom dictionary maxellabs:guidelines = {
+        string colorUsage = "使用语义化颜色命名"
+        string typography = "保持字体层次清晰"
+        string spacing = "使用8px网格系统"
+        string accessibility = "确保WCAG 2.1 AA级别合规"
+        string performance = "组件懒加载，图标SVG优化"
+    }
+} 
