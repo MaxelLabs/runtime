@@ -160,4 +160,4 @@ export enum ThemeSwitchMode {
   Auto = 'auto',
   System = 'system',
   Time = 'time',
-} 
+}
