@@ -55,7 +55,7 @@ export interface AnimationClip extends AnimationPrim {
   /**
    * 元数据
    */
-  metadata?: CommonMetadata;
+  metadata: CommonMetadata;
 }
 
 /**
