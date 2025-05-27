@@ -4,7 +4,7 @@
  */
 
 import type { UsdValue } from './usd';
-import type { BlendMode, EasingFunction, ColorSpace, QualityLevel, FeedbackType } from './enums';
+import type { BlendMode, EasingFunction, ColorSpace, QualityLevel, FeedbackType, FilterType } from './enums';
 import type { BoundingBox, VersionInfo } from './base';
 
 /**
@@ -275,4 +275,26 @@ export interface CommonMetadata {
    * 自定义数据
    */
   customData?: Record<string, any>;
+}
+
+/**
+ * 图像滤镜
+ */
+export interface ImageFilter {
+  /**
+   * 滤镜类型
+   */
+  type: FilterType;
+  /**
+   * 滤镜强度 (0-1)
+   */
+  intensity: number;
+  /**
+   * 滤镜参数
+   */
+  parameters?: Record<string, any>;
+  /**
+   * 是否启用
+   */
+  enabled: boolean;
 }

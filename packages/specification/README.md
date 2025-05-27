@@ -15,115 +15,207 @@
 
 ## 核心模块
 
-### 1. USD 核心扩展 (`usd.ts`)
+### 1. 基础规范 (`core/`)
 
-基于 OpenUSD 标准的核心数据类型和 Prim 系统：
+基于 OpenUSD 标准的核心类型系统：
 
 ```typescript
-import { UsdStage, UsdPrim, UsdLayer } from '@maxellabs/specification';
+import { UsdStage, UsdPrim, Transform, Color } from '@maxellabs/specification/core';
 
-// USD Stage 管理
-const stage: UsdStage = {
-  rootLayer: rootLayer,
-  pseudoRoot: rootPrim,
-  timeCodesPerSecond: 24,
-  startTimeCode: 0,
-  endTimeCode: 100
+// 基础类型支持
+const transform: Transform = {
+  position: [0, 0, 0],
+  rotation: [0, 0, 0, 1],
+  scale: [1, 1, 1]
 };
 ```
 
 **特性：**
-- 完整的 USD 数据类型支持
-- Prim 层次结构管理
-- 组合弧（Composition Arcs）支持
-- 变体集合（Variant Sets）
-- 引用和载荷系统
+- 统一的基础类型定义
+- 跨模块共享的接口规范
+- 标准化的枚举和常量
+- OpenUSD 兼容的数据类型
 
-### 2. 几何体系统 (`geometry.ts`)
+### 2. 设计系统 (`design/`)
 
-支持多种几何体类型和高级功能：
+模块化的设计工具数据格式支持：
 
+#### 2.1 基础定义 (`design/base.ts` + `design/enums.ts`)
 ```typescript
-import { MeshPrim, GeometryCollection } from '@maxellabs/specification';
+import { DesignBounds, DesignConstraints, ComponentInstance } from '@maxellabs/specification/design';
+import { DesignElementType, ConstraintType } from '@maxellabs/specification/design';
 
-// 网格几何体
-const mesh: MeshPrim = {
-  typeName: 'Mesh',
-  vertices: vertices,
-  faces: faces,
-  normals: normals,
-  uvs: uvs,
-  materialBinding: materialPath
+// 基础接口使用
+const bounds: DesignBounds = { x: 0, y: 0, width: 100, height: 40 };
+const constraints: DesignConstraints = {
+  horizontal: ConstraintType.Left,
+  vertical: ConstraintType.Top
 };
 ```
 
-**支持的几何体类型：**
-- Mesh（网格）
-- Curve（曲线）
-- Points（点云）
-- Sphere、Cube、Cylinder 等基础几何体
-- 实例化和 LOD 支持
-- 物理属性和碰撞检测
-
-### 3. 材质着色器系统 (`material.ts`)
-
-完整的材质和着色器网络支持：
-
+#### 2.2 设计元素 (`design/elements.ts`)
 ```typescript
-import { Material, ShaderNetwork } from '@maxellabs/specification';
+import { DesignElement, SpriteElement, IconElement } from '@maxellabs/specification/design';
 
-// 材质定义
-const material: Material = {
-  typeName: 'Material',
-  shaderNetwork: {
-    nodes: shaderNodes,
-    connections: connections
-  },
-  variants: materialVariants
+// 设计元素定义
+const element: DesignElement = {
+  id: 'element-1',
+  name: 'Button',
+  type: DesignElementType.Component,
+  bounds: { x: 0, y: 0, width: 100, height: 40 },
+  visible: true,
+  locked: false,
+  opacity: 1.0
 };
 ```
 
-**特性：**
-- 着色器网络编辑
-- 预定义着色器（PBR、Unlit 等）
-- 材质变体和参数化
-- 程序化材质支持
-- 材质动画
-
-### 4. 设计系统 (`design.ts`)
-
-支持 Figma 等设计工具的数据格式：
-
+#### 2.3 样式系统 (`design/styles.ts`)
 ```typescript
-import { DesignDocument, DesignSystem } from '@maxellabs/specification';
+import { DesignStyle, DesignFill, DesignStroke } from '@maxellabs/specification/design';
 
-// 设计文档
-const designDoc: DesignDocument = {
-  typeName: 'DesignDocument',
+// 样式定义
+const style: DesignStyle = {
+  fills: [
+    {
+      type: 'solid',
+      color: { value: [0.2, 0.4, 0.8, 1.0] },
+      opacity: 1.0,
+      visible: true
+    }
+  ],
+  cornerRadius: 8
+};
+```
+
+#### 2.4 颜色系统 (`design/colors.ts`)
+```typescript
+import { DesignColorSystem, DesignColorPalette } from '@maxellabs/specification/design';
+
+// 颜色系统
+const colorSystem: DesignColorSystem = {
+  primary: primaryPalette,
+  neutral: neutralPalette,
+  semantic: {
+    success: successPalette,
+    warning: warningPalette,
+    error: errorPalette,
+    info: infoPalette
+  }
+};
+```
+
+#### 2.5 组件库 (`design/components.ts`)
+```typescript
+import { DesignComponent, DesignComponentLibrary } from '@maxellabs/specification/design';
+
+// 组件库管理
+const library: DesignComponentLibrary = {
+  name: 'UI Components',
+  version: '1.0.0',
+  components: {
+    'button': buttonComponent,
+    'input': inputComponent
+  }
+};
+```
+
+#### 2.6 图标库 (`design/icons.ts`)
+```typescript
+import { DesignIconLibrary, DesignIcon } from '@maxellabs/specification/design';
+
+// 图标库系统
+const iconLibrary: DesignIconLibrary = {
+  name: 'App Icons',
+  version: '1.0.0',
+  icons: {
+    'home': {
+      id: 'home',
+      name: 'Home',
+      category: 'navigation',
+      sizes: [16, 24, 32, 48],
+      svg: '<svg>...</svg>'
+    }
+  }
+};
+```
+
+#### 2.7 字体排版 (`design/typography.ts`)
+```typescript
+import { DesignTypographySystem, DesignFontFamily } from '@maxellabs/specification/design';
+
+// 字体系统
+const typography: DesignTypographySystem = {
+  fontFamilies: fontFamilies,
+  scale: typographyScale,
+  textStyles: textStyles
+};
+```
+
+#### 2.8 主题系统 (`design/themes.ts`)
+```typescript
+import { DesignTheme, DesignStyleLibrary } from '@maxellabs/specification/design';
+
+// 主题配置
+const lightTheme: DesignTheme = {
+  name: 'Light Theme',
+  type: 'light',
+  colors: lightColors,
+  typography: typographyOverrides
+};
+```
+
+#### 2.9 页面管理 (`design/page.ts`)
+```typescript
+import { DesignPage, PageConfig } from '@maxellabs/specification/design';
+
+// 页面定义
+const page: DesignPage = {
+  id: 'page-1',
+  name: 'Home Page',
+  type: 'page',
+  canvasSize: { width: 375, height: 812, unit: 'px' },
+  elements: pageElements
+};
+```
+
+#### 2.10 设计系统 (`design/systems.ts`)
+```typescript
+import { DesignSystem } from '@maxellabs/specification/design';
+
+// 完整设计系统
+const designSystem: DesignSystem = {
+  name: 'Brand Design System',
+  version: '2.0.0',
+  colors: colorSystem,
+  typography: typographySystem,
+  spacing: spacingSystem,
+  components: componentLibrary,
+  icons: iconLibrary,
+  styles: styleLibrary
+};
+```
+
+#### 2.11 设计文档 (`design/document.ts`)
+```typescript
+import { DesignDocument } from '@maxellabs/specification/design';
+
+// 设计文档管理
+const document: DesignDocument = {
+  id: 'doc-1',
+  name: 'Mobile App Design',
+  type: 'design',
+  version: '1.0.0',
   pages: designPages,
-  designSystem: designSystem,
-  assetLibrary: assetLibrary
+  designSystem: designSystem
 };
 ```
 
-**包含功能：**
-- 设计页面和画板管理
-- 设计元素（Frame、Group、Shape 等）
-- 样式系统（颜色、字体、间距）
-- 组件库和变体
-- **图标库系统**：
-  - SVG 图标存储
-  - 图标分类和标签
-  - 多种样式变体（outline、filled、duotone 等）
-  - 多尺寸支持
-- 交互和动画定义
-
-### 5. 工作流程系统 (`workflow.ts`)
+### 3. 工作流程系统 (`workflow/`)
 
 完整的工作流程管理：
 
 ```typescript
-import { Workflow, WorkflowStage } from '@maxellabs/specification';
+import { Workflow, WorkflowStage } from '@maxellabs/specification/workflow';
 
 // 工作流程定义
 const workflow: Workflow = {
@@ -143,12 +235,12 @@ const workflow: Workflow = {
 - Production（生产）
 - Maintenance（维护）
 
-### 6. 包格式系统 (`package.ts`)
+### 4. 包格式系统 (`package/`)
 
 基于 USDZ 扩展的 .maxz 包格式：
 
 ```typescript
-import { MaxellabsPackage } from '@maxellabs/specification';
+import { MaxellabsPackage } from '@maxellabs/specification/package';
 
 // Maxellabs 包
 const package: MaxellabsPackage = {

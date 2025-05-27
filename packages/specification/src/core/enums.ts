@@ -14,6 +14,33 @@ export enum QualityLevel {
 }
 
 /**
+ * 许可类型
+ */
+export enum LicenseType {
+  MIT = 'MIT',
+  Apache = 'Apache-2.0',
+  GPL = 'GPL-3.0',
+  BSD = 'BSD-3-Clause',
+  CC0 = 'CC0-1.0',
+  CCBY = 'CC-BY-4.0',
+  Custom = 'Custom',
+  Proprietary = 'Proprietary',
+}
+
+/**
+ * 滤镜类型
+ */
+export enum FilterType {
+  Exposure = 'exposure',
+  Contrast = 'contrast',
+  Saturation = 'saturation',
+  Temperature = 'temperature',
+  Tint = 'tint',
+  Highlights = 'highlights',
+  Shadows = 'shadows',
+}
+
+/**
  * 颜色空间
  */
 export enum ColorSpace {
