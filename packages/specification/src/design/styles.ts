@@ -7,7 +7,7 @@
 import type {
   IColor,
   GradientStop,
-  Transform,
+  ITransform,
   CommonMetadata,
   BlendMode,
   GradientType,
@@ -171,7 +171,7 @@ export interface DesignImage {
   /**
    * 图像变换（使用通用Transform）
    */
-  transform?: Transform;
+  transform?: ITransform;
   /**
    * 图像滤镜
    */

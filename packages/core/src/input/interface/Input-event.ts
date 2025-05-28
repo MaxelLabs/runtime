@@ -1,7 +1,8 @@
 import { Event } from '../../base/event';
 import { Vector2 } from '@maxellabs/math';
 import type { InputEventType, KeyCode } from '../enums/InputEventType';
-import { MouseButton, PointerButton } from '../enums/InputEventType';
+import { PointerButton } from '../enums/InputEventType';
+import { MouseButton } from '@maxellabs/specification';
 
 /**
  * 基础输入事件接口
@@ -118,7 +119,7 @@ export class MouseEvent extends Event implements BaseInputEvent {
   /** 事件类型 */
   declare type: InputEventType;
 
-  constructor(type: InputEventType, button: MouseButton = MouseButton.LEFT) {
+  constructor(type: InputEventType, button: MouseButton = MouseButton.Left) {
     super(type);
     this.button = button;
     this.buttons = 0;

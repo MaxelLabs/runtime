@@ -83,7 +83,7 @@ export interface ClickEffect {
 /**
  * 基础变换接口（核心3D变换）
  */
-export interface Transform {
+export interface ITransform {
   /**
    * 位置
    */

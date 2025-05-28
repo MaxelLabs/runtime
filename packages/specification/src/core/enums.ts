@@ -4,6 +4,32 @@
  */
 
 /**
+ * 几何体优化配置
+ */
+export interface GeometryOptimization {
+  /**
+   * 是否启用顶点合并
+   */
+  mergeVertices?: boolean;
+  /**
+   * 是否启用索引优化
+   */
+  optimizeIndices?: boolean;
+  /**
+   * 是否移除未使用的顶点
+   */
+  removeUnusedVertices?: boolean;
+  /**
+   * 是否启用几何体压缩
+   */
+  compression?: boolean;
+  /**
+   * 压缩级别 (0-9)
+   */
+  compressionLevel?: number;
+}
+
+/**
  * 顶点属性枚举
  */
 export enum VertexAttribute {
