@@ -3,8 +3,10 @@
  * 动画状态机、状态和转换的定义
  */
 
+import type { AnimationState, AnimationTransition, AnimationParameter } from '../common';
+
 /**
- * 动画状态机
+ * 动画状态机（使用通用类型）
  */
 export interface AnimationStateMachine {
   /**
@@ -12,11 +14,11 @@ export interface AnimationStateMachine {
    */
   name: string;
   /**
-   * 状态列表
+   * 状态列表（使用通用类型）
    */
   states: AnimationState[];
   /**
-   * 转换列表
+   * 转换列表（使用通用类型）
    */
   transitions: AnimationTransition[];
   /**
@@ -24,98 +26,13 @@ export interface AnimationStateMachine {
    */
   defaultState: string;
   /**
-   * 参数列表
+   * 参数列表（使用通用类型）
    */
   parameters: AnimationParameter[];
 }
 
 /**
- * 动画状态
- */
-export interface AnimationState {
-  /**
-   * 状态名称
-   */
-  name: string;
-  /**
-   * 动画剪辑
-   */
-  clip?: string;
-  /**
-   * 播放速度
-   */
-  speed: number;
-  /**
-   * 循环
-   */
-  loop: boolean;
-  /**
-   * 状态行为
-   */
-  behaviors?: AnimationStateBehavior[];
-}
-
-/**
- * 动画转换
- */
-export interface AnimationTransition {
-  /**
-   * 源状态
-   */
-  fromState: string;
-  /**
-   * 目标状态
-   */
-  toState: string;
-  /**
-   * 转换条件
-   */
-  conditions: AnimationCondition[];
-  /**
-   * 转换时间
-   */
-  duration: number;
-  /**
-   * 偏移时间
-   */
-  offset: number;
-  /**
-   * 中断源
-   */
-  interruptionSource: InterruptionSource;
-}
-
-/**
- * 动画条件
- */
-export interface AnimationCondition {
-  /**
-   * 参数名称
-   */
-  parameter: string;
-  /**
-   * 条件类型
-   */
-  type: ConditionType;
-  /**
-   * 阈值
-   */
-  threshold?: number;
-}
-
-/**
- * 条件类型
- */
-export enum ConditionType {
-  Greater = 'greater',
-  Less = 'less',
-  Equals = 'equals',
-  NotEquals = 'not-equals',
-  Trigger = 'trigger',
-}
-
-/**
- * 中断源
+ * 中断源（保留，因为common中没有定义）
  */
 export enum InterruptionSource {
   None = 'none',
@@ -126,43 +43,15 @@ export enum InterruptionSource {
 }
 
 /**
- * 动画参数
+ * 扩展的动画转换（添加中断源）
  */
-export interface AnimationParameter {
+export interface ExtendedAnimationTransition extends AnimationTransition {
   /**
-   * 参数名称
+   * 中断源
    */
-  name: string;
+  interruptionSource?: InterruptionSource;
   /**
-   * 参数类型
+   * 偏移时间
    */
-  type: ParameterType;
-  /**
-   * 默认值
-   */
-  defaultValue: any;
-}
-
-/**
- * 参数类型
- */
-export enum ParameterType {
-  Float = 'float',
-  Int = 'int',
-  Bool = 'bool',
-  Trigger = 'trigger',
-}
-
-/**
- * 状态行为
- */
-export interface AnimationStateBehavior {
-  /**
-   * 行为类型
-   */
-  type: string;
-  /**
-   * 行为参数
-   */
-  parameters: Record<string, any>;
+  offset?: number;
 }

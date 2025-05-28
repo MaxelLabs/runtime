@@ -1,42 +1,15 @@
 /**
  * Maxellabs 设计模块基础定义
- * 设计系统的基础接口和类型
+ * 设计系统特有的接口和类型
  */
 
-import type {
-  DesignElementType,
-  ConstraintType,
-  ComponentPropertyType,
-  IconStyle,
-  StyleType,
-  FillType,
-  StrokeType,
-  LineCap,
-  LineJoin,
-  ImageScaleMode,
-  ShadowType,
-  BlurType,
-} from './enums';
-
-export type {
-  DesignElementType,
-  ConstraintType,
-  ComponentPropertyType,
-  IconStyle,
-  StyleType,
-  FillType,
-  StrokeType,
-  LineCap,
-  LineJoin,
-  ImageScaleMode,
-  ShadowType,
-  BlurType,
-};
+import type { ComponentPropertyType, IconStyle } from './enums';
+import type { ConstraintConfig, BaseComponentProperty, ConstraintType } from '../core';
 
 /**
- * 设计约束
+ * 设计约束（扩展核心约束配置）
  */
-export interface DesignConstraints {
+export interface DesignConstraints extends ConstraintConfig {
   /**
    * 水平约束
    */
@@ -48,7 +21,7 @@ export interface DesignConstraints {
 }
 
 /**
- * 组件实例
+ * 组件实例（设计特有）
  */
 export interface ComponentInstance {
   /**
@@ -70,29 +43,17 @@ export interface ComponentInstance {
 }
 
 /**
- * 组件属性定义
+ * 设计组件属性定义（扩展核心组件属性）
  */
-export interface DesignComponentProperty {
-  /**
-   * 属性名称
-   */
-  name: string;
+export interface DesignComponentProperty extends BaseComponentProperty {
   /**
    * 属性类型
    */
   type: ComponentPropertyType;
-  /**
-   * 默认值
-   */
-  defaultValue?: any;
-  /**
-   * 可选值
-   */
-  options?: any[];
 }
 
 /**
- * 组件变体
+ * 组件变体（设计特有）
  */
 export interface DesignComponentVariant {
   /**
@@ -106,7 +67,7 @@ export interface DesignComponentVariant {
 }
 
 /**
- * 图标变体
+ * 图标变体（设计特有）
  */
 export interface DesignIconVariant {
   /**
@@ -124,7 +85,7 @@ export interface DesignIconVariant {
 }
 
 /**
- * 图标分类
+ * 图标分类（设计特有）
  */
 export interface DesignIconCategory {
   /**
@@ -143,26 +104,4 @@ export interface DesignIconCategory {
    * 父分类
    */
   parent?: string;
-}
-
-/**
- * 设计边界框
- */
-export interface DesignBounds {
-  /**
-   * X 坐标
-   */
-  x: number;
-  /**
-   * Y 坐标
-   */
-  y: number;
-  /**
-   * 宽度
-   */
-  width: number;
-  /**
-   * 高度
-   */
-  height: number;
 }

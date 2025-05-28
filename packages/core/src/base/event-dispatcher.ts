@@ -5,7 +5,7 @@ import { Event } from './event';
  */
 export interface EventListener {
   /** 回调函数 */
-  callback: Function;
+  callback: (event: Event) => void;
   /** 上下文对象 */
   target?: any;
   /** 优先级，数值越大越先执行 */
@@ -20,7 +20,7 @@ export interface EventListener {
  */
 export class EventDispatcher extends MaxObject {
   /** 事件监听器映射表 */
-  private listeners: Map<string, Set<Function>> = new Map();
+  private listeners: Map<string, Set<EventListener>> = new Map();
   /** 正在派发中的事件类型 */
   private dispatchingEvents: Set<string> = new Set();
   /** 父事件分发器 */
@@ -31,8 +31,6 @@ export class EventDispatcher extends MaxObject {
   private captureEnabled: boolean = true;
   /** 是否启用事件冒泡 */
   private bubbleEnabled: boolean = true;
-  /** 派发器标签 */
-  protected tag: string;
   /** 是否暂停事件分发 */
   protected paused: boolean = false;
   protected eventDispatcherId: string;
@@ -53,7 +51,7 @@ export class EventDispatcher extends MaxObject {
    * @param type 事件类型
    * @param listener 回调函数
    */
-  on(type: string, listener: Function): void {
+  on(type: string, listener: (event: Event) => void): void {
     if (!this.listeners.has(type)) {
       this.listeners.set(type, new Set());
     }
@@ -65,7 +63,7 @@ export class EventDispatcher extends MaxObject {
    * @param type 事件类型
    * @param listener 回调函数
    */
-  once(type: string, listener: Function): void {
+  once(type: string, listener: (event: Event) => void): void {
     const onceWrapper = (event: Event) => {
       this.off(type, onceWrapper);
       listener(event);

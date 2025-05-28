@@ -1,20 +1,26 @@
 /**
- * Maxellabs 缓动函数模块
- * 动效引擎的缓动函数定义
+ * Maxellabs 动画缓动模块
+ * 动画系统特有的扩展缓动函数定义
  */
+
+// 重新导出核心类型
+export { PlaybackDirection, FillModeType, TransformType } from '../core/enums';
 
 /**
- * 缓动函数类型
+ * 扩展的缓动函数类型（动画特有的详细缓动类型）
  */
-export enum EasingType {
-  // 线性
+export enum ExtendedEasingType {
+  // 继承通用缓动类型
   Linear = 'linear',
-
-  // Ease 系列
   EaseIn = 'ease-in',
   EaseOut = 'ease-out',
   EaseInOut = 'ease-in-out',
+  CubicBezier = 'cubic-bezier',
+  Elastic = 'elastic',
+  Bounce = 'bounce',
+  Back = 'back',
 
+  // 扩展的详细缓动类型
   // Quad 系列
   QuadIn = 'quad-in',
   QuadOut = 'quad-out',
@@ -64,95 +70,26 @@ export enum EasingType {
   BounceIn = 'bounce-in',
   BounceOut = 'bounce-out',
   BounceInOut = 'bounce-in-out',
-
-  // 自定义贝塞尔
-  CubicBezier = 'cubic-bezier',
-}
-
-// /**
-//  * 缓动函数定义
-//  */
-// export interface EasingFunction {
-//   /**
-//    * 缓动类型
-//    */
-//   type: EasingType;
-//   /**
-//    * 贝塞尔控制点（仅用于 CubicBezier）
-//    */
-//   controlPoints?: [number, number, number, number];
-//   /**
-//    * 自定义参数
-//    */
-//   parameters?: Record<string, number>;
-// }
-
-/**
- * 播放方向
- */
-export enum PlaybackDirection {
-  Normal = 'normal',
-  Reverse = 'reverse',
-  Alternate = 'alternate',
-  AlternateReverse = 'alternate-reverse',
 }
 
 /**
- * 动画填充模式
+ * 动画特有的变换函数（扩展核心变换函数）
  */
-export enum AnimationFillMode {
-  None = 'none',
-  Forwards = 'forwards',
-  Backwards = 'backwards',
-  Both = 'both',
-}
-
-/**
- * 变换函数类型
- */
-export enum TransformType {
-  // 平移
-  Translate = 'translate',
-  Translate3d = 'translate3d',
-  TranslateX = 'translateX',
-  TranslateY = 'translateY',
-  TranslateZ = 'translateZ',
-
-  // 缩放
-  Scale = 'scale',
-  Scale3d = 'scale3d',
-  ScaleX = 'scaleX',
-  ScaleY = 'scaleY',
-  ScaleZ = 'scaleZ',
-
-  // 旋转
-  Rotate = 'rotate',
-  Rotate3d = 'rotate3d',
-  RotateX = 'rotateX',
-  RotateY = 'rotateY',
-  RotateZ = 'rotateZ',
-
-  // 倾斜
-  Skew = 'skew',
-  SkewX = 'skewX',
-  SkewY = 'skewY',
-
-  // 其他
-  Perspective = 'perspective',
-  Matrix = 'matrix',
-  Matrix3d = 'matrix3d',
-}
-
-/**
- * 变换函数
- */
-export interface TransformFunction {
+export interface AnimationTransformFunction {
   /**
-   * 函数类型
+   * 变换类型（使用核心TransformType）
    */
-  type: TransformType;
+  type: string;
   /**
-   * 参数
+   * 函数参数
    */
   parameters: number[];
+  /**
+   * 动画特有的插值参数
+   */
+  interpolation?: ExtendedEasingType;
+  /**
+   * 关键帧时间点
+   */
+  keyframes?: number[];
 }

@@ -5,7 +5,8 @@
 
 import type { LicenseType } from '../core';
 import type { CommonMetadata } from '../core/interfaces';
-import type { IconStyle, DesignIconVariant, DesignIconCategory } from './base';
+import type { DesignIconVariant, DesignIconCategory } from './base';
+import type { IconStyle } from './enums';
 
 /**
  * 设计图标

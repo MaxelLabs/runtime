@@ -3,13 +3,13 @@
  * 动画控制器、图层和遮罩的定义
  */
 
-import type { BlendMode } from '../core/enums';
+import type { AnimationController, AnimationMixerLayer, AnimationMask } from '../common';
 import type { AnimationStateMachine } from './stateMachine';
 
 /**
- * 动画控制器
+ * 扩展的动画控制器（添加状态机支持）
  */
-export interface AnimationController {
+export interface ExtendedAnimationController extends AnimationController {
   /**
    * 控制器名称
    */
@@ -17,51 +17,27 @@ export interface AnimationController {
   /**
    * 状态机
    */
-  stateMachine: AnimationStateMachine;
+  stateMachine?: AnimationStateMachine;
   /**
    * 当前状态
    */
-  currentState: string;
-  /**
-   * 播放时间
-   */
-  time: number;
+  currentState?: string;
 }
 
 /**
- * 动画图层
+ * 动画图层（扩展通用混合器层）
  */
-export interface AnimationLayer {
-  /**
-   * 图层名称
-   */
-  name: string;
-  /**
-   * 图层权重
-   */
-  weight: number;
-  /**
-   * 混合模式
-   */
-  blendMode: BlendMode;
+export interface StateMachineAnimationLayer extends AnimationMixerLayer {
   /**
    * 状态机
    */
-  stateMachine: AnimationStateMachine;
-  /**
-   * 遮罩
-   */
-  mask?: AnimationMask;
+  stateMachine?: AnimationStateMachine;
 }
 
 /**
- * 动画遮罩
+ * 骨骼动画遮罩（扩展通用遮罩）
  */
-export interface AnimationMask {
-  /**
-   * 遮罩名称
-   */
-  name: string;
+export interface BoneAnimationMask extends AnimationMask {
   /**
    * 包含的骨骼
    */
@@ -71,3 +47,6 @@ export interface AnimationMask {
    */
   excludedBones: string[];
 }
+
+// 重新导出通用类型以保持兼容性
+export { AnimationController, AnimationMixer, AnimationMixerLayer, AnimationMask } from '../common';

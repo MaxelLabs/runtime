@@ -4,17 +4,14 @@
  */
 
 import type { BlendMode } from '../core/enums';
+import type { AnimationMixer } from '../common';
 
 /**
- * 动画混合器
+ * 动画混合器（使用通用类型作为基础）
  */
-export interface AnimationBlender {
+export interface AnimationBlender extends Omit<AnimationMixer, 'layers'> {
   /**
-   * 混合器名称
-   */
-  name: string;
-  /**
-   * 混合类型
+   * 混合类型（使用core BlendMode）
    */
   type: BlendMode;
   /**

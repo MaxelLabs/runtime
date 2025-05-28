@@ -3,6 +3,8 @@
  * 动画曲线、关键点和数值范围的定义
  */
 
+import type { AnimationKeyframe } from '../common';
+
 /**
  * 数值范围
  */
@@ -32,39 +34,17 @@ export interface ColorRange {
 }
 
 /**
- * 动画曲线
+ * 动画曲线（使用通用关键帧）
  */
 export interface AnimationCurve {
   /**
-   * 关键点
+   * 关键点（使用通用类型）
    */
-  keys: CurveKey[];
+  keys: AnimationKeyframe[];
   /**
    * 预设类型
    */
   preset?: CurvePreset;
-}
-
-/**
- * 曲线关键点
- */
-export interface CurveKey {
-  /**
-   * 时间（0-1）
-   */
-  time: number;
-  /**
-   * 值
-   */
-  value: number;
-  /**
-   * 输入切线
-   */
-  inTangent: number;
-  /**
-   * 输出切线
-   */
-  outTangent: number;
 }
 
 /**

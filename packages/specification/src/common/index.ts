@@ -18,7 +18,7 @@ export * from './sprite';
 // 帧动画相关
 export * from './frame';
 
-// 变换相关 - 重命名导出以避免冲突
+// 变换相关
 export * from './transform';
 
 // 动画相关 - 重命名导出以避免冲突
@@ -27,11 +27,10 @@ export * from './animation';
 // 渲染相关
 export * from './rendering';
 
+export * from './material';
+
 // 交互相关
 export * from './interaction';
-
-// 材质相关
-export * from './material';
 
 // 纹理相关
 export * from './texture';

@@ -3,12 +3,144 @@
  * 所有模块共用的基础数据类型、枚举和常量
  */
 
+import type { ColorSpace } from './enums';
+import type { UsdValue } from './usd';
+
+/**
+ * 资产类型
+ */
+export enum AssetType {
+  Design = 'design',
+  Image = 'image',
+  Video = 'video',
+  Audio = 'audio',
+  Font = 'font',
+  Icon = 'icon',
+  Component = 'component',
+  Code = 'code',
+  Documentation = 'documentation',
+  Configuration = 'configuration',
+}
 /**
  * 基础数据类型
  */
 export type UUID = string;
 export type Path = string;
 export type URL = string;
+
+/**
+ * 压缩算法
+ */
+export enum CompressionAlgorithm {
+  /**
+   * Gzip
+   */
+  Gzip = 'gzip',
+  /**
+   * Brotli
+   */
+  Brotli = 'brotli',
+  /**
+   * LZ4
+   */
+  LZ4 = 'lz4',
+  /**
+   * Zstandard
+   */
+  Zstd = 'zstd',
+}
+
+/**
+ * 缓存策略
+ */
+export enum CacheStrategy {
+  /**
+   * 无缓存
+   */
+  None = 'none',
+  /**
+   * 内存缓存
+   */
+  Memory = 'memory',
+  /**
+   * 磁盘缓存
+   */
+  Disk = 'disk',
+  /**
+   * 混合缓存
+   */
+  Hybrid = 'hybrid',
+  /**
+   * 智能缓存
+   */
+  Smart = 'smart',
+}
+
+/**
+ * 几何体优化
+ */
+export interface GeometryOptimization {
+  /**
+   * 顶点合并
+   */
+  mergeVertices: boolean;
+  /**
+   * 索引优化
+   */
+  optimizeIndices: boolean;
+  /**
+   * 简化
+   */
+  simplification: boolean;
+  /**
+   * 压缩
+   */
+  compression: boolean;
+}
+
+/**
+ * 共享设置
+ */
+export interface SharingSettings {
+  /**
+   * 是否公开
+   */
+  public: boolean;
+  /**
+   * 分享链接
+   */
+  shareLink?: string;
+  /**
+   * 密码保护
+   */
+  password?: string;
+  /**
+   * 过期时间
+   */
+  expiresAt?: string;
+  /**
+   * 允许下载
+   */
+  allowDownload?: boolean;
+  /**
+   * 允许复制
+   */
+  allowCopy?: boolean;
+  /**
+   * 分享范围
+   */
+  scope?: SharingScope;
+}
+
+/**
+ * 分享范围
+ */
+export enum SharingScope {
+  Private = 'private',
+  Team = 'team',
+  Organization = 'organization',
+  Public = 'public',
+}
 
 /**
  * 版本信息
@@ -51,17 +183,107 @@ export interface Timestamp {
 }
 
 /**
- * 边界框
+ * 核心颜色接口
  */
-export interface BoundingBox {
+export interface Color {
   /**
-   * 最小点
+   * 颜色值
    */
-  min: [number, number, number];
+  value: UsdValue; // Color4f
   /**
-   * 最大点
+   * 颜色空间
    */
-  max: [number, number, number];
+  colorSpace?: ColorSpace;
+  /**
+   * 是否线性
+   */
+  linear?: boolean;
+}
+
+// ========== 数学基础类型 ==========
+
+/**
+ * 2D向量
+ */
+export interface Vector2 {
+  x: number;
+  y: number;
+}
+
+/**
+ * 3D向量
+ */
+export interface Vector3 {
+  x: number;
+  y: number;
+  z: number;
+}
+
+/**
+ * 4D向量
+ */
+export interface Vector4 {
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+}
+
+/**
+ * 四元数
+ */
+export interface Quaternion {
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+}
+
+/**
+ * 2x2矩阵
+ */
+export interface Matrix2x2 {
+  m00: number;
+  m01: number;
+  m10: number;
+  m11: number;
+}
+
+/**
+ * 3x3矩阵
+ */
+export interface Matrix3x3 {
+  m00: number;
+  m01: number;
+  m02: number;
+  m10: number;
+  m11: number;
+  m12: number;
+  m20: number;
+  m21: number;
+  m22: number;
+}
+
+/**
+ * 4x4矩阵
+ */
+export interface Matrix4x4 {
+  m00: number;
+  m01: number;
+  m02: number;
+  m03: number;
+  m10: number;
+  m11: number;
+  m12: number;
+  m13: number;
+  m20: number;
+  m21: number;
+  m22: number;
+  m23: number;
+  m30: number;
+  m31: number;
+  m32: number;
+  m33: number;
 }
 
 /**
@@ -71,11 +293,11 @@ export interface BoundingSphere {
   /**
    * 中心点
    */
-  center: [number, number, number];
+  center: Vector3;
   /**
    * 半径
    */
-  radius: number;
+  radius: UsdValue; // float
 }
 
 /**

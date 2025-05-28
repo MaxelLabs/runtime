@@ -4,7 +4,7 @@
  */
 
 import type { CommonElement, CommonElementType } from './elements';
-import type { Color } from '../core/interfaces';
+import type { Color, VerticalAlign } from '../core';
 
 /**
  * 文本对齐方式
@@ -29,25 +29,21 @@ export enum TextAlign {
 }
 
 /**
- * 垂直对齐方式
+ * 文本方向
  */
-export enum VerticalAlign {
+export enum TextDirection {
   /**
-   * 顶部对齐
+   * 从左到右
    */
-  Top = 'top',
+  LeftToRight = 'ltr',
   /**
-   * 中间对齐
+   * 从右到左
    */
-  Middle = 'middle',
+  RightToLeft = 'rtl',
   /**
-   * 底部对齐
+   * 自动
    */
-  Bottom = 'bottom',
-  /**
-   * 基线对齐
-   */
-  Baseline = 'baseline',
+  Auto = 'auto',
 }
 
 /**

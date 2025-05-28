@@ -3,7 +3,7 @@
  * 基于 USDZ 扩展的 Maxellabs 包格式 (.maxz)
  */
 
-import type { UsdStage } from '../core/usd';
+import type { UsdStage, CompressionAlgorithm, DeviceType, CacheStrategy, GeometryOptimization } from '../core';
 import type { DesignDocument } from '../design';
 import type { Workflow } from '../workflow';
 
@@ -237,19 +237,6 @@ export interface BrowserSupport {
 }
 
 /**
- * 设备类型
- */
-export enum DeviceType {
-  Mobile = 'mobile',
-  Tablet = 'tablet',
-  Desktop = 'desktop',
-  TV = 'tv',
-  Watch = 'watch',
-  VR = 'vr',
-  AR = 'ar',
-}
-
-/**
  * 资产清单
  */
 export interface AssetManifest {
@@ -362,18 +349,6 @@ export interface CompressionInfo {
    */
   ratio: number;
 }
-
-/**
- * 压缩算法
- */
-export enum CompressionAlgorithm {
-  None = 'none',
-  Gzip = 'gzip',
-  Brotli = 'brotli',
-  LZ4 = 'lz4',
-  Zstd = 'zstd',
-}
-
 /**
  * 资产统计
  */
@@ -703,16 +678,6 @@ export interface LoaderConfiguration {
 }
 
 /**
- * 缓存策略
- */
-export enum CacheStrategy {
-  None = 'none',
-  Memory = 'memory',
-  Disk = 'disk',
-  Hybrid = 'hybrid',
-}
-
-/**
  * 缓存配置
  */
 export interface CacheConfiguration {
@@ -817,28 +782,6 @@ export enum TextureCompression {
   PVRTC = 'pvrtc',
   ASTC = 'astc',
   BC7 = 'bc7',
-}
-
-/**
- * 几何体优化
- */
-export interface GeometryOptimization {
-  /**
-   * 顶点合并
-   */
-  mergeVertices: boolean;
-  /**
-   * 索引优化
-   */
-  optimizeIndices: boolean;
-  /**
-   * 简化
-   */
-  simplification: boolean;
-  /**
-   * 压缩
-   */
-  compression: boolean;
 }
 
 /**

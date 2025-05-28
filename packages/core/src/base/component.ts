@@ -89,7 +89,7 @@ export abstract class Component extends ReferResource {
    * 当组件被创建时调用（内部使用）
    * @internal
    */
-  _awake(): void {
+  awake(): void {
     if (this.lifecycleState !== ComponentLifecycleState.CREATED) {
       return;
     }

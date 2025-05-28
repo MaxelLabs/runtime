@@ -3,10 +3,31 @@
  * 包含填充、描边、阴影、模糊等视觉样式
  */
 
-import type { Transform, Color, ImageFilter, GradientStop } from '../core/interfaces';
-import type { BlendMode, GradientType, StrokePosition, VerticalAlign } from '../core/enums';
-import type { StyleType, FillType, StrokeType, LineCap, LineJoin, ImageScaleMode, ShadowType, BlurType } from './base';
+// 从 core 模块导入基础类型
+import type {
+  Color,
+  GradientStop,
+  Transform,
+  CommonMetadata,
+  BlendMode,
+  GradientType,
+  LineCap,
+  LineJoin,
+  StrokePosition,
+  StyleType,
+} from '../core';
 
+// 从 common 模块导入通用类型
+import type {
+  TextAlign,
+  FontStyle,
+  FontWeight,
+  TextDecoration,
+  TextTransform,
+  ImageFilter,
+  ImageScaleMode,
+} from '../common';
+import type { BlurType, DesignShadowType, FillType, StrokeType } from './enums';
 /**
  * 设计样式
  */
@@ -46,7 +67,7 @@ export interface DesignFill {
    */
   type: FillType;
   /**
-   * 颜色（使用统一Color）
+   * 颜色（使用通用Color）
    */
   color?: Color;
   /**
@@ -66,7 +87,7 @@ export interface DesignFill {
    */
   visible: boolean;
   /**
-   * 混合模式（使用统一BlendMode）
+   * 混合模式（使用通用BlendMode）
    */
   blendMode?: BlendMode;
 }
@@ -80,7 +101,7 @@ export interface DesignStroke {
    */
   type: StrokeType;
   /**
-   * 颜色（使用统一Color）
+   * 颜色（使用通用Color）
    */
   color?: Color;
   /**
@@ -148,7 +169,7 @@ export interface DesignImage {
    */
   scaleMode: ImageScaleMode;
   /**
-   * 图像变换（使用统一Transform）
+   * 图像变换（使用通用Transform）
    */
   transform?: Transform;
   /**
@@ -164,9 +185,9 @@ export interface DesignShadow {
   /**
    * 阴影类型
    */
-  type: ShadowType;
+  type: DesignShadowType;
   /**
-   * 颜色（使用统一Color）
+   * 颜色（使用通用Color）
    */
   color: Color;
   /**
@@ -207,6 +228,7 @@ export interface DesignBlur {
 
 /**
  * 设计文本样式
+ * 扩展通用文本样式，添加设计工具特定的属性
  */
 export interface DesignTextStyle {
   /**
@@ -218,11 +240,11 @@ export interface DesignTextStyle {
    */
   fontSize: number;
   /**
-   * 字体粗细
+   * 字体粗细（使用通用类型）
    */
-  fontWeight: number | string;
+  fontWeight: FontWeight;
   /**
-   * 字体样式
+   * 字体样式（使用通用类型）
    */
   fontStyle?: FontStyle;
   /**
@@ -238,62 +260,21 @@ export interface DesignTextStyle {
    */
   paragraphSpacing?: number;
   /**
-   * 文本对齐
+   * 文本对齐（使用通用类型）
    */
   textAlign?: TextAlign;
   /**
-   * 垂直对齐
-   */
-  verticalAlign?: VerticalAlign;
-  /**
-   * 文本装饰
+   * 文本装饰（使用通用类型）
    */
   textDecoration?: TextDecoration;
   /**
-   * 文本变换
+   * 文本变换（使用通用类型）
    */
   textTransform?: TextTransform;
 }
 
 /**
- * 字体样式
- */
-export enum FontStyle {
-  Normal = 'normal',
-  Italic = 'italic',
-}
-
-/**
- * 文本对齐
- */
-export enum TextAlign {
-  Left = 'left',
-  Center = 'center',
-  Right = 'right',
-  Justify = 'justify',
-}
-
-/**
- * 文本装饰
- */
-export enum TextDecoration {
-  None = 'none',
-  Underline = 'underline',
-  LineThrough = 'line-through',
-}
-
-/**
- * 文本变换
- */
-export enum TextTransform {
-  None = 'none',
-  Uppercase = 'uppercase',
-  Lowercase = 'lowercase',
-  Capitalize = 'capitalize',
-}
-
-/**
- * 样式定义
+ * 设计样式定义
  */
 export interface DesignStyleDefinition {
   /**
@@ -317,7 +298,16 @@ export interface DesignStyleDefinition {
    */
   description?: string;
   /**
-   * 混合模式（使用统一BlendMode）
+   * 混合模式（使用通用BlendMode）
    */
   blendMode?: BlendMode;
+  /**
+   * 样式元数据
+   */
+  metadata?: CommonMetadata;
 }
+
+// 重新导出通用类型以保持兼容性
+export { TextAlign, FontStyle, FontWeight, TextDecoration, TextTransform } from '../common/text';
+
+export { ImageFilter, ImageScaleMode } from '../common';

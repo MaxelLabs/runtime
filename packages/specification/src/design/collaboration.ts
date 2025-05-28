@@ -3,6 +3,8 @@
  * 包含协作者、权限和共享相关类型
  */
 
+import type { Permission, SharingSettings } from '../core';
+
 /**
  * 协作信息
  */
@@ -79,19 +81,6 @@ export enum CollaboratorRole {
 }
 
 /**
- * 权限类型
- */
-export enum Permission {
-  Read = 'read',
-  Write = 'write',
-  Comment = 'comment',
-  Share = 'share',
-  Admin = 'admin',
-  Export = 'export',
-  Delete = 'delete',
-}
-
-/**
  * 协作者状态
  */
 export enum CollaboratorStatus {
@@ -121,50 +110,6 @@ export interface PermissionSettings {
    * 权限过期时间
    */
   expiresAt?: Record<string, string>;
-}
-
-/**
- * 共享设置
- */
-export interface SharingSettings {
-  /**
-   * 是否公开
-   */
-  public: boolean;
-  /**
-   * 分享链接
-   */
-  shareLink?: string;
-  /**
-   * 密码保护
-   */
-  password?: string;
-  /**
-   * 过期时间
-   */
-  expiresAt?: string;
-  /**
-   * 允许下载
-   */
-  allowDownload?: boolean;
-  /**
-   * 允许复制
-   */
-  allowCopy?: boolean;
-  /**
-   * 分享范围
-   */
-  scope?: SharingScope;
-}
-
-/**
- * 分享范围
- */
-export enum SharingScope {
-  Private = 'private',
-  Team = 'team',
-  Organization = 'organization',
-  Public = 'public',
 }
 
 /**

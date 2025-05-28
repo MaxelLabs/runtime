@@ -3,6 +3,8 @@
  * 材质和着色器渲染相关类型定义
  */
 
+import type { TextureFilterMode } from '../common';
+import type { CullMode, FillMode, InterpolationMode, MaterialProperties, Vector2, WrapMode } from '../core';
 import type { UsdPrim, UsdValue } from '../core/usd';
 
 /**
@@ -54,58 +56,6 @@ export interface Material extends MaterialPrim {
    * 渲染状态
    */
   renderState?: RenderState;
-}
-
-/**
- * 材质类型
- */
-export enum MaterialType {
-  /**
-   * 标准PBR
-   */
-  StandardPBR = 'standard-pbr',
-  /**
-   * 金属粗糙度
-   */
-  MetallicRoughness = 'metallic-roughness',
-  /**
-   * 镜面光泽度
-   */
-  SpecularGlossiness = 'specular-glossiness',
-  /**
-   * 无光照
-   */
-  Unlit = 'unlit',
-  /**
-   * 自定义
-   */
-  Custom = 'custom',
-  /**
-   * 透明
-   */
-  Transparent = 'transparent',
-  /**
-   * 发光
-   */
-  Emissive = 'emissive',
-}
-
-/**
- * 透明模式
- */
-export enum AlphaMode {
-  /**
-   * 不透明
-   */
-  Opaque = 'opaque',
-  /**
-   * 遮罩
-   */
-  Mask = 'mask',
-  /**
-   * 混合
-   */
-  Blend = 'blend',
 }
 
 /**
@@ -317,52 +267,6 @@ export interface ShaderConnection {
 /**
  * 材质属性
  */
-export interface MaterialProperties {
-  /**
-   * 基础颜色
-   */
-  baseColor?: MaterialProperty;
-  /**
-   * 金属度
-   */
-  metallic?: MaterialProperty;
-  /**
-   * 粗糙度
-   */
-  roughness?: MaterialProperty;
-  /**
-   * 法线
-   */
-  normal?: MaterialProperty;
-  /**
-   * 遮挡
-   */
-  occlusion?: MaterialProperty;
-  /**
-   * 发光
-   */
-  emissive?: MaterialProperty;
-  /**
-   * 透明度
-   */
-  alpha?: MaterialProperty;
-  /**
-   * 高度
-   */
-  height?: MaterialProperty;
-  /**
-   * 细节法线
-   */
-  detailNormal?: MaterialProperty;
-  /**
-   * 细节遮罩
-   */
-  detailMask?: MaterialProperty;
-}
-
-/**
- * 材质属性
- */
 export interface MaterialProperty {
   /**
    * 属性值
@@ -433,7 +337,7 @@ export interface TextureSampler {
   /**
    * 过滤模式
    */
-  filter: FilterMode;
+  filter: TextureFilterMode;
   /**
    * 包装模式
    */
@@ -446,58 +350,6 @@ export interface TextureSampler {
    * Mipmap偏移
    */
   mipmapBias?: number;
-}
-
-/**
- * 过滤模式
- */
-export enum FilterMode {
-  /**
-   * 最近邻
-   */
-  Nearest = 'nearest',
-  /**
-   * 线性
-   */
-  Linear = 'linear',
-  /**
-   * 最近邻Mipmap最近邻
-   */
-  NearestMipmapNearest = 'nearest-mipmap-nearest',
-  /**
-   * 线性Mipmap最近邻
-   */
-  LinearMipmapNearest = 'linear-mipmap-nearest',
-  /**
-   * 最近邻Mipmap线性
-   */
-  NearestMipmapLinear = 'nearest-mipmap-linear',
-  /**
-   * 线性Mipmap线性
-   */
-  LinearMipmapLinear = 'linear-mipmap-linear',
-}
-
-/**
- * 包装模式
- */
-export enum WrapMode {
-  /**
-   * 重复
-   */
-  Repeat = 'repeat',
-  /**
-   * 镜像重复
-   */
-  MirroredRepeat = 'mirrored-repeat',
-  /**
-   * 夹紧到边缘
-   */
-  ClampToEdge = 'clamp-to-edge',
-  /**
-   * 夹紧到边框
-   */
-  ClampToBorder = 'clamp-to-border',
 }
 
 /**
@@ -869,46 +721,6 @@ export interface RasterState {
 }
 
 /**
- * 填充模式
- */
-export enum FillMode {
-  /**
-   * 实心
-   */
-  Solid = 'solid',
-  /**
-   * 线框
-   */
-  Wireframe = 'wireframe',
-  /**
-   * 点
-   */
-  Point = 'point',
-}
-
-/**
- * 剔除模式
- */
-export enum CullMode {
-  /**
-   * 不剔除
-   */
-  None = 'none',
-  /**
-   * 剔除正面
-   */
-  Front = 'front',
-  /**
-   * 剔除背面
-   */
-  Back = 'back',
-  /**
-   * 剔除正面和背面
-   */
-  FrontAndBack = 'front-and-back',
-}
-
-/**
  * 正面方向
  */
 export enum FrontFace {
@@ -925,24 +737,24 @@ export enum FrontFace {
 /**
  * 材质变体
  */
-export interface MaterialVariant {
-  /**
-   * 变体名称
-   */
-  name: string;
-  /**
-   * 变体描述
-   */
-  description?: string;
-  /**
-   * 变体属性覆盖
-   */
-  propertyOverrides: Record<string, any>;
-  /**
-   * 变体条件
-   */
-  conditions?: VariantCondition[];
-}
+// export interface MaterialVariant {
+//   /**
+//    * 变体名称
+//    */
+//   name: string;
+//   /**
+//    * 变体描述
+//    */
+//   description?: string;
+//   /**
+//    * 变体属性覆盖
+//    */
+//   propertyOverrides: Record<string, any>;
+//   /**
+//    * 变体条件
+//    */
+//   conditions?: VariantCondition[];
+// }
 
 /**
  * 变体条件
@@ -1207,11 +1019,11 @@ export interface MaterialKeyframe {
   /**
    * 切线输入
    */
-  inTangent?: [number, number];
+  inTangent?: Vector2;
   /**
    * 切线输出
    */
-  outTangent?: [number, number];
+  outTangent?: Vector2;
 }
 
 /**
@@ -1234,26 +1046,4 @@ export enum AnimationLoopMode {
    * 夹紧
    */
   Clamp = 'clamp',
-}
-
-/**
- * 插值模式
- */
-export enum InterpolationMode {
-  /**
-   * 线性
-   */
-  Linear = 'linear',
-  /**
-   * 步进
-   */
-  Step = 'step',
-  /**
-   * 三次样条
-   */
-  CubicSpline = 'cubic-spline',
-  /**
-   * 贝塞尔
-   */
-  Bezier = 'bezier',
 }

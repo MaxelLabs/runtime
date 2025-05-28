@@ -3,7 +3,7 @@
  * 包含调色板、颜色模式和可访问性相关类型
  */
 
-import type { Color } from '../core/interfaces';
+import type { Color } from '../core';
 
 /**
  * 设计颜色系统

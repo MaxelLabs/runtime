@@ -3,7 +3,7 @@
  * 包含资产库、资产分类和资产管理相关类型
  */
 
-import type { LicenseType } from '../core';
+import type { AssetType, LicenseType } from '../core';
 
 /**
  * 资产库
@@ -75,22 +75,6 @@ export interface DesignAsset {
    * 分辨率信息
    */
   resolution?: AssetResolution;
-}
-
-/**
- * 资产类型
- */
-export enum AssetType {
-  Image = 'image',
-  Icon = 'icon',
-  Font = 'font',
-  Video = 'video',
-  Audio = 'audio',
-  Document = 'document',
-  Component = 'component',
-  Template = 'template',
-  Illustration = 'illustration',
-  Photo = 'photo',
 }
 
 /**

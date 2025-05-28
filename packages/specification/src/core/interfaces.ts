@@ -1,14 +1,87 @@
 /**
- * Maxellabs 统一接口定义
- * 所有模块共用的接口类型
+ * Maxellabs 核心模块接口定义
+ * 提供系统核心的基础接口和类型
  */
 
 import type { UsdValue } from './usd';
-import type { BlendMode, EasingFunction, ColorSpace, QualityLevel, FeedbackType, FilterType } from './enums';
-import type { BoundingBox, VersionInfo } from './base';
+import type {
+  QualityLevel,
+  EasingFunction,
+  MaterialType,
+  BorderStyle,
+  ClickFeedbackType,
+  VisualEffectType,
+} from './enums';
+import type { Color, Vector3, VersionInfo } from './base';
 
 /**
- * 统一变换接口
+ * 视觉效果
+ */
+export interface VisualEffect {
+  /**
+   * 效果类型
+   */
+  type: VisualEffectType;
+  /**
+   * 持续时间（毫秒）
+   */
+  duration: number;
+  /**
+   * 效果参数
+   */
+  parameters?: Record<string, any>;
+}
+
+/**
+ * 震动模式
+ */
+export interface VibrationPattern {
+  /**
+   * 震动持续时间（毫秒）
+   */
+  duration: number;
+  /**
+   * 震动强度 (0-1)
+   */
+  intensity: number;
+  /**
+   * 震动模式
+   */
+  pattern?: number[];
+}
+
+/**
+ * 点击效果
+ */
+export interface ClickEffect {
+  /**
+   * 是否启用
+   */
+  enabled: boolean;
+  /**
+   * 反馈类型
+   */
+  feedbackType: ClickFeedbackType;
+  /**
+   * 动画配置
+   */
+  animation?: AnimationProperties;
+  /**
+   * 音效
+   */
+  sound?: string;
+  /**
+   * 震动
+   */
+  vibration?: VibrationPattern;
+  /**
+   * 视觉效果
+   */
+  visualEffect?: VisualEffect;
+}
+
+/**
+ * 基础变换接口（核心3D变换）
  */
 export interface Transform {
   /**
@@ -30,24 +103,6 @@ export interface Transform {
 }
 
 /**
- * 统一颜色接口
- */
-export interface Color {
-  /**
-   * 颜色值
-   */
-  value: UsdValue; // Color4f
-  /**
-   * 颜色空间
-   */
-  colorSpace?: ColorSpace;
-  /**
-   * 是否线性
-   */
-  linear?: boolean;
-}
-
-/**
  * 渐变停止点
  */
 export interface GradientStop {
@@ -66,37 +121,117 @@ export interface GradientStop {
 }
 
 /**
- * 统一材质属性接口
+ * 核心材质属性（基础版本）
  */
 export interface MaterialProperties {
   /**
+   * 材质名称
+   */
+  name: string;
+  /**
+   * 材质类型
+   */
+  type: MaterialType;
+  /**
    * 基础颜色
    */
-  baseColor?: Color;
+  baseColor: Color;
   /**
    * 透明度
    */
-  opacity?: UsdValue; // float
+  opacity: number;
   /**
-   * 混合模式
+   * 金属度
    */
-  blendMode?: BlendMode;
+  metallic?: number;
   /**
-   * 是否双面
+   * 粗糙度
    */
-  doubleSided?: UsdValue; // bool
+  roughness?: number;
   /**
-   * 是否投射阴影
+   * 自发光颜色
    */
-  castShadows?: UsdValue; // bool
+  emissiveColor?: Color;
   /**
-   * 是否接收阴影
+   * 自发光强度
    */
-  receiveShadows?: UsdValue; // bool
+  emissiveIntensity?: number;
+  /**
+   * 法线强度
+   */
+  normalScale?: number;
+  /**
+   * 遮挡强度
+   */
+  occlusionStrength?: number;
+  /**
+   * 折射率
+   */
+  ior?: number;
+  /**
+   * 透射
+   */
+  transmission?: number;
+  /**
+   * 厚度
+   */
+  thickness?: number;
+  /**
+   * 衰减颜色
+   */
+  attenuationColor?: Color;
+  /**
+   * 衰减距离
+   */
+  attenuationDistance?: number;
+  /**
+   * 各向异性
+   */
+  anisotropy?: number;
+  /**
+   * 各向异性旋转
+   */
+  anisotropyRotation?: number;
+  /**
+   * 清漆
+   */
+  clearcoat?: number;
+  /**
+   * 清漆粗糙度
+   */
+  clearcoatRoughness?: number;
+  /**
+   * 清漆法线
+   */
+  clearcoatNormal?: number;
+  /**
+   * 光泽
+   */
+  sheen?: number;
+  /**
+   * 光泽颜色
+   */
+  sheenColor?: Color;
+  /**
+   * 光泽粗糙度
+   */
+  sheenRoughness?: number;
+  /**
+   * 次表面散射
+   */
+  subsurface?: number;
+  /**
+   * 次表面颜色
+   */
+  subsurfaceColor?: Color;
+  /**
+   * 次表面半径
+   */
+  subsurfaceRadius?: [number, number, number];
 }
 
 /**
- * 统一动画属性接口
+ * 核心动画属性
  */
 export interface AnimationProperties {
   /**
@@ -126,7 +261,7 @@ export interface AnimationProperties {
 }
 
 /**
- * 统一渲染属性接口
+ * 核心渲染属性
  */
 export interface RenderingProperties {
   /**
@@ -146,13 +281,35 @@ export interface RenderingProperties {
    */
   material?: MaterialProperties;
   /**
-   * 边界框
+   * 3D边界框
    */
   boundingBox?: BoundingBox;
 }
 
 /**
- * 统一交互属性接口
+ * 3D边界框（核心版本）
+ */
+export interface BoundingBox {
+  /**
+   * 最小点
+   */
+  min: Vector3;
+  /**
+   * 最大点
+   */
+  max: Vector3;
+  /**
+   * 中心点
+   */
+  center?: Vector3;
+  /**
+   * 尺寸
+   */
+  size?: Vector3;
+}
+
+/**
+ * 核心交互属性
  */
 export interface InteractionProperties {
   /**
@@ -174,13 +331,17 @@ export interface InteractionProperties {
 }
 
 /**
- * 悬停效果接口
+ * 悬停效果
  */
 export interface HoverEffect {
   /**
    * 是否启用
    */
-  enabled: UsdValue; // bool
+  enabled: boolean;
+  /**
+   * 悬停延迟（毫秒）
+   */
+  delay: number;
   /**
    * 高亮颜色
    */
@@ -188,33 +349,49 @@ export interface HoverEffect {
   /**
    * 缩放因子
    */
-  scaleFactor?: UsdValue; // float
+  scaleFactor?: number;
   /**
-   * 动画属性
+   * 透明度变化
+   */
+  opacityChange?: number;
+  /**
+   * 动画配置
    */
   animation?: AnimationProperties;
+  /**
+   * 光标样式
+   */
+  cursor?: string;
+  /**
+   * 工具提示
+   */
+  tooltip?: string;
 }
 
 /**
- * 点击效果接口
+ * 选择边框
  */
-export interface ClickEffect {
+export interface SelectionBorder {
   /**
-   * 是否启用
+   * 边框宽度
    */
-  enabled: UsdValue; // bool
+  width: UsdValue; // float
   /**
-   * 反馈类型
+   * 边框颜色
    */
-  feedbackType?: FeedbackType;
+  color: Color;
   /**
-   * 动画属性
+   * 边框样式
    */
-  animation?: AnimationProperties;
+  style: BorderStyle;
+  /**
+   * 边框圆角
+   */
+  radius?: UsdValue; // float
 }
 
 /**
- * 选择效果接口
+ * 选择效果
  */
 export interface SelectionEffect {
   /**
@@ -229,6 +406,14 @@ export interface SelectionEffect {
    * 选择颜色
    */
   selectionColor?: Color;
+  /**
+   * 选择边框
+   */
+  selectionBorder?: SelectionBorder;
+  /**
+   * 选择动画
+   */
+  animation?: AnimationProperties;
 }
 
 /**
@@ -294,25 +479,288 @@ export interface CommonMetadata {
    */
   customData?: Record<string, any>;
 }
+// ========== 枚举类型 ==========
 
 /**
- * 图像滤镜
+ * 变换空间
  */
-export interface ImageFilter {
+export enum TransformSpace {
   /**
-   * 滤镜类型
+   * 世界空间
    */
-  type: FilterType;
+  World = 'world',
   /**
-   * 滤镜强度 (0-1)
+   * 本地空间
    */
-  intensity: number;
+  Local = 'local',
   /**
-   * 滤镜参数
+   * 父级空间
+   */
+  Parent = 'parent',
+  /**
+   * 屏幕空间
+   */
+  Screen = 'screen',
+  /**
+   * 视图空间
+   */
+  View = 'view',
+}
+
+/**
+ * 旋转顺序
+ */
+export enum RotationOrder {
+  /**
+   * XYZ顺序
+   */
+  XYZ = 'xyz',
+  /**
+   * XZY顺序
+   */
+  XZY = 'xzy',
+  /**
+   * YXZ顺序
+   */
+  YXZ = 'yxz',
+  /**
+   * YZX顺序
+   */
+  YZX = 'yzx',
+  /**
+   * ZXY顺序
+   */
+  ZXY = 'zxy',
+  /**
+   * ZYX顺序
+   */
+  ZYX = 'zyx',
+}
+
+/**
+ * 通用变换函数
+ * 适用于动画、设计等所有需要变换的模块
+ */
+export interface TransformFunction {
+  /**
+   * 函数类型
+   */
+  type: string;
+  /**
+   * 参数
+   */
+  parameters: number[];
+}
+
+/**
+ * 通用约束配置
+ * 适用于布局、设计系统等
+ */
+export interface ConstraintConfig {
+  /**
+   * 水平约束
+   */
+  horizontal: string;
+  /**
+   * 垂直约束
+   */
+  vertical: string;
+}
+
+/**
+ * 通用动画配置基础接口
+ * 适用于所有动画系统的基础配置
+ */
+export interface BaseAnimationConfig {
+  /**
+   * 动画名称
+   */
+  name: string;
+  /**
+   * 持续时间（秒）
+   */
+  duration: number;
+  /**
+   * 延迟时间（秒）
+   */
+  delay?: number;
+  /**
+   * 播放速度
+   */
+  speed?: number;
+  /**
+   * 循环模式
+   */
+  loopMode?: string;
+  /**
+   * 循环次数（-1为无限循环）
+   */
+  loopCount?: number;
+  /**
+   * 缓动函数
+   */
+  easing?: string;
+  /**
+   * 自定义缓动参数
+   */
+  easingParams?: number[];
+  /**
+   * 是否自动播放
+   */
+  autoPlay?: boolean;
+  /**
+   * 是否自动销毁
+   */
+  autoDestroy?: boolean;
+  /**
+   * 动画权重
+   */
+  weight?: number;
+  /**
+   * 混合模式
+   */
+  blendMode?: string;
+}
+
+/**
+ * 通用事件配置
+ * 适用于动画、交互等所有需要事件的模块
+ */
+export interface BaseEvent {
+  /**
+   * 事件类型
+   */
+  type: string;
+  /**
+   * 事件名称
+   */
+  name?: string;
+  /**
+   * 触发时间（秒）
+   */
+  time: number;
+  /**
+   * 事件参数
    */
   parameters?: Record<string, any>;
+  /**
+   * 事件回调
+   */
+  callback?: string;
+}
+
+/**
+ * 通用控制器接口
+ * 适用于动画、媒体播放等所有需要控制的模块
+ */
+export interface BaseController {
+  /**
+   * 当前播放状态
+   */
+  playState: string;
+  /**
+   * 当前时间
+   */
+  currentTime: number;
+  /**
+   * 播放速度
+   */
+  playbackSpeed: number;
   /**
    * 是否启用
    */
   enabled: boolean;
+  /**
+   * 权重
+   */
+  weight: number;
+  /**
+   * 当前循环次数
+   */
+  currentLoop: number;
+  /**
+   * 播放方向（1为正向，-1为反向）
+   */
+  direction: number;
+}
+
+/**
+ * 通用组件属性定义
+ * 适用于设计系统、UI组件等
+ */
+export interface BaseComponentProperty {
+  /**
+   * 属性名称
+   */
+  name: string;
+  /**
+   * 属性类型
+   */
+  type: string;
+  /**
+   * 默认值
+   */
+  defaultValue?: any;
+  /**
+   * 可选值
+   */
+  options?: any[];
+}
+
+/**
+ * 通用样式配置
+ * 适用于设计、UI、渲染等所有需要样式的模块
+ */
+export interface BaseStyle {
+  /**
+   * 样式名称
+   */
+  name: string;
+  /**
+   * 样式类型
+   */
+  type: string;
+  /**
+   * 样式值
+   */
+  value: any;
+  /**
+   * 是否启用
+   */
+  enabled?: boolean;
+}
+
+/**
+ * 通用参数定义
+ * 适用于动画、组件、系统等所有需要参数的模块
+ */
+export interface BaseParameter {
+  /**
+   * 参数名称
+   */
+  name: string;
+  /**
+   * 参数类型
+   */
+  type: string;
+  /**
+   * 默认值
+   */
+  defaultValue: any;
+  /**
+   * 当前值
+   */
+  value: any;
+  /**
+   * 最小值（数值类型）
+   */
+  min?: number;
+  /**
+   * 最大值（数值类型）
+   */
+  max?: number;
+  /**
+   * 描述
+   */
+  description?: string;
 }

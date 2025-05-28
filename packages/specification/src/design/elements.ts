@@ -3,135 +3,38 @@
  * 设计工具中的元素类型和属性
  */
 
-import type { BlendMode } from '../core/enums';
-import type {
-  Transform,
-  AnimationProperties,
-  InteractionProperties,
-  MaterialProperties,
-  RenderingProperties,
-  CommonMetadata,
-} from '../core/interfaces';
-import type { CommonElement, CommonElementType, ImageScaleMode, ImageFilter, OverflowMode } from '../common';
-import type { TextStyle } from '../media';
-import type { DesignElementType, DesignBounds, DesignConstraints, ComponentInstance, IconStyle } from './base';
+// 从 core 模块导入基础类型
+import type { Transform } from '../core/interfaces';
+
+// 从 common 模块导入通用类型
+import type { CommonBounds, CommonElement, OverflowMode } from '../common';
+import type { ImageScaleMode, ImageFilter } from '../common/image';
+import type { TextAlign, FontStyle, FontWeight, CommonTextStyle } from '../common/text';
+import type { SpriteAtlas, SpriteAnimation } from '../common/sprite';
+
+// 导入设计特定类型
+import type { DesignConstraints, ComponentInstance } from './base';
 import type { DesignStyle } from './styles';
-
-/**
- * 设计精灵图集
- */
-export interface DesignSpriteAtlas {
-  /**
-   * 图集纹理
-   */
-  texture: string;
-  /**
-   * 帧定义
-   */
-  frames: DesignSpriteFrame[];
-  /**
-   * 图集元数据
-   */
-  metadata?: DesignSpriteAtlasMetadata;
-}
-
-/**
- * 设计精灵帧
- */
-export interface DesignSpriteFrame {
-  /**
-   * 帧名称
-   */
-  name: string;
-  /**
-   * 在图集中的位置
-   */
-  x: number;
-  y: number;
-  /**
-   * 帧尺寸
-   */
-  width: number;
-  height: number;
-  /**
-   * 是否旋转
-   */
-  rotated?: boolean;
-  /**
-   * 修剪信息
-   */
-  trimmed?: boolean;
-  /**
-   * 原始尺寸
-   */
-  sourceSize?: { w: number; h: number };
-}
-
-/**
- * 设计精灵图集元数据
- */
-export interface DesignSpriteAtlasMetadata {
-  /**
-   * 应用程序
-   */
-  app: string;
-  /**
-   * 版本
-   */
-  version: string;
-  /**
-   * 图像格式
-   */
-  format: string;
-  /**
-   * 图集尺寸
-   */
-  size: { w: number; h: number };
-  /**
-   * 缩放
-   */
-  scale: number;
-}
-
-/**
- * 设计精灵动画
- */
-export interface DesignSpriteAnimation {
-  /**
-   * 动画名称
-   */
-  name: string;
-  /**
-   * 帧序列
-   */
-  frames: number[];
-  /**
-   * 帧率
-   */
-  frameRate: number;
-  /**
-   * 是否循环
-   */
-  loop: boolean;
-  /**
-   * 动画属性
-   */
-  properties?: AnimationProperties;
-}
+import type { IconStyle } from './enums';
+import type { ElementType } from '../core';
 
 /**
  * 设计元素基础接口
  * 扩展通用元素接口，添加设计特定的属性
  */
-export interface DesignElement extends Omit<CommonElement, 'type' | 'children' | 'constraints'> {
+export interface DesignElement extends Omit<CommonElement, 'type' | 'children' | 'constraints' | 'transform'> {
   /**
    * 元素类型（设计特定）
    */
-  type: DesignElementType;
+  type: ElementType;
   /**
-   * 位置和尺寸（设计特定）
+   * 位置和尺寸（设计特定的 bounds 而不是 transform）
    */
-  bounds: DesignBounds;
+  bounds: CommonBounds;
+  /**
+   * 变换信息（可选，用于3D变换）
+   */
+  transform?: Transform;
   /**
    * 样式
    */
@@ -141,7 +44,7 @@ export interface DesignElement extends Omit<CommonElement, 'type' | 'children' |
    */
   constraints?: DesignConstraints;
   /**
-   * 子元素
+   * 子元素（设计特定）
    */
   children?: DesignElement[];
   /**
@@ -151,25 +54,37 @@ export interface DesignElement extends Omit<CommonElement, 'type' | 'children' |
 }
 
 /**
- * 文本元素接口
+ * 设计文本元素接口（扩展通用文本元素）
  */
-export interface TextElement extends DesignElement {
-  type: DesignElementType.Text;
+export interface DesignTextElement extends DesignElement {
+  type: ElementType.Text;
   /**
    * 文本内容
    */
   content: string;
   /**
-   * 文本样式
+   * 文本样式（使用通用文本样式）
    */
-  textStyle?: TextStyle;
+  textStyle?: CommonTextStyle;
+  /**
+   * 文本对齐（使用通用类型）
+   */
+  textAlign?: TextAlign;
+  /**
+   * 字体样式（使用通用类型）
+   */
+  fontStyle?: FontStyle;
+  /**
+   * 字体粗细（使用通用类型）
+   */
+  fontWeight?: FontWeight;
 }
 
 /**
- * 图像元素接口
+ * 设计图像元素接口（扩展通用图像元素）
  */
-export interface ImageElement extends DesignElement {
-  type: DesignElementType.Image;
+export interface DesignImageElement extends DesignElement {
+  type: ElementType.Image;
   /**
    * 图像源
    */
@@ -183,62 +98,58 @@ export interface ImageElement extends DesignElement {
    */
   filters?: ImageFilter[];
   /**
-   * 图像配置
+   * 设计特定的图像配置
    */
-  imageConfig?: any; // 将在styles.ts中定义具体类型
+  designImageConfig?: DesignImageConfig;
 }
 
 /**
- * 图像滤镜
+ * 设计特定的图像配置
  */
-export interface DesignImageFilter {
+export interface DesignImageConfig {
   /**
-   * 滤镜类型
+   * 图像替换
    */
-  type: ImageFilterType;
+  imageReplacement?: string;
   /**
-   * 滤镜值
+   * 图像库链接
    */
-  value: number;
+  libraryLink?: string;
+  /**
+   * 裁剪信息
+   */
+  cropInfo?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
 }
 
 /**
- * 图像滤镜类型
+ * 设计精灵元素接口（扩展通用精灵元素）
  */
-export enum ImageFilterType {
-  Exposure = 'exposure',
-  Contrast = 'contrast',
-  Saturation = 'saturation',
-  Temperature = 'temperature',
-  Tint = 'tint',
-  Highlights = 'highlights',
-  Shadows = 'shadows',
-}
-
-/**
- * 精灵元素接口
- */
-export interface SpriteElement extends DesignElement {
-  type: DesignElementType.Sprite;
+export interface DesignSpriteElement extends DesignElement {
+  type: ElementType.Sprite;
   /**
-   * 纹理图集（设计特定）
+   * 纹理图集（使用通用类型）
    */
-  atlas: DesignSpriteAtlas;
+  atlas: SpriteAtlas;
   /**
-   * 当前帧
+   * 当前帧（使用数字索引）
    */
   currentFrame: number;
   /**
-   * 动画配置（设计特定）
+   * 动画配置（使用通用类型）
    */
-  spriteAnimation?: DesignSpriteAnimation;
+  spriteAnimation?: SpriteAnimation;
 }
 
 /**
- * 图标元素接口
+ * 设计图标元素接口
  */
-export interface IconElement extends DesignElement {
-  type: DesignElementType.Icon;
+export interface DesignIconElement extends DesignElement {
+  type: ElementType.Icon;
   /**
    * 图标名称
    */
@@ -258,10 +169,10 @@ export interface IconElement extends DesignElement {
 }
 
 /**
- * 矢量元素接口
+ * 设计矢量元素接口
  */
-export interface VectorElement extends DesignElement {
-  type: DesignElementType.Vector;
+export interface DesignVectorElement extends DesignElement {
+  type: ElementType.Vector;
   /**
    * 路径数据
    */
@@ -269,13 +180,13 @@ export interface VectorElement extends DesignElement {
   /**
    * 矢量配置
    */
-  vectorConfig?: VectorConfig;
+  vectorConfig?: DesignVectorConfig;
 }
 
 /**
- * 矢量配置
+ * 设计矢量配置
  */
-export interface VectorConfig {
+export interface DesignVectorConfig {
   /**
    * 闭合路径
    */
@@ -291,10 +202,10 @@ export interface VectorConfig {
 }
 
 /**
- * 组元素接口
+ * 设计组合元素接口
  */
-export interface GroupElement extends DesignElement {
-  type: DesignElementType.Group;
+export interface DesignGroupElement extends DesignElement {
+  type: ElementType.Group;
   /**
    * 剪切路径
    */
@@ -306,10 +217,10 @@ export interface GroupElement extends DesignElement {
 }
 
 /**
- * 帧元素接口
+ * 设计帧元素接口
  */
-export interface FrameElement extends DesignElement {
-  type: DesignElementType.Frame;
+export interface DesignFrameElement extends DesignElement {
+  type: ElementType.Frame;
   /**
    * 背景
    */

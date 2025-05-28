@@ -1,171 +1,212 @@
-# Animation 动画模块
+# Maxellabs 动画模块
 
-Maxellabs 3D Engine 的动画系统规范，基于 USD (Universal Scene Description) 标准，提供完整的动画、动效、粒子系统和状态机功能。
+动画模块提供基于USD标准的动画系统和扩展缓动功能，专注于动画特有的类型定义和USD集成。
 
-## 模块结构
+## 功能概述
 
-### 核心模块 (Core)
-- **文件**: `core.ts`
-- **功能**: 动画系统的基础类型和接口定义
-- **主要内容**:
-  - `AnimationPrim` - 动画基础接口
-  - `AnimationClip` - 动画剪辑
-  - `AnimationTrack` - 动画轨道
-  - `Keyframe` - 关键帧
-  - `AnimationEvent` - 动画事件
+动画模块在核心模块基础上，提供USD特有的动画类型定义和扩展的缓动函数，支持复杂的动画制作流程。
 
-### 状态机模块 (State Machine)
-- **文件**: `stateMachine.ts`
-- **功能**: 动画状态机、状态和转换管理
-- **主要内容**:
-  - `AnimationStateMachine` - 动画状态机
-  - `AnimationState` - 动画状态
-  - `AnimationTransition` - 状态转换
-  - `AnimationCondition` - 转换条件
-  - `AnimationParameter` - 状态参数
+## 主要组件
 
-### 控制器模块 (Controller)
-- **文件**: `controller.ts`
-- **功能**: 动画控制器、图层和遮罩管理
-- **主要内容**:
-  - `AnimationController` - 动画控制器
-  - `AnimationLayer` - 动画图层
-  - `AnimationMask` - 动画遮罩
+### USD动画核心 (core.ts)
+USD特有的动画类型定义：
 
-### 混合器模块 (Blender)
-- **文件**: `blender.ts`
-- **功能**: 动画混合器和混合策略
-- **主要内容**:
-  - `AnimationBlender` - 动画混合器
-  - `AnimationBlendInput` - 混合输入
+- **UsdAnimationClip**: USD动画剪辑，扩展通用动画剪辑
+- **UsdKeyframe**: USD特定的关键帧，支持USD切线定义
+- **UsdTangent**: USD切线类型，用于高精度动画插值
+- **UsdAnimationTrack**: USD动画轨道，包含USD路径和类型信息
 
-### 缓动函数模块 (Easing)
-- **文件**: `easing.ts`
-- **功能**: 动效引擎的缓动函数和变换定义
-- **主要内容**:
-  - `EasingType` - 缓动函数类型枚举
-  - `EasingFunction` - 缓动函数定义
-  - `TransformType` - 变换函数类型
-  - `PlaybackDirection` - 播放方向
-  - `AnimationFillMode` - 填充模式
+```typescript
+import { UsdAnimationClip, UsdKeyframe } from '@maxellabs/specification/animation';
 
-### 时间轴模块 (Timeline)
-- **文件**: `timeline.ts`
-- **功能**: 时间轴和属性动画管理
-- **主要内容**:
-  - `Timeline` - 时间轴
-  - `TimelineAnimation` - 时间轴动画
-  - `PropertyAnimation` - 属性动画
+// USD动画剪辑定义
+const usdClip: UsdAnimationClip = {
+  typeName: 'Animation',
+  path: '/World/Characters/Hero/Animations/Walk',
+  attributes: {
+    name: { value: 'WalkCycle', type: 'string' },
+    duration: { value: 2.0, type: 'float' },
+    frameRate: { value: 24.0, type: 'float' },
+    loopMode: { value: 'loop', type: 'token' }
+  },
+  tracks: [], // USD动画轨道
+  events: []  // 动画事件
+};
+```
 
-### 曲线模块 (Curve)
-- **文件**: `curve.ts`
-- **功能**: 动画曲线、关键点和数值范围定义
-- **主要内容**:
-  - `AnimationCurve` - 动画曲线
-  - `ColorCurve` - 颜色曲线
-  - `VelocityCurve` - 速度曲线
-  - `ValueRange` - 数值范围
-  - `ColorRange` - 颜色范围
+### 扩展缓动系统 (easing.ts)
+动画特有的详细缓动类型和变换函数：
 
-### 粒子系统模块 (Particle)
-- **文件**: `particle.ts`
-- **功能**: 粒子系统、发射器和渲染配置
-- **主要内容**:
-  - `ParticleSystem` - 粒子系统
-  - `ParticleEmitter` - 粒子发射器
-  - `ParticleConfig` - 粒子配置
-  - `ParticleRenderer` - 粒子渲染器
+- **ExtendedEasingType**: 详细的缓动函数枚举（Quad、Cubic、Quart等系列）
+- **AnimationTransformFunction**: 动画特有的变换函数，支持关键帧插值
 
-### 粒子物理模块 (Particle Physics)
-- **文件**: `particlePhysics.ts`
-- **功能**: 粒子物理、碰撞和力场系统
-- **主要内容**:
-  - `ParticlePhysics` - 粒子物理
-  - `ParticleCollision` - 粒子碰撞
-  - `ForceField` - 力场系统
+```typescript
+import { ExtendedEasingType, AnimationTransformFunction } from '@maxellabs/specification/animation';
+
+// 使用扩展缓动类型
+const smoothAnimation: AnimationTransformFunction = {
+  type: 'scale',  // 使用核心TransformType
+  parameters: [1, 1, 1],
+  interpolation: ExtendedEasingType.QuadInOut,
+  keyframes: [0, 0.5, 1.0]
+};
+```
+
+### 粒子动画 (particle.ts)
+专门的粒子系统动画类型：
+
+- **ParticleAnimation**: 粒子动画配置
+- **ParticleEmissionCurve**: 发射曲线定义
+- **ParticleLifecycleCurve**: 生命周期曲线
+
+### 动画控制器 (controller.ts)
+高级动画控制功能：
+
+- **AnimationController**: 动画控制器实现
+- **AnimationBlender**: 动画混合器
+- **AnimationStateMachine**: 状态机管理
+
+### 动画曲线 (curve.ts)
+专业的动画曲线编辑：
+
+- **AnimationCurve**: 动画曲线定义
+- **CurveKeyframe**: 曲线关键帧
+- **TangentType**: 切线类型
+
+### 状态机 (stateMachine.ts)
+动画状态机系统：
+
+- **AnimationStateMachine**: 状态机定义
+- **AnimationState**: 动画状态
+- **StateTransition**: 状态转换
+
+### 时间轴 (timeline.ts)
+时间轴编辑功能：
+
+- **AnimationTimeline**: 时间轴定义
+- **TimelineClip**: 时间轴片段
+- **TimelineMarker**: 时间轴标记
+
+### Blender集成 (blender.ts)
+Blender软件集成支持：
+
+- **BlenderAnimationData**: Blender动画数据
+- **BlenderAction**: Blender动作
+- **BlenderFCurve**: Blender F曲线
+
+### 粒子物理 (particlePhysics.ts)
+粒子物理动画：
+
+- **ParticlePhysicsAnimation**: 粒子物理动画
+- **PhysicsForce**: 物理力
+- **CollisionResponse**: 碰撞响应
+
+## 与核心模块的关系
+
+动画模块继承并扩展了核心模块的类型：
+
+### 重新导出核心类型
+```typescript
+// 从core模块导入通用动画类型
+import { PlayState, BlendMode, LoopMode } from '@maxellabs/specification/core';
+
+// 重新导出供使用
+export { PlayState as AnimationPlayState } from '@maxellabs/specification/core';
+export { BlendMode as AnimationBlendMode } from '@maxellabs/specification/core';
+```
+
+### 扩展核心接口
+```typescript
+// 扩展核心动画配置
+interface UsdAnimationConfig extends BaseAnimationConfig {
+  // USD特有的属性
+  usdPath: string;
+  usdType: string;
+}
+```
 
 ## 设计原则
 
-### 1. 模块化设计
-- 每个模块专注于特定功能领域
-- 模块间通过接口进行解耦
-- 单个文件不超过200行代码
+### 1. USD优先
+所有动画类型都优先考虑USD兼容性，确保与标准制作流程的集成。
 
-### 2. 基于核心规范
-- 统一使用 `core` 模块的基础类型和枚举
-- 遵循 USD 标准的数据结构
-- 保持与其他模块的一致性
+### 2. 专业级精度
+提供电影级动画制作所需的精度和控制能力。
 
-### 3. 类型安全
-- 完整的 TypeScript 类型定义
-- 严格的接口约束
-- 支持类型推导和检查
+### 3. 扩展性
+支持自定义缓动函数和动画类型的扩展。
 
-### 4. 扩展性
-- 支持自定义动画类型
-- 可扩展的状态机系统
-- 灵活的粒子系统配置
+### 4. 性能优化
+考虑实时渲染的性能需求，优化数据结构。
 
 ## 使用示例
 
+### 创建USD动画
 ```typescript
-import {
-  AnimationClip,
-  AnimationStateMachine,
-  Timeline,
-  ParticleSystem,
-  EasingType
+import { 
+  UsdAnimationClip, 
+  UsdKeyframe, 
+  ExtendedEasingType 
 } from '@maxellabs/specification/animation';
+import { InterpolationMode } from '@maxellabs/specification/core';
 
-// 创建动画剪辑
-const clip: AnimationClip = {
-  typeName: 'Animation',
-  attributes: {
-    name: { value: 'walkCycle', type: 'string' },
-    duration: { value: 2.0, type: 'float' },
-    frameRate: { value: 30, type: 'float' },
-    loopMode: { value: 'loop', type: 'string' }
+// 创建关键帧
+const keyframes: UsdKeyframe[] = [
+  {
+    time: 0,
+    value: { x: 0, y: 0, z: 0 },
+    interpolation: InterpolationMode.Bezier,
+    inTangent: { x: 0, y: 0 },
+    outTangent: { x: 0.3, y: 0 }
   },
-  tracks: [],
-  metadata: {
-    name: 'Walk Cycle',
-    version: { major: 1, minor: 0, patch: 0 }
+  {
+    time: 1,
+    value: { x: 10, y: 0, z: 0 },
+    interpolation: InterpolationMode.Bezier,
+    inTangent: { x: 0.7, y: 0 },
+    outTangent: { x: 1, y: 0 }
   }
+];
+```
+
+### 使用扩展缓动
+```typescript
+import { ExtendedEasingType } from '@maxellabs/specification/animation';
+
+// 使用详细的缓动类型
+const bounceAnimation = {
+  easing: ExtendedEasingType.BounceOut,
+  duration: 0.8,
+  keyframes: [
+    { time: 0, value: 0 },
+    { time: 1, value: 100 }
+  ]
 };
-
-// 创建状态机
-const stateMachine: AnimationStateMachine = {
-  name: 'CharacterController',
-  states: [
-    { name: 'idle', speed: 1.0, loop: true },
-    { name: 'walk', speed: 1.0, loop: true }
-  ],
-  transitions: [],
-  defaultState: 'idle',
-  parameters: []
-};
 ```
 
-## 文件依赖关系
+## 模块特色
 
-```
-animation/
-├── core.ts (基础接口)
-├── stateMachine.ts → core
-├── controller.ts → stateMachine, core/enums
-├── blender.ts → core/enums
-├── easing.ts (独立)
-├── timeline.ts → easing, curve
-├── curve.ts (独立)
-├── particle.ts → core/enums, curve, particlePhysics
-├── particlePhysics.ts (独立)
-└── index.ts (导出所有模块)
-```
+### 1. USD深度集成
+完全支持USD动画规范，包括时间采样、属性动画、关系动画等。
+
+### 2. 专业工具支持
+与Blender、Maya等主流动画软件的数据格式兼容。
+
+### 3. 实时优化
+针对实时渲染优化的动画数据结构和算法。
+
+### 4. 扩展缓动库
+提供比CSS动画更丰富的缓动函数库。
+
+## 版本历史
+
+- **v1.2.0**: 重构模块，将通用类型移至core模块
+- **v1.1.0**: 添加粒子物理动画支持
+- **v1.0.0**: 初始版本，基础USD动画支持
 
 ## 注意事项
 
-1. **私有变量命名**: 不使用下划线前缀，遵循项目规范
-2. **方法命名**: 使用 `getXXX()` 和 `setXXX()` 方法而非 getter/setter
-3. **枚举值**: 使用字符串字面量便于序列化和调试
-4. **可选属性**: 合理使用可选属性减少必填字段
-5. **类型导入**: 使用 `type` 关键字进行类型导入 
+1. **导入顺序**: 需要先导入core模块的基础类型
+2. **USD兼容**: 确保动画数据符合USD规范
+3. **性能考虑**: 复杂动画可能影响实时性能
+4. **类型安全**: 使用TypeScript类型检查确保动画数据正确性 

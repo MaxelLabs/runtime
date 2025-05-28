@@ -3,122 +3,23 @@
  * 定义所有系统共通的动画相关类型
  */
 
-/**
- * 动画播放状态
- */
-export enum AnimationPlayState {
-  /**
-   * 播放中
-   */
-  Playing = 'playing',
-  /**
-   * 暂停
-   */
-  Paused = 'paused',
-  /**
-   * 停止
-   */
-  Stopped = 'stopped',
-  /**
-   * 完成
-   */
-  Finished = 'finished',
-}
+import type { AnimationKeyframe } from './frame';
+import type {
+  BlendMode,
+  LoopMode,
+  EasingFunction,
+  PlayState,
+  BaseAnimationConfig,
+  BaseEvent,
+  BaseController,
+  BaseParameter,
+  EventType,
+} from '../core';
 
 /**
- * 动画循环模式
+ * 通用动画配置（扩展核心配置）
  */
-export enum AnimationLoopMode {
-  /**
-   * 不循环
-   */
-  None = 'none',
-  /**
-   * 循环
-   */
-  Loop = 'loop',
-  /**
-   * 往返循环
-   */
-  PingPong = 'ping-pong',
-  /**
-   * 反向循环
-   */
-  Reverse = 'reverse',
-}
-
-/**
- * 动画混合模式
- */
-export enum AnimationBlendMode {
-  /**
-   * 覆盖
-   */
-  Override = 'override',
-  /**
-   * 叠加
-   */
-  Additive = 'additive',
-  /**
-   * 相乘
-   */
-  Multiply = 'multiply',
-  /**
-   * 减法
-   */
-  Subtract = 'subtract',
-  /**
-   * 最小值
-   */
-  Min = 'min',
-  /**
-   * 最大值
-   */
-  Max = 'max',
-}
-
-/**
- * 缓动函数类型
- */
-export enum EasingType {
-  /**
-   * 线性
-   */
-  Linear = 'linear',
-  /**
-   * 缓入
-   */
-  EaseIn = 'ease-in',
-  /**
-   * 缓出
-   */
-  EaseOut = 'ease-out',
-  /**
-   * 缓入缓出
-   */
-  EaseInOut = 'ease-in-out',
-  /**
-   * 三次贝塞尔
-   */
-  CubicBezier = 'cubic-bezier',
-  /**
-   * 弹性
-   */
-  Elastic = 'elastic',
-  /**
-   * 反弹
-   */
-  Bounce = 'bounce',
-  /**
-   * 回退
-   */
-  Back = 'back',
-}
-
-/**
- * 通用动画配置
- */
-export interface CommonAnimationConfig {
+export interface CommonAnimationConfig extends BaseAnimationConfig {
   /**
    * 动画名称
    */
@@ -138,7 +39,7 @@ export interface CommonAnimationConfig {
   /**
    * 循环模式
    */
-  loopMode?: AnimationLoopMode;
+  loopMode?: LoopMode;
   /**
    * 循环次数（-1为无限循环）
    */
@@ -146,7 +47,7 @@ export interface CommonAnimationConfig {
   /**
    * 缓动函数
    */
-  easing?: EasingType;
+  easing?: EasingFunction;
   /**
    * 自定义缓动参数
    */
@@ -166,55 +67,17 @@ export interface CommonAnimationConfig {
   /**
    * 混合模式
    */
-  blendMode?: AnimationBlendMode;
+  blendMode?: BlendMode;
 }
 
 /**
- * 动画事件类型
+ * 动画事件（扩展核心事件）
  */
-export enum AnimationEventType {
-  /**
-   * 开始播放
-   */
-  Start = 'start',
-  /**
-   * 暂停
-   */
-  Pause = 'pause',
-  /**
-   * 恢复播放
-   */
-  Resume = 'resume',
-  /**
-   * 停止
-   */
-  Stop = 'stop',
-  /**
-   * 完成
-   */
-  Complete = 'complete',
-  /**
-   * 循环
-   */
-  Loop = 'loop',
-  /**
-   * 更新
-   */
-  Update = 'update',
-  /**
-   * 自定义事件
-   */
-  Custom = 'custom',
-}
-
-/**
- * 动画事件
- */
-export interface AnimationEvent {
+export interface AnimationEvent extends BaseEvent {
   /**
    * 事件类型
    */
-  type: AnimationEventType;
+  type: EventType;
   /**
    * 事件名称
    */
@@ -234,13 +97,13 @@ export interface AnimationEvent {
 }
 
 /**
- * 动画控制器
+ * 动画控制器（扩展核心控制器）
  */
-export interface AnimationController {
+export interface AnimationController extends BaseController {
   /**
    * 当前播放状态
    */
-  playState: AnimationPlayState;
+  playState: PlayState;
   /**
    * 当前时间
    */
@@ -308,7 +171,7 @@ export interface AnimationMixerLayer {
   /**
    * 混合模式
    */
-  blendMode: AnimationBlendMode;
+  blendMode: BlendMode;
   /**
    * 动画状态列表
    */
@@ -376,7 +239,7 @@ export interface AnimationStateBehavior {
 }
 
 /**
- * 动画状态转换
+ * 动画转换
  */
 export interface AnimationTransition {
   /**
@@ -458,33 +321,13 @@ export interface AnimationMask {
 }
 
 /**
- * 动画参数
+ * 动画参数（扩展核心参数）
  */
-export interface AnimationParameter {
-  /**
-   * 参数名称
-   */
-  name: string;
+export interface AnimationParameter extends BaseParameter {
   /**
    * 参数类型
    */
   type: 'bool' | 'int' | 'float' | 'trigger';
-  /**
-   * 默认值
-   */
-  defaultValue: any;
-  /**
-   * 当前值
-   */
-  value: any;
-  /**
-   * 最小值（数值类型）
-   */
-  min?: number;
-  /**
-   * 最大值（数值类型）
-   */
-  max?: number;
 }
 
 /**
@@ -548,34 +391,5 @@ export interface AnimationTimelineTrack {
   /**
    * 混合模式
    */
-  blendMode: AnimationBlendMode;
-}
-
-/**
- * 动画关键帧
- */
-export interface AnimationKeyframe {
-  /**
-   * 时间
-   */
-  time: number;
-  /**
-   * 值
-   */
-  value: any;
-  /**
-   * 插值类型
-   */
-  interpolation: 'linear' | 'step' | 'bezier' | 'spline';
-  /**
-   * 缓动函数
-   */
-  easing?: EasingType;
-  /**
-   * 贝塞尔控制点
-   */
-  bezierControlPoints?: {
-    inTangent: [number, number];
-    outTangent: [number, number];
-  };
+  blendMode: BlendMode;
 }

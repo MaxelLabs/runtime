@@ -1,53 +1,11 @@
 /**
- * Maxellabs 通用渲染
- * 定义所有系统共通的渲染相关类型
+ * Maxellabs 通用渲染类型
+ * 定义跨模块共享的基础渲染类型
  */
 
-import type { BlendMode } from '../core/enums';
-
-/**
- * 渲染模式
- */
-export enum RenderMode {
-  /**
-   * 不透明
-   */
-  Opaque = 'opaque',
-  /**
-   * 透明
-   */
-  Transparent = 'transparent',
-  /**
-   * 遮罩
-   */
-  Cutout = 'cutout',
-  /**
-   * 叠加
-   */
-  Additive = 'additive',
-  /**
-   * 相乘
-   */
-  Multiply = 'multiply',
-}
-
-/**
- * 剔除模式
- */
-export enum CullMode {
-  /**
-   * 不剔除
-   */
-  None = 'none',
-  /**
-   * 剔除正面
-   */
-  Front = 'front',
-  /**
-   * 剔除背面
-   */
-  Back = 'back',
-}
+import type { BlendMode, RenderMode } from '../core';
+import type { CommonElement } from './elements';
+import type { CommonMaterial } from './material';
 
 /**
  * 深度测试模式
@@ -154,59 +112,9 @@ export enum ShadowType {
 }
 
 /**
- * 通用渲染配置
+ * 通用渲染状态（简化版本）
  */
-export interface CommonRenderConfig {
-  /**
-   * 渲染模式
-   */
-  renderMode: RenderMode;
-  /**
-   * 混合模式
-   */
-  blendMode: BlendMode;
-  /**
-   * 剔除模式
-   */
-  cullMode: CullMode;
-  /**
-   * 深度测试
-   */
-  depthTest: DepthTest;
-  /**
-   * 是否写入深度
-   */
-  depthWrite: boolean;
-  /**
-   * 渲染队列
-   */
-  renderQueue: number;
-  /**
-   * 是否双面渲染
-   */
-  doubleSided: boolean;
-  /**
-   * 是否投射阴影
-   */
-  castShadows: boolean;
-  /**
-   * 是否接收阴影
-   */
-  receiveShadows: boolean;
-  /**
-   * 光照模式
-   */
-  lightingMode: LightingMode;
-  /**
-   * 阴影类型
-   */
-  shadowType: ShadowType;
-}
-
-/**
- * 渲染状态
- */
-export interface RenderState {
+export interface CommonRenderState {
   /**
    * 是否可见
    */
@@ -216,59 +124,35 @@ export interface RenderState {
    */
   opacity: number;
   /**
-   * 渲染层级
+   * 混合模式（使用 core 类型）
    */
-  renderLayer: number;
+  blendMode: BlendMode;
   /**
-   * 渲染顺序
+   * 渲染模式（使用 core 类型）
    */
-  renderOrder: number;
+  renderMode?: RenderMode;
   /**
-   * 是否启用
+   * Z索引
    */
-  enabled: boolean;
-  /**
-   * LOD级别
-   */
-  lodLevel?: number;
-  /**
-   * 距离相机的距离
-   */
-  distanceToCamera?: number;
+  zIndex?: number;
 }
 
 /**
- * 渲染统计信息
+ * 通用可渲染元素
  */
-export interface RenderStats {
+export interface CommonRenderableElement extends CommonElement {
   /**
-   * 绘制调用次数
+   * 材质引用
    */
-  drawCalls: number;
+  materialId?: string;
   /**
-   * 三角形数量
+   * 渲染状态
    */
-  triangles: number;
+  renderState?: CommonRenderState;
   /**
-   * 顶点数量
+   * 渲染层级
    */
-  vertices: number;
-  /**
-   * 纹理内存使用量（MB）
-   */
-  textureMemory: number;
-  /**
-   * 几何体内存使用量（MB）
-   */
-  geometryMemory: number;
-  /**
-   * 帧率
-   */
-  fps: number;
-  /**
-   * 帧时间（毫秒）
-   */
-  frameTime: number;
+  renderLayer?: number;
 }
 
 /**
@@ -280,254 +164,63 @@ export interface RenderBatch {
    */
   id: string;
   /**
-   * 材质ID
+   * 元素列表
    */
-  materialId: string;
+  elements: CommonRenderableElement[];
   /**
-   * 几何体ID列表
+   * 共享材质
    */
-  geometryIds: string[];
-  /**
-   * 实例数量
-   */
-  instanceCount: number;
+  material?: CommonMaterial;
   /**
    * 渲染优先级
    */
   priority: number;
-  /**
-   * 是否启用批处理
-   */
-  enableBatching: boolean;
 }
 
 /**
- * 渲染通道
+ * 基础渲染配置
  */
-export interface RenderPass {
+export interface CommonRenderConfig {
   /**
-   * 通道名称
+   * 启用深度测试
    */
-  name: string;
+  enableDepthTest?: boolean;
   /**
-   * 通道类型
+   * 启用深度写入
    */
-  type: RenderPassType;
+  enableDepthWrite?: boolean;
   /**
-   * 是否启用
+   * 启用面剔除
    */
-  enabled: boolean;
+  enableCulling?: boolean;
   /**
-   * 渲染目标
+   * 启用混合
    */
-  renderTarget?: string;
-  /**
-   * 清除标志
-   */
-  clearFlags: ClearFlags;
-  /**
-   * 清除颜色
-   */
-  clearColor?: [number, number, number, number];
-  /**
-   * 清除深度
-   */
-  clearDepth?: number;
-  /**
-   * 清除模板
-   */
-  clearStencil?: number;
-  /**
-   * 视口
-   */
-  viewport?: Viewport;
-  /**
-   * 渲染层遮罩
-   */
-  layerMask?: number;
-  /**
-   * 渲染队列范围
-   */
-  queueRange?: {
-    min: number;
-    max: number;
-  };
+  enableBlending?: boolean;
 }
 
 /**
- * 渲染通道类型
+ * 通用渲染统计
  */
-export enum RenderPassType {
+export interface CommonRenderStats {
   /**
-   * 前向渲染
+   * 绘制调用次数
    */
-  Forward = 'forward',
+  drawCalls: number;
   /**
-   * 延迟渲染
+   * 渲染的三角形数量
    */
-  Deferred = 'deferred',
+  triangles: number;
   /**
-   * 阴影映射
+   * 渲染的顶点数量
    */
-  ShadowMap = 'shadow-map',
+  vertices: number;
   /**
-   * 后处理
+   * 纹理切换次数
    */
-  PostProcess = 'post-process',
+  textureBinds: number;
   /**
-   * UI渲染
+   * 渲染时间（毫秒）
    */
-  UI = 'ui',
-  /**
-   * 天空盒
-   */
-  Skybox = 'skybox',
-}
-
-/**
- * 清除标志
- */
-export enum ClearFlags {
-  /**
-   * 不清除
-   */
-  None = 0,
-  /**
-   * 清除颜色
-   */
-  Color = 1,
-  /**
-   * 清除深度
-   */
-  Depth = 2,
-  /**
-   * 清除模板
-   */
-  Stencil = 4,
-  /**
-   * 清除所有
-   */
-  All = 7,
-}
-
-/**
- * 视口
- */
-export interface Viewport {
-  /**
-   * X坐标
-   */
-  x: number;
-  /**
-   * Y坐标
-   */
-  y: number;
-  /**
-   * 宽度
-   */
-  width: number;
-  /**
-   * 高度
-   */
-  height: number;
-  /**
-   * 最小深度
-   */
-  minDepth?: number;
-  /**
-   * 最大深度
-   */
-  maxDepth?: number;
-}
-
-/**
- * LOD配置
- */
-export interface LODConfig {
-  /**
-   * LOD级别
-   */
-  levels: LODLevel[];
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
-  /**
-   * LOD偏移
-   */
-  bias: number;
-  /**
-   * 淡入淡出模式
-   */
-  fadeMode: LODFadeMode;
-}
-
-/**
- * LOD级别
- */
-export interface LODLevel {
-  /**
-   * 级别索引
-   */
-  level: number;
-  /**
-   * 距离阈值
-   */
-  distance: number;
-  /**
-   * 渲染器列表
-   */
-  renderers: string[];
-  /**
-   * 质量设置
-   */
-  quality?: QualitySettings;
-}
-
-/**
- * LOD淡入淡出模式
- */
-export enum LODFadeMode {
-  /**
-   * 无淡入淡出
-   */
-  None = 'none',
-  /**
-   * 交叉淡入淡出
-   */
-  CrossFade = 'cross-fade',
-  /**
-   * 速度树淡入淡出
-   */
-  SpeedTree = 'speed-tree',
-}
-
-/**
- * 质量设置
- */
-export interface QualitySettings {
-  /**
-   * 纹理质量
-   */
-  textureQuality: number;
-  /**
-   * 阴影质量
-   */
-  shadowQuality: number;
-  /**
-   * 抗锯齿级别
-   */
-  antiAliasing: number;
-  /**
-   * 各向异性过滤级别
-   */
-  anisotropicFiltering: number;
-  /**
-   * 软粒子
-   */
-  softParticles: boolean;
-  /**
-   * 实时反射
-   */
-  realtimeReflections: boolean;
+  renderTime: number;
 }

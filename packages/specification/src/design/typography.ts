@@ -3,9 +3,14 @@
  * 包含字体系统、排版配置和文本处理
  */
 
-import type { WritingMode } from '../core';
-import type { CommonMetadata } from '../core/interfaces';
-import type { DesignTextStyle, FontStyle } from './styles';
+// 从 core 模块导入基础类型
+import type { CommonMetadata, WritingMode } from '../core';
+
+// 从 common 模块导入通用类型
+import type { TextOverflow, TextDirection, FontStyle } from '../common/text';
+
+// 从设计模块导入设计特定类型
+import type { DesignTextStyle } from './styles';
 
 /**
  * 字体格式
@@ -20,6 +25,40 @@ export enum FontFormat {
 }
 
 /**
+ * 字体显示模式
+ */
+export enum FontDisplay {
+  Auto = 'auto',
+  Block = 'block',
+  Swap = 'swap',
+  Fallback = 'fallback',
+  Optional = 'optional',
+}
+
+/**
+ * 字体分类
+ */
+export enum FontCategory {
+  Serif = 'serif',
+  SansSerif = 'sans-serif',
+  Monospace = 'monospace',
+  Cursive = 'cursive',
+  Fantasy = 'fantasy',
+  Display = 'display',
+  Handwriting = 'handwriting',
+}
+
+/**
+ * 文本对齐方式
+ */
+export enum TextJustification {
+  None = 'none',
+  InterWord = 'inter-word',
+  InterCharacter = 'inter-character',
+  Auto = 'auto',
+}
+
+/**
  * 设计字体文件
  */
 export interface DesignFontFile {
@@ -28,7 +67,7 @@ export interface DesignFontFile {
    */
   weight: number;
   /**
-   * 字体样式
+   * 字体样式（使用通用类型）
    */
   style: FontStyle;
   /**
@@ -50,14 +89,21 @@ export interface DesignFontFile {
 }
 
 /**
- * 字体显示模式
+ * 字体许可
  */
-export enum FontDisplay {
-  Auto = 'auto',
-  Block = 'block',
-  Swap = 'swap',
-  Fallback = 'fallback',
-  Optional = 'optional',
+export interface FontLicense {
+  /**
+   * 许可类型
+   */
+  type: string;
+  /**
+   * 许可URL
+   */
+  url?: string;
+  /**
+   * 许可描述
+   */
+  description?: string;
 }
 
 /**
@@ -92,37 +138,6 @@ export interface DesignFontFamily {
    * 字体许可
    */
   license?: FontLicense;
-}
-
-/**
- * 字体分类
- */
-export enum FontCategory {
-  Serif = 'serif',
-  SansSerif = 'sans-serif',
-  Monospace = 'monospace',
-  Cursive = 'cursive',
-  Fantasy = 'fantasy',
-  Display = 'display',
-  Handwriting = 'handwriting',
-}
-
-/**
- * 字体许可
- */
-export interface FontLicense {
-  /**
-   * 许可类型
-   */
-  type: string;
-  /**
-   * 许可URL
-   */
-  url?: string;
-  /**
-   * 许可描述
-   */
-  description?: string;
 }
 
 /**
@@ -242,44 +257,15 @@ export interface TextMetrics {
 }
 
 /**
- * 文本溢出处理
- */
-export enum TextOverflow {
-  Clip = 'clip',
-  Ellipsis = 'ellipsis',
-  FadeOut = 'fade-out',
-  Wrap = 'wrap',
-}
-
-/**
- * 文本对齐方式
- */
-export enum TextJustification {
-  None = 'none',
-  InterWord = 'inter-word',
-  InterCharacter = 'inter-character',
-  Auto = 'auto',
-}
-
-/**
- * 文本方向
- */
-export enum TextDirection {
-  LeftToRight = 'ltr',
-  RightToLeft = 'rtl',
-  Auto = 'auto',
-}
-
-/**
  * 文本渲染配置
  */
 export interface TextRenderConfig {
   /**
-   * 文本方向
+   * 文本方向（使用通用类型）
    */
   direction?: TextDirection;
   /**
-   * 书写模式
+   * 书写模式（使用通用类型）
    */
   writingMode?: WritingMode;
   /**
@@ -287,7 +273,7 @@ export interface TextRenderConfig {
    */
   textJustification?: TextJustification;
   /**
-   * 溢出处理
+   * 溢出处理（使用通用类型）
    */
   overflow?: TextOverflow;
   /**

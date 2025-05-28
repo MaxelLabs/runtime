@@ -1,45 +1,14 @@
 /**
  * Maxellabs 设计模块枚举定义
- * 设计系统相关的枚举类型
+ * 设计系统特有的枚举类型
  */
 
-/**
- * 设计元素类型
- */
-export enum DesignElementType {
-  Frame = 'frame',
-  Group = 'group',
-  Rectangle = 'rectangle',
-  Ellipse = 'ellipse',
-  Polygon = 'polygon',
-  Star = 'star',
-  Vector = 'vector',
-  Text = 'text',
-  Image = 'image',
-  Component = 'component',
-  Instance = 'instance',
-  Line = 'line',
-  Arrow = 'arrow',
-  Sprite = 'sprite',
-  Icon = 'icon',
-}
+// 从core导入通用类型
+
+// 重新导出 common 中的类型
 
 /**
- * 约束类型
- */
-export enum ConstraintType {
-  Left = 'left',
-  Right = 'right',
-  Center = 'center',
-  LeftRight = 'left-right',
-  Scale = 'scale',
-  Top = 'top',
-  Bottom = 'bottom',
-  TopBottom = 'top-bottom',
-}
-
-/**
- * 组件属性类型
+ * 组件属性类型（设计特有）
  */
 export enum ComponentPropertyType {
   Boolean = 'boolean',
@@ -49,7 +18,7 @@ export enum ComponentPropertyType {
 }
 
 /**
- * 图标样式
+ * 图标样式（设计特有）
  */
 export enum IconStyle {
   Outline = 'outline',
@@ -60,18 +29,7 @@ export enum IconStyle {
 }
 
 /**
- * 样式类型
- */
-export enum StyleType {
-  Fill = 'fill',
-  Stroke = 'stroke',
-  Text = 'text',
-  Shadow = 'shadow',
-  Blur = 'blur',
-}
-
-/**
- * 填充类型
+ * 填充类型（设计特有）
  */
 export enum FillType {
   Solid = 'solid',
@@ -81,7 +39,7 @@ export enum FillType {
 }
 
 /**
- * 描边类型
+ * 描边类型（设计特有）
  */
 export enum StrokeType {
   Solid = 'solid',
@@ -89,43 +47,15 @@ export enum StrokeType {
 }
 
 /**
- * 线帽样式
+ * 阴影类型（设计特有）
  */
-export enum LineCap {
-  Butt = 'butt',
-  Round = 'round',
-  Square = 'square',
-}
-
-/**
- * 线连接样式
- */
-export enum LineJoin {
-  Miter = 'miter',
-  Round = 'round',
-  Bevel = 'bevel',
-}
-
-/**
- * 图像缩放模式
- */
-export enum ImageScaleMode {
-  Fill = 'fill',
-  Fit = 'fit',
-  Crop = 'crop',
-  Tile = 'tile',
-}
-
-/**
- * 阴影类型
- */
-export enum ShadowType {
+export enum DesignShadowType {
   Drop = 'drop',
   Inner = 'inner',
 }
 
 /**
- * 模糊类型
+ * 模糊类型（设计特有）
  */
 export enum BlurType {
   Layer = 'layer',
