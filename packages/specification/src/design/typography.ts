@@ -4,15 +4,13 @@
  */
 
 // 从 core 模块导入基础类型
-import type { CommonMetadata } from '../core/interfaces';
+import type { CommonMetadata, WritingMode } from '../core';
 
 // 从 common 模块导入通用类型
-import type { TextOverflow, TextDirection } from '../common/text';
+import type { TextOverflow, TextDirection, FontStyle } from '../common/text';
 
 // 从设计模块导入设计特定类型
 import type { DesignTextStyle } from './styles';
-import type { FontStyle } from '../common/text';
-import type { WritingMode } from '../core';
 
 /**
  * 字体格式

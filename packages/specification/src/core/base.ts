@@ -7,11 +7,118 @@ import type { ColorSpace } from './enums';
 import type { UsdValue } from './usd';
 
 /**
+ * 资产类型
+ */
+export enum AssetType {
+  Design = 'design',
+  Image = 'image',
+  Video = 'video',
+  Audio = 'audio',
+  Font = 'font',
+  Icon = 'icon',
+  Component = 'component',
+  Code = 'code',
+  Documentation = 'documentation',
+  Configuration = 'configuration',
+}
+/**
  * 基础数据类型
  */
 export type UUID = string;
 export type Path = string;
 export type URL = string;
+
+/**
+ * 压缩算法
+ */
+export enum CompressionAlgorithm {
+  /**
+   * Gzip
+   */
+  Gzip = 'gzip',
+  /**
+   * Brotli
+   */
+  Brotli = 'brotli',
+  /**
+   * LZ4
+   */
+  LZ4 = 'lz4',
+  /**
+   * Zstandard
+   */
+  Zstd = 'zstd',
+}
+
+/**
+ * 缓存策略
+ */
+export enum CacheStrategy {
+  /**
+   * 无缓存
+   */
+  None = 'none',
+  /**
+   * 内存缓存
+   */
+  Memory = 'memory',
+  /**
+   * 磁盘缓存
+   */
+  Disk = 'disk',
+  /**
+   * 混合缓存
+   */
+  Hybrid = 'hybrid',
+  /**
+   * 智能缓存
+   */
+  Smart = 'smart',
+}
+
+/**
+ * 共享设置
+ */
+export interface SharingSettings {
+  /**
+   * 是否公开
+   */
+  public: boolean;
+  /**
+   * 分享链接
+   */
+  shareLink?: string;
+  /**
+   * 密码保护
+   */
+  password?: string;
+  /**
+   * 过期时间
+   */
+  expiresAt?: string;
+  /**
+   * 允许下载
+   */
+  allowDownload?: boolean;
+  /**
+   * 允许复制
+   */
+  allowCopy?: boolean;
+  /**
+   * 分享范围
+   */
+  scope?: SharingScope;
+}
+
+/**
+ * 分享范围
+ */
+export enum SharingScope {
+  Private = 'private',
+  Team = 'team',
+  Organization = 'organization',
+  Public = 'public',
+}
 
 /**
  * 版本信息

@@ -4,14 +4,30 @@
  */
 
 // 从 core 模块导入基础类型
-import type { Transform, Color, CommonMetadata } from '../core/interfaces';
-import type { BlendMode, GradientType, StrokePosition } from '../core/enums';
-import type { GradientStop } from '../core/interfaces';
+import type {
+  Color,
+  GradientStop,
+  Transform,
+  CommonMetadata,
+  BlendMode,
+  GradientType,
+  LineCap,
+  LineJoin,
+  StrokePosition,
+  StyleType,
+} from '../core';
 
 // 从 common 模块导入通用类型
-import type { ImageFilter, ImageScaleMode } from '../common';
-import type { TextAlign, FontStyle, FontWeight, TextDecoration, TextTransform } from '../common/text';
-import type { BlurType, DesignShadowType, FillType, LineCap, LineJoin, StrokeType, StyleType } from './enums';
+import type {
+  TextAlign,
+  FontStyle,
+  FontWeight,
+  TextDecoration,
+  TextTransform,
+  ImageFilter,
+  ImageScaleMode,
+} from '../common';
+import type { BlurType, DesignShadowType, FillType, StrokeType } from './enums';
 /**
  * 设计样式
  */

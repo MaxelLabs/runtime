@@ -3,7 +3,7 @@
  * 文本布局和排版相关类型定义
  */
 
-import type { Color } from '../../core/interfaces';
+import type { Color } from '../../core';
 import type { BorderStyle } from './styles';
 
 /**

@@ -3,7 +3,7 @@
  * 包含主题配置、样式库和主题覆盖相关类型
  */
 
-import type { CommonMetadata, Color } from '../core/interfaces';
+import type { CommonMetadata, Color } from '../core';
 import type { DesignTypographySystem } from './typography';
 import type { DesignSpacingSystem } from './spacing';
 import type { DesignStyleDefinition } from './styles';

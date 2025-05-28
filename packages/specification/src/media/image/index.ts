@@ -78,5 +78,4 @@ export type {
   PreloadPriority,
   PreloadStrategy,
   CacheCompressionSettings,
-  CompressionAlgorithm,
 } from './collection';

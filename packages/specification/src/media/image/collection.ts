@@ -5,7 +5,7 @@
 
 import type { ImageSortBy, SortOrder, ImageScaleMode, ImageFormat } from './base';
 import type { ImageOptimization } from './processing';
-import type { DeviceType } from '../../core/base';
+import type { CacheStrategy, CompressionAlgorithm, DeviceType } from '../../core/base';
 
 /**
  * 图像变体
@@ -562,32 +562,6 @@ export interface ImageCache {
 }
 
 /**
- * 缓存策略
- */
-export enum CacheStrategy {
-  /**
-   * 无缓存
-   */
-  None = 'none',
-  /**
-   * 内存缓存
-   */
-  Memory = 'memory',
-  /**
-   * 磁盘缓存
-   */
-  Disk = 'disk',
-  /**
-   * 混合缓存
-   */
-  Hybrid = 'hybrid',
-  /**
-   * 智能缓存
-   */
-  Smart = 'smart',
-}
-
-/**
  * 预加载配置
  */
 export interface PreloadConfig {
@@ -669,26 +643,4 @@ export interface CacheCompressionSettings {
    * 压缩级别
    */
   level: number;
-}
-
-/**
- * 压缩算法
- */
-export enum CompressionAlgorithm {
-  /**
-   * Gzip
-   */
-  Gzip = 'gzip',
-  /**
-   * Brotli
-   */
-  Brotli = 'brotli',
-  /**
-   * LZ4
-   */
-  LZ4 = 'lz4',
-  /**
-   * Zstandard
-   */
-  Zstd = 'zstd',
 }

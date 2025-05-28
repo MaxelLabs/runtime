@@ -133,7 +133,7 @@ export interface ConstraintValue {
   /**
    * 约束类型
    */
-  type: ConstraintType;
+  type: CommonConstraintType;
   /**
    * 约束值
    */
@@ -147,7 +147,7 @@ export interface ConstraintValue {
 /**
  * 约束类型
  */
-export enum ConstraintType {
+export enum CommonConstraintType {
   /**
    * 固定值
    */

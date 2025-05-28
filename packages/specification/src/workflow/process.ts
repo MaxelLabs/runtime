@@ -3,6 +3,7 @@
  * 从设计到上线的全流程数据描述
  */
 
+import type { AssetType } from '../core';
 import type { UsdPrim, UsdValue } from '../core/usd';
 
 /**
@@ -1152,22 +1153,6 @@ export interface AssetReference {
    * 资产元数据
    */
   metadata?: Record<string, any>;
-}
-
-/**
- * 资产类型
- */
-export enum AssetType {
-  Design = 'design',
-  Image = 'image',
-  Video = 'video',
-  Audio = 'audio',
-  Font = 'font',
-  Icon = 'icon',
-  Component = 'component',
-  Code = 'code',
-  Documentation = 'documentation',
-  Configuration = 'configuration',
 }
 
 /**
