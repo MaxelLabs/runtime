@@ -45,7 +45,7 @@ export class Entity extends ReferResource {
     // 创建并初始化Transform组件
     this.transform = new Transform(this);
     this.components.set(Transform.name, this.transform);
-    this.transform._awake();
+    this.transform.awake();
   }
 
   /**
@@ -312,7 +312,7 @@ export class Entity extends ReferResource {
     }
 
     this.components.set(component.constructor.name, component);
-    component._awake();
+    component.awake();
 
     return component;
   }
