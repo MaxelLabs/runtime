@@ -51,20 +51,6 @@ export interface Timestamp {
 }
 
 /**
- * 边界框
- */
-export interface BoundingBox {
-  /**
-   * 最小点
-   */
-  min: [number, number, number];
-  /**
-   * 最大点
-   */
-  max: [number, number, number];
-}
-
-/**
  * 边界球
  */
 export interface BoundingSphere {

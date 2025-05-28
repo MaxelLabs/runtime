@@ -3,6 +3,7 @@
  * 几何体和网格渲染相关类型定义
  */
 
+import type { BoundingBox } from '../core';
 import type { UsdPrim, UsdValue } from '../core/usd';
 
 /**
@@ -112,28 +113,6 @@ export interface GeometryProperties {
    * 是否有顶点颜色
    */
   hasVertexColors: boolean;
-}
-
-/**
- * 边界框
- */
-export interface BoundingBox {
-  /**
-   * 最小点
-   */
-  min: [number, number, number];
-  /**
-   * 最大点
-   */
-  max: [number, number, number];
-  /**
-   * 中心点
-   */
-  center: [number, number, number];
-  /**
-   * 尺寸
-   */
-  size: [number, number, number];
 }
 
 /**

@@ -4,8 +4,82 @@
  */
 
 import type { UsdValue } from './usd';
-import type { BlendMode, EasingFunction, ColorSpace, QualityLevel, FeedbackType, FilterType } from './enums';
-import type { BoundingBox, VersionInfo } from './base';
+import type {
+  EasingFunction,
+  ColorSpace,
+  QualityLevel,
+  FilterType,
+  ClickFeedbackType,
+  VisualEffectType,
+  MaterialType,
+  BorderStyle,
+} from './enums';
+import type { VersionInfo } from './base';
+
+/**
+ * 视觉效果
+ */
+export interface VisualEffect {
+  /**
+   * 效果类型
+   */
+  type: VisualEffectType;
+  /**
+   * 持续时间（毫秒）
+   */
+  duration: number;
+  /**
+   * 效果参数
+   */
+  parameters?: Record<string, any>;
+}
+/**
+ * 震动模式
+ */
+export interface VibrationPattern {
+  /**
+   * 震动持续时间（毫秒）
+   */
+  duration: number;
+  /**
+   * 震动强度 (0-1)
+   */
+  intensity: number;
+  /**
+   * 震动模式
+   */
+  pattern?: number[];
+}
+
+/**
+ * 点击效果
+ */
+export interface ClickEffect {
+  /**
+   * 是否启用
+   */
+  enabled: boolean;
+  /**
+   * 反馈类型
+   */
+  feedbackType: ClickFeedbackType;
+  /**
+   * 动画配置
+   */
+  animation?: AnimationProperties;
+  /**
+   * 音效
+   */
+  sound?: string;
+  /**
+   * 震动
+   */
+  vibration?: VibrationPattern;
+  /**
+   * 视觉效果
+   */
+  visualEffect?: VisualEffect;
+}
 
 /**
  * 统一变换接口
@@ -66,33 +140,113 @@ export interface GradientStop {
 }
 
 /**
- * 统一材质属性接口
+ * 材质属性
  */
 export interface MaterialProperties {
   /**
+   * 材质名称
+   */
+  name: string;
+  /**
+   * 材质类型
+   */
+  type: MaterialType;
+  /**
    * 基础颜色
    */
-  baseColor?: Color;
+  baseColor: Color;
   /**
    * 透明度
    */
-  opacity?: UsdValue; // float
+  opacity: number;
   /**
-   * 混合模式
+   * 金属度
    */
-  blendMode?: BlendMode;
+  metallic?: number;
   /**
-   * 是否双面
+   * 粗糙度
    */
-  doubleSided?: UsdValue; // bool
+  roughness?: number;
   /**
-   * 是否投射阴影
+   * 自发光颜色
    */
-  castShadows?: UsdValue; // bool
+  emissiveColor?: Color;
   /**
-   * 是否接收阴影
+   * 自发光强度
    */
-  receiveShadows?: UsdValue; // bool
+  emissiveIntensity?: number;
+  /**
+   * 法线强度
+   */
+  normalScale?: number;
+  /**
+   * 遮挡强度
+   */
+  occlusionStrength?: number;
+  /**
+   * 折射率
+   */
+  ior?: number;
+  /**
+   * 透射
+   */
+  transmission?: number;
+  /**
+   * 厚度
+   */
+  thickness?: number;
+  /**
+   * 衰减颜色
+   */
+  attenuationColor?: Color;
+  /**
+   * 衰减距离
+   */
+  attenuationDistance?: number;
+  /**
+   * 各向异性
+   */
+  anisotropy?: number;
+  /**
+   * 各向异性旋转
+   */
+  anisotropyRotation?: number;
+  /**
+   * 清漆
+   */
+  clearcoat?: number;
+  /**
+   * 清漆粗糙度
+   */
+  clearcoatRoughness?: number;
+  /**
+   * 清漆法线
+   */
+  clearcoatNormal?: number;
+  /**
+   * 光泽
+   */
+  sheen?: number;
+  /**
+   * 光泽颜色
+   */
+  sheenColor?: Color;
+  /**
+   * 光泽粗糙度
+   */
+  sheenRoughness?: number;
+  /**
+   * 次表面散射
+   */
+  subsurface?: number;
+  /**
+   * 次表面颜色
+   */
+  subsurfaceColor?: Color;
+  /**
+   * 次表面半径
+   */
+  subsurfaceRadius?: [number, number, number];
 }
 
 /**
@@ -152,6 +306,168 @@ export interface RenderingProperties {
 }
 
 /**
+ * 2D向量
+ */
+export interface Vector2 {
+  x: number;
+  y: number;
+}
+
+/**
+ * 3D向量
+ */
+export interface Vector3 {
+  x: number;
+  y: number;
+  z: number;
+}
+
+/**
+ * 4D向量
+ */
+export interface Vector4 {
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+}
+
+/**
+ * 四元数
+ */
+export interface Quaternion {
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+}
+
+/**
+ * 2D矩阵
+ */
+export interface Matrix2x2 {
+  m00: number;
+  m01: number;
+  m10: number;
+  m11: number;
+}
+
+/**
+ * 3D矩阵
+ */
+export interface Matrix3x3 {
+  m00: number;
+  m01: number;
+  m02: number;
+  m10: number;
+  m11: number;
+  m12: number;
+  m20: number;
+  m21: number;
+  m22: number;
+}
+
+/**
+ * 4D矩阵
+ */
+export interface Matrix4x4 {
+  m00: number;
+  m01: number;
+  m02: number;
+  m03: number;
+  m10: number;
+  m11: number;
+  m12: number;
+  m13: number;
+  m20: number;
+  m21: number;
+  m22: number;
+  m23: number;
+  m30: number;
+  m31: number;
+  m32: number;
+  m33: number;
+}
+
+/**
+ * 变换空间
+ */
+export enum TransformSpace {
+  /**
+   * 世界空间
+   */
+  World = 'world',
+  /**
+   * 本地空间
+   */
+  Local = 'local',
+  /**
+   * 父级空间
+   */
+  Parent = 'parent',
+  /**
+   * 屏幕空间
+   */
+  Screen = 'screen',
+  /**
+   * 视图空间
+   */
+  View = 'view',
+}
+
+/**
+ * 旋转顺序
+ */
+export enum RotationOrder {
+  /**
+   * XYZ顺序
+   */
+  XYZ = 'xyz',
+  /**
+   * XZY顺序
+   */
+  XZY = 'xzy',
+  /**
+   * YXZ顺序
+   */
+  YXZ = 'yxz',
+  /**
+   * YZX顺序
+   */
+  YZX = 'yzx',
+  /**
+   * ZXY顺序
+   */
+  ZXY = 'zxy',
+  /**
+   * ZYX顺序
+   */
+  ZYX = 'zyx',
+}
+
+/**
+ * 边界框
+ */
+export interface BoundingBox {
+  /**
+   * 最小点
+   */
+  min: Vector3;
+  /**
+   * 最大点
+   */
+  max: Vector3;
+  /**
+   * 中心点
+   */
+  center?: Vector3;
+  /**
+   * 尺寸
+   */
+  size?: Vector3;
+}
+
+/**
  * 统一交互属性接口
  */
 export interface InteractionProperties {
@@ -174,47 +490,66 @@ export interface InteractionProperties {
 }
 
 /**
- * 悬停效果接口
+ * 悬停效果
  */
 export interface HoverEffect {
   /**
    * 是否启用
    */
-  enabled: UsdValue; // bool
+  enabled: boolean;
+  /**
+   * 悬停延迟（毫秒）
+   */
+  delay: number;
   /**
    * 高亮颜色
    */
-  highlightColor?: Color;
+  highlightColor?: [number, number, number, number];
   /**
    * 缩放因子
    */
-  scaleFactor?: UsdValue; // float
+  scaleFactor?: number;
   /**
-   * 动画属性
+   * 透明度变化
+   */
+  opacityChange?: number;
+  /**
+   * 动画配置
    */
   animation?: AnimationProperties;
+  /**
+   * 光标样式
+   */
+  cursor?: string;
+  /**
+   * 工具提示
+   */
+  tooltip?: string;
 }
 
 /**
- * 点击效果接口
+ * 选择边框
  */
-export interface ClickEffect {
+export interface SelectionBorder {
   /**
-   * 是否启用
+   * 边框宽度
    */
-  enabled: UsdValue; // bool
+  width: UsdValue; // float
   /**
-   * 反馈类型
+   * 边框颜色
    */
-  feedbackType?: FeedbackType;
+  color: Color;
   /**
-   * 动画属性
+   * 边框样式
    */
-  animation?: AnimationProperties;
+  style: BorderStyle;
+  /**
+   * 边框圆角
+   */
+  radius?: UsdValue; // float
 }
-
 /**
- * 选择效果接口
+ * 选择效果
  */
 export interface SelectionEffect {
   /**
@@ -229,8 +564,15 @@ export interface SelectionEffect {
    * 选择颜色
    */
   selectionColor?: Color;
+  /**
+   * 选择边框
+   */
+  selectionBorder?: SelectionBorder;
+  /**
+   * 选择动画
+   */
+  animation?: AnimationProperties;
 }
-
 /**
  * 性能配置接口
  */

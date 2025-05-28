@@ -3,51 +3,7 @@
  * 定义所有系统共通的渲染相关类型
  */
 
-import type { BlendMode } from '../core/enums';
-
-/**
- * 渲染模式
- */
-export enum RenderMode {
-  /**
-   * 不透明
-   */
-  Opaque = 'opaque',
-  /**
-   * 透明
-   */
-  Transparent = 'transparent',
-  /**
-   * 遮罩
-   */
-  Cutout = 'cutout',
-  /**
-   * 叠加
-   */
-  Additive = 'additive',
-  /**
-   * 相乘
-   */
-  Multiply = 'multiply',
-}
-
-/**
- * 剔除模式
- */
-export enum CullMode {
-  /**
-   * 不剔除
-   */
-  None = 'none',
-  /**
-   * 剔除正面
-   */
-  Front = 'front',
-  /**
-   * 剔除背面
-   */
-  Back = 'back',
-}
+import type { BlendMode, CullMode, RenderMode } from '../core';
 
 /**
  * 深度测试模式

@@ -4,7 +4,7 @@
  */
 
 import type { CommonElement, CommonElementType } from './elements';
-import type { Color, CommonMetadata } from '../core/interfaces';
+import type { Color, CommonMetadata, ImageFilter } from '../core';
 
 /**
  * 图像缩放模式
@@ -72,90 +72,6 @@ export enum ImageFormat {
    * AVIF格式
    */
   AVIF = 'avif',
-}
-
-/**
- * 图像滤镜类型
- */
-export enum ImageFilterType {
-  /**
-   * 模糊
-   */
-  Blur = 'blur',
-  /**
-   * 亮度
-   */
-  Brightness = 'brightness',
-  /**
-   * 对比度
-   */
-  Contrast = 'contrast',
-  /**
-   * 饱和度
-   */
-  Saturation = 'saturation',
-  /**
-   * 色相
-   */
-  Hue = 'hue',
-  /**
-   * 曝光
-   */
-  Exposure = 'exposure',
-  /**
-   * 色温
-   */
-  Temperature = 'temperature',
-  /**
-   * 色调
-   */
-  Tint = 'tint',
-  /**
-   * 高光
-   */
-  Highlights = 'highlights',
-  /**
-   * 阴影
-   */
-  Shadows = 'shadows',
-  /**
-   * 锐化
-   */
-  Sharpen = 'sharpen',
-  /**
-   * 噪点
-   */
-  Noise = 'noise',
-  /**
-   * 晕影
-   */
-  Vignette = 'vignette',
-  /**
-   * 颗粒
-   */
-  Grain = 'grain',
-}
-
-/**
- * 图像滤镜
- */
-export interface ImageFilter {
-  /**
-   * 滤镜类型
-   */
-  type: ImageFilterType;
-  /**
-   * 滤镜强度 (0-1)
-   */
-  intensity: number;
-  /**
-   * 滤镜参数
-   */
-  parameters?: Record<string, any>;
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
 }
 
 /**

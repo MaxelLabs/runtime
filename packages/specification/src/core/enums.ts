@@ -4,6 +4,48 @@
  */
 
 /**
+ * 材质类型
+ */
+export enum MaterialType {
+  /**
+   * 标准材质
+   */
+  Standard = 'standard',
+  /**
+   * 无光照材质
+   */
+  Unlit = 'unlit',
+  /**
+   * 物理材质
+   */
+  Physical = 'physical',
+  /**
+   * 卡通材质
+   */
+  Toon = 'toon',
+  /**
+   * 精灵材质
+   */
+  Sprite = 'sprite',
+  /**
+   * UI材质
+   */
+  UI = 'ui',
+  /**
+   * 粒子材质
+   */
+  Particle = 'particle',
+  /**
+   * 天空盒材质
+   */
+  Skybox = 'skybox',
+  /**
+   * 自定义材质
+   */
+  Custom = 'custom',
+}
+
+/**
  * 渐变类型
  */
 export enum GradientType {
@@ -247,6 +289,62 @@ export enum FillMode {
 }
 
 /**
+ * 点击反馈类型
+ */
+export enum ClickFeedbackType {
+  /**
+   * 无反馈
+   */
+  None = 'none',
+  /**
+   * 缩放
+   */
+  Scale = 'scale',
+  /**
+   * 闪烁
+   */
+  Flash = 'flash',
+  /**
+   * 波纹
+   */
+  Ripple = 'ripple',
+  /**
+   * 弹跳
+   */
+  Bounce = 'bounce',
+  /**
+   * 旋转
+   */
+  Rotate = 'rotate',
+}
+
+/**
+ * 视觉效果类型
+ */
+export enum VisualEffectType {
+  /**
+   * 粒子效果
+   */
+  Particle = 'particle',
+  /**
+   * 光晕效果
+   */
+  Glow = 'glow',
+  /**
+   * 闪光效果
+   */
+  Flash = 'flash',
+  /**
+   * 波纹效果
+   */
+  Ripple = 'ripple',
+  /**
+   * 爆炸效果
+   */
+  Explosion = 'explosion',
+}
+
+/**
  * 剔除模式
  */
 export enum CullMode {
@@ -265,6 +363,74 @@ export enum SideMode {
 }
 
 /**
+ * 渲染模式
+ */
+export enum RenderMode {
+  /**
+   * 不透明
+   */
+  Opaque = 'opaque',
+  /**
+   * 透明
+   */
+  Transparent = 'transparent',
+  /**
+   * 遮罩
+   */
+  Cutout = 'cutout',
+  /**
+   * 叠加
+   */
+  Additive = 'additive',
+  /**
+   * 相乘
+   */
+  Multiply = 'multiply',
+}
+
+/**
+ * 边框样式
+ */
+export enum BorderStyle {
+  /**
+   * 无边框
+   */
+  None = 'none',
+  /**
+   * 实线
+   */
+  Solid = 'solid',
+  /**
+   * 虚线
+   */
+  Dashed = 'dashed',
+  /**
+   * 点线
+   */
+  Dotted = 'dotted',
+  /**
+   * 双线
+   */
+  Double = 'double',
+  /**
+   * 凹槽
+   */
+  Groove = 'groove',
+  /**
+   * 脊线
+   */
+  Ridge = 'ridge',
+  /**
+   * 内嵌
+   */
+  Inset = 'inset',
+  /**
+   * 外凸
+   */
+  Outset = 'outset',
+}
+
+/**
  * 蒙版模式
  */
 export enum MaskMode {
@@ -277,7 +443,7 @@ export enum MaskMode {
 /**
  * 渲染模式
  */
-export enum RenderMode {
+export enum RenderBillboardMode {
   Billboard = 'billboard',
   HorizontalBillboard = 'horizontal-billboard',
   VerticalBillboard = 'vertical-billboard',

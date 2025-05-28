@@ -3,6 +3,7 @@
  * 材质和着色器渲染相关类型定义
  */
 
+import type { CullMode } from '../core';
 import type { UsdPrim, UsdValue } from '../core/usd';
 
 /**
@@ -884,28 +885,6 @@ export enum FillMode {
    * 点
    */
   Point = 'point',
-}
-
-/**
- * 剔除模式
- */
-export enum CullMode {
-  /**
-   * 不剔除
-   */
-  None = 'none',
-  /**
-   * 剔除正面
-   */
-  Front = 'front',
-  /**
-   * 剔除背面
-   */
-  Back = 'back',
-  /**
-   * 剔除正面和背面
-   */
-  FrontAndBack = 'front-and-back',
 }
 
 /**
