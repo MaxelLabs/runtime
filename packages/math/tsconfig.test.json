@@ -11,5 +11,10 @@
     "src",
     "test",
     "../../types"
+  ],
+  "references": [
+    {
+      "path": "../specification"
+    }
   ]
 }

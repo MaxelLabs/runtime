@@ -12,9 +12,6 @@
   "references": [
     {
       "path": "../math"
-    },
-    {
-      "path": "../specification"
     }
   ]
 }

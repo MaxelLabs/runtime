@@ -1,5 +1,5 @@
-import type { GeometryPrim, BoundingBox } from '@maxellabs/specification';
-import { VertexAttribute } from '@maxellabs/specification';
+import type { GeometryPrim, BoundingBox } from '@maxellabs/math';
+import { VertexAttribute } from '@maxellabs/math';
 import { Resource, ResourceType } from '../resource/resource';
 import type { ResourceLoadOptions } from '../resource/resource';
 

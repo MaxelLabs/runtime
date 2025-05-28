@@ -165,9 +165,21 @@ export interface Timestamp {
  */
 export interface IColor {
   /**
-   * 颜色值
+   * 红色分量
    */
-  value: UsdValue; // Color4f
+  r: number;
+  /**
+   * 绿色分量
+   */
+  g: number;
+  /**
+   * 蓝色分量
+   */
+  b: number;
+  /**
+   * 透明度分量
+   */
+  a: number;
   /**
    * 颜色空间
    */

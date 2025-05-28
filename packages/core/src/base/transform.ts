@@ -1,4 +1,5 @@
 import type { Entity } from './entity';
+import type { ITransform } from '@maxellabs/math';
 import { Vector3, Quaternion, Matrix4 } from '@maxellabs/math';
 import { Component } from './component';
 
@@ -8,7 +9,7 @@ import { Component } from './component';
  * 每个实体都有一个变换组件，用于管理其在3D空间中的变换
  * 支持层级结构和本地/世界坐标系转换
  */
-export class Transform extends Component {
+export class Transform extends Component implements ITransform {
   /** 父变换 */
   private parent: Transform | null = null;
 

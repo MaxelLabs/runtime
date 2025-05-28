@@ -80,27 +80,31 @@ export interface ClickEffect {
   visualEffect?: VisualEffect;
 }
 
+// /**
+//  * 基础变换接口（核心3D变换）
+//  */
+// export interface ITransform {
+//   /**
+//    * 位置
+//    */
+//   position: IVector3; // Vector3f
+//   /**
+//    * 旋转（四元数）
+//    */
+//   rotation: IQuaternion; // Quatf
+//   /**
+//    * 缩放
+//    */
+//   scale: IVector3; // Vector3f
+//   /**
+//    * 变换矩阵（可选，优先级高于位置/旋转/缩放）
+//    */
+//   matrix?: IMatrix4x4; // Matrix4d
+// }
 /**
  * 基础变换接口（核心3D变换）
  */
-export interface ITransform {
-  /**
-   * 位置
-   */
-  position: UsdValue; // Vector3f
-  /**
-   * 旋转（四元数）
-   */
-  rotation: UsdValue; // Quatf
-  /**
-   * 缩放
-   */
-  scale: UsdValue; // Vector3f
-  /**
-   * 变换矩阵（可选，优先级高于位置/旋转/缩放）
-   */
-  matrix?: UsdValue; // Matrix4d
-}
+export type ITransform = object;
 
 /**
  * 渐变停止点

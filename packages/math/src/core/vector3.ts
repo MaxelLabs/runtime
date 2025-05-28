@@ -1,18 +1,21 @@
+import { UsdDataType, type IVector3 } from '@maxellabs/specification';
+import type { UsdValue } from '@maxellabs/specification';
 import type { Matrix4 } from './matrix4';
 import type { Quaternion } from './quaternion';
 import type { Vector3DataType, Vector3Like, vec3 } from './type';
 import { NumberEpsilon, fastInvSqrt } from './utils';
 import { Vector2 } from './vector2';
+import { MathConfig } from '../config/mathConfig';
+import { ObjectPool, type Poolable } from '../pool/objectPool';
 
-// 对象池配置 - 增加池大小以应对高负载场景
-const POOL_SIZE = 2000;
-const pool: Vector3[] = [];
-let poolIndex = 0;
+// 高性能对象池实现
+const vector3Pool = new ObjectPool<Vector3>(() => new Vector3(), MathConfig.getPoolConfig().Vector3);
 
 /**
  * 三维向量
+ * 实现 @specification 包的 IVector3 接口，提供高性能的3D向量运算
  */
-export class Vector3 {
+export class Vector3 implements IVector3, Poolable {
   /**
    * 三维向量的常量
    */
@@ -26,22 +29,47 @@ export class Vector3 {
   static readonly POSITIVE_X = new Vector3(1.0, 0.0, 0.0);
   static readonly POSITIVE_Y = new Vector3(0.0, 1.0, 0.0);
   static readonly POSITIVE_Z = new Vector3(0.0, 0.0, 1.0);
+  static readonly NEGATIVE_X = new Vector3(-1.0, 0.0, 0.0);
+  static readonly NEGATIVE_Y = new Vector3(0.0, -1.0, 0.0);
+  static readonly NEGATIVE_Z = new Vector3(0.0, 0.0, -1.0);
 
-  // 使用TypedArray而不是单独的属性，提高内存密度和访问速度
+  // 使用内存对齐的TypedArray，提高SIMD性能
   private elements: Float32Array;
 
   /**
    * 构造函数，默认值为零向量
-   * @param [x=0]
-   * @param [y=0]
-   * @param [z=0]
+   * @param x - x分量，默认为0
+   * @param y - y分量，默认为0
+   * @param z - z分量，默认为0
    */
   constructor(x = 0, y = 0, z = 0) {
-    this.elements = new Float32Array([x, y, z]);
+    // 16字节对齐，优化SIMD访问
+    this.elements = new Float32Array(4); // 使用4个元素确保对齐
+    this.elements[0] = x;
+    this.elements[1] = y;
+    this.elements[2] = z;
+    this.elements[3] = 0; // padding for alignment
   }
 
   /**
-   * x坐标访问器
+   * 重置对象状态（对象池接口）
+   */
+  reset(): void {
+    this.elements[0] = 0;
+    this.elements[1] = 0;
+    this.elements[2] = 0;
+    this.elements[3] = 0;
+  }
+
+  /**
+   * 检查对象是否可池化（对象池接口）
+   */
+  isPoolable(): boolean {
+    return true;
+  }
+
+  /**
+   * x坐标访问器（IVector3接口）
    */
   get x(): number {
     return this.elements[0];
@@ -52,7 +80,7 @@ export class Vector3 {
   }
 
   /**
-   * y坐标访问器
+   * y坐标访问器（IVector3接口）
    */
   get y(): number {
     return this.elements[1];
@@ -63,7 +91,7 @@ export class Vector3 {
   }
 
   /**
-   * z坐标访问器
+   * z坐标访问器（IVector3接口）
    */
   get z(): number {
     return this.elements[2];
@@ -765,50 +793,183 @@ export class Vector3 {
     return this.normalize();
   }
 
+  // ========== 规范兼容方法 ==========
+
   /**
-   * 从对象池获取或创建新的 Vector3 实例
+   * 转换为IVector3接口格式
+   * @returns IVector3接口对象
    */
-  static create(x = 0, y = 0, z = 0): Vector3 {
-    if (poolIndex < pool.length) {
-      const vector = pool[poolIndex++];
+  toIVector3(): IVector3 {
+    return {
+      x: this.x,
+      y: this.y,
+      z: this.z,
+    };
+  }
 
-      vector.set(x, y, z);
+  /**
+   * 从IVector3接口创建Vector3实例
+   * @param v - IVector3接口对象
+   * @returns Vector3实例
+   */
+  static fromIVector3(v: IVector3): Vector3 {
+    return new Vector3(v.x, v.y, v.z);
+  }
 
-      return vector;
+  /**
+   * 从IVector3接口设置当前向量值
+   * @param v - IVector3接口对象
+   * @returns 返回自身，用于链式调用
+   */
+  fromIVector3(v: IVector3): this {
+    this.elements[0] = v.x;
+    this.elements[1] = v.y;
+    this.elements[2] = v.z;
+    return this;
+  }
+
+  // ========== USD 兼容方法 ==========
+
+  /**
+   * 转换为USD兼容的UsdValue格式（Vector3f）
+   * @returns UsdValue数组格式
+   */
+  toUsdValue(): UsdValue {
+    return {
+      type: UsdDataType.Vector3f,
+      value: [this.x, this.y, this.z],
+    };
+  }
+
+  /**
+   * 从USD兼容的UsdValue格式创建Vector3实例
+   * @param value - UsdValue对象格式
+   * @returns Vector3实例
+   */
+  static fromUsdValue(value: UsdValue): Vector3 {
+    if (!value.value || !Array.isArray(value.value) || value.value.length < 3) {
+      throw new Error('Invalid UsdValue for Vector3: must have array value with at least 3 elements');
     }
-
+    const [x, y, z] = value.value as [number, number, number];
     return new Vector3(x, y, z);
   }
 
   /**
-   * 释放 Vector3 实例到对象池
+   * 从USD兼容的UsdValue格式设置当前向量值
+   * @param value - UsdValue对象格式
+   * @returns 返回自身，用于链式调用
+   */
+  fromUsdValue(value: UsdValue): this {
+    if (!value.value || !Array.isArray(value.value) || value.value.length < 3) {
+      throw new Error('Invalid UsdValue for Vector3: must have array value with at least 3 elements');
+    }
+    const [x, y, z] = value.value as [number, number, number];
+    this.elements[0] = x;
+    this.elements[1] = y;
+    this.elements[2] = z;
+    return this;
+  }
+
+  // ========== 高性能对象池方法 ==========
+
+  /**
+   * 从对象池创建Vector3实例（高性能）
+   * @param x - x分量，默认为0
+   * @param y - y分量，默认为0
+   * @param z - z分量，默认为0
+   * @returns Vector3实例
+   */
+  static create(x = 0, y = 0, z = 0): Vector3 {
+    if (MathConfig.isObjectPoolEnabled()) {
+      const instance = vector3Pool.create();
+      instance.set(x, y, z);
+      return instance;
+    }
+    return new Vector3(x, y, z);
+  }
+
+  /**
+   * 释放Vector3实例到对象池（高性能）
+   * @param vector - 要释放的向量实例
    */
   static release(vector: Vector3): void {
-    if (poolIndex > 0 && pool.length < POOL_SIZE) {
-      poolIndex--;
-      pool[poolIndex] = vector;
+    if (MathConfig.isObjectPoolEnabled() && vector) {
+      vector3Pool.release(vector);
     }
   }
 
   /**
-   * 预分配对象池
+   * 预分配指定数量的Vector3实例到对象池
+   * @param count - 预分配数量
    */
   static preallocate(count: number): void {
-    const initialSize = pool.length;
-
-    for (let i = 0; i < count && pool.length < POOL_SIZE; i++) {
-      pool.push(new Vector3());
+    if (MathConfig.isObjectPoolEnabled()) {
+      vector3Pool.preallocate(count);
     }
-    console.debug(`Vector3池：从${initialSize}增加到${pool.length}`);
   }
 
   /**
    * 清空对象池
    */
   static clearPool(): void {
-    pool.length = 0;
-    poolIndex = 0;
+    vector3Pool.clear();
   }
+
+  /**
+   * 获取对象池统计信息
+   */
+  static getPoolStats() {
+    return vector3Pool.getStats();
+  }
+
+  /**
+   * 检查是否支持SIMD优化
+   */
+  static hasSIMDSupport(): boolean {
+    return MathConfig.isSIMDEnabled();
+  }
+
+  // ========== 实用方法 ==========
+
+  /**
+   * 返回一个归一化后的新向量
+   * @returns 归一化后的新向量
+   */
+  normalized(): Vector3 {
+    const len = this.length();
+
+    if (len < NumberEpsilon) {
+      return Vector3.create();
+    }
+
+    const scale = 1 / len;
+    return Vector3.create(this.x * scale, this.y * scale, this.z * scale);
+  }
+
+  /**
+   * 向量乘以标量，返回一个新向量
+   * @param scalar - 标量值
+   * @returns 新向量
+   */
+  multiplyScalar(scalar: number): Vector3 {
+    return Vector3.create(this.x * scalar, this.y * scalar, this.z * scalar);
+  }
+
+  /**
+   * 向量除以标量，返回一个新向量
+   * @param scalar - 标量值
+   * @returns 新向量
+   */
+  divideScalar(scalar: number): Vector3 {
+    if (Math.abs(scalar) < NumberEpsilon) {
+      console.warn('Vector3.divideScalar: scalar is too close to zero');
+      return Vector3.create();
+    }
+    const invScalar = 1 / scalar;
+    return Vector3.create(this.x * invScalar, this.y * invScalar, this.z * invScalar);
+  }
+
+  // ========== 静态计算方法 ==========
 
   /**
    * 计算两个向量的叉积，返回一个新的向量
@@ -824,7 +985,7 @@ export class Vector3 {
       by = b.y,
       bz = b.z;
 
-    return new Vector3(ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx);
+    return Vector3.create(ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx);
   }
 
   /**
@@ -834,31 +995,189 @@ export class Vector3 {
    * @returns 差值向量 (a - b)
    */
   static subtract(a: Vector3, b: Vector3): Vector3 {
-    return new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
+    return Vector3.create(a.x - b.x, a.y - b.y, a.z - b.z);
   }
 
   /**
-   * 返回一个归一化后的新向量
-   * @returns 归一化后的新向量
+   * 计算两个向量的和，返回一个新的向量
+   * @param a - 第一个向量
+   * @param b - 第二个向量
+   * @returns 和向量 (a + b)
    */
-  normalized(): Vector3 {
-    const len = this.length();
+  static add(a: Vector3, b: Vector3): Vector3 {
+    return Vector3.create(a.x + b.x, a.y + b.y, a.z + b.z);
+  }
 
-    if (len < NumberEpsilon) {
-      return new Vector3();
+  /**
+   * 计算两个向量的乘积，返回一个新的向量
+   * @param a - 第一个向量
+   * @param b - 第二个向量
+   * @returns 乘积向量 (a * b)
+   */
+  static multiply(a: Vector3, b: Vector3): Vector3 {
+    return Vector3.create(a.x * b.x, a.y * b.y, a.z * b.z);
+  }
+
+  /**
+   * 计算两个向量的点积
+   * @param a - 第一个向量
+   * @param b - 第二个向量
+   * @returns 点积值
+   */
+  static dot(a: Vector3, b: Vector3): number {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+  }
+
+  /**
+   * 计算两个向量之间的距离
+   * @param a - 第一个向量
+   * @param b - 第二个向量
+   * @returns 距离值
+   */
+  static distance(a: Vector3, b: Vector3): number {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    const dz = a.z - b.z;
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+  }
+
+  /**
+   * 计算两个向量之间的距离平方
+   * @param a - 第一个向量
+   * @param b - 第二个向量
+   * @returns 距离平方值
+   */
+  static distanceSquared(a: Vector3, b: Vector3): number {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    const dz = a.z - b.z;
+    return dx * dx + dy * dy + dz * dz;
+  }
+
+  /**
+   * 在两个向量之间进行线性插值
+   * @param a - 起始向量
+   * @param b - 目标向量
+   * @param t - 插值参数 [0, 1]
+   * @returns 插值结果向量
+   */
+  static lerp(a: Vector3, b: Vector3, t: number): Vector3 {
+    const clampedT = Math.max(0, Math.min(1, t));
+    return Vector3.create(a.x + (b.x - a.x) * clampedT, a.y + (b.y - a.y) * clampedT, a.z + (b.z - a.z) * clampedT);
+  }
+
+  /**
+   * 在两个向量之间进行球面线性插值
+   * @param a - 起始向量
+   * @param b - 目标向量
+   * @param t - 插值参数 [0, 1]
+   * @returns 插值结果向量
+   */
+  static slerp(a: Vector3, b: Vector3, t: number): Vector3 {
+    const clampedT = Math.max(0, Math.min(1, t));
+
+    // 计算角度
+    const dot = Vector3.dot(a.normalized(), b.normalized());
+    const theta = Math.acos(Math.max(-1, Math.min(1, dot)));
+
+    if (Math.abs(theta) < NumberEpsilon) {
+      // 向量几乎平行，使用线性插值
+      return Vector3.lerp(a, b, clampedT);
     }
 
-    const scale = 1 / len;
+    const sinTheta = Math.sin(theta);
+    const factor1 = Math.sin((1 - clampedT) * theta) / sinTheta;
+    const factor2 = Math.sin(clampedT * theta) / sinTheta;
 
-    return new Vector3(this.x * scale, this.y * scale, this.z * scale);
+    return Vector3.create(a.x * factor1 + b.x * factor2, a.y * factor1 + b.y * factor2, a.z * factor1 + b.z * factor2);
   }
 
   /**
-   * 向量乘以标量，返回一个新向量
-   * @param scalar - 标量值
-   * @returns 新向量
+   * 计算向量的反射
+   * @param incident - 入射向量
+   * @param normal - 法向量（必须是单位向量）
+   * @returns 反射向量
    */
-  multiplyScalar(scalar: number): Vector3 {
-    return new Vector3(this.x * scalar, this.y * scalar, this.z * scalar);
+  static reflect(incident: Vector3, normal: Vector3): Vector3 {
+    const dot = Vector3.dot(incident, normal);
+    return Vector3.create(
+      incident.x - 2 * dot * normal.x,
+      incident.y - 2 * dot * normal.y,
+      incident.z - 2 * dot * normal.z
+    );
+  }
+
+  /**
+   * 计算向量的折射
+   * @param incident - 入射向量（必须是单位向量）
+   * @param normal - 法向量（必须是单位向量）
+   * @param eta - 折射率
+   * @returns 折射向量，如果发生全反射则返回null
+   */
+  static refract(incident: Vector3, normal: Vector3, eta: number): Vector3 | null {
+    const cosI = -Vector3.dot(incident, normal);
+    const sin2T = eta * eta * (1 - cosI * cosI);
+
+    if (sin2T > 1) {
+      // 全反射
+      return null;
+    }
+
+    const cosT = Math.sqrt(1 - sin2T);
+
+    return Vector3.create(
+      eta * incident.x + (eta * cosI - cosT) * normal.x,
+      eta * incident.y + (eta * cosI - cosT) * normal.y,
+      eta * incident.z + (eta * cosI - cosT) * normal.z
+    );
+  }
+
+  /**
+   * 获取向量的最小分量值
+   * @param v - 向量
+   * @returns 最小分量值
+   */
+  static minComponent(v: Vector3): number {
+    return Math.min(v.x, Math.min(v.y, v.z));
+  }
+
+  /**
+   * 获取向量的最大分量值
+   * @param v - 向量
+   * @returns 最大分量值
+   */
+  static maxComponent(v: Vector3): number {
+    return Math.max(v.x, Math.max(v.y, v.z));
+  }
+
+  /**
+   * 检查向量是否为有效值
+   * @param v - 向量
+   * @returns 是否有效
+   */
+  static isValid(v: Vector3): boolean {
+    return !isNaN(v.x) && !isNaN(v.y) && !isNaN(v.z) && isFinite(v.x) && isFinite(v.y) && isFinite(v.z);
+  }
+
+  /**
+   * 计算三个向量中每个分量的最小值
+   * @param a - 第一个向量
+   * @param b - 第二个向量
+   * @param c - 第三个向量
+   * @returns 最小值向量
+   */
+  static min3(a: Vector3, b: Vector3, c: Vector3): Vector3 {
+    return Vector3.create(Math.min(a.x, b.x, c.x), Math.min(a.y, b.y, c.y), Math.min(a.z, b.z, c.z));
+  }
+
+  /**
+   * 计算三个向量中每个分量的最大值
+   * @param a - 第一个向量
+   * @param b - 第二个向量
+   * @param c - 第三个向量
+   * @returns 最大值向量
+   */
+  static max3(a: Vector3, b: Vector3, c: Vector3): Vector3 {
+    return Vector3.create(Math.max(a.x, b.x, c.x), Math.max(a.y, b.y, c.y), Math.max(a.z, b.z, c.z));
   }
 }

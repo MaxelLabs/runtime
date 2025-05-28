@@ -22,8 +22,5 @@ export * from './resource';
 // 场景系统
 export * from './scene';
 
-// 导出数学库类型
+// 导出数学/规范库类型
 export * from '@maxellabs/math';
-
-// 导出规范库
-export * from '@maxellabs/specification';

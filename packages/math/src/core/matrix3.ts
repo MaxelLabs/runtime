@@ -1,20 +1,22 @@
+import { UsdDataType, type IMatrix3x3 } from '@maxellabs/specification';
+import type { UsdValue } from '@maxellabs/specification';
 import type { Matrix4 } from './matrix4';
 import type { Quaternion } from './quaternion';
 import type { Matrix3DataType, mat3 } from './type';
 import { isEqual } from './utils';
 import type { Vector3 } from './vector3';
+import { MathConfig } from '../config/mathConfig';
+import { ObjectPool, type Poolable } from '../pool/objectPool';
 
-// 对象池配置
-const MATRIX3_POOL_SIZE = 100;
-const matrix3Pool: Matrix3[] = [];
-let matrix3PoolIndex = 0;
+// 高性能对象池实现
+const matrix3Pool = new ObjectPool<Matrix3>(() => new Matrix3(), MathConfig.getPoolConfig().Matrix3);
 
 /**
  * 三维矩阵（列优先矩阵）
+ * 实现 @specification 包的 IMatrix3x3 接口，提供高性能的3x3矩阵运算
  */
-export class Matrix3 {
+export class Matrix3 implements IMatrix3x3, Poolable {
   static readonly IDENTITY = Object.freeze(new Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1));
-
   static readonly ZERO = Object.freeze(new Matrix3(0, 0, 0, 0, 0, 0, 0, 0, 0));
 
   /**
@@ -23,19 +25,244 @@ export class Matrix3 {
   elements: Float32Array;
 
   /**
-   * 构造函数，初始值为零矩阵
-   * @param [m11=1] - 第 1 行，第 1 列
-   * @param [m21=0] - 第 2 行，第 1 列
-   * @param [m31=0] - 第 3 行，第 1 列
-   * @param [m12=0] - 第 1 行，第 2 列
-   * @param [m22=1] - 第 2 行，第 2 列
-   * @param [m32=0] - 第 3 行，第 2 列
-   * @param [m13=0] - 第 1 行，第 3 列
-   * @param [m23=0] - 第 2 行，第 3 列
-   * @param [m33=1] - 第 3 行，第 3 列
+   * 构造函数，初始值为单位矩阵
+   * @param m11 - 第 1 行，第 1 列，默认为1
+   * @param m21 - 第 2 行，第 1 列，默认为0
+   * @param m31 - 第 3 行，第 1 列，默认为0
+   * @param m12 - 第 1 行，第 2 列，默认为0
+   * @param m22 - 第 2 行，第 2 列，默认为1
+   * @param m32 - 第 3 行，第 2 列，默认为0
+   * @param m13 - 第 1 行，第 3 列，默认为0
+   * @param m23 - 第 2 行，第 3 列，默认为0
+   * @param m33 - 第 3 行，第 3 列，默认为1
    */
   constructor(m11 = 1, m21 = 0, m31 = 0, m12 = 0, m22 = 1, m32 = 0, m13 = 0, m23 = 0, m33 = 1) {
     this.elements = new Float32Array([m11, m21, m31, m12, m22, m32, m13, m23, m33]);
+  }
+
+  /**
+   * 重置对象状态（对象池接口）
+   */
+  reset(): void {
+    this.elements.set([1, 0, 0, 0, 1, 0, 0, 0, 1]);
+  }
+
+  /**
+   * 检查对象是否可池化（对象池接口）
+   */
+  isPoolable(): boolean {
+    return true;
+  }
+
+  // ========== IMatrix3x3 接口属性 ==========
+
+  get m00(): number {
+    return this.elements[0];
+  }
+  set m00(value: number) {
+    this.elements[0] = value;
+  }
+
+  get m01(): number {
+    return this.elements[3];
+  }
+  set m01(value: number) {
+    this.elements[3] = value;
+  }
+
+  get m02(): number {
+    return this.elements[6];
+  }
+  set m02(value: number) {
+    this.elements[6] = value;
+  }
+
+  get m10(): number {
+    return this.elements[1];
+  }
+  set m10(value: number) {
+    this.elements[1] = value;
+  }
+
+  get m11(): number {
+    return this.elements[4];
+  }
+  set m11(value: number) {
+    this.elements[4] = value;
+  }
+
+  get m12(): number {
+    return this.elements[7];
+  }
+  set m12(value: number) {
+    this.elements[7] = value;
+  }
+
+  get m20(): number {
+    return this.elements[2];
+  }
+  set m20(value: number) {
+    this.elements[2] = value;
+  }
+
+  get m21(): number {
+    return this.elements[5];
+  }
+  set m21(value: number) {
+    this.elements[5] = value;
+  }
+
+  get m22(): number {
+    return this.elements[8];
+  }
+  set m22(value: number) {
+    this.elements[8] = value;
+  }
+
+  // ========== 规范兼容方法 ==========
+
+  /**
+   * 转换为IMatrix3x3接口格式
+   * @returns IMatrix3x3接口对象
+   */
+  toIMatrix3x3(): IMatrix3x3 {
+    return {
+      m00: this.m00,
+      m01: this.m01,
+      m02: this.m02,
+      m10: this.m10,
+      m11: this.m11,
+      m12: this.m12,
+      m20: this.m20,
+      m21: this.m21,
+      m22: this.m22,
+    };
+  }
+
+  /**
+   * 从IMatrix3x3接口创建Matrix3实例
+   * @param m - IMatrix3x3接口对象
+   * @returns Matrix3实例
+   */
+  static fromIMatrix3x3(m: IMatrix3x3): Matrix3 {
+    return new Matrix3(m.m00, m.m10, m.m20, m.m01, m.m11, m.m21, m.m02, m.m12, m.m22);
+  }
+
+  /**
+   * 从IMatrix3x3接口设置当前矩阵值
+   * @param m - IMatrix3x3接口对象
+   * @returns 返回自身，用于链式调用
+   */
+  fromIMatrix3x3(m: IMatrix3x3): this {
+    return this.set(m.m00, m.m10, m.m20, m.m01, m.m11, m.m21, m.m02, m.m12, m.m22);
+  }
+
+  // ========== USD 兼容方法 ==========
+
+  /**
+   * 转换为USD兼容的UsdValue格式（Array）
+   * @returns UsdValue对象格式
+   */
+  toUsdValue(): UsdValue {
+    return {
+      type: UsdDataType.Array,
+      value: Array.from(this.elements),
+    };
+  }
+
+  /**
+   * 从USD兼容的UsdValue格式创建Matrix3实例
+   * @param value - UsdValue对象格式
+   * @returns Matrix3实例
+   */
+  static fromUsdValue(value: UsdValue): Matrix3 {
+    if (!value.value || !Array.isArray(value.value) || value.value.length < 9) {
+      throw new Error('Invalid UsdValue for Matrix3: must have array value with at least 9 elements');
+    }
+    const elements = value.value as number[];
+    return new Matrix3(
+      elements[0],
+      elements[1],
+      elements[2],
+      elements[3],
+      elements[4],
+      elements[5],
+      elements[6],
+      elements[7],
+      elements[8]
+    );
+  }
+
+  /**
+   * 从USD兼容的UsdValue格式设置当前矩阵值
+   * @param value - UsdValue对象格式
+   * @returns 返回自身，用于链式调用
+   */
+  fromUsdValue(value: UsdValue): this {
+    if (!value.value || !Array.isArray(value.value) || value.value.length < 9) {
+      throw new Error('Invalid UsdValue for Matrix3: must have array value with at least 9 elements');
+    }
+    const elements = value.value as number[];
+    this.elements.set(elements.slice(0, 9));
+    return this;
+  }
+
+  // ========== 高性能对象池方法 ==========
+
+  /**
+   * 从对象池创建Matrix3实例（高性能）
+   * @param m11 - 第 1 行，第 1 列，默认为1
+   * @param m21 - 第 2 行，第 1 列，默认为0
+   * @param m31 - 第 3 行，第 1 列，默认为0
+   * @param m12 - 第 1 行，第 2 列，默认为0
+   * @param m22 - 第 2 行，第 2 列，默认为1
+   * @param m32 - 第 3 行，第 2 列，默认为0
+   * @param m13 - 第 1 行，第 3 列，默认为0
+   * @param m23 - 第 2 行，第 3 列，默认为0
+   * @param m33 - 第 3 行，第 3 列，默认为1
+   * @returns Matrix3实例
+   */
+  static create(m11 = 1, m21 = 0, m31 = 0, m12 = 0, m22 = 1, m32 = 0, m13 = 0, m23 = 0, m33 = 1): Matrix3 {
+    if (MathConfig.isObjectPoolEnabled()) {
+      const instance = matrix3Pool.create();
+      instance.set(m11, m21, m31, m12, m22, m32, m13, m23, m33);
+      return instance;
+    }
+    return new Matrix3(m11, m21, m31, m12, m22, m32, m13, m23, m33);
+  }
+
+  /**
+   * 释放Matrix3实例到对象池（高性能）
+   * @param matrix - 要释放的矩阵实例
+   */
+  static release(matrix: Matrix3): void {
+    if (MathConfig.isObjectPoolEnabled() && matrix) {
+      matrix3Pool.release(matrix);
+    }
+  }
+
+  /**
+   * 预分配指定数量的Matrix3实例到对象池
+   * @param count - 预分配数量
+   */
+  static preallocate(count: number): void {
+    if (MathConfig.isObjectPoolEnabled()) {
+      matrix3Pool.preallocate(count);
+    }
+  }
+
+  /**
+   * 清空对象池
+   */
+  static clearPool(): void {
+    matrix3Pool.clear();
+  }
+
+  /**
+   * 获取对象池统计信息
+   */
+  static getPoolStats() {
+    return matrix3Pool.getStats();
   }
 
   /**
@@ -542,41 +769,10 @@ export class Matrix3 {
     }
   }
 
-  /**
-   * 从对象池获取一个 Matrix3 实例
-   */
-  static create(): Matrix3 {
-    if (matrix3PoolIndex < matrix3Pool.length) {
-      return matrix3Pool[matrix3PoolIndex++].identity();
-    }
-
-    return new Matrix3();
-  }
+  // ========== 静态工厂方法 ==========
 
   /**
-   * 将 Matrix3 实例释放回对象池
-   */
-  static release(matrix: Matrix3): void {
-    if (matrix3PoolIndex > 0 && matrix3Pool.length < MATRIX3_POOL_SIZE) {
-      matrix3PoolIndex--;
-      matrix3Pool[matrix3PoolIndex] = matrix;
-    }
-  }
-
-  /**
-   * 预分配对象池
-   */
-  static preallocate(count: number): void {
-    const initialSize = matrix3Pool.length;
-
-    for (let i = 0; i < count && matrix3Pool.length < MATRIX3_POOL_SIZE; i++) {
-      matrix3Pool.push(new Matrix3());
-    }
-    console.debug(`Matrix3池：从${initialSize}增加到${matrix3Pool.length}`);
-  }
-
-  /**
-   * 创建单位阵
+   * 创建单位矩阵
    * @returns 单位矩阵
    */
   static fromIdentity(): Matrix3 {
@@ -606,7 +802,7 @@ export class Matrix3 {
   /**
    * 通过数组创建矩阵
    * @param array - 数组（列优先）
-   * @param [offset=0] - 起始偏移值
+   * @param offset - 起始偏移值，默认为0
    * @returns 矩阵
    */
   static fromArray(array: Matrix3DataType, offset = 0): Matrix3 {
@@ -623,7 +819,7 @@ export class Matrix3 {
   }
 
   /**
-   * 设置矩阵通过行优先数据
+   * 通过行优先数据创建矩阵
    * @param m11 - 第 1 行，第 1 列
    * @param m12 - 第 1 行，第 2 列
    * @param m13 - 第 1 行，第 3 列
@@ -647,5 +843,51 @@ export class Matrix3 {
     m33: number
   ): Matrix3 {
     return Matrix3.create().set(m11, m21, m31, m12, m22, m32, m13, m23, m33);
+  }
+
+  /**
+   * 矩阵相乘
+   * @param a - 左矩阵
+   * @param b - 右矩阵
+   * @returns 相乘结果
+   */
+  static multiply(a: Matrix3, b: Matrix3): Matrix3 {
+    const result = Matrix3.create();
+    return result.multiplyMatrices(a, b);
+  }
+
+  /**
+   * 矩阵转置
+   * @param m - 输入矩阵
+   * @returns 转置结果
+   */
+  static transpose(m: Matrix3): Matrix3 {
+    const result = Matrix3.create();
+    return result.copyFrom(m).transpose();
+  }
+
+  /**
+   * 矩阵求逆
+   * @param m - 输入矩阵
+   * @returns 逆矩阵
+   */
+  static invert(m: Matrix3): Matrix3 {
+    const result = Matrix3.create();
+    return result.copyFrom(m).invert();
+  }
+
+  /**
+   * 检查矩阵是否为有效值
+   * @param m - 矩阵
+   * @returns 是否有效
+   */
+  static isValid(m: Matrix3): boolean {
+    const e = m.elements;
+    for (let i = 0; i < 9; i++) {
+      if (isNaN(e[i]) || !isFinite(e[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 }

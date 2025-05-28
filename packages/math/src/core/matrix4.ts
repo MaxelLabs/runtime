@@ -1,19 +1,21 @@
+import { UsdDataType, type IMatrix4x4 } from '@maxellabs/specification';
+import type { UsdValue } from '@maxellabs/specification';
 import { Vector3 } from './vector3';
 import type { Vector4 } from './vector4';
 import type { Quaternion } from './quaternion';
 import type { mat4 } from './type';
+import { MathConfig } from '../config/mathConfig';
+import { ObjectPool, type Poolable } from '../pool/objectPool';
 
-// 对象池配置
-const MATRIX4_POOL_SIZE = 100;
-const matrix4Pool: Matrix4[] = [];
-let matrix4PoolIndex = 0;
+// 高性能对象池实现
+const matrix4Pool = new ObjectPool<Matrix4>(() => new Matrix4(), MathConfig.getPoolConfig().Matrix4);
 
 /**
  * 四阶矩阵（列优先矩阵）
+ * 实现 @specification 包的 IMatrix4x4 接口，提供高性能的4x4矩阵运算
  */
-export class Matrix4 {
+export class Matrix4 implements IMatrix4x4, Poolable {
   static readonly IDENTITY = Object.freeze(new Matrix4().identity());
-
   static readonly ZERO = Object.freeze(new Matrix4().setZero());
 
   private static readonly tempVec0: Vector3 = new Vector3();
@@ -29,6 +31,303 @@ export class Matrix4 {
   constructor() {
     this.elements = new Float32Array(16);
     this.identity();
+  }
+
+  /**
+   * 重置对象状态（对象池接口）
+   */
+  reset(): void {
+    this.identity();
+  }
+
+  /**
+   * 检查对象是否可池化（对象池接口）
+   */
+  isPoolable(): boolean {
+    return true;
+  }
+
+  // ========== IMatrix4x4 接口属性 ==========
+
+  get m00(): number {
+    return this.elements[0];
+  }
+  set m00(value: number) {
+    this.elements[0] = value;
+  }
+
+  get m01(): number {
+    return this.elements[4];
+  }
+  set m01(value: number) {
+    this.elements[4] = value;
+  }
+
+  get m02(): number {
+    return this.elements[8];
+  }
+  set m02(value: number) {
+    this.elements[8] = value;
+  }
+
+  get m03(): number {
+    return this.elements[12];
+  }
+  set m03(value: number) {
+    this.elements[12] = value;
+  }
+
+  get m10(): number {
+    return this.elements[1];
+  }
+  set m10(value: number) {
+    this.elements[1] = value;
+  }
+
+  get m11(): number {
+    return this.elements[5];
+  }
+  set m11(value: number) {
+    this.elements[5] = value;
+  }
+
+  get m12(): number {
+    return this.elements[9];
+  }
+  set m12(value: number) {
+    this.elements[9] = value;
+  }
+
+  get m13(): number {
+    return this.elements[13];
+  }
+  set m13(value: number) {
+    this.elements[13] = value;
+  }
+
+  get m20(): number {
+    return this.elements[2];
+  }
+  set m20(value: number) {
+    this.elements[2] = value;
+  }
+
+  get m21(): number {
+    return this.elements[6];
+  }
+  set m21(value: number) {
+    this.elements[6] = value;
+  }
+
+  get m22(): number {
+    return this.elements[10];
+  }
+  set m22(value: number) {
+    this.elements[10] = value;
+  }
+
+  get m23(): number {
+    return this.elements[14];
+  }
+  set m23(value: number) {
+    this.elements[14] = value;
+  }
+
+  get m30(): number {
+    return this.elements[3];
+  }
+  set m30(value: number) {
+    this.elements[3] = value;
+  }
+
+  get m31(): number {
+    return this.elements[7];
+  }
+  set m31(value: number) {
+    this.elements[7] = value;
+  }
+
+  get m32(): number {
+    return this.elements[11];
+  }
+  set m32(value: number) {
+    this.elements[11] = value;
+  }
+
+  get m33(): number {
+    return this.elements[15];
+  }
+  set m33(value: number) {
+    this.elements[15] = value;
+  }
+
+  // ========== 规范兼容方法 ==========
+
+  /**
+   * 转换为IMatrix4x4接口格式
+   * @returns IMatrix4x4接口对象
+   */
+  toIMatrix4x4(): IMatrix4x4 {
+    return {
+      m00: this.m00,
+      m01: this.m01,
+      m02: this.m02,
+      m03: this.m03,
+      m10: this.m10,
+      m11: this.m11,
+      m12: this.m12,
+      m13: this.m13,
+      m20: this.m20,
+      m21: this.m21,
+      m22: this.m22,
+      m23: this.m23,
+      m30: this.m30,
+      m31: this.m31,
+      m32: this.m32,
+      m33: this.m33,
+    };
+  }
+
+  /**
+   * 从IMatrix4x4接口创建Matrix4实例
+   * @param m - IMatrix4x4接口对象
+   * @returns Matrix4实例
+   */
+  static fromIMatrix4x4(m: IMatrix4x4): Matrix4 {
+    const matrix = new Matrix4();
+    return matrix.set(
+      m.m00,
+      m.m10,
+      m.m20,
+      m.m30,
+      m.m01,
+      m.m11,
+      m.m21,
+      m.m31,
+      m.m02,
+      m.m12,
+      m.m22,
+      m.m32,
+      m.m03,
+      m.m13,
+      m.m23,
+      m.m33
+    );
+  }
+
+  /**
+   * 从IMatrix4x4接口设置当前矩阵值
+   * @param m - IMatrix4x4接口对象
+   * @returns 返回自身，用于链式调用
+   */
+  fromIMatrix4x4(m: IMatrix4x4): this {
+    return this.set(
+      m.m00,
+      m.m10,
+      m.m20,
+      m.m30,
+      m.m01,
+      m.m11,
+      m.m21,
+      m.m31,
+      m.m02,
+      m.m12,
+      m.m22,
+      m.m32,
+      m.m03,
+      m.m13,
+      m.m23,
+      m.m33
+    );
+  }
+
+  // ========== USD 兼容方法 ==========
+
+  /**
+   * 转换为USD兼容的UsdValue格式（Matrix4d）
+   * @returns UsdValue对象格式
+   */
+  toUsdValue(): UsdValue {
+    return {
+      type: UsdDataType.Matrix4d,
+      value: Array.from(this.elements),
+    };
+  }
+
+  /**
+   * 从USD兼容的UsdValue格式创建Matrix4实例
+   * @param value - UsdValue对象格式
+   * @returns Matrix4实例
+   */
+  static fromUsdValue(value: UsdValue): Matrix4 {
+    if (!value.value || !Array.isArray(value.value) || value.value.length < 16) {
+      throw new Error('Invalid UsdValue for Matrix4: must have array value with at least 16 elements');
+    }
+    const matrix = new Matrix4();
+    matrix.elements.set(value.value.slice(0, 16) as number[]);
+    return matrix;
+  }
+
+  /**
+   * 从USD兼容的UsdValue格式设置当前矩阵值
+   * @param value - UsdValue对象格式
+   * @returns 返回自身，用于链式调用
+   */
+  fromUsdValue(value: UsdValue): this {
+    if (!value.value || !Array.isArray(value.value) || value.value.length < 16) {
+      throw new Error('Invalid UsdValue for Matrix4: must have array value with at least 16 elements');
+    }
+    this.elements.set(value.value.slice(0, 16) as number[]);
+    return this;
+  }
+
+  // ========== 高性能对象池方法 ==========
+
+  /**
+   * 从对象池创建Matrix4实例（高性能）
+   * @returns Matrix4实例
+   */
+  static create(): Matrix4 {
+    if (MathConfig.isObjectPoolEnabled()) {
+      const instance = matrix4Pool.create();
+      instance.identity();
+      return instance;
+    }
+    return new Matrix4();
+  }
+
+  /**
+   * 释放Matrix4实例到对象池（高性能）
+   * @param matrix - 要释放的矩阵实例
+   */
+  static release(matrix: Matrix4): void {
+    if (MathConfig.isObjectPoolEnabled() && matrix) {
+      matrix4Pool.release(matrix);
+    }
+  }
+
+  /**
+   * 预分配指定数量的Matrix4实例到对象池
+   * @param count - 预分配数量
+   */
+  static preallocate(count: number): void {
+    if (MathConfig.isObjectPoolEnabled()) {
+      matrix4Pool.preallocate(count);
+    }
+  }
+
+  /**
+   * 清空对象池
+   */
+  static clearPool(): void {
+    matrix4Pool.clear();
+  }
+
+  /**
+   * 获取对象池统计信息
+   */
+  static getPoolStats() {
+    return matrix4Pool.getStats();
   }
 
   /**
@@ -59,60 +358,60 @@ export class Matrix4 {
 
   /**
    * 设置矩阵
-   * @param m11 - 第 1 行，第 1 列
-   * @param m21 - 第 2 行，第 1 列
-   * @param m31 - 第 3 行，第 1 列
-   * @param m41 - 第 4 行，第 1 列
-   * @param m12 - 第 1 行，第 2 列
-   * @param m22 - 第 2 行，第 2 列
-   * @param m32 - 第 3 行，第 2 列
-   * @param m42 - 第 4 行，第 2 列
-   * @param m13 - 第 1 行，第 3 列
-   * @param m23 - 第 2 行，第 3 列
-   * @param m33 - 第 3 行，第 3 列
-   * @param m43 - 第 4 行，第 3 列
-   * @param m14 - 第 1 行，第 4 列
-   * @param m24 - 第 2 行，第 4 列
-   * @param m34 - 第 3 行，第 4 列
-   * @param m44 - 第 4 行，第 4 列
+   * @param m00 - 第 1 行，第 1 列
+   * @param m10 - 第 2 行，第 1 列
+   * @param m20 - 第 3 行，第 1 列
+   * @param m30 - 第 4 行，第 1 列
+   * @param m01 - 第 1 行，第 2 列
+   * @param m11 - 第 2 行，第 2 列
+   * @param m21 - 第 3 行，第 2 列
+   * @param m31 - 第 4 行，第 2 列
+   * @param m02 - 第 1 行，第 3 列
+   * @param m12 - 第 2 行，第 3 列
+   * @param m22 - 第 3 行，第 3 列
+   * @param m32 - 第 4 行，第 3 列
+   * @param m03 - 第 1 行，第 4 列
+   * @param m13 - 第 2 行，第 4 列
+   * @param m23 - 第 3 行，第 4 列
+   * @param m33 - 第 4 行，第 4 列
    * @returns 矩阵
    */
   set(
+    m00: number,
+    m10: number,
+    m20: number,
+    m30: number,
+    m01: number,
     m11: number,
     m21: number,
     m31: number,
-    m41: number,
+    m02: number,
     m12: number,
     m22: number,
     m32: number,
-    m42: number,
+    m03: number,
     m13: number,
     m23: number,
-    m33: number,
-    m43: number,
-    m14: number,
-    m24: number,
-    m34: number,
-    m44: number
+    m33: number
   ): this {
     const e = this.elements;
 
-    e[0] = m11;
-    e[1] = m21;
-    e[2] = m31;
-    e[3] = m41;
-    e[4] = m12;
-    e[5] = m22;
-    e[6] = m32;
-    e[7] = m42;
-    e[8] = m13;
-    e[9] = m23;
-    e[10] = m33;
-    e[11] = m43;
-    e[12] = m14;
-    e[13] = m24;
-    e[14] = m34;
-    e[15] = m44;
+    e[0] = m00;
+    e[1] = m10;
+    e[2] = m20;
+    e[3] = m30;
+    e[4] = m01;
+    e[5] = m11;
+    e[6] = m21;
+    e[7] = m31;
+    e[8] = m02;
+    e[9] = m12;
+    e[10] = m22;
+    e[11] = m32;
+    e[12] = m03;
+    e[13] = m13;
+    e[14] = m23;
+    e[15] = m33;
 
     return this;
   }
@@ -955,47 +1254,6 @@ export class Matrix4 {
   }
 
   /**
-   * 从对象池获取一个 Matrix4 实例
-   */
-  static create(): Matrix4 {
-    if (matrix4PoolIndex < matrix4Pool.length) {
-      return matrix4Pool[matrix4PoolIndex++].identity();
-    }
-
-    return new Matrix4();
-  }
-
-  /**
-   * 将 Matrix4 实例释放回对象池
-   */
-  static release(matrix: Matrix4): void {
-    if (matrix4PoolIndex > 0 && matrix4Pool.length < MATRIX4_POOL_SIZE) {
-      matrix4PoolIndex--;
-      matrix4Pool[matrix4PoolIndex] = matrix;
-    }
-  }
-
-  /**
-   * 预分配对象池
-   */
-  static preallocate(count: number): void {
-    const initialSize = matrix4Pool.length;
-
-    for (let i = 0; i < count && matrix4Pool.length < MATRIX4_POOL_SIZE; i++) {
-      matrix4Pool.push(new Matrix4());
-    }
-    console.debug(`Matrix4池：从${initialSize}增加到${matrix4Pool.length}`);
-  }
-
-  /**
-   * 清空对象池
-   */
-  static clearPool(): void {
-    matrix4Pool.length = 0;
-    matrix4PoolIndex = 0;
-  }
-
-  /**
    * 获取矩阵元素数组
    */
   getElements(): Float32Array {
@@ -1159,6 +1417,54 @@ export class Matrix4 {
     e[10] = f.z;
 
     // 保持平移和缩放不变
+    return this;
+  }
+
+  /**
+   * 从四元数创建旋转矩阵
+   * @param q - 四元数
+   * @returns 返回自身，用于链式调用
+   */
+  makeRotationFromQuaternion(q: Quaternion): this {
+    const x = q.x,
+      y = q.y,
+      z = q.z,
+      w = q.w;
+    const x2 = x + x,
+      y2 = y + y,
+      z2 = z + z;
+    const xx = x * x2,
+      xy = x * y2,
+      xz = x * z2;
+    const yy = y * y2,
+      yz = y * z2,
+      zz = z * z2;
+    const wx = w * x2,
+      wy = w * y2,
+      wz = w * z2;
+
+    const e = this.elements;
+
+    e[0] = 1 - (yy + zz);
+    e[1] = xy + wz;
+    e[2] = xz - wy;
+    e[3] = 0;
+
+    e[4] = xy - wz;
+    e[5] = 1 - (xx + zz);
+    e[6] = yz + wx;
+    e[7] = 0;
+
+    e[8] = xz + wy;
+    e[9] = yz - wx;
+    e[10] = 1 - (xx + yy);
+    e[11] = 0;
+
+    e[12] = 0;
+    e[13] = 0;
+    e[14] = 0;
+    e[15] = 1;
+
     return this;
   }
 }
