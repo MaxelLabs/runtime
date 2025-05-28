@@ -145,21 +145,25 @@ const textElement: DesignTextElement = {
 import { DesignStyle, FillType } from '@maxellabs/specification/design';
 
 const buttonStyle: DesignStyle = {
-  fills: [{
-    type: FillType.Solid,
-    color: { r: 0.2, g: 0.6, b: 1.0, a: 1.0 },
-    opacity: 1,
-    visible: true,
-  }],
+  fills: [
+    {
+      type: FillType.Solid,
+      color: { r: 0.2, g: 0.6, b: 1.0, a: 1.0 },
+      opacity: 1,
+      visible: true,
+    },
+  ],
   cornerRadius: 8,
-  shadows: [{
-    type: ShadowType.Drop,
-    color: { r: 0, g: 0, b: 0, a: 0.1 },
-    offsetX: 0,
-    offsetY: 2,
-    blur: 4,
-    visible: true,
-  }],
+  shadows: [
+    {
+      type: DesignShadowType.Drop,
+      color: { r: 0, g: 0, b: 0, a: 0.1 },
+      offsetX: 0,
+      offsetY: 2,
+      blur: 4,
+      visible: true,
+    },
+  ],
 };
 ```
 
@@ -267,6 +271,7 @@ export type SpriteElement = DesignSpriteElement;
 ## 更新日志
 
 ### v0.0.6
+
 - 完成 design 模块重构
 - 使用 common 和 core 模块的共通类型
 - 修复类型冲突和重复定义

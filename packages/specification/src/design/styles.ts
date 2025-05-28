@@ -11,10 +11,7 @@ import type { GradientStop } from '../core/interfaces';
 // 从 common 模块导入通用类型
 import type { ImageFilter, ImageScaleMode } from '../common';
 import type { TextAlign, FontStyle, FontWeight, TextDecoration, TextTransform } from '../common/text';
-
-// 从设计模块导入设计特定类型
-import type { StyleType, FillType, StrokeType, LineCap, LineJoin, ShadowType, BlurType } from './base';
-
+import type { BlurType, DesignShadowType, FillType, LineCap, LineJoin, StrokeType, StyleType } from './enums';
 /**
  * 设计样式
  */
@@ -172,7 +169,7 @@ export interface DesignShadow {
   /**
    * 阴影类型
    */
-  type: ShadowType;
+  type: DesignShadowType;
   /**
    * 颜色（使用通用Color）
    */

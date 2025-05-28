@@ -3,40 +3,9 @@
  * 设计系统的基础接口和类型
  */
 
-import type {
-  DesignElementType,
-  DesignConstraintType,
-  ComponentPropertyType,
-  IconStyle,
-  StyleType,
-  FillType,
-  StrokeType,
-  LineCap,
-  LineJoin,
-  ShadowType,
-  BlurType,
-} from './enums';
+import type { DesignConstraintType, ComponentPropertyType, IconStyle } from './enums';
 
 // 从 common 模块导入共通类型
-import type { ImageScaleMode } from '../common/image';
-
-export type {
-  DesignElementType,
-  DesignConstraintType,
-  ComponentPropertyType,
-  IconStyle,
-  StyleType,
-  FillType,
-  StrokeType,
-  LineCap,
-  LineJoin,
-  ImageScaleMode,
-  ShadowType,
-  BlurType,
-};
-
-// 为向后兼容性导出别名
-export type ConstraintType = DesignConstraintType;
 
 /**
  * 设计约束

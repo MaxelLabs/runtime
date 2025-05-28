@@ -2,11 +2,6 @@
  * Maxellabs 设计模块枚举定义
  * 设计系统相关的枚举类型
  */
-
-// 从 common 模块导入共通的枚举类型
-import type { ImageScaleMode } from '../common/image';
-import type { TransfromConstraintType as TransformConstraintType } from '../common/transform';
-
 // 重新导出 common 中的类型
 export { ImageScaleMode } from '../common/image';
 
@@ -44,10 +39,6 @@ export enum DesignConstraintType {
   Bottom = 'bottom',
   TopBottom = 'top-bottom',
 }
-
-// 为保持向后兼容性，创建别名
-export type ConstraintType = DesignConstraintType;
-export const ConstraintType = DesignConstraintType;
 
 /**
  * 组件属性类型
@@ -120,7 +111,7 @@ export enum LineJoin {
 /**
  * 阴影类型
  */
-export enum ShadowType {
+export enum DesignShadowType {
   Drop = 'drop',
   Inner = 'inner',
 }

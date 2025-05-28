@@ -7,11 +7,12 @@
 import type { CommonMetadata } from '../core/interfaces';
 
 // 从 common 模块导入通用类型
-import type { TextOverflow, WordWrap, TextDirection, WritingMode } from '../common/text';
+import type { TextOverflow, TextDirection } from '../common/text';
 
 // 从设计模块导入设计特定类型
 import type { DesignTextStyle } from './styles';
 import type { FontStyle } from '../common/text';
+import type { WritingMode } from '../core';
 
 /**
  * 字体格式
@@ -290,6 +291,3 @@ export interface TextRenderConfig {
    */
   editable?: boolean;
 }
-
-// 重新导出通用类型以保持兼容性
-export { TextOverflow, WordWrap, TextDirection, WritingMode, FontStyle } from '../common/text';

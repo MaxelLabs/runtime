@@ -4,27 +4,10 @@
  */
 
 // 从 core 模块导入基础类型
-import type { BlendMode } from '../core/enums';
-import type {
-  Transform,
-  AnimationProperties,
-  InteractionProperties,
-  MaterialProperties,
-  RenderingProperties,
-  CommonMetadata,
-} from '../core/interfaces';
+import type { Transform, AnimationProperties } from '../core/interfaces';
 
 // 从 common 模块导入通用类型
-import type {
-  CommonElement,
-  CommonElementType,
-  CommonSpriteElement,
-  CommonImageElement,
-  CommonTextElement,
-  SpriteAtlas,
-  SpriteAnimation,
-  OverflowMode,
-} from '../common';
+import type { CommonElement, SpriteAtlas, SpriteAnimation, OverflowMode } from '../common';
 import type { ImageScaleMode, ImageFilter } from '../common/image';
 import type { TextAlign, FontStyle, FontWeight } from '../common/text';
 
@@ -32,8 +15,9 @@ import type { TextAlign, FontStyle, FontWeight } from '../common/text';
 import type { MediaTextStyle } from '../media/text/base';
 
 // 导入设计特定类型
-import type { DesignElementType, DesignBounds, DesignConstraints, ComponentInstance, IconStyle } from './base';
+import type { DesignBounds, DesignConstraints, ComponentInstance } from './base';
 import type { DesignStyle } from './styles';
+import type { DesignElementType, IconStyle } from './enums';
 
 /**
  * 设计精灵图集 (扩展通用精灵图集)
