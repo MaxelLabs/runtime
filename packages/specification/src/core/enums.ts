@@ -4,6 +4,19 @@
  */
 
 /**
+ * 顶点属性枚举
+ */
+export enum VertexAttribute {
+  Position = 'POSITION',
+  Normal = 'NORMAL',
+  Tangent = 'TANGENT',
+  Color = 'COLOR',
+  TexCoord0 = 'TEXCOORD_0',
+  TexCoord1 = 'TEXCOORD_1',
+  BoneIndex = 'JOINTS_0',
+  BoneWeight = 'WEIGHTS_0',
+}
+/**
  * 材质类型
  */
 export enum MaterialType {

@@ -92,7 +92,7 @@ export interface IResourceLoader {
  */
 export abstract class Resource extends ReferResource {
   /** 资源类型 */
-  readonly type: ResourceType;
+  override readonly type: ResourceType;
   /** 资源URL */
   protected resourceUrl: string = '';
   /** 资源数据 */
@@ -112,7 +112,7 @@ export abstract class Resource extends ReferResource {
   /** 资源版本号 */
   protected version: number = 1;
   /** 资源元数据 */
-  protected metadata: Record<string, any> = {};
+  metadata: Record<string, any> = {};
   /** 资源依赖列表 */
   protected dependencies: Set<Resource> = new Set();
   /** 依赖此资源的资源列表 */
@@ -134,7 +134,7 @@ export abstract class Resource extends ReferResource {
   /**
    * 获取资源URL
    */
-  getUrl(): string {
+  override getUrl(): string {
     return this.resourceUrl;
   }
 
@@ -142,7 +142,7 @@ export abstract class Resource extends ReferResource {
    * 设置资源URL
    * @param url 新的URL
    */
-  setUrl(url: string): void {
+  override setUrl(url: string): void {
     this.resourceUrl = url;
   }
 
@@ -195,12 +195,12 @@ export abstract class Resource extends ReferResource {
     // 子类可以重写此方法来处理状态变化
   }
 
-  /**
-   * 是否已加载
-   */
-  get isLoaded(): boolean {
-    return this.loadState === ResourceLoadState.LOADED;
-  }
+  // /**
+  //  * 是否已加载
+  //  */
+  // override isLoaded(): boolean {
+  //   return this.loadState === ResourceLoadState.LOADED;
+  // }
 
   /**
    * 是否正在加载

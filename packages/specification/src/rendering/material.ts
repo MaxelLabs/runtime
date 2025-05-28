@@ -4,7 +4,7 @@
  */
 
 import type { TextureFilterMode } from '../common';
-import type { CullMode, FillMode, InterpolationMode, MaterialProperties, Vector2, WrapMode } from '../core';
+import type { CullMode, FillMode, InterpolationMode, MaterialProperties, IVector2, WrapMode } from '../core';
 import type { UsdPrim, UsdValue } from '../core/usd';
 
 /**
@@ -1019,11 +1019,11 @@ export interface MaterialKeyframe {
   /**
    * 切线输入
    */
-  inTangent?: Vector2;
+  inTangent?: IVector2;
   /**
    * 切线输出
    */
-  outTangent?: Vector2;
+  outTangent?: IVector2;
 }
 
 /**

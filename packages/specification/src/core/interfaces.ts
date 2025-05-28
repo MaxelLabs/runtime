@@ -12,7 +12,7 @@ import type {
   ClickFeedbackType,
   VisualEffectType,
 } from './enums';
-import type { Color, Vector3, VersionInfo } from './base';
+import type { IColor, IVector3, VersionInfo } from './base';
 
 /**
  * 视觉效果
@@ -135,7 +135,7 @@ export interface MaterialProperties {
   /**
    * 基础颜色
    */
-  baseColor: Color;
+  baseColor: IColor;
   /**
    * 透明度
    */
@@ -151,7 +151,7 @@ export interface MaterialProperties {
   /**
    * 自发光颜色
    */
-  emissiveColor?: Color;
+  emissiveColor?: IColor;
   /**
    * 自发光强度
    */
@@ -179,7 +179,7 @@ export interface MaterialProperties {
   /**
    * 衰减颜色
    */
-  attenuationColor?: Color;
+  attenuationColor?: IColor;
   /**
    * 衰减距离
    */
@@ -211,7 +211,7 @@ export interface MaterialProperties {
   /**
    * 光泽颜色
    */
-  sheenColor?: Color;
+  sheenColor?: IColor;
   /**
    * 光泽粗糙度
    */
@@ -223,7 +223,7 @@ export interface MaterialProperties {
   /**
    * 次表面颜色
    */
-  subsurfaceColor?: Color;
+  subsurfaceColor?: IColor;
   /**
    * 次表面半径
    */
@@ -293,19 +293,19 @@ export interface BoundingBox {
   /**
    * 最小点
    */
-  min: Vector3;
+  min: IVector3;
   /**
    * 最大点
    */
-  max: Vector3;
+  max: IVector3;
   /**
    * 中心点
    */
-  center?: Vector3;
+  center?: IVector3;
   /**
    * 尺寸
    */
-  size?: Vector3;
+  size?: IVector3;
 }
 
 /**
@@ -345,7 +345,7 @@ export interface HoverEffect {
   /**
    * 高亮颜色
    */
-  highlightColor?: Color;
+  highlightColor?: IColor;
   /**
    * 缩放因子
    */
@@ -379,7 +379,7 @@ export interface SelectionBorder {
   /**
    * 边框颜色
    */
-  color: Color;
+  color: IColor;
   /**
    * 边框样式
    */
@@ -405,7 +405,7 @@ export interface SelectionEffect {
   /**
    * 选择颜色
    */
-  selectionColor?: Color;
+  selectionColor?: IColor;
   /**
    * 选择边框
    */

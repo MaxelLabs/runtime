@@ -1,16 +1,4 @@
-/**
- * 顶点属性枚举
- */
-export enum VertexAttribute {
-  Position = 'POSITION',
-  Normal = 'NORMAL',
-  Tangent = 'TANGENT',
-  Color = 'COLOR',
-  TexCoord0 = 'TEXCOORD_0',
-  TexCoord1 = 'TEXCOORD_1',
-  BoneIndex = 'JOINTS_0',
-  BoneWeight = 'WEIGHTS_0',
-}
+import { VertexAttribute } from '@maxellabs/specification';
 
 /**
  * 几何体数据接口

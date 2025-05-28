@@ -2,7 +2,6 @@ import { EventDispatcher } from '../base/event-dispatcher';
 import { Container, ServiceKeys } from '../base/IOC';
 import { ObjectPool } from '../base/object-pool';
 import type { Resource, ResourceType, IResourceLoader, ResourceLoadOptions } from './resource';
-import { ResourceLoadState } from './resource';
 
 /**
  * 资源管理器事件类型

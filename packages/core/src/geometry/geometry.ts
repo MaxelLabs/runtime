@@ -1,4 +1,5 @@
-import type { GeometryPrim, VertexAttribute, BoundingBox } from '@maxellabs/specification';
+import type { GeometryPrim, BoundingBox } from '@maxellabs/specification';
+import { VertexAttribute } from '@maxellabs/specification';
 import { Resource, ResourceType } from '../resource/resource';
 import type { ResourceLoadOptions } from '../resource/resource';
 
@@ -94,11 +95,12 @@ export interface GeometryBuffer {
  */
 export abstract class Geometry extends Resource implements GeometryPrim {
   // GeometryPrim 必需属性
-  readonly typeName: 'Geometry' = 'Geometry';
+  readonly typeName = 'Geometry' as const;
   readonly path: string;
   readonly active: boolean = true;
   readonly attributes: Record<string, any> = {};
-
+  readonly relationships: Record<string, any> = {};
+  readonly children: any[] = [];
   /** 顶点数据缓冲区 */
   protected vertexBuffers: Map<VertexAttribute, GeometryBuffer> = new Map();
   /** 索引数据缓冲区 */
@@ -234,13 +236,13 @@ export abstract class Geometry extends Resource implements GeometryPrim {
    * 更新包围盒
    */
   protected updateBoundingBox(): void {
-    const positionBuffer = this.getVertexAttribute(VertexAttribute.POSITION);
+    const positionBuffer = this.getVertexAttribute(VertexAttribute.Position);
     if (!positionBuffer) {
       this.boundingBox = {
-        min: [0, 0, 0],
-        max: [0, 0, 0],
-        center: [0, 0, 0],
-        size: [0, 0, 0],
+        min: { x: 0, y: 0, z: 0 },
+        max: { x: 0, y: 0, z: 0 },
+        center: { x: 0, y: 0, z: 0 },
+        size: { x: 0, y: 0, z: 0 },
       };
       return;
     }
@@ -279,10 +281,10 @@ export abstract class Geometry extends Resource implements GeometryPrim {
     const centerZ = (minZ + maxZ) / 2;
 
     this.boundingBox = {
-      min: [minX, minY, minZ],
-      max: [maxX, maxY, maxZ],
-      center: [centerX, centerY, centerZ],
-      size: [maxX - minX, maxY - minY, maxZ - minZ],
+      min: { x: minX, y: minY, z: minZ },
+      max: { x: maxX, y: maxY, z: maxZ },
+      center: { x: centerX, y: centerY, z: centerZ },
+      size: { x: maxX - minX, y: maxY - minY, z: maxZ - minZ },
     };
 
     this.needsUpdateBounds = false;
