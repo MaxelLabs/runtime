@@ -3,7 +3,7 @@
  * 几何体和网格渲染相关类型定义
  */
 
-import type { BoundingBox } from '../core';
+import type { BoundingBox, BoundingSphere } from '../core';
 import type { UsdPrim, UsdValue } from '../core/usd';
 
 /**
@@ -113,20 +113,6 @@ export interface GeometryProperties {
    * 是否有顶点颜色
    */
   hasVertexColors: boolean;
-}
-
-/**
- * 边界球
- */
-export interface BoundingSphere {
-  /**
-   * 中心点
-   */
-  center: [number, number, number];
-  /**
-   * 半径
-   */
-  radius: number;
 }
 
 /**
@@ -734,24 +720,6 @@ export enum DeformationType {
 }
 
 /**
- * 几何体优化
- */
-export interface GeometryOptimization {
-  /**
-   * 简化配置
-   */
-  simplification?: SimplificationConfig;
-  /**
-   * 压缩配置
-   */
-  compression?: CompressionConfig;
-  /**
-   * 缓存配置
-   */
-  caching?: CachingConfig;
-}
-
-/**
  * 简化配置
  */
 export interface SimplificationConfig {
@@ -922,7 +890,7 @@ export interface CachingConfig {
   /**
    * 缓存策略
    */
-  strategy: CacheStrategy;
+  strategy: GeoCacheStrategy;
   /**
    * 缓存大小限制
    */
@@ -936,7 +904,7 @@ export interface CachingConfig {
 /**
  * 缓存策略
  */
-export enum CacheStrategy {
+export enum GeoCacheStrategy {
   /**
    * 最近最少使用
    */

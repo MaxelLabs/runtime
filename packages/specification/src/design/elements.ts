@@ -9,11 +9,8 @@ import type { Transform } from '../core/interfaces';
 // 从 common 模块导入通用类型
 import type { CommonBounds, CommonElement, OverflowMode } from '../common';
 import type { ImageScaleMode, ImageFilter } from '../common/image';
-import type { TextAlign, FontStyle, FontWeight } from '../common/text';
+import type { TextAlign, FontStyle, FontWeight, CommonTextStyle } from '../common/text';
 import type { SpriteAtlas, SpriteAnimation } from '../common/sprite';
-
-// 从 media 模块导入文本样式
-import type { MediaTextStyle } from '../media/text/base';
 
 // 导入设计特定类型
 import type { DesignConstraints, ComponentInstance } from './base';
@@ -66,9 +63,9 @@ export interface DesignTextElement extends DesignElement {
    */
   content: string;
   /**
-   * 文本样式（使用媒体模块的样式）
+   * 文本样式（使用通用文本样式）
    */
-  textStyle?: MediaTextStyle;
+  textStyle?: CommonTextStyle;
   /**
    * 文本对齐（使用通用类型）
    */

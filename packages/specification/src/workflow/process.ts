@@ -3,7 +3,7 @@
  * 从设计到上线的全流程数据描述
  */
 
-import type { AssetType } from '../core';
+import type { AssetType, Permission } from '../core';
 import type { UsdPrim, UsdValue } from '../core/usd';
 
 /**
@@ -530,17 +530,6 @@ export interface TeamPermission {
    * 权限列表
    */
   permissions: Permission[];
-}
-
-/**
- * 权限
- */
-export enum Permission {
-  Read = 'read',
-  Write = 'write',
-  Execute = 'execute',
-  Delete = 'delete',
-  Admin = 'admin',
 }
 
 /**

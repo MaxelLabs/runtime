@@ -3,7 +3,7 @@
  * 包含协作者、权限和共享相关类型
  */
 
-import type { SharingSettings } from '../core';
+import type { Permission, SharingSettings } from '../core';
 
 /**
  * 协作信息
@@ -78,19 +78,6 @@ export enum CollaboratorRole {
   Viewer = 'viewer',
   Commenter = 'commenter',
   Guest = 'guest',
-}
-
-/**
- * 权限类型
- */
-export enum Permission {
-  Read = 'read',
-  Write = 'write',
-  Comment = 'comment',
-  Share = 'share',
-  Admin = 'admin',
-  Export = 'export',
-  Delete = 'delete',
 }
 
 /**

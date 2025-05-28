@@ -77,6 +77,28 @@ export enum CacheStrategy {
 }
 
 /**
+ * 几何体优化
+ */
+export interface GeometryOptimization {
+  /**
+   * 顶点合并
+   */
+  mergeVertices: boolean;
+  /**
+   * 索引优化
+   */
+  optimizeIndices: boolean;
+  /**
+   * 简化
+   */
+  simplification: boolean;
+  /**
+   * 压缩
+   */
+  compression: boolean;
+}
+
+/**
  * 共享设置
  */
 export interface SharingSettings {

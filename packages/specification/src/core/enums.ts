@@ -250,6 +250,17 @@ export enum EasingFunction {
 }
 
 /**
+ * 权限
+ */
+export enum Permission {
+  Read = 'read',
+  Write = 'write',
+  Execute = 'execute',
+  Delete = 'delete',
+  Admin = 'admin',
+}
+
+/**
  * 纹理包装模式
  */
 export enum WrapMode {
