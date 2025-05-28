@@ -3,9 +3,9 @@ export * from './interface';
 
 // // 导出数学库类型
 export * from '@maxellabs/math';
-// // 导出规范库
+// 导出规范库
 
-// // export * from '@maxellabs/specification';
+export * from '@maxellabs/specification';
 
 // 全局常量
 export * from './constants';

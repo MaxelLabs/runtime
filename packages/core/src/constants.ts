@@ -112,14 +112,6 @@ export enum PerformanceLevel {
   ULTRA = 'ultra',
 }
 
-// 日志级别
-export enum LogLevel {
-  DEBUG = 0,
-  INFO = 1,
-  WARN = 2,
-  ERROR = 3,
-}
-
 // 对象池默认配置
 export const OBJECT_POOL_CONFIG = {
   DEFAULT_CAPACITY: 10,

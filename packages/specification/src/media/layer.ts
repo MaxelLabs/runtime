@@ -3,6 +3,7 @@
  * 图层系统和合成相关类型定义
  */
 
+import type { GradientStop, GradientType, StrokePosition } from '../core';
 import type { UsdPrim, UsdValue } from '../core/usd';
 
 /**
@@ -65,7 +66,7 @@ export interface Layer extends LayerPrim {
   /**
    * 子图层
    */
-  children?: Layer[];
+  children: Layer[];
   /**
    * 图层内容
    */
@@ -916,24 +917,6 @@ export enum BevelDirection {
 }
 
 /**
- * 描边位置
- */
-export enum StrokePosition {
-  /**
-   * 内部
-   */
-  Inside = 'inside',
-  /**
-   * 中心
-   */
-  Center = 'center',
-  /**
-   * 外部
-   */
-  Outside = 'outside',
-}
-
-/**
  * 描边填充类型
  */
 export enum StrokeFillType {
@@ -1033,38 +1016,6 @@ export interface GradientDefinition {
    * 随机种子
    */
   randomSeed?: number;
-}
-
-/**
- * 渐变类型
- */
-export enum GradientType {
-  /**
-   * 实色
-   */
-  Solid = 'solid',
-  /**
-   * 噪点
-   */
-  Noise = 'noise',
-}
-
-/**
- * 渐变停止点
- */
-export interface GradientStop {
-  /**
-   * 位置 (0-1)
-   */
-  position: number;
-  /**
-   * 颜色
-   */
-  color: [number, number, number, number];
-  /**
-   * 中点
-   */
-  midpoint?: number;
 }
 
 /**

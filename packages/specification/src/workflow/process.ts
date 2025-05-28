@@ -4,7 +4,6 @@
  */
 
 import type { UsdPrim, UsdValue } from '../core/usd';
-import type { DesignDocument } from '../design';
 
 /**
  * 工作流程基础接口

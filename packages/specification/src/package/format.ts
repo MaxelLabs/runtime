@@ -4,7 +4,6 @@
  */
 
 import type { UsdStage } from '../core/usd';
-import { UsdLayer } from '../core/usd';
 import type { DesignDocument } from '../design';
 import type { Workflow } from '../workflow';
 

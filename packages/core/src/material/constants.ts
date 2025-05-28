@@ -13,20 +13,6 @@ export enum CullFace {
 }
 
 /**
- * 混合模式
- */
-export enum BlendMode {
-  /** 不透明 */
-  Opaque,
-  /** 透明 */
-  Transparent,
-  /** 叠加 */
-  Additive,
-  /** 自定义 */
-  Custom,
-}
-
-/**
  * 深度测试函数
  */
 export enum DepthFunc {
