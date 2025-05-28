@@ -14,9 +14,23 @@ import type {
   PerformanceConfig,
   CommonMetadata,
 } from '../../core/interfaces';
+import type {
+  CommonTextElement,
+  CommonTextStyle,
+  TextAlign,
+  VerticalAlign,
+  FontStyle,
+  FontWeight,
+  TextDecoration,
+  TextTransform,
+  TextOverflow,
+  WordWrap,
+  TextShadow,
+} from '../../common';
 import type { TextBackground, TextBorder, TextFill, TextSelection, TextStroke } from './styles';
-import type { BlendMode, VerticalAlign } from '../../core';
-import type { TextFlow, TextOverflow, TextWrap } from './layout';
+import type { BlendMode } from '../../core';
+import type { TextFlow } from './layout';
+
 /**
  * 文本基础接口
  */
@@ -25,154 +39,45 @@ export interface TextPrim extends UsdPrim {
 }
 
 /**
- * 文本元素
+ * 媒体文本元素
+ * 扩展通用文本元素，添加媒体特定的属性
  */
-export interface TextElement extends TextPrim {
-  attributes: {
-    /**
-     * 文本内容
-     */
-    content: UsdValue; // string
-    /**
-     * 字体族
-     */
-    fontFamily: UsdValue; // string
-    /**
-     * 字体大小
-     */
-    fontSize: UsdValue; // float
-    /**
-     * 字体粗细
-     */
-    fontWeight: UsdValue; // FontWeight
-    /**
-     * 字体样式
-     */
-    fontStyle: UsdValue; // FontStyle
-    /**
-     * 文本颜色（使用统一Color）
-     */
-    color: UsdValue; // Color
-    /**
-     * 文本对齐
-     */
-    textAlign: UsdValue; // TextAlign
-    /**
-     * 行高
-     */
-    lineHeight: UsdValue; // float
-    /**
-     * 字符间距
-     */
-    letterSpacing: UsdValue; // float
-    /**
-     * 单词间距
-     */
-    wordSpacing?: UsdValue; // float
-    /**
-     * 段落间距
-     */
-    paragraphSpacing?: UsdValue; // float
-  };
+export interface MediaTextElement extends CommonTextElement {
   /**
-   * 文本样式
+   * 文本样式（媒体特定）
    */
-  style: TextStyle;
+  style: MediaTextStyle;
   /**
    * 文本布局
    */
   layout: TextLayout;
   /**
-   * 文本变换（使用统一Transform）
-   */
-  transform?: Transform;
-  /**
-   * 材质属性（使用统一MaterialProperties）
-   */
-  material?: MaterialProperties;
-  /**
-   * 渲染属性（使用统一RenderingProperties）
-   */
-  rendering?: RenderingProperties;
-  /**
-   * 动画属性（使用统一AnimationProperties）
-   */
-  animation?: AnimationProperties;
-  /**
-   * 交互属性（使用统一InteractionProperties）
-   */
-  interaction?: InteractionProperties;
-  /**
-   * 性能配置（使用统一PerformanceConfig）
+   * 性能配置
    */
   performance?: PerformanceConfig;
-  /**
-   * 元数据（使用统一CommonMetadata）
-   */
-  metadata: CommonMetadata;
 }
 
 /**
- * 字体粗细
+ * 媒体文本样式
+ * 扩展通用文本样式，添加媒体特定的样式属性
  */
-export enum FontWeight {
-  Thin = 100,
-  ExtraLight = 200,
-  Light = 300,
-  Normal = 400,
-  Medium = 500,
-  SemiBold = 600,
-  Bold = 700,
-  ExtraBold = 800,
-  Black = 900,
-}
-
-/**
- * 字体样式
- */
-export enum FontStyle {
+export interface MediaTextStyle extends CommonTextStyle {
   /**
-   * 正常
+   * 文本描边
    */
-  Normal = 'normal',
+  textStroke?: TextStroke;
   /**
-   * 斜体
+   * 文本填充
    */
-  Italic = 'italic',
+  textFill?: TextFill;
   /**
-   * 倾斜
+   * 文本背景
    */
-  Oblique = 'oblique',
-}
-
-/**
- * 文本对齐
- */
-export enum TextAlign {
+  textBackground?: TextBackground;
   /**
-   * 左对齐
+   * 文本选择样式
    */
-  Left = 'left',
-  /**
-   * 居中
-   */
-  Center = 'center',
-  /**
-   * 右对齐
-   */
-  Right = 'right',
-  /**
-   * 两端对齐
-   */
-  Justify = 'justify',
-  /**
-   * 起始对齐
-   */
-  Start = 'start',
-  /**
-   * 结束对齐
-   */
-  End = 'end',
+  selection?: TextSelection;
 }
 
 /**
@@ -274,122 +179,6 @@ export enum TextDecorationStyle {
 }
 
 /**
- * 文本变换类型
- */
-export enum TextTransformType {
-  /**
-   * 无变换
-   */
-  None = 'none',
-  /**
-   * 大写
-   */
-  Uppercase = 'uppercase',
-  /**
-   * 小写
-   */
-  Lowercase = 'lowercase',
-  /**
-   * 首字母大写
-   */
-  Capitalize = 'capitalize',
-  /**
-   * 全角
-   */
-  FullWidth = 'full-width',
-  /**
-   * 半角
-   */
-  FullSizeKana = 'full-size-kana',
-}
-
-/**
- * 文本样式
- */
-export interface TextStyle {
-  /**
-   * 文本装饰
-   */
-  textDecoration?: TextDecoration;
-  /**
-   * 文本变换
-   */
-  textTransform?: TextTransformType;
-  /**
-   * 垂直对齐
-   */
-  verticalAlign?: VerticalAlign;
-  /**
-   * 文本阴影
-   */
-  textShadow?: TextShadow[];
-  /**
-   * 文本描边
-   */
-  textStroke?: TextStroke;
-  /**
-   * 文本填充
-   */
-  textFill?: TextFill;
-  /**
-   * 文本背景
-   */
-  textBackground?: TextBackground;
-  /**
-   * 文本选择样式
-   */
-  selection?: TextSelection;
-  /**
-   * 混合模式（使用统一BlendMode）
-   */
-  blendMode?: BlendMode;
-}
-
-/**
- * 文本装饰
- */
-export interface TextDecoration {
-  /**
-   * 装饰线类型
-   */
-  line: TextDecorationLine;
-  /**
-   * 装饰线样式
-   */
-  style?: TextDecorationStyle;
-  /**
-   * 装饰线颜色（使用统一Color）
-   */
-  color?: Color;
-  /**
-   * 装饰线厚度
-   */
-  thickness?: number;
-}
-
-/**
- * 文本阴影
- */
-export interface TextShadow {
-  /**
-   * X 偏移
-   */
-  offsetX: number;
-  /**
-   * Y 偏移
-   */
-  offsetY: number;
-  /**
-   * 模糊半径
-   */
-  blurRadius: number;
-  /**
-   * 阴影颜色（使用统一Color）
-   */
-  color: Color;
-}
-
-/**
  * 文本布局
  */
 export interface TextLayout {
@@ -402,11 +191,11 @@ export interface TextLayout {
    */
   textFlow?: TextFlow;
   /**
-   * 文本换行
+   * 文本换行（使用通用类型）
    */
-  textWrap?: TextWrap;
+  textWrap?: WordWrap;
   /**
-   * 文本溢出
+   * 文本溢出（使用通用类型）
    */
   textOverflow?: TextOverflow;
   /**
@@ -470,3 +259,20 @@ export interface TextPadding {
    */
   left: number;
 }
+
+// 重新导出通用类型以保持兼容性
+export {
+  TextAlign,
+  VerticalAlign,
+  FontStyle,
+  FontWeight,
+  TextDecoration,
+  TextTransform,
+  TextOverflow,
+  WordWrap,
+  TextShadow,
+} from '../../common';
+
+// 为了保持向后兼容性，创建别名
+export type TextStyle = MediaTextStyle;
+export type TextElement = MediaTextElement;

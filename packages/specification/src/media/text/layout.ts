@@ -189,9 +189,9 @@ export enum OverflowType {
 }
 
 /**
- * 文本溢出
+ * 媒体文本溢出
  */
-export interface TextOverflow {
+export interface MediaTextOverflow {
   /**
    * 溢出处理
    */
@@ -205,6 +205,9 @@ export interface TextOverflow {
    */
   fade?: boolean;
 }
+
+// 为了保持向后兼容性，创建别名
+export type TextOverflow = MediaTextOverflow;
 
 /**
  * 段落对齐

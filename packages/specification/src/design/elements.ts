@@ -12,82 +12,132 @@ import type {
   RenderingProperties,
   CommonMetadata,
 } from '../core/interfaces';
+import type { CommonElement, CommonElementType, ImageScaleMode, ImageFilter, OverflowMode } from '../common';
 import type { TextStyle } from '../media';
 import type { DesignElementType, DesignBounds, DesignConstraints, ComponentInstance, IconStyle } from './base';
 import type { DesignStyle } from './styles';
 
 /**
- * 元素图像缩放模式
+ * 设计精灵图集
  */
-export enum ElementImageScaleMode {
-  Fill = 'fill',
-  Fit = 'fit',
-  Crop = 'crop',
-  Tile = 'tile',
+export interface DesignSpriteAtlas {
+  /**
+   * 图集纹理
+   */
+  texture: string;
+  /**
+   * 帧定义
+   */
+  frames: DesignSpriteFrame[];
+  /**
+   * 图集元数据
+   */
+  metadata?: DesignSpriteAtlasMetadata;
+}
+
+/**
+ * 设计精灵帧
+ */
+export interface DesignSpriteFrame {
+  /**
+   * 帧名称
+   */
+  name: string;
+  /**
+   * 在图集中的位置
+   */
+  x: number;
+  y: number;
+  /**
+   * 帧尺寸
+   */
+  width: number;
+  height: number;
+  /**
+   * 是否旋转
+   */
+  rotated?: boolean;
+  /**
+   * 修剪信息
+   */
+  trimmed?: boolean;
+  /**
+   * 原始尺寸
+   */
+  sourceSize?: { w: number; h: number };
+}
+
+/**
+ * 设计精灵图集元数据
+ */
+export interface DesignSpriteAtlasMetadata {
+  /**
+   * 应用程序
+   */
+  app: string;
+  /**
+   * 版本
+   */
+  version: string;
+  /**
+   * 图像格式
+   */
+  format: string;
+  /**
+   * 图集尺寸
+   */
+  size: { w: number; h: number };
+  /**
+   * 缩放
+   */
+  scale: number;
+}
+
+/**
+ * 设计精灵动画
+ */
+export interface DesignSpriteAnimation {
+  /**
+   * 动画名称
+   */
+  name: string;
+  /**
+   * 帧序列
+   */
+  frames: number[];
+  /**
+   * 帧率
+   */
+  frameRate: number;
+  /**
+   * 是否循环
+   */
+  loop: boolean;
+  /**
+   * 动画属性
+   */
+  properties?: AnimationProperties;
 }
 
 /**
  * 设计元素基础接口
+ * 扩展通用元素接口，添加设计特定的属性
  */
-export interface DesignElement {
+export interface DesignElement extends Omit<CommonElement, 'type' | 'children' | 'constraints'> {
   /**
-   * 元素 ID
-   */
-  id: string;
-  /**
-   * 元素名称
-   */
-  name: string;
-  /**
-   * 元素类型
+   * 元素类型（设计特定）
    */
   type: DesignElementType;
   /**
-   * 位置和尺寸
+   * 位置和尺寸（设计特定）
    */
   bounds: DesignBounds;
-  /**
-   * 变换（使用统一Transform）
-   */
-  transform?: Transform;
-  /**
-   * 可见性
-   */
-  visible: boolean;
-  /**
-   * 锁定状态
-   */
-  locked: boolean;
-  /**
-   * 透明度
-   */
-  opacity: number;
-  /**
-   * 混合模式（使用统一BlendMode）
-   */
-  blendMode?: BlendMode;
-  /**
-   * 材质属性（使用统一MaterialProperties）
-   */
-  material?: MaterialProperties;
-  /**
-   * 渲染属性（使用统一RenderingProperties）
-   */
-  rendering?: RenderingProperties;
-  /**
-   * 动画属性（使用统一AnimationProperties）
-   */
-  animation?: AnimationProperties;
-  /**
-   * 交互属性（使用统一InteractionProperties）
-   */
-  interaction?: InteractionProperties;
   /**
    * 样式
    */
   style?: DesignStyle;
   /**
-   * 约束
+   * 约束（设计特定）
    */
   constraints?: DesignConstraints;
   /**
@@ -98,10 +148,6 @@ export interface DesignElement {
    * 组件实例
    */
   componentInstance?: ComponentInstance;
-  /**
-   * 元数据
-   */
-  metadata?: CommonMetadata;
 }
 
 /**
@@ -129,13 +175,13 @@ export interface ImageElement extends DesignElement {
    */
   source: string;
   /**
-   * 缩放模式
+   * 缩放模式（使用通用类型）
    */
-  scaleMode: ElementImageScaleMode;
+  scaleMode: ImageScaleMode;
   /**
-   * 图像滤镜
+   * 图像滤镜（使用通用类型）
    */
-  filters?: DesignImageFilter[];
+  filters?: ImageFilter[];
   /**
    * 图像配置
    */
@@ -175,119 +221,17 @@ export enum ImageFilterType {
 export interface SpriteElement extends DesignElement {
   type: DesignElementType.Sprite;
   /**
-   * 纹理图集
+   * 纹理图集（设计特定）
    */
-  atlas: SpriteAtlas;
+  atlas: DesignSpriteAtlas;
   /**
    * 当前帧
    */
   currentFrame: number;
   /**
-   * 动画配置
+   * 动画配置（设计特定）
    */
-  spriteAnimation?: SpriteAnimation;
-}
-
-/**
- * 精灵图集
- */
-export interface SpriteAtlas {
-  /**
-   * 图集纹理
-   */
-  texture: string;
-  /**
-   * 帧定义
-   */
-  frames: SpriteFrame[];
-  /**
-   * 图集元数据
-   */
-  metadata?: SpriteAtlasMetadata;
-}
-
-/**
- * 精灵帧
- */
-export interface SpriteFrame {
-  /**
-   * 帧名称
-   */
-  name: string;
-  /**
-   * 在图集中的位置
-   */
-  x: number;
-  y: number;
-  /**
-   * 帧尺寸
-   */
-  width: number;
-  height: number;
-  /**
-   * 是否旋转
-   */
-  rotated?: boolean;
-  /**
-   * 修剪信息
-   */
-  trimmed?: boolean;
-  /**
-   * 原始尺寸
-   */
-  sourceSize?: { w: number; h: number };
-}
-
-/**
- * 精灵图集元数据
- */
-export interface SpriteAtlasMetadata {
-  /**
-   * 应用程序
-   */
-  app: string;
-  /**
-   * 版本
-   */
-  version: string;
-  /**
-   * 图像格式
-   */
-  format: string;
-  /**
-   * 图集尺寸
-   */
-  size: { w: number; h: number };
-  /**
-   * 缩放
-   */
-  scale: number;
-}
-
-/**
- * 精灵动画
- */
-export interface SpriteAnimation {
-  /**
-   * 动画名称
-   */
-  name: string;
-  /**
-   * 帧序列
-   */
-  frames: number[];
-  /**
-   * 帧率
-   */
-  frameRate: number;
-  /**
-   * 是否循环
-   */
-  loop: boolean;
-  /**
-   * 动画属性（使用统一AnimationProperties）
-   */
-  properties?: AnimationProperties;
+  spriteAnimation?: DesignSpriteAnimation;
 }
 
 /**
@@ -314,7 +258,7 @@ export interface IconElement extends DesignElement {
 }
 
 /**
- * 矢量元素
+ * 矢量元素接口
  */
 export interface VectorElement extends DesignElement {
   type: DesignElementType.Vector;
@@ -347,7 +291,7 @@ export interface VectorConfig {
 }
 
 /**
- * 组元素
+ * 组元素接口
  */
 export interface GroupElement extends DesignElement {
   type: DesignElementType.Group;
@@ -362,7 +306,7 @@ export interface GroupElement extends DesignElement {
 }
 
 /**
- * 帧元素
+ * 帧元素接口
  */
 export interface FrameElement extends DesignElement {
   type: DesignElementType.Frame;
@@ -371,21 +315,11 @@ export interface FrameElement extends DesignElement {
    */
   background?: any; // 将在styles.ts中定义具体类型
   /**
-   * 溢出处理
+   * 溢出处理（使用通用类型）
    */
   overflow?: OverflowMode;
   /**
    * 裁剪内容
    */
   clipContent?: boolean;
-}
-
-/**
- * 溢出模式
- */
-export enum OverflowMode {
-  Visible = 'visible',
-  Hidden = 'hidden',
-  Scroll = 'scroll',
-  Auto = 'auto',
 }

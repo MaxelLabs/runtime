@@ -9,17 +9,30 @@ export * from './base';
 // 样式相关
 export * from './styles';
 
-// 布局相关
-export * from './layout';
+// 布局相关 - 选择性导出避免冲突
+export {
+  FlowDirection,
+  TextFlow,
+  ColumnRule,
+  WrapMode,
+  WordBreak,
+  Hyphens,
+  WhiteSpace,
+  TextWrap,
+  OverflowType,
+  MediaTextOverflow,
+  ParagraphAlignment,
+  ParagraphIndent,
+  ParagraphSpacing,
+  LineSpacingType,
+  ListType,
+  MarkerPosition,
+  ListStyle,
+  PageBreak,
+  PageBreakType,
+  TabStop,
+  TabStopType,
+} from './layout';
 
 // 效果相关
-export * from './effects';
-
-// 重新导出常用类型组合
-export * from './base';
-
-export * from './styles';
-
-export * from './layout';
-
 export * from './effects';
