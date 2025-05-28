@@ -1,243 +1,273 @@
-# Maxellabs 设计模块
+# Design 模块
 
-基于OpenUSD格式的设计工具数据规范，支持完整的设计到生产工作流程。
+Maxellabs 3D Engine 的设计系统模块，提供完整的设计工具类型定义和规范。
+
+## 模块概述
+
+Design 模块是基于重构优化的设计系统实现，统一了设计工具、UI 组件、样式系统等相关的类型定义。该模块充分复用了 `common` 和 `core` 模块中的共通类型，减少了重复定义，提高了类型一致性。
+
+## 主要特性
+
+- **类型统一**: 使用 common 和 core 模块的共通类型，避免重复定义
+- **设计元素**: 完整的设计元素类型系统（文本、图像、矢量、组件等）
+- **样式系统**: 填充、描边、阴影、模糊等视觉样式的完整定义
+- **字体排版**: 字体系统、排版配置和文本处理的完整支持
+- **组件库**: 设计组件的定义和管理系统
+- **图标系统**: 图标库的完整管理方案
+- **颜色系统**: 颜色管理和主题系统
+- **协作系统**: 设计协作和版本管理功能
+
+## 核心概念
+
+### 设计元素 (Design Elements)
+
+设计元素是设计系统的核心构成单位，包括：
+
+```typescript
+// 设计元素类型
+enum DesignElementType {
+  Frame = 'frame',
+  Group = 'group',
+  Rectangle = 'rectangle',
+  Ellipse = 'ellipse',
+  Text = 'text',
+  Image = 'image',
+  Sprite = 'sprite',
+  Icon = 'icon',
+  Vector = 'vector',
+  Component = 'component',
+  Instance = 'instance',
+}
+
+// 设计元素基础接口
+interface DesignElement {
+  type: DesignElementType;
+  bounds: DesignBounds;
+  style?: DesignStyle;
+  constraints?: DesignConstraints;
+  children?: DesignElement[];
+}
+```
+
+### 样式系统 (Style System)
+
+样式系统提供了完整的视觉属性定义：
+
+```typescript
+interface DesignStyle {
+  fills?: DesignFill[];
+  strokes?: DesignStroke[];
+  shadows?: DesignShadow[];
+  blur?: DesignBlur;
+  cornerRadius?: number | number[];
+  textStyle?: DesignTextStyle;
+}
+```
+
+### 字体排版 (Typography)
+
+字体排版系统包含字体管理和文本样式：
+
+```typescript
+interface DesignTypographySystem {
+  fontFamilies: DesignFontFamily[];
+  scale: DesignTypographyScale;
+  textStyles: Record<string, DesignTextStyle>;
+  baseConfig?: TypographyBaseConfig;
+}
+```
 
 ## 模块结构
 
-本模块经过重构，将原来的大文件拆分为功能明确的小模块，每个文件控制在300行以内。
+```
+src/design/
+├── index.ts              # 模块入口文件
+├── README.md             # 模块文档
+├── enums.ts              # 枚举定义
+├── base.ts               # 基础类型和接口
+├── elements.ts           # 设计元素定义
+├── styles.ts             # 样式系统
+├── typography.ts         # 字体排版
+├── components.ts         # 组件库
+├── icons.ts              # 图标系统
+├── colors.ts             # 颜色系统
+├── spacing.ts            # 间距系统
+├── themes.ts             # 主题系统
+├── page.ts               # 页面管理
+├── assets.ts             # 资产管理
+├── collaboration.ts      # 协作系统
+├── systems.ts            # 设计系统核心
+└── document.ts           # 设计文档
+```
 
-### 核心模块
+## 类型复用
 
-#### 1. 基础定义 (`base.ts` + `enums.ts`)
+Design 模块充分复用了其他模块的类型定义：
 
-- **base.ts**: 基础接口定义 (128行)
+### 从 Common 模块复用
 
-  - `DesignConstraints`: 设计约束
-  - `ComponentInstance`: 组件实例
-  - `DesignComponentProperty`: 组件属性定义
-  - `DesignComponentVariant`: 组件变体
-  - `DesignIconVariant`: 图标变体
-  - `DesignIconCategory`: 图标分类
-  - `DesignBounds`: 设计边界框
+- **图像类型**: `ImageScaleMode`, `ImageFilter`, `ImageFormat`
+- **文本类型**: `TextAlign`, `FontStyle`, `FontWeight`, `TextDecoration`, `TextTransform`
+- **精灵类型**: `SpriteAtlas`, `SpriteAnimation`, `SpriteType`
+- **变换类型**: `CommonTransform`, `TransformConstraint`
 
-- **enums.ts**: 所有枚举类型定义 (166行)
-  - `DesignElementType`: 设计元素类型
-  - `ConstraintType`: 约束类型
-  - `ComponentPropertyType`: 组件属性类型
-  - `IconStyle`: 图标样式
-  - 样式相关枚举（填充、描边、渐变等）
+### 从 Core 模块复用
 
-#### 2. 设计元素 (`elements.ts`)
-
-设计元素基础接口和特殊元素类型 (391行)
-
-- `DesignElement`: 设计元素基础接口
-- `TextElement`: 文本元素
-- `ImageElement`: 图像元素
-- `SpriteElement`: 精灵元素
-- `IconElement`: 图标元素
-- `VectorElement`: 矢量元素
-- `GroupElement`: 组元素
-- `FrameElement`: 帧元素
-
-#### 3. 样式系统 (`styles.ts`)
-
-视觉样式定义 (372行)
-
-- `DesignStyle`: 设计样式
-- `DesignFill`: 设计填充
-- `DesignStroke`: 设计描边
-- `DesignGradient`: 设计渐变
-- `DesignImage`: 设计图像
-- `DesignShadow`: 设计阴影
-- `DesignBlur`: 设计模糊
-- `DesignTextStyle`: 设计文本样式
-
-#### 4. 字体排版 (`typography.ts`)
-
-字体系统和排版配置 (314行)
-
-- `DesignFontFamily`: 设计字体族
-- `DesignFontFile`: 设计字体文件
-- `DesignTypographyScale`: 设计排版比例
-- `DesignTypographySystem`: 设计排版系统
-- `TextMetrics`: 文本度量
-- `TextRenderConfig`: 文本渲染配置
-
-#### 5. 组件库 (`components.ts`)
-
-组件库管理和组件定义 (334行)
-
-- `DesignComponent`: 设计组件
-- `ComponentState`: 组件状态
-- `ComponentTransition`: 组件状态转换
-- `DesignComponentLibrary`: 设计组件库
-- `ComponentCategory`: 组件分类
-- `ComponentUsageStats`: 组件使用统计
-
-#### 6. 图标库 (`icons.ts`)
-
-图标库系统 (414行)
-
-- `DesignIcon`: 设计图标
-- `IconLicense`: 图标许可
-- `IconUsageStats`: 图标使用统计
-- `DesignIconLibrary`: 设计图标库
-- `IconLibraryConfig`: 图标库配置
-- `IconSearchResult`: 图标搜索结果
-- `IconFilter`: 图标过滤器
-- `IconCollection`: 图标集合
-
-### 子系统模块
-
-#### 7. 颜色系统 (`colors.ts`)
-
-颜色调色板和可访问性 (156行)
-
-- `DesignColorSystem`: 设计颜色系统
-- `DesignColorPalette`: 设计调色板
-- `ColorUsage`: 颜色用途
-- `ColorAccessibility`: 颜色可访问性
-- `DesignColorMode`: 颜色模式
-
-#### 8. 间距系统 (`spacing.ts`)
-
-间距和断点系统 (111行)
-
-- `DesignSpacingSystem`: 设计间距系统
-- `SpacingUsage`: 间距用途
-- `DesignBreakpoints`: 设计断点系统
-- `BreakpointUsage`: 断点用途
-
-#### 9. 主题系统 (`themes.ts`)
-
-主题配置和样式库 (174行)
-
-- `DesignTheme`: 设计主题
-- `DesignStyleLibrary`: 设计样式库
-- `ThemeVariable`: 主题变量
-- `ThemeConfig`: 主题配置
-
-#### 10. 页面管理 (`page.ts`)
-
-页面、画板和网格系统 (394行)
-
-- `DesignPage`: 设计页面
-- `CanvasSize`: 画布尺寸
-- `PageConfig`: 页面配置
-- `PageBackground`: 页面背景
-- `PageGrid`: 页面网格
-- `PageGuide`: 页面指南
-- `PageAnnotation`: 页面注释
-
-#### 11. 资产管理 (`assets.ts`)
-
-资产库和分类管理 (155行)
-
-- `AssetLibrary`: 资产库
-- `DesignAsset`: 设计资产
-- `AssetCategory`: 资产分类
-- `AssetLicense`: 资产许可
-- `AssetResolution`: 资产分辨率
-
-#### 12. 协作系统 (`collaboration.ts`)
-
-协作者和权限管理 (220行)
-
-- `CollaborationInfo`: 协作信息
-- `Collaborator`: 协作者
-- `PermissionSettings`: 权限设置
-- `SharingSettings`: 共享设置
-- `CollaborationHistory`: 协作历史
-
-### 核心系统
-
-#### 13. 设计系统 (`systems.ts`)
-
-完整设计系统核心接口 (243行)
-
-- `DesignSystem`: 设计系统
-- `DesignSystemConfig`: 设计系统配置
-- `ValidationConfig`: 验证配置
-- `ExportConfig`: 导出配置
-- `SyncConfig`: 同步配置
-
-#### 14. 设计文档 (`document.ts`)
-
-设计文档管理和配置 (130行)
-
-- `DesignDocument`: 设计文档
-- `DocumentConfig`: 文档配置
-- `DocumentExportSettings`: 文档导出设置
-- `DocumentPluginConfig`: 文档插件配置
-
-## 技术特性
-
-### 1. 模块化架构
-
-- 每个文件功能明确，便于维护
-- 大部分文件控制在300行以内
-- 清晰的依赖关系和导入结构
-
-### 2. 类型安全
-
-- 完整的TypeScript类型定义
-- 与核心模块的接口一致性
-- 统一的基础类型使用
-
-### 3. 扩展性
-
-- 支持插件系统
-- 灵活的主题和样式覆盖
-- 可配置的验证和导出
-
-### 4. 跨平台兼容
-
-- 基于OpenUSD标准
-- 支持多种设计工具导入导出
-- 统一的数据格式
+- **基础类型**: `Color`, `Transform`, `BlendMode`
+- **渲染类型**: `GradientType`, `StrokePosition`, `GradientStop`
+- **元数据**: `CommonMetadata`
 
 ## 使用示例
 
-### 基础使用
+### 创建设计元素
 
 ```typescript
-import { DesignDocument, DesignSystem, DesignPage, DesignComponent } from '@maxellabs/specification/design';
+import { DesignElement, DesignElementType } from '@maxellabs/specification/design';
 
-// 创建设计文档
-const document: DesignDocument = {
-  id: 'doc-1',
-  name: 'Mobile App Design',
-  type: 'design',
-  version: '1.0.0',
-  pages: [],
-  designSystem: designSystem,
+const textElement: DesignTextElement = {
+  type: DesignElementType.Text,
+  id: 'text-1',
+  name: '标题',
+  bounds: { x: 0, y: 0, width: 200, height: 40 },
+  content: 'Hello World',
+  textStyle: {
+    fontFamily: 'Helvetica',
+    fontSize: 24,
+    fontWeight: FontWeight.Bold,
+    textAlign: TextAlign.Center,
+  },
 };
 ```
 
-### 高级功能
+### 定义样式
 
 ```typescript
-import { DesignColorSystem, DesignIconLibrary, CollaborationInfo, ThemeConfig } from '@maxellabs/specification/design';
+import { DesignStyle, FillType } from '@maxellabs/specification/design';
 
-// 创建完整的设计系统
-const designSystem: DesignSystem = {
-  name: 'Brand Design System',
-  version: '2.0.0',
-  colors: colorSystem,
-  typography: typographySystem,
-  spacing: spacingSystem,
-  components: componentLibrary,
-  icons: iconLibrary,
-  styles: styleLibrary,
-  themes: themes,
-  breakpoints: breakpoints,
+const buttonStyle: DesignStyle = {
+  fills: [{
+    type: FillType.Solid,
+    color: { r: 0.2, g: 0.6, b: 1.0, a: 1.0 },
+    opacity: 1,
+    visible: true,
+  }],
+  cornerRadius: 8,
+  shadows: [{
+    type: ShadowType.Drop,
+    color: { r: 0, g: 0, b: 0, a: 0.1 },
+    offsetX: 0,
+    offsetY: 2,
+    blur: 4,
+    visible: true,
+  }],
 };
 ```
 
-## 代码规范
+### 设置排版系统
 
-- 私有变量不使用下划线前缀
-- 使用统一的基础类型（Transform、Color等）
-- 保持与core模块的接口一致性
-- 遵循ESLint和Prettier配置
+```typescript
+import { DesignTypographySystem } from '@maxellabs/specification/design';
+
+const typographySystem: DesignTypographySystem = {
+  fontFamilies: [
+    {
+      name: 'Helvetica',
+      files: [
+        {
+          weight: 400,
+          style: FontStyle.Normal,
+          url: '/fonts/helvetica-regular.woff2',
+          format: FontFormat.WOFF2,
+        },
+      ],
+      category: FontCategory.SansSerif,
+    },
+  ],
+  scale: {
+    base: 16,
+    ratio: 1.25,
+    sizes: {
+      xs: 12,
+      sm: 14,
+      md: 16,
+      lg: 20,
+      xl: 24,
+    },
+  },
+  textStyles: {
+    body: {
+      fontFamily: 'Helvetica',
+      fontSize: 16,
+      fontWeight: FontWeight.Normal,
+      lineHeight: 1.5,
+    },
+  },
+};
+```
+
+## 设计约束
+
+设计约束系统用于定义元素的布局行为：
+
+```typescript
+import { DesignConstraints, DesignConstraintType } from '@maxellabs/specification/design';
+
+const constraints: DesignConstraints = {
+  horizontal: DesignConstraintType.LeftRight,
+  vertical: DesignConstraintType.Top,
+};
+```
+
+## 组件系统
+
+设计组件支持属性覆盖和变体：
+
+```typescript
+import { ComponentInstance } from '@maxellabs/specification/design';
+
+const buttonInstance: ComponentInstance = {
+  componentId: 'button-component',
+  instanceId: 'button-1',
+  overrides: {
+    'text-layer': { content: '点击我' },
+  },
+  variantProperties: {
+    state: 'default',
+    size: 'medium',
+  },
+};
+```
+
+## 兼容性
+
+为保持向后兼容性，模块提供了类型别名：
+
+```typescript
+// 向后兼容的别名
+export type ConstraintType = DesignConstraintType;
+export type TextElement = DesignTextElement;
+export type ImageElement = DesignImageElement;
+export type SpriteElement = DesignSpriteElement;
+```
+
+## 最佳实践
+
+1. **使用共通类型**: 优先使用 common 和 core 模块中的类型
+2. **保持一致性**: 设计元素的命名和结构保持一致
+3. **类型安全**: 充分利用 TypeScript 的类型检查
+4. **模块化设计**: 按功能模块组织代码结构
+5. **文档完整**: 为每个接口和类型提供完整的注释
+
+## 注意事项
+
+- Design 模块是专门为设计工具和 UI 组件设计的，不应用于 3D 渲染场景
+- 使用时需要同时安装 common 和 core 模块的依赖
+- 设计约束类型 `DesignConstraintType` 与变换约束类型 `TransformConstraintType` 是不同的概念
+
+## 更新日志
+
+### v0.0.6
+- 完成 design 模块重构
+- 使用 common 和 core 模块的共通类型
+- 修复类型冲突和重复定义
+- 添加完整的类型文档和使用示例

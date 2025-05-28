@@ -3,32 +3,10 @@
  * 文本基础类型定义
  */
 
-import type { UsdPrim, UsdValue } from '../../core/usd';
-import type {
-  Transform,
-  Color,
-  AnimationProperties,
-  InteractionProperties,
-  MaterialProperties,
-  RenderingProperties,
-  PerformanceConfig,
-  CommonMetadata,
-} from '../../core/interfaces';
-import type {
-  CommonTextElement,
-  CommonTextStyle,
-  TextAlign,
-  VerticalAlign,
-  FontStyle,
-  FontWeight,
-  TextDecoration,
-  TextTransform,
-  TextOverflow,
-  WordWrap,
-  TextShadow,
-} from '../../common';
+import type { UsdPrim } from '../../core/usd';
+import type { PerformanceConfig } from '../../core/interfaces';
+import type { CommonTextElement, CommonTextStyle, TextOverflow, WordWrap } from '../../common';
 import type { TextBackground, TextBorder, TextFill, TextSelection, TextStroke } from './styles';
-import type { BlendMode } from '../../core';
 import type { TextFlow } from './layout';
 
 /**
@@ -78,6 +56,28 @@ export interface MediaTextStyle extends CommonTextStyle {
    * 文本选择样式
    */
   selection?: TextSelection;
+}
+
+/**
+ * 垂直对齐
+ */
+export enum VerticalAlign {
+  /**
+   * 顶部对齐
+   */
+  Top = 'top',
+  /**
+   * 中间对齐
+   */
+  Middle = 'middle',
+  /**
+   * 底部对齐
+   */
+  Bottom = 'bottom',
+  /**
+   * 基线对齐
+   */
+  Baseline = 'baseline',
 }
 
 /**
@@ -263,7 +263,6 @@ export interface TextPadding {
 // 重新导出通用类型以保持兼容性
 export {
   TextAlign,
-  VerticalAlign,
   FontStyle,
   FontWeight,
   TextDecoration,

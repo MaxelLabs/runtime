@@ -141,7 +141,6 @@ export enum TransfromConstraintType {
    */
   Parent = 'parent',
 }
-
 /**
  * 变换约束
  */
@@ -199,6 +198,10 @@ export interface BoundingBox2D {
  */
 export interface TransformHierarchy {
   /**
+   * 变换ID
+   */
+  id: string;
+  /**
    * 父级变换ID
    */
   parentId?: string;
@@ -221,7 +224,7 @@ export interface TransformHierarchy {
 }
 
 /**
- * 变换动画关键帧
+ * 变换关键帧
  */
 export interface TransformKeyframe {
   /**

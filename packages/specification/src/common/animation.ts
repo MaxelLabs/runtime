@@ -3,6 +3,8 @@
  * 定义所有系统共通的动画相关类型
  */
 
+import type { AnimationKeyframe } from './frame';
+
 /**
  * 动画播放状态
  */
@@ -549,33 +551,4 @@ export interface AnimationTimelineTrack {
    * 混合模式
    */
   blendMode: AnimationBlendMode;
-}
-
-/**
- * 动画关键帧
- */
-export interface AnimationKeyframe {
-  /**
-   * 时间
-   */
-  time: number;
-  /**
-   * 值
-   */
-  value: any;
-  /**
-   * 插值类型
-   */
-  interpolation: 'linear' | 'step' | 'bezier' | 'spline';
-  /**
-   * 缓动函数
-   */
-  easing?: EasingType;
-  /**
-   * 贝塞尔控制点
-   */
-  bezierControlPoints?: {
-    inTangent: [number, number];
-    outTangent: [number, number];
-  };
 }

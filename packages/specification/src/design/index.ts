@@ -3,9 +3,35 @@
  * 提供设计系统的所有类型定义和接口
  */
 
-// 基础定义和枚举
-export * from './base';
-export * from './enums';
+// 只导出接口类型，避免重复
+export type {
+  DesignConstraints,
+  ComponentInstance,
+  DesignComponentProperty,
+  DesignComponentVariant,
+  DesignIconVariant,
+  DesignIconCategory,
+  DesignBounds,
+} from './base';
+
+// 只导出枚举值，一次性导出
+export {
+  DesignElementType,
+  DesignConstraintType,
+  ComponentPropertyType,
+  IconStyle,
+  StyleType,
+  FillType,
+  StrokeType,
+  LineCap,
+  LineJoin,
+  ShadowType,
+  BlurType,
+  ImageScaleMode,
+} from './enums';
+
+// 向后兼容的别名导出
+export type { DesignConstraintType as ConstraintType } from './enums';
 
 // 设计元素
 export * from './elements';

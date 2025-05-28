@@ -4,17 +4,40 @@
  */
 
 /**
- * 缓动函数类型
+ * 播放方向
  */
-export enum EasingType {
-  // 线性
-  Linear = 'linear',
+export enum PlaybackDirection {
+  Normal = 'normal',
+  Reverse = 'reverse',
+  Alternate = 'alternate',
+  AlternateReverse = 'alternate-reverse',
+}
 
-  // Ease 系列
+/**
+ * 动画填充模式
+ */
+export enum AnimationFillMode {
+  None = 'none',
+  Forwards = 'forwards',
+  Backwards = 'backwards',
+  Both = 'both',
+}
+
+/**
+ * 扩展的缓动函数类型（添加更多详细的缓动类型）
+ */
+export enum ExtendedEasingType {
+  // 继承通用缓动类型
+  Linear = 'linear',
   EaseIn = 'ease-in',
   EaseOut = 'ease-out',
   EaseInOut = 'ease-in-out',
+  CubicBezier = 'cubic-bezier',
+  Elastic = 'elastic',
+  Bounce = 'bounce',
+  Back = 'back',
 
+  // 扩展的详细缓动类型
   // Quad 系列
   QuadIn = 'quad-in',
   QuadOut = 'quad-out',
@@ -64,47 +87,6 @@ export enum EasingType {
   BounceIn = 'bounce-in',
   BounceOut = 'bounce-out',
   BounceInOut = 'bounce-in-out',
-
-  // 自定义贝塞尔
-  CubicBezier = 'cubic-bezier',
-}
-
-// /**
-//  * 缓动函数定义
-//  */
-// export interface EasingFunction {
-//   /**
-//    * 缓动类型
-//    */
-//   type: EasingType;
-//   /**
-//    * 贝塞尔控制点（仅用于 CubicBezier）
-//    */
-//   controlPoints?: [number, number, number, number];
-//   /**
-//    * 自定义参数
-//    */
-//   parameters?: Record<string, number>;
-// }
-
-/**
- * 播放方向
- */
-export enum PlaybackDirection {
-  Normal = 'normal',
-  Reverse = 'reverse',
-  Alternate = 'alternate',
-  AlternateReverse = 'alternate-reverse',
-}
-
-/**
- * 动画填充模式
- */
-export enum AnimationFillMode {
-  None = 'none',
-  Forwards = 'forwards',
-  Backwards = 'backwards',
-  Both = 'both',
 }
 
 /**

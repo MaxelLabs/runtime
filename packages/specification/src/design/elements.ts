@@ -3,6 +3,7 @@
  * 设计工具中的元素类型和属性
  */
 
+// 从 core 模块导入基础类型
 import type { BlendMode } from '../core/enums';
 import type {
   Transform,
@@ -12,31 +13,40 @@ import type {
   RenderingProperties,
   CommonMetadata,
 } from '../core/interfaces';
-import type { CommonElement, CommonElementType, ImageScaleMode, ImageFilter, OverflowMode } from '../common';
-import type { TextStyle } from '../media';
+
+// 从 common 模块导入通用类型
+import type {
+  CommonElement,
+  CommonElementType,
+  CommonSpriteElement,
+  CommonImageElement,
+  CommonTextElement,
+  SpriteAtlas,
+  SpriteAnimation,
+  OverflowMode,
+} from '../common';
+import type { ImageScaleMode, ImageFilter } from '../common/image';
+import type { TextAlign, FontStyle, FontWeight } from '../common/text';
+
+// 从 media 模块导入文本样式
+import type { MediaTextStyle } from '../media/text/base';
+
+// 导入设计特定类型
 import type { DesignElementType, DesignBounds, DesignConstraints, ComponentInstance, IconStyle } from './base';
 import type { DesignStyle } from './styles';
 
 /**
- * 设计精灵图集
+ * 设计精灵图集 (扩展通用精灵图集)
  */
-export interface DesignSpriteAtlas {
+export interface DesignSpriteAtlas extends SpriteAtlas {
   /**
-   * 图集纹理
+   * 设计特定的元数据
    */
-  texture: string;
-  /**
-   * 帧定义
-   */
-  frames: DesignSpriteFrame[];
-  /**
-   * 图集元数据
-   */
-  metadata?: DesignSpriteAtlasMetadata;
+  designMetadata?: DesignSpriteAtlasMetadata;
 }
 
 /**
- * 设计精灵帧
+ * 设计精灵帧 (保持设计工具特定的格式)
  */
 export interface DesignSpriteFrame {
   /**
@@ -94,25 +104,13 @@ export interface DesignSpriteAtlasMetadata {
 }
 
 /**
- * 设计精灵动画
+ * 设计精灵动画 (扩展通用精灵动画)
  */
-export interface DesignSpriteAnimation {
+export interface DesignSpriteAnimation extends SpriteAnimation {
   /**
-   * 动画名称
-   */
-  name: string;
-  /**
-   * 帧序列
+   * 帧序列 (设计工具使用数字索引)
    */
   frames: number[];
-  /**
-   * 帧率
-   */
-  frameRate: number;
-  /**
-   * 是否循环
-   */
-  loop: boolean;
   /**
    * 动画属性
    */
@@ -123,15 +121,19 @@ export interface DesignSpriteAnimation {
  * 设计元素基础接口
  * 扩展通用元素接口，添加设计特定的属性
  */
-export interface DesignElement extends Omit<CommonElement, 'type' | 'children' | 'constraints'> {
+export interface DesignElement extends Omit<CommonElement, 'type' | 'children' | 'constraints' | 'transform'> {
   /**
    * 元素类型（设计特定）
    */
   type: DesignElementType;
   /**
-   * 位置和尺寸（设计特定）
+   * 位置和尺寸（设计特定的 bounds 而不是 transform）
    */
   bounds: DesignBounds;
+  /**
+   * 变换信息（可选，用于3D变换）
+   */
+  transform?: Transform;
   /**
    * 样式
    */
@@ -141,7 +143,7 @@ export interface DesignElement extends Omit<CommonElement, 'type' | 'children' |
    */
   constraints?: DesignConstraints;
   /**
-   * 子元素
+   * 子元素（设计特定）
    */
   children?: DesignElement[];
   /**
@@ -151,24 +153,36 @@ export interface DesignElement extends Omit<CommonElement, 'type' | 'children' |
 }
 
 /**
- * 文本元素接口
+ * 设计文本元素接口
  */
-export interface TextElement extends DesignElement {
+export interface DesignTextElement extends DesignElement {
   type: DesignElementType.Text;
   /**
    * 文本内容
    */
   content: string;
   /**
-   * 文本样式
+   * 文本样式（使用媒体模块的样式）
    */
-  textStyle?: TextStyle;
+  textStyle?: MediaTextStyle;
+  /**
+   * 文本对齐（使用通用类型）
+   */
+  textAlign?: TextAlign;
+  /**
+   * 字体样式（使用通用类型）
+   */
+  fontStyle?: FontStyle;
+  /**
+   * 字体粗细（使用通用类型）
+   */
+  fontWeight?: FontWeight;
 }
 
 /**
- * 图像元素接口
+ * 设计图像元素接口
  */
-export interface ImageElement extends DesignElement {
+export interface DesignImageElement extends DesignElement {
   type: DesignElementType.Image;
   /**
    * 图像源
@@ -183,49 +197,45 @@ export interface ImageElement extends DesignElement {
    */
   filters?: ImageFilter[];
   /**
-   * 图像配置
+   * 设计特定的图像配置
    */
-  imageConfig?: any; // 将在styles.ts中定义具体类型
+  designImageConfig?: DesignImageConfig;
 }
 
 /**
- * 图像滤镜
+ * 设计图像配置
  */
-export interface DesignImageFilter {
+export interface DesignImageConfig {
   /**
-   * 滤镜类型
+   * 图像替换
    */
-  type: ImageFilterType;
+  imageReplacement?: string;
   /**
-   * 滤镜值
+   * 图像库链接
    */
-  value: number;
+  libraryLink?: string;
+  /**
+   * 裁剪信息
+   */
+  cropInfo?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
 }
 
 /**
- * 图像滤镜类型
+ * 设计精灵元素接口
  */
-export enum ImageFilterType {
-  Exposure = 'exposure',
-  Contrast = 'contrast',
-  Saturation = 'saturation',
-  Temperature = 'temperature',
-  Tint = 'tint',
-  Highlights = 'highlights',
-  Shadows = 'shadows',
-}
-
-/**
- * 精灵元素接口
- */
-export interface SpriteElement extends DesignElement {
+export interface DesignSpriteElement extends DesignElement {
   type: DesignElementType.Sprite;
   /**
    * 纹理图集（设计特定）
    */
   atlas: DesignSpriteAtlas;
   /**
-   * 当前帧
+   * 当前帧（使用数字索引）
    */
   currentFrame: number;
   /**
@@ -235,9 +245,9 @@ export interface SpriteElement extends DesignElement {
 }
 
 /**
- * 图标元素接口
+ * 设计图标元素接口
  */
-export interface IconElement extends DesignElement {
+export interface DesignIconElement extends DesignElement {
   type: DesignElementType.Icon;
   /**
    * 图标名称
@@ -258,9 +268,9 @@ export interface IconElement extends DesignElement {
 }
 
 /**
- * 矢量元素接口
+ * 设计矢量元素接口
  */
-export interface VectorElement extends DesignElement {
+export interface DesignVectorElement extends DesignElement {
   type: DesignElementType.Vector;
   /**
    * 路径数据
@@ -269,13 +279,13 @@ export interface VectorElement extends DesignElement {
   /**
    * 矢量配置
    */
-  vectorConfig?: VectorConfig;
+  vectorConfig?: DesignVectorConfig;
 }
 
 /**
- * 矢量配置
+ * 设计矢量配置
  */
-export interface VectorConfig {
+export interface DesignVectorConfig {
   /**
    * 闭合路径
    */
@@ -291,9 +301,9 @@ export interface VectorConfig {
 }
 
 /**
- * 组元素接口
+ * 设计组合元素接口
  */
-export interface GroupElement extends DesignElement {
+export interface DesignGroupElement extends DesignElement {
   type: DesignElementType.Group;
   /**
    * 剪切路径
@@ -306,9 +316,9 @@ export interface GroupElement extends DesignElement {
 }
 
 /**
- * 帧元素接口
+ * 设计帧元素接口
  */
-export interface FrameElement extends DesignElement {
+export interface DesignFrameElement extends DesignElement {
   type: DesignElementType.Frame;
   /**
    * 背景
@@ -323,3 +333,20 @@ export interface FrameElement extends DesignElement {
    */
   clipContent?: boolean;
 }
+
+// 为保持向后兼容性，导出别名
+export type TextElement = DesignTextElement;
+export type ImageElement = DesignImageElement;
+export type SpriteElement = DesignSpriteElement;
+export type IconElement = DesignIconElement;
+export type VectorElement = DesignVectorElement;
+export type GroupElement = DesignGroupElement;
+export type FrameElement = DesignFrameElement;
+
+// 重新导出通用类型
+export type {
+  CommonElement as BaseElement,
+  CommonImageElement,
+  CommonTextElement,
+  CommonSpriteElement,
+} from '../common';

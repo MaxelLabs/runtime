@@ -30,6 +30,24 @@ export enum TextAlign {
 }
 
 /**
+ * 文本方向
+ */
+export enum TextDirection {
+  /**
+   * 从左到右
+   */
+  LeftToRight = 'ltr',
+  /**
+   * 从右到左
+   */
+  RightToLeft = 'rtl',
+  /**
+   * 自动
+   */
+  Auto = 'auto',
+}
+
+/**
  * 字体样式
  */
 export enum FontStyle {

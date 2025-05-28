@@ -3,6 +3,13 @@
  * 设计系统相关的枚举类型
  */
 
+// 从 common 模块导入共通的枚举类型
+import type { ImageScaleMode } from '../common/image';
+import type { TransfromConstraintType as TransformConstraintType } from '../common/transform';
+
+// 重新导出 common 中的类型
+export { ImageScaleMode } from '../common/image';
+
 /**
  * 设计元素类型
  */
@@ -25,9 +32,9 @@ export enum DesignElementType {
 }
 
 /**
- * 约束类型
+ * 设计约束类型 (设计特定的约束类型)
  */
-export enum ConstraintType {
+export enum DesignConstraintType {
   Left = 'left',
   Right = 'right',
   Center = 'center',
@@ -37,6 +44,10 @@ export enum ConstraintType {
   Bottom = 'bottom',
   TopBottom = 'top-bottom',
 }
+
+// 为保持向后兼容性，创建别名
+export type ConstraintType = DesignConstraintType;
+export const ConstraintType = DesignConstraintType;
 
 /**
  * 组件属性类型
@@ -104,16 +115,6 @@ export enum LineJoin {
   Miter = 'miter',
   Round = 'round',
   Bevel = 'bevel',
-}
-
-/**
- * 图像缩放模式
- */
-export enum ImageScaleMode {
-  Fill = 'fill',
-  Fit = 'fit',
-  Crop = 'crop',
-  Tile = 'tile',
 }
 
 /**

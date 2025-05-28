@@ -141,7 +141,7 @@ export interface ParticleConfig {
  */
 export interface ParticleRenderer {
   /**
-   * 渲染模式
+   * 渲染模式（使用core类型）
    */
   mode: RenderMode;
   /**
@@ -153,7 +153,7 @@ export interface ParticleRenderer {
    */
   texture?: string;
   /**
-   * 混合模式
+   * 混合模式（使用core类型）
    */
   blendMode: BlendMode;
   /**

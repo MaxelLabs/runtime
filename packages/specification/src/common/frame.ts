@@ -96,7 +96,7 @@ export enum FrameDataType {
 /**
  * 关键帧
  */
-export interface Keyframe {
+export interface AnimationKeyframe {
   /**
    * 时间（秒）
    */
@@ -131,9 +131,13 @@ export interface AnimationTrack {
    */
   name: string;
   /**
+   * 目标路径
+   */
+  targetPath: string;
+  /**
    * 目标属性
    */
-  property: string;
+  propertyName: string;
   /**
    * 数据类型
    */
@@ -141,7 +145,7 @@ export interface AnimationTrack {
   /**
    * 关键帧列表
    */
-  keyframes: Keyframe[];
+  keyframes: AnimationKeyframe[];
   /**
    * 是否启用
    */

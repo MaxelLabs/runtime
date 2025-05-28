@@ -18,7 +18,7 @@ export * from './sprite';
 // 帧动画相关
 export * from './frame';
 
-// 变换相关 - 重命名导出以避免冲突
+// 变换相关
 export * from './transform';
 
 // 动画相关 - 重命名导出以避免冲突

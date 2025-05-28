@@ -4,20 +4,13 @@
  */
 
 import type { EasingFunction } from '../core';
+import type { AnimationTimeline } from '../common';
 import type { PlaybackDirection, AnimationFillMode, TransformFunction } from './easing';
 
 /**
- * 时间轴
+ * 时间轴（使用通用类型作为基础）
  */
-export interface Timeline {
-  /**
-   * 时间轴名称
-   */
-  name: string;
-  /**
-   * 持续时间（毫秒）
-   */
-  duration: number;
+export interface Timeline extends Omit<AnimationTimeline, 'tracks' | 'events'> {
   /**
    * 播放速度
    */
@@ -69,7 +62,7 @@ export interface TimelineAnimation {
    */
   duration: number;
   /**
-   * 缓动函数
+   * 缓动函数（使用core类型）
    */
   easing: EasingFunction;
   /**
@@ -107,3 +100,6 @@ export interface PropertyAnimation {
    */
   transform?: TransformFunction;
 }
+
+// 重新导出通用类型以保持兼容性
+export { AnimationTimeline, AnimationTimelineTrack } from '../common';

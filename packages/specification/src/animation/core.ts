@@ -6,6 +6,7 @@
 import type { UsdPrim, UsdValue } from '../core/usd';
 import type { InterpolationMode } from '../core/enums';
 import type { CommonMetadata } from '../core/interfaces';
+import type { AnimationEvent, AnimationKeyframe, AnimationTrack } from '../common';
 
 /**
  * 动画基础接口
@@ -32,9 +33,9 @@ export interface AnimationClip extends AnimationPrim {
      */
     frameRate: UsdValue; // float
     /**
-     * 循环模式
+     * 循环模式（使用通用类型）
      */
-    loopMode: UsdValue; // LoopMode
+    loopMode: UsdValue; // AnimationLoopMode
     /**
      * 开始时间
      */
@@ -49,7 +50,7 @@ export interface AnimationClip extends AnimationPrim {
    */
   tracks: AnimationTrack[];
   /**
-   * 动画事件
+   * 动画事件（使用通用类型）
    */
   events?: AnimationEvent[];
   /**
@@ -59,79 +60,7 @@ export interface AnimationClip extends AnimationPrim {
 }
 
 /**
- * 动画轨道
- */
-export interface AnimationTrack {
-  /**
-   * 轨道名称
-   */
-  name: string;
-  /**
-   * 目标路径
-   */
-  targetPath: string;
-  /**
-   * 属性名称
-   */
-  propertyName: string;
-  /**
-   * 轨道类型
-   */
-  type: AnimationTrackType;
-  /**
-   * 关键帧
-   */
-  keyframes: Keyframe[];
-  /**
-   * 插值模式
-   */
-  interpolation: InterpolationMode;
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
-}
-
-/**
- * 动画轨道类型
- */
-export enum AnimationTrackType {
-  Position = 'position',
-  Rotation = 'rotation',
-  Scale = 'scale',
-  Color = 'color',
-  Opacity = 'opacity',
-  Custom = 'custom',
-}
-
-/**
- * 关键帧
- */
-export interface Keyframe {
-  /**
-   * 时间（秒）
-   */
-  time: number;
-  /**
-   * 值
-   */
-  value: any;
-  /**
-   * 输入切线
-   */
-  inTangent?: Tangent;
-  /**
-   * 输出切线
-   */
-  outTangent?: Tangent;
-  /**
-   * 插值模式
-   */
-  interpolation?: InterpolationMode;
-}
-
-/**
- * 切线
+ * 切线（保留，因为common中的AnimationKeyframe使用不同的结构）
  */
 export interface Tangent {
   /**
@@ -145,23 +74,19 @@ export interface Tangent {
 }
 
 /**
- * 动画事件
+ * USD特定的关键帧（扩展通用关键帧）
  */
-export interface AnimationEvent {
+export interface UsdKeyframe extends Omit<AnimationKeyframe, 'interpolation' | 'bezierControlPoints'> {
   /**
-   * 事件名称
+   * 输入切线
    */
-  name: string;
+  inTangent?: Tangent;
   /**
-   * 触发时间
+   * 输出切线
    */
-  time: number;
+  outTangent?: Tangent;
   /**
-   * 事件参数
+   * 插值模式（使用core类型）
    */
-  parameters?: Record<string, any>;
-  /**
-   * 事件回调
-   */
-  callback?: string;
+  interpolation?: InterpolationMode;
 }

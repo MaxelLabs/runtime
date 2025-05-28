@@ -5,7 +5,7 @@
 
 import type {
   DesignElementType,
-  ConstraintType,
+  DesignConstraintType,
   ComponentPropertyType,
   IconStyle,
   StyleType,
@@ -13,14 +13,16 @@ import type {
   StrokeType,
   LineCap,
   LineJoin,
-  ImageScaleMode,
   ShadowType,
   BlurType,
 } from './enums';
 
+// 从 common 模块导入共通类型
+import type { ImageScaleMode } from '../common/image';
+
 export type {
   DesignElementType,
-  ConstraintType,
+  DesignConstraintType,
   ComponentPropertyType,
   IconStyle,
   StyleType,
@@ -33,6 +35,9 @@ export type {
   BlurType,
 };
 
+// 为向后兼容性导出别名
+export type ConstraintType = DesignConstraintType;
+
 /**
  * 设计约束
  */
@@ -40,11 +45,11 @@ export interface DesignConstraints {
   /**
    * 水平约束
    */
-  horizontal: ConstraintType;
+  horizontal: DesignConstraintType;
   /**
    * 垂直约束
    */
-  vertical: ConstraintType;
+  vertical: DesignConstraintType;
 }
 
 /**

@@ -198,7 +198,7 @@ export interface CommonImageElement extends Omit<CommonElement, 'metadata'> {
    */
   imageTransform?: ImageTransform;
   /**
-   * 色调映射颜色
+   * 色调颜色
    */
   tintColor?: Color;
   /**
@@ -387,3 +387,6 @@ export interface NineSliceConfig {
    */
   fillCenter?: boolean;
 }
+
+// 重新导出core中的类型以保持兼容性
+export type { ImageFilter } from '../core';
