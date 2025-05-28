@@ -4,8 +4,7 @@
  */
 
 import type { CommonElement, CommonElementType } from './elements';
-import type { Color } from '../core/interfaces';
-import type { VerticalAlign } from '../core';
+import type { Color, VerticalAlign } from '../core';
 
 /**
  * 文本对齐方式

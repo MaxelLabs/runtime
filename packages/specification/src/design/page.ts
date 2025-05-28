@@ -3,8 +3,8 @@
  * 包含页面、画板、网格和指南相关类型
  */
 
+import type { CommonBounds } from '../common';
 import type { GradientStop, GradientType } from '../core';
-import type { DesignBounds } from './base';
 import type { DesignElement } from './elements';
 
 /**
@@ -341,7 +341,7 @@ export interface PageAnnotation {
   /**
    * 注释位置
    */
-  position: DesignBounds;
+  position: CommonBounds;
   /**
    * 注释类型
    */

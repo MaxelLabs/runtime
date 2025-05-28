@@ -3,9 +3,9 @@
  * 时间轴和属性动画的定义
  */
 
-import type { EasingFunction } from '../core';
+import type { EasingFunction, TransformType } from '../core';
 import type { AnimationTimeline } from '../common';
-import type { PlaybackDirection, AnimationFillMode, TransformFunction } from './easing';
+import type { PlaybackDirection } from './easing';
 
 /**
  * 时间轴（使用通用类型作为基础）
@@ -26,7 +26,7 @@ export interface Timeline extends Omit<AnimationTimeline, 'tracks' | 'events'> {
   /**
    * 填充模式
    */
-  fillMode: AnimationFillMode;
+  fillMode: FillMode;
   /**
    * 延迟时间
    */
@@ -98,7 +98,7 @@ export interface PropertyAnimation {
   /**
    * 变换函数
    */
-  transform?: TransformFunction;
+  transform?: TransformType;
 }
 
 // 重新导出通用类型以保持兼容性

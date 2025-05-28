@@ -20,9 +20,9 @@ export interface AnimationPrim extends Omit<UsdPrim, 'metadata'> {
 }
 
 /**
- * 动画剪辑
+ * USD动画剪辑（USD特有的动画剪辑定义）
  */
-export interface AnimationClip extends AnimationPrim {
+export interface UsdAnimationClip extends AnimationPrim {
   attributes: {
     /**
      * 动画名称
@@ -60,9 +60,9 @@ export interface AnimationClip extends AnimationPrim {
 }
 
 /**
- * 切线（保留，因为common中的AnimationKeyframe使用不同的结构）
+ * USD特有的切线定义
  */
-export interface Tangent {
+export interface UsdTangent {
   /**
    * X 分量
    */
@@ -80,13 +80,31 @@ export interface UsdKeyframe extends Omit<AnimationKeyframe, 'interpolation' | '
   /**
    * 输入切线
    */
-  inTangent?: Tangent;
+  inTangent?: UsdTangent;
   /**
    * 输出切线
    */
-  outTangent?: Tangent;
+  outTangent?: UsdTangent;
   /**
    * 插值模式（使用core类型）
    */
   interpolation?: InterpolationMode;
+}
+
+/**
+ * USD特有的动画轨道
+ */
+export interface UsdAnimationTrack extends Omit<AnimationTrack, 'keyframes'> {
+  /**
+   * USD关键帧列表
+   */
+  keyframes: UsdKeyframe[];
+  /**
+   * USD属性路径
+   */
+  usdPath: string;
+  /**
+   * USD属性类型
+   */
+  usdType: string;
 }

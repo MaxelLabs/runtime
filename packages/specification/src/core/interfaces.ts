@@ -536,3 +536,231 @@ export enum RotationOrder {
    */
   ZYX = 'zyx',
 }
+
+/**
+ * 通用变换函数
+ * 适用于动画、设计等所有需要变换的模块
+ */
+export interface TransformFunction {
+  /**
+   * 函数类型
+   */
+  type: string;
+  /**
+   * 参数
+   */
+  parameters: number[];
+}
+
+/**
+ * 通用约束配置
+ * 适用于布局、设计系统等
+ */
+export interface ConstraintConfig {
+  /**
+   * 水平约束
+   */
+  horizontal: string;
+  /**
+   * 垂直约束
+   */
+  vertical: string;
+}
+
+/**
+ * 通用动画配置基础接口
+ * 适用于所有动画系统的基础配置
+ */
+export interface BaseAnimationConfig {
+  /**
+   * 动画名称
+   */
+  name: string;
+  /**
+   * 持续时间（秒）
+   */
+  duration: number;
+  /**
+   * 延迟时间（秒）
+   */
+  delay?: number;
+  /**
+   * 播放速度
+   */
+  speed?: number;
+  /**
+   * 循环模式
+   */
+  loopMode?: string;
+  /**
+   * 循环次数（-1为无限循环）
+   */
+  loopCount?: number;
+  /**
+   * 缓动函数
+   */
+  easing?: string;
+  /**
+   * 自定义缓动参数
+   */
+  easingParams?: number[];
+  /**
+   * 是否自动播放
+   */
+  autoPlay?: boolean;
+  /**
+   * 是否自动销毁
+   */
+  autoDestroy?: boolean;
+  /**
+   * 动画权重
+   */
+  weight?: number;
+  /**
+   * 混合模式
+   */
+  blendMode?: string;
+}
+
+/**
+ * 通用事件配置
+ * 适用于动画、交互等所有需要事件的模块
+ */
+export interface BaseEvent {
+  /**
+   * 事件类型
+   */
+  type: string;
+  /**
+   * 事件名称
+   */
+  name?: string;
+  /**
+   * 触发时间（秒）
+   */
+  time: number;
+  /**
+   * 事件参数
+   */
+  parameters?: Record<string, any>;
+  /**
+   * 事件回调
+   */
+  callback?: string;
+}
+
+/**
+ * 通用控制器接口
+ * 适用于动画、媒体播放等所有需要控制的模块
+ */
+export interface BaseController {
+  /**
+   * 当前播放状态
+   */
+  playState: string;
+  /**
+   * 当前时间
+   */
+  currentTime: number;
+  /**
+   * 播放速度
+   */
+  playbackSpeed: number;
+  /**
+   * 是否启用
+   */
+  enabled: boolean;
+  /**
+   * 权重
+   */
+  weight: number;
+  /**
+   * 当前循环次数
+   */
+  currentLoop: number;
+  /**
+   * 播放方向（1为正向，-1为反向）
+   */
+  direction: number;
+}
+
+/**
+ * 通用组件属性定义
+ * 适用于设计系统、UI组件等
+ */
+export interface BaseComponentProperty {
+  /**
+   * 属性名称
+   */
+  name: string;
+  /**
+   * 属性类型
+   */
+  type: string;
+  /**
+   * 默认值
+   */
+  defaultValue?: any;
+  /**
+   * 可选值
+   */
+  options?: any[];
+}
+
+/**
+ * 通用样式配置
+ * 适用于设计、UI、渲染等所有需要样式的模块
+ */
+export interface BaseStyle {
+  /**
+   * 样式名称
+   */
+  name: string;
+  /**
+   * 样式类型
+   */
+  type: string;
+  /**
+   * 样式值
+   */
+  value: any;
+  /**
+   * 是否启用
+   */
+  enabled?: boolean;
+}
+
+/**
+ * 通用参数定义
+ * 适用于动画、组件、系统等所有需要参数的模块
+ */
+export interface BaseParameter {
+  /**
+   * 参数名称
+   */
+  name: string;
+  /**
+   * 参数类型
+   */
+  type: string;
+  /**
+   * 默认值
+   */
+  defaultValue: any;
+  /**
+   * 当前值
+   */
+  value: any;
+  /**
+   * 最小值（数值类型）
+   */
+  min?: number;
+  /**
+   * 最大值（数值类型）
+   */
+  max?: number;
+  /**
+   * 描述
+   */
+  description?: string;
+}

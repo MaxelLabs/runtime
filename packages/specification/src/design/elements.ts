@@ -7,7 +7,7 @@
 import type { Transform } from '../core/interfaces';
 
 // 从 common 模块导入通用类型
-import type { CommonElement, OverflowMode } from '../common';
+import type { CommonBounds, CommonElement, OverflowMode } from '../common';
 import type { ImageScaleMode, ImageFilter } from '../common/image';
 import type { TextAlign, FontStyle, FontWeight } from '../common/text';
 import type { SpriteAtlas, SpriteAnimation } from '../common/sprite';
@@ -16,9 +16,10 @@ import type { SpriteAtlas, SpriteAnimation } from '../common/sprite';
 import type { MediaTextStyle } from '../media/text/base';
 
 // 导入设计特定类型
-import type { DesignBounds, DesignConstraints, ComponentInstance } from './base';
+import type { DesignConstraints, ComponentInstance } from './base';
 import type { DesignStyle } from './styles';
-import type { DesignElementType, IconStyle } from './enums';
+import type { IconStyle } from './enums';
+import type { ElementType } from '../core';
 
 /**
  * 设计元素基础接口
@@ -28,11 +29,11 @@ export interface DesignElement extends Omit<CommonElement, 'type' | 'children' |
   /**
    * 元素类型（设计特定）
    */
-  type: DesignElementType;
+  type: ElementType;
   /**
    * 位置和尺寸（设计特定的 bounds 而不是 transform）
    */
-  bounds: DesignBounds;
+  bounds: CommonBounds;
   /**
    * 变换信息（可选，用于3D变换）
    */
@@ -59,7 +60,7 @@ export interface DesignElement extends Omit<CommonElement, 'type' | 'children' |
  * 设计文本元素接口（扩展通用文本元素）
  */
 export interface DesignTextElement extends DesignElement {
-  type: DesignElementType.Text;
+  type: ElementType.Text;
   /**
    * 文本内容
    */
@@ -86,7 +87,7 @@ export interface DesignTextElement extends DesignElement {
  * 设计图像元素接口（扩展通用图像元素）
  */
 export interface DesignImageElement extends DesignElement {
-  type: DesignElementType.Image;
+  type: ElementType.Image;
   /**
    * 图像源
    */
@@ -132,7 +133,7 @@ export interface DesignImageConfig {
  * 设计精灵元素接口（扩展通用精灵元素）
  */
 export interface DesignSpriteElement extends DesignElement {
-  type: DesignElementType.Sprite;
+  type: ElementType.Sprite;
   /**
    * 纹理图集（使用通用类型）
    */
@@ -151,7 +152,7 @@ export interface DesignSpriteElement extends DesignElement {
  * 设计图标元素接口
  */
 export interface DesignIconElement extends DesignElement {
-  type: DesignElementType.Icon;
+  type: ElementType.Icon;
   /**
    * 图标名称
    */
@@ -174,7 +175,7 @@ export interface DesignIconElement extends DesignElement {
  * 设计矢量元素接口
  */
 export interface DesignVectorElement extends DesignElement {
-  type: DesignElementType.Vector;
+  type: ElementType.Vector;
   /**
    * 路径数据
    */
@@ -207,7 +208,7 @@ export interface DesignVectorConfig {
  * 设计组合元素接口
  */
 export interface DesignGroupElement extends DesignElement {
-  type: DesignElementType.Group;
+  type: ElementType.Group;
   /**
    * 剪切路径
    */
@@ -222,7 +223,7 @@ export interface DesignGroupElement extends DesignElement {
  * 设计帧元素接口
  */
 export interface DesignFrameElement extends DesignElement {
-  type: DesignElementType.Frame;
+  type: ElementType.Frame;
   /**
    * 背景
    */

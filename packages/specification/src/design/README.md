@@ -1,278 +1,370 @@
-# Design 模块
+# Maxellabs 设计模块
 
-Maxellabs 3D Engine 的设计系统模块，提供完整的设计工具类型定义和规范。
+设计模块提供设计系统特有的接口和类型定义，专注于设计工具、组件库和设计流程的特定需求。
 
-## 模块概述
+## 功能概述
 
-Design 模块是基于重构优化的设计系统实现，统一了设计工具、UI 组件、样式系统等相关的类型定义。该模块充分复用了 `common` 和 `core` 模块中的共通类型，减少了重复定义，提高了类型一致性。
+设计模块在核心模块基础上，提供设计系统特有的类型定义和工具，支持现代设计工作流程和组件化开发。
 
-## 主要特性
+## 主要组件
 
-- **类型统一**: 使用 common 和 core 模块的共通类型，避免重复定义
-- **设计元素**: 完整的设计元素类型系统（文本、图像、矢量、组件等）
-- **样式系统**: 填充、描边、阴影、模糊等视觉样式的完整定义
-- **字体排版**: 字体系统、排版配置和文本处理的完整支持
-- **组件库**: 设计组件的定义和管理系统
-- **图标系统**: 图标库的完整管理方案
-- **颜色系统**: 颜色管理和主题系统
-- **协作系统**: 设计协作和版本管理功能
+### 设计基础 (base.ts)
+设计系统特有的基础接口：
 
-## 核心概念
-
-### 设计元素 (Design Elements)
-
-设计元素是设计系统的核心构成单位，包括：
+- **DesignConstraints**: 设计约束配置，扩展核心约束类型
+- **ComponentInstance**: 组件实例管理
+- **DesignComponentProperty**: 设计组件属性定义
+- **DesignComponentVariant**: 组件变体系统
+- **DesignIconVariant**: 图标变体管理
+- **DesignIconCategory**: 图标分类系统
 
 ```typescript
-// 设计元素类型
-enum DesignElementType {
-  Frame = 'frame',
-  Group = 'group',
-  Rectangle = 'rectangle',
-  Ellipse = 'ellipse',
-  Text = 'text',
-  Image = 'image',
-  Sprite = 'sprite',
-  Icon = 'icon',
-  Vector = 'vector',
-  Component = 'component',
-  Instance = 'instance',
-}
+import { DesignConstraints, ComponentInstance } from '@maxellabs/specification/design';
 
-// 设计元素基础接口
-interface DesignElement {
-  type: DesignElementType;
-  bounds: DesignBounds;
-  style?: DesignStyle;
-  constraints?: DesignConstraints;
-  children?: DesignElement[];
-}
+// 设计约束配置
+const constraints: DesignConstraints = {
+  horizontal: 'left-right',  // 使用设计特有的约束类型
+  vertical: 'top-bottom'
+};
+
+// 组件实例
+const buttonInstance: ComponentInstance = {
+  componentId: 'button-primary',
+  instanceId: 'header-cta-button',
+  overrides: {
+    text: '立即购买',
+    variant: 'large'
+  },
+  variantProperties: {
+    size: 'large',
+    color: 'primary'
+  }
+};
 ```
 
-### 样式系统 (Style System)
+### 设计枚举 (enums.ts)
+设计系统特有的枚举类型：
 
-样式系统提供了完整的视觉属性定义：
+- **ComponentPropertyType**: 组件属性类型（Boolean, Text, InstanceSwap, Variant）
+- **IconStyle**: 图标样式（Outline, Filled, Duotone, Light, Bold）
+- **FillType**: 填充类型（Solid, Gradient, Image, Video）
+- **StrokeType**: 描边类型（Solid, Gradient）
+- **DesignShadowType**: 阴影类型（Drop, Inner）
+- **BlurType**: 模糊类型（Layer, Background）
 
 ```typescript
-interface DesignStyle {
-  fills?: DesignFill[];
-  strokes?: DesignStroke[];
-  shadows?: DesignShadow[];
-  blur?: DesignBlur;
-  cornerRadius?: number | number[];
-  textStyle?: DesignTextStyle;
-}
+import { IconStyle, FillType, ComponentPropertyType } from '@maxellabs/specification/design';
+
+// 图标配置
+const iconConfig = {
+  style: IconStyle.Duotone,
+  fill: FillType.Gradient
+};
+
+// 组件属性
+const textProperty = {
+  name: 'label',
+  type: ComponentPropertyType.Text,
+  defaultValue: '按钮'
+};
 ```
 
-### 字体排版 (Typography)
+### 页面管理 (page.ts)
+设计文档和页面管理：
 
-字体排版系统包含字体管理和文本样式：
+- **DesignPage**: 设计页面定义
+- **PageLayout**: 页面布局配置
+- **Viewport**: 视口设置
+- **Grid**: 网格系统
 
+### 设计元素 (elements.ts)
+设计元素系统：
+
+- **DesignElement**: 基础设计元素
+- **ElementHierarchy**: 元素层次结构
+- **GroupElement**: 元素分组
+
+### 字体排版 (typography.ts)
+排版系统：
+
+- **TypographyStyle**: 排版样式
+- **FontFamily**: 字体族
+- **TextStyle**: 文本样式
+
+### 图标系统 (icons.ts)
+图标管理：
+
+- **IconLibrary**: 图标库
+- **IconSet**: 图标集合
+- **VectorIcon**: 矢量图标
+
+### 样式系统 (styles.ts)
+样式定义：
+
+- **StyleSheet**: 样式表
+- **DesignToken**: 设计令牌
+- **ThemeStyle**: 主题样式
+
+### 间距系统 (spacing.ts)
+间距和布局：
+
+- **SpacingScale**: 间距尺度
+- **LayoutGrid**: 布局网格
+- **ResponsiveBreakpoint**: 响应式断点
+
+### 资产管理 (assets.ts)
+设计资产：
+
+- **DesignAsset**: 设计资产
+- **AssetLibrary**: 资产库
+- **AssetVersion**: 资产版本
+
+### 主题系统 (themes.ts)
+主题管理：
+
+- **DesignTheme**: 设计主题
+- **ThemeMode**: 主题模式
+- **ThemeVariant**: 主题变体
+
+### 设计文档 (document.ts)
+文档管理：
+
+- **DesignDocument**: 设计文档
+- **DocumentMetadata**: 文档元数据
+- **DocumentVersion**: 文档版本
+
+### 颜色系统 (colors.ts)
+颜色管理：
+
+- **ColorPalette**: 调色板
+- **ColorToken**: 颜色令牌
+- **ColorScheme**: 配色方案
+
+### 设计系统 (systems.ts)
+设计系统核心：
+
+- **DesignSystem**: 设计系统定义
+- **SystemComponent**: 系统组件
+- **DesignPattern**: 设计模式
+
+### 协作系统 (collaboration.ts)
+设计协作：
+
+- **DesignComment**: 设计评论
+- **VersionControl**: 版本控制
+- **CollaborationSession**: 协作会话
+
+### 组件库 (components.ts)
+组件库管理：
+
+- **ComponentLibrary**: 组件库
+- **ComponentCategory**: 组件分类
+- **ComponentDocumentation**: 组件文档
+
+## 与核心模块的关系
+
+设计模块继承并扩展了核心模块的类型：
+
+### 重新导出核心类型
 ```typescript
-interface DesignTypographySystem {
-  fontFamilies: DesignFontFamily[];
-  scale: DesignTypographyScale;
-  textStyles: Record<string, DesignTextStyle>;
-  baseConfig?: TypographyBaseConfig;
+// 从core模块导入通用类型
+import { ElementType, ConstraintType, StyleType } from '@maxellabs/specification/core';
+
+// 重新导出供设计使用
+export { ElementType as DesignElementType } from '@maxellabs/specification/core';
+export { ConstraintType as DesignConstraintType } from '@maxellabs/specification/core';
+```
+
+### 扩展核心接口
+```typescript
+// 扩展核心约束配置
+interface DesignConstraints extends ConstraintConfig {
+  horizontal: DesignConstraintType;
+  vertical: DesignConstraintType;
+}
+
+// 扩展核心组件属性
+interface DesignComponentProperty extends BaseComponentProperty {
+  type: ComponentPropertyType;
 }
 ```
 
-## 模块结构
+## 设计原则
 
-```
-src/design/
-├── index.ts              # 模块入口文件
-├── README.md             # 模块文档
-├── enums.ts              # 枚举定义
-├── base.ts               # 基础类型和接口
-├── elements.ts           # 设计元素定义
-├── styles.ts             # 样式系统
-├── typography.ts         # 字体排版
-├── components.ts         # 组件库
-├── icons.ts              # 图标系统
-├── colors.ts             # 颜色系统
-├── spacing.ts            # 间距系统
-├── themes.ts             # 主题系统
-├── page.ts               # 页面管理
-├── assets.ts             # 资产管理
-├── collaboration.ts      # 协作系统
-├── systems.ts            # 设计系统核心
-└── document.ts           # 设计文档
-```
+### 1. 组件化设计
+支持现代组件化设计工作流程，包括变体、实例、覆盖等概念。
 
-## 类型复用
+### 2. 设计系统支持
+提供完整的设计系统支持，包括设计令牌、主题、样式库等。
 
-Design 模块充分复用了其他模块的类型定义：
+### 3. 工具集成
+与Figma、Sketch等主流设计工具的数据格式兼容。
 
-### 从 Common 模块复用
-
-- **图像类型**: `ImageScaleMode`, `ImageFilter`, `ImageFormat`
-- **文本类型**: `TextAlign`, `FontStyle`, `FontWeight`, `TextDecoration`, `TextTransform`
-- **精灵类型**: `SpriteAtlas`, `SpriteAnimation`, `SpriteType`
-- **变换类型**: `CommonTransform`, `TransformConstraint`
-
-### 从 Core 模块复用
-
-- **基础类型**: `Color`, `Transform`, `BlendMode`
-- **渲染类型**: `GradientType`, `StrokePosition`, `GradientStop`
-- **元数据**: `CommonMetadata`
+### 4. 协作友好
+支持多人协作、版本控制、评论反馈等协作功能。
 
 ## 使用示例
 
-### 创建设计元素
-
+### 创建设计组件
 ```typescript
-import { DesignElement, DesignElementType } from '@maxellabs/specification/design';
+import { 
+  DesignComponentProperty, 
+  ComponentPropertyType,
+  DesignComponentVariant 
+} from '@maxellabs/specification/design';
 
-const textElement: DesignTextElement = {
-  type: DesignElementType.Text,
-  id: 'text-1',
-  name: '标题',
-  bounds: { x: 0, y: 0, width: 200, height: 40 },
-  content: 'Hello World',
-  textStyle: {
-    fontFamily: 'Helvetica',
-    fontSize: 24,
-    fontWeight: FontWeight.Bold,
-    textAlign: TextAlign.Center,
+// 定义组件属性
+const buttonProperties: DesignComponentProperty[] = [
+  {
+    name: 'text',
+    type: ComponentPropertyType.Text,
+    defaultValue: '按钮',
+    description: '按钮文本'
   },
-};
+  {
+    name: 'variant',
+    type: ComponentPropertyType.Variant,
+    defaultValue: 'primary',
+    options: ['primary', 'secondary', 'outline']
+  },
+  {
+    name: 'disabled',
+    type: ComponentPropertyType.Boolean,
+    defaultValue: false
+  }
+];
+
+// 定义组件变体
+const buttonVariants: DesignComponentVariant[] = [
+  {
+    name: 'Primary',
+    properties: {
+      backgroundColor: '#007bff',
+      color: '#ffffff',
+      border: 'none'
+    }
+  },
+  {
+    name: 'Secondary', 
+    properties: {
+      backgroundColor: '#6c757d',
+      color: '#ffffff',
+      border: 'none'
+    }
+  }
+];
 ```
 
-### 定义样式
-
+### 设计系统配置
 ```typescript
-import { DesignStyle, FillType } from '@maxellabs/specification/design';
+import { 
+  DesignSystem, 
+  ColorPalette, 
+  TypographyStyle 
+} from '@maxellabs/specification/design';
 
-const buttonStyle: DesignStyle = {
-  fills: [
-    {
-      type: FillType.Solid,
-      color: { r: 0.2, g: 0.6, b: 1.0, a: 1.0 },
-      opacity: 1,
-      visible: true,
+// 创建设计系统
+const designSystem: DesignSystem = {
+  name: 'Maxellabs Design System',
+  version: { major: 1, minor: 0, patch: 0 },
+  colors: {
+    primary: {
+      50: '#e3f2fd',
+      500: '#2196f3',
+      900: '#0d47a1'
     },
-  ],
-  cornerRadius: 8,
-  shadows: [
-    {
-      type: DesignShadowType.Drop,
-      color: { r: 0, g: 0, b: 0, a: 0.1 },
-      offsetX: 0,
-      offsetY: 2,
-      blur: 4,
-      visible: true,
-    },
-  ],
-};
-```
-
-### 设置排版系统
-
-```typescript
-import { DesignTypographySystem } from '@maxellabs/specification/design';
-
-const typographySystem: DesignTypographySystem = {
-  fontFamilies: [
-    {
-      name: 'Helvetica',
-      files: [
-        {
-          weight: 400,
-          style: FontStyle.Normal,
-          url: '/fonts/helvetica-regular.woff2',
-          format: FontFormat.WOFF2,
-        },
-      ],
-      category: FontCategory.SansSerif,
-    },
-  ],
-  scale: {
-    base: 16,
-    ratio: 1.25,
-    sizes: {
-      xs: 12,
-      sm: 14,
-      md: 16,
-      lg: 20,
-      xl: 24,
-    },
+    secondary: {
+      50: '#fce4ec',
+      500: '#e91e63', 
+      900: '#880e4f'
+    }
   },
-  textStyles: {
+  typography: {
+    h1: {
+      fontSize: 32,
+      fontWeight: 700,
+      lineHeight: 1.2
+    },
     body: {
-      fontFamily: 'Helvetica',
       fontSize: 16,
-      fontWeight: FontWeight.Normal,
-      lineHeight: 1.5,
-    },
+      fontWeight: 400,
+      lineHeight: 1.5
+    }
   },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32
+  }
 };
 ```
 
-## 设计约束
-
-设计约束系统用于定义元素的布局行为：
-
+### 图标库管理
 ```typescript
-import { DesignConstraints, DesignConstraintType } from '@maxellabs/specification/design';
+import { 
+  IconLibrary, 
+  DesignIconVariant, 
+  IconStyle 
+} from '@maxellabs/specification/design';
 
-const constraints: DesignConstraints = {
-  horizontal: DesignConstraintType.LeftRight,
-  vertical: DesignConstraintType.Top,
+// 创建图标库
+const iconLibrary: IconLibrary = {
+  name: 'Maxellabs Icons',
+  version: '1.0.0',
+  categories: [
+    {
+      id: 'actions',
+      name: '操作',
+      description: '用户操作相关图标'
+    }
+  ],
+  icons: [
+    {
+      id: 'edit',
+      name: '编辑',
+      category: 'actions',
+      variants: [
+        {
+          name: 'outline',
+          style: IconStyle.Outline,
+          svg: '<svg>...</svg>'
+        },
+        {
+          name: 'filled',
+          style: IconStyle.Filled,
+          svg: '<svg>...</svg>'
+        }
+      ]
+    }
+  ]
 };
 ```
 
-## 组件系统
+## 模块特色
 
-设计组件支持属性覆盖和变体：
+### 1. 现代设计工作流程
+支持基于组件的现代设计工作流程，包括设计系统、变体管理等。
 
-```typescript
-import { ComponentInstance } from '@maxellabs/specification/design';
+### 2. 工具链集成
+与主流设计工具和开发工具的无缝集成。
 
-const buttonInstance: ComponentInstance = {
-  componentId: 'button-component',
-  instanceId: 'button-1',
-  overrides: {
-    'text-layer': { content: '点击我' },
-  },
-  variantProperties: {
-    state: 'default',
-    size: 'medium',
-  },
-};
-```
+### 3. 协作支持
+内置协作功能，支持团队设计工作流程。
 
-## 兼容性
+### 4. 可扩展性
+模块化设计，支持自定义扩展和插件开发。
 
-为保持向后兼容性，模块提供了类型别名：
+## 版本历史
 
-```typescript
-// 向后兼容的别名
-export type ConstraintType = DesignConstraintType;
-export type TextElement = DesignTextElement;
-export type ImageElement = DesignImageElement;
-export type SpriteElement = DesignSpriteElement;
-```
-
-## 最佳实践
-
-1. **使用共通类型**: 优先使用 common 和 core 模块中的类型
-2. **保持一致性**: 设计元素的命名和结构保持一致
-3. **类型安全**: 充分利用 TypeScript 的类型检查
-4. **模块化设计**: 按功能模块组织代码结构
-5. **文档完整**: 为每个接口和类型提供完整的注释
+- **v1.2.0**: 重构模块，将通用类型移至core模块
+- **v1.1.0**: 添加协作系统支持
+- **v1.0.0**: 初始版本，基础设计系统支持
 
 ## 注意事项
 
-- Design 模块是专门为设计工具和 UI 组件设计的，不应用于 3D 渲染场景
-- 使用时需要同时安装 common 和 core 模块的依赖
-- 设计约束类型 `DesignConstraintType` 与变换约束类型 `TransformConstraintType` 是不同的概念
-
-## 更新日志
-
-### v0.0.6
-
-- 完成 design 模块重构
-- 使用 common 和 core 模块的共通类型
-- 修复类型冲突和重复定义
-- 添加完整的类型文档和使用示例
+1. **导入顺序**: 需要先导入core模块的基础类型
+2. **设计规范**: 遵循现代设计系统的最佳实践
+3. **兼容性**: 确保与主流设计工具的兼容性
+4. **性能考虑**: 大型设计文档可能影响性能，需要合理分割和懒加载

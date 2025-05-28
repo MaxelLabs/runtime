@@ -516,3 +516,235 @@ export enum ShapeType {
   Edge = 'edge',
   Texture = 'texture',
 }
+
+/**
+ * 统一动画播放状态
+ * 适用于所有动画系统
+ */
+export enum PlayState {
+  /**
+   * 播放中
+   */
+  Playing = 'playing',
+  /**
+   * 暂停
+   */
+  Paused = 'paused',
+  /**
+   * 停止
+   */
+  Stopped = 'stopped',
+  /**
+   * 完成
+   */
+  Finished = 'finished',
+}
+
+/**
+ * 统一播放方向
+ * 适用于所有动画和媒体播放
+ */
+export enum PlaybackDirection {
+  Normal = 'normal',
+  Reverse = 'reverse',
+  Alternate = 'alternate',
+  AlternateReverse = 'alternate-reverse',
+}
+
+/**
+ * 统一填充模式
+ * 适用于动画、渲染等
+ */
+export enum FillModeType {
+  None = 'none',
+  Forwards = 'forwards',
+  Backwards = 'backwards',
+  Both = 'both',
+}
+
+/**
+ * 统一变换类型
+ * 适用于动画、设计、渲染等所有需要变换的模块
+ */
+export enum TransformType {
+  // 平移
+  Translate = 'translate',
+  Translate3d = 'translate3d',
+  TranslateX = 'translateX',
+  TranslateY = 'translateY',
+  TranslateZ = 'translateZ',
+
+  // 缩放
+  Scale = 'scale',
+  Scale3d = 'scale3d',
+  ScaleX = 'scaleX',
+  ScaleY = 'scaleY',
+  ScaleZ = 'scaleZ',
+
+  // 旋转
+  Rotate = 'rotate',
+  Rotate3d = 'rotate3d',
+  RotateX = 'rotateX',
+  RotateY = 'rotateY',
+  RotateZ = 'rotateZ',
+
+  // 倾斜
+  Skew = 'skew',
+  SkewX = 'skewX',
+  SkewY = 'skewY',
+
+  // 其他
+  Perspective = 'perspective',
+  Matrix = 'matrix',
+  Matrix3d = 'matrix3d',
+}
+
+/**
+ * 统一对齐方式
+ * 适用于UI、设计、布局等
+ */
+export enum AlignmentType {
+  // 水平对齐
+  Left = 'left',
+  Center = 'center',
+  Right = 'right',
+  Justify = 'justify',
+
+  // 垂直对齐
+  Top = 'top',
+  Middle = 'middle',
+  Bottom = 'bottom',
+
+  // 基线对齐
+  Baseline = 'baseline',
+
+  // 拉伸
+  Stretch = 'stretch',
+}
+
+/**
+ * 统一约束类型
+ * 适用于布局、设计系统等
+ */
+export enum ConstraintType {
+  // 水平约束
+  Left = 'left',
+  Right = 'right',
+  Center = 'center',
+  LeftRight = 'left-right',
+  Scale = 'scale',
+
+  // 垂直约束
+  Top = 'top',
+  Bottom = 'bottom',
+  TopBottom = 'top-bottom',
+}
+
+/**
+ * 统一元素类型
+ * 适用于设计、渲染、UI等所有需要描述元素的模块
+ */
+export enum ElementType {
+  // 基础几何
+  Rectangle = 'rectangle',
+  Ellipse = 'ellipse',
+  Polygon = 'polygon',
+  Star = 'star',
+  Vector = 'vector',
+  Line = 'line',
+  Arrow = 'arrow',
+
+  // 容器
+  Frame = 'frame',
+  Group = 'group',
+
+  // 内容
+  Text = 'text',
+  Image = 'image',
+  Sprite = 'sprite',
+  Icon = 'icon',
+
+  // 组件
+  Component = 'component',
+  Instance = 'instance',
+}
+
+/**
+ * 统一数据类型
+ * 适用于动画、参数、属性等
+ */
+export enum DataType {
+  Boolean = 'boolean',
+  Integer = 'integer',
+  Float = 'float',
+  String = 'string',
+  Vector2 = 'vector2',
+  Vector3 = 'vector3',
+  Vector4 = 'vector4',
+  Color = 'color',
+  Texture = 'texture',
+  Object = 'object',
+  Array = 'array',
+  Enum = 'enum',
+}
+
+/**
+ * 统一事件类型
+ * 适用于动画、交互、系统事件等
+ */
+export enum EventType {
+  // 生命周期事件
+  Start = 'start',
+  Pause = 'pause',
+  Resume = 'resume',
+  Stop = 'stop',
+  Complete = 'complete',
+  Update = 'update',
+
+  // 循环事件
+  Loop = 'loop',
+
+  // 交互事件
+  Click = 'click',
+  Hover = 'hover',
+  Focus = 'focus',
+  Blur = 'blur',
+
+  // 系统事件
+  Load = 'load',
+  Error = 'error',
+
+  // 自定义事件
+  Custom = 'custom',
+}
+
+/**
+ * 统一样式类型
+ * 适用于设计、UI、渲染等
+ */
+export enum StyleType {
+  Fill = 'fill',
+  Stroke = 'stroke',
+  Text = 'text',
+  Shadow = 'shadow',
+  Blur = 'blur',
+  Effect = 'effect',
+}
+
+/**
+ * 统一线帽样式
+ */
+export enum LineCap {
+  Butt = 'butt',
+  Round = 'round',
+  Square = 'square',
+}
+
+/**
+ * 统一线连接样式
+ */
+export enum LineJoin {
+  Miter = 'miter',
+  Round = 'round',
+  Bevel = 'bevel',
+}
