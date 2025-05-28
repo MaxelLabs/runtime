@@ -1,4 +1,4 @@
-import { VertexAttribute } from '@maxellabs/specification';
+import { VertexAttribute } from '@maxellabs/math';
 
 /**
  * 几何体数据接口
