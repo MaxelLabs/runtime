@@ -3,7 +3,7 @@
  * 图像处理和变换相关类型定义
  */
 
-import type { ImageFilter } from '../../core/interfaces';
+import type { ImageFilter } from '../../common/image';
 import type { ImageDimensions, ImageRegion, ImageScaleMode } from './base';
 
 /**

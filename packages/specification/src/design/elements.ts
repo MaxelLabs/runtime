@@ -4,12 +4,13 @@
  */
 
 // 从 core 模块导入基础类型
-import type { Transform, AnimationProperties } from '../core/interfaces';
+import type { Transform } from '../core/interfaces';
 
 // 从 common 模块导入通用类型
-import type { CommonElement, SpriteAtlas, SpriteAnimation, OverflowMode } from '../common';
+import type { CommonElement, OverflowMode } from '../common';
 import type { ImageScaleMode, ImageFilter } from '../common/image';
 import type { TextAlign, FontStyle, FontWeight } from '../common/text';
+import type { SpriteAtlas, SpriteAnimation } from '../common/sprite';
 
 // 从 media 模块导入文本样式
 import type { MediaTextStyle } from '../media/text/base';
@@ -18,88 +19,6 @@ import type { MediaTextStyle } from '../media/text/base';
 import type { DesignBounds, DesignConstraints, ComponentInstance } from './base';
 import type { DesignStyle } from './styles';
 import type { DesignElementType, IconStyle } from './enums';
-
-/**
- * 设计精灵图集 (扩展通用精灵图集)
- */
-export interface DesignSpriteAtlas extends SpriteAtlas {
-  /**
-   * 设计特定的元数据
-   */
-  designMetadata?: DesignSpriteAtlasMetadata;
-}
-
-/**
- * 设计精灵帧 (保持设计工具特定的格式)
- */
-export interface DesignSpriteFrame {
-  /**
-   * 帧名称
-   */
-  name: string;
-  /**
-   * 在图集中的位置
-   */
-  x: number;
-  y: number;
-  /**
-   * 帧尺寸
-   */
-  width: number;
-  height: number;
-  /**
-   * 是否旋转
-   */
-  rotated?: boolean;
-  /**
-   * 修剪信息
-   */
-  trimmed?: boolean;
-  /**
-   * 原始尺寸
-   */
-  sourceSize?: { w: number; h: number };
-}
-
-/**
- * 设计精灵图集元数据
- */
-export interface DesignSpriteAtlasMetadata {
-  /**
-   * 应用程序
-   */
-  app: string;
-  /**
-   * 版本
-   */
-  version: string;
-  /**
-   * 图像格式
-   */
-  format: string;
-  /**
-   * 图集尺寸
-   */
-  size: { w: number; h: number };
-  /**
-   * 缩放
-   */
-  scale: number;
-}
-
-/**
- * 设计精灵动画 (扩展通用精灵动画)
- */
-export interface DesignSpriteAnimation extends SpriteAnimation {
-  /**
-   * 帧序列 (设计工具使用数字索引)
-   */
-  frames: number[];
-  /**
-   * 动画属性
-   */
-  properties?: AnimationProperties;
-}
 
 /**
  * 设计元素基础接口
@@ -137,7 +56,7 @@ export interface DesignElement extends Omit<CommonElement, 'type' | 'children' |
 }
 
 /**
- * 设计文本元素接口
+ * 设计文本元素接口（扩展通用文本元素）
  */
 export interface DesignTextElement extends DesignElement {
   type: DesignElementType.Text;
@@ -164,7 +83,7 @@ export interface DesignTextElement extends DesignElement {
 }
 
 /**
- * 设计图像元素接口
+ * 设计图像元素接口（扩展通用图像元素）
  */
 export interface DesignImageElement extends DesignElement {
   type: DesignElementType.Image;
@@ -187,7 +106,7 @@ export interface DesignImageElement extends DesignElement {
 }
 
 /**
- * 设计图像配置
+ * 设计特定的图像配置
  */
 export interface DesignImageConfig {
   /**
@@ -210,22 +129,22 @@ export interface DesignImageConfig {
 }
 
 /**
- * 设计精灵元素接口
+ * 设计精灵元素接口（扩展通用精灵元素）
  */
 export interface DesignSpriteElement extends DesignElement {
   type: DesignElementType.Sprite;
   /**
-   * 纹理图集（设计特定）
+   * 纹理图集（使用通用类型）
    */
-  atlas: DesignSpriteAtlas;
+  atlas: SpriteAtlas;
   /**
    * 当前帧（使用数字索引）
    */
   currentFrame: number;
   /**
-   * 动画配置（设计特定）
+   * 动画配置（使用通用类型）
    */
-  spriteAnimation?: DesignSpriteAnimation;
+  spriteAnimation?: SpriteAnimation;
 }
 
 /**
@@ -317,20 +236,3 @@ export interface DesignFrameElement extends DesignElement {
    */
   clipContent?: boolean;
 }
-
-// 为保持向后兼容性，导出别名
-export type TextElement = DesignTextElement;
-export type ImageElement = DesignImageElement;
-export type SpriteElement = DesignSpriteElement;
-export type IconElement = DesignIconElement;
-export type VectorElement = DesignVectorElement;
-export type GroupElement = DesignGroupElement;
-export type FrameElement = DesignFrameElement;
-
-// 重新导出通用类型
-export type {
-  CommonElement as BaseElement,
-  CommonImageElement,
-  CommonTextElement,
-  CommonSpriteElement,
-} from '../common';

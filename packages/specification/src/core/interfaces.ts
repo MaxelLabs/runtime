@@ -1,20 +1,18 @@
 /**
- * Maxellabs 统一接口定义
- * 所有模块共用的接口类型
+ * Maxellabs 核心模块接口定义
+ * 提供系统核心的基础接口和类型
  */
 
 import type { UsdValue } from './usd';
 import type {
-  EasingFunction,
-  ColorSpace,
   QualityLevel,
-  FilterType,
-  ClickFeedbackType,
-  VisualEffectType,
+  EasingFunction,
   MaterialType,
   BorderStyle,
+  ClickFeedbackType,
+  VisualEffectType,
 } from './enums';
-import type { VersionInfo } from './base';
+import type { Color, Vector3, VersionInfo } from './base';
 
 /**
  * 视觉效果
@@ -33,6 +31,7 @@ export interface VisualEffect {
    */
   parameters?: Record<string, any>;
 }
+
 /**
  * 震动模式
  */
@@ -82,7 +81,7 @@ export interface ClickEffect {
 }
 
 /**
- * 统一变换接口
+ * 基础变换接口（核心3D变换）
  */
 export interface Transform {
   /**
@@ -104,24 +103,6 @@ export interface Transform {
 }
 
 /**
- * 统一颜色接口
- */
-export interface Color {
-  /**
-   * 颜色值
-   */
-  value: UsdValue; // Color4f
-  /**
-   * 颜色空间
-   */
-  colorSpace?: ColorSpace;
-  /**
-   * 是否线性
-   */
-  linear?: boolean;
-}
-
-/**
  * 渐变停止点
  */
 export interface GradientStop {
@@ -140,7 +121,7 @@ export interface GradientStop {
 }
 
 /**
- * 材质属性
+ * 核心材质属性（基础版本）
  */
 export interface MaterialProperties {
   /**
@@ -250,7 +231,7 @@ export interface MaterialProperties {
 }
 
 /**
- * 统一动画属性接口
+ * 核心动画属性
  */
 export interface AnimationProperties {
   /**
@@ -280,7 +261,7 @@ export interface AnimationProperties {
 }
 
 /**
- * 统一渲染属性接口
+ * 核心渲染属性
  */
 export interface RenderingProperties {
   /**
@@ -300,153 +281,13 @@ export interface RenderingProperties {
    */
   material?: MaterialProperties;
   /**
-   * 边界框
+   * 3D边界框
    */
   boundingBox?: BoundingBox;
 }
 
 /**
- * 2D向量
- */
-export interface Vector2 {
-  x: number;
-  y: number;
-}
-
-/**
- * 3D向量
- */
-export interface Vector3 {
-  x: number;
-  y: number;
-  z: number;
-}
-
-/**
- * 4D向量
- */
-export interface Vector4 {
-  x: number;
-  y: number;
-  z: number;
-  w: number;
-}
-
-/**
- * 四元数
- */
-export interface Quaternion {
-  x: number;
-  y: number;
-  z: number;
-  w: number;
-}
-
-/**
- * 2D矩阵
- */
-export interface Matrix2x2 {
-  m00: number;
-  m01: number;
-  m10: number;
-  m11: number;
-}
-
-/**
- * 3D矩阵
- */
-export interface Matrix3x3 {
-  m00: number;
-  m01: number;
-  m02: number;
-  m10: number;
-  m11: number;
-  m12: number;
-  m20: number;
-  m21: number;
-  m22: number;
-}
-
-/**
- * 4D矩阵
- */
-export interface Matrix4x4 {
-  m00: number;
-  m01: number;
-  m02: number;
-  m03: number;
-  m10: number;
-  m11: number;
-  m12: number;
-  m13: number;
-  m20: number;
-  m21: number;
-  m22: number;
-  m23: number;
-  m30: number;
-  m31: number;
-  m32: number;
-  m33: number;
-}
-
-/**
- * 变换空间
- */
-export enum TransformSpace {
-  /**
-   * 世界空间
-   */
-  World = 'world',
-  /**
-   * 本地空间
-   */
-  Local = 'local',
-  /**
-   * 父级空间
-   */
-  Parent = 'parent',
-  /**
-   * 屏幕空间
-   */
-  Screen = 'screen',
-  /**
-   * 视图空间
-   */
-  View = 'view',
-}
-
-/**
- * 旋转顺序
- */
-export enum RotationOrder {
-  /**
-   * XYZ顺序
-   */
-  XYZ = 'xyz',
-  /**
-   * XZY顺序
-   */
-  XZY = 'xzy',
-  /**
-   * YXZ顺序
-   */
-  YXZ = 'yxz',
-  /**
-   * YZX顺序
-   */
-  YZX = 'yzx',
-  /**
-   * ZXY顺序
-   */
-  ZXY = 'zxy',
-  /**
-   * ZYX顺序
-   */
-  ZYX = 'zyx',
-}
-
-/**
- * 边界框
+ * 3D边界框（核心版本）
  */
 export interface BoundingBox {
   /**
@@ -468,7 +309,7 @@ export interface BoundingBox {
 }
 
 /**
- * 统一交互属性接口
+ * 核心交互属性
  */
 export interface InteractionProperties {
   /**
@@ -504,7 +345,7 @@ export interface HoverEffect {
   /**
    * 高亮颜色
    */
-  highlightColor?: [number, number, number, number];
+  highlightColor?: Color;
   /**
    * 缩放因子
    */
@@ -548,6 +389,7 @@ export interface SelectionBorder {
    */
   radius?: UsdValue; // float
 }
+
 /**
  * 选择效果
  */
@@ -573,6 +415,7 @@ export interface SelectionEffect {
    */
   animation?: AnimationProperties;
 }
+
 /**
  * 性能配置接口
  */
@@ -636,25 +479,60 @@ export interface CommonMetadata {
    */
   customData?: Record<string, any>;
 }
+// ========== 枚举类型 ==========
 
 /**
- * 图像滤镜
+ * 变换空间
  */
-export interface ImageFilter {
+export enum TransformSpace {
   /**
-   * 滤镜类型
+   * 世界空间
    */
-  type: FilterType;
+  World = 'world',
   /**
-   * 滤镜强度 (0-1)
+   * 本地空间
    */
-  intensity: number;
+  Local = 'local',
   /**
-   * 滤镜参数
+   * 父级空间
    */
-  parameters?: Record<string, any>;
+  Parent = 'parent',
   /**
-   * 是否启用
+   * 屏幕空间
    */
-  enabled: boolean;
+  Screen = 'screen',
+  /**
+   * 视图空间
+   */
+  View = 'view',
+}
+
+/**
+ * 旋转顺序
+ */
+export enum RotationOrder {
+  /**
+   * XYZ顺序
+   */
+  XYZ = 'xyz',
+  /**
+   * XZY顺序
+   */
+  XZY = 'xzy',
+  /**
+   * YXZ顺序
+   */
+  YXZ = 'yxz',
+  /**
+   * YZX顺序
+   */
+  YZX = 'yzx',
+  /**
+   * ZXY顺序
+   */
+  ZXY = 'zxy',
+  /**
+   * ZYX顺序
+   */
+  ZYX = 'zyx',
 }

@@ -4,74 +4,171 @@
  */
 
 import type { CommonElement, CommonElementType } from './elements';
-import type { Color, CommonMetadata, ImageFilter } from '../core';
-
-/**
- * 图像缩放模式
- */
-export enum ImageScaleMode {
-  /**
-   * 填充
-   */
-  Fill = 'fill',
-  /**
-   * 适应
-   */
-  Fit = 'fit',
-  /**
-   * 裁剪
-   */
-  Crop = 'crop',
-  /**
-   * 平铺
-   */
-  Tile = 'tile',
-  /**
-   * 拉伸
-   */
-  Stretch = 'stretch',
-  /**
-   * 原始大小
-   */
-  None = 'none',
-}
 
 /**
  * 图像格式
  */
 export enum ImageFormat {
   /**
-   * JPEG格式
+   * JPEG 格式
    */
   JPEG = 'jpeg',
   /**
-   * PNG格式
+   * PNG 格式
    */
   PNG = 'png',
   /**
-   * WebP格式
+   * WebP 格式
    */
   WebP = 'webp',
   /**
-   * SVG格式
+   * AVIF 格式
    */
-  SVG = 'svg',
+  AVIF = 'avif',
   /**
-   * GIF格式
+   * GIF 格式
    */
   GIF = 'gif',
   /**
-   * BMP格式
+   * BMP 格式
    */
   BMP = 'bmp',
   /**
-   * TIFF格式
+   * TIFF 格式
    */
   TIFF = 'tiff',
   /**
-   * AVIF格式
+   * SVG 格式
    */
-  AVIF = 'avif',
+  SVG = 'svg',
+}
+
+/**
+ * 图像缩放模式
+ */
+export enum ImageScaleMode {
+  /**
+   * 拉伸填充
+   */
+  Stretch = 'stretch',
+  /**
+   * 等比缩放适应
+   */
+  Fit = 'fit',
+  /**
+   * 等比缩放填充
+   */
+  Fill = 'fill',
+  /**
+   * 居中
+   */
+  Center = 'center',
+  /**
+   * 平铺
+   */
+  Tile = 'tile',
+  /**
+   * 九宫格
+   */
+  NineSlice = 'nine-slice',
+}
+
+/**
+ * 图像变换类型
+ */
+export enum ImageTransform {
+  /**
+   * 无变换
+   */
+  None = 'none',
+  /**
+   * 水平翻转
+   */
+  FlipH = 'flip-h',
+  /**
+   * 垂直翻转
+   */
+  FlipV = 'flip-v',
+  /**
+   * 旋转90度
+   */
+  Rotate90 = 'rotate-90',
+  /**
+   * 旋转180度
+   */
+  Rotate180 = 'rotate-180',
+  /**
+   * 旋转270度
+   */
+  Rotate270 = 'rotate-270',
+}
+
+/**
+ * 图像滤镜类型
+ */
+export enum ImageFilterType {
+  /**
+   * 模糊
+   */
+  Blur = 'blur',
+  /**
+   * 锐化
+   */
+  Sharpen = 'sharpen',
+  /**
+   * 亮度
+   */
+  Brightness = 'brightness',
+  /**
+   * 对比度
+   */
+  Contrast = 'contrast',
+  /**
+   * 饱和度
+   */
+  Saturation = 'saturation',
+  /**
+   * 色相
+   */
+  Hue = 'hue',
+  /**
+   * 灰度
+   */
+  Grayscale = 'grayscale',
+  /**
+   * 反色
+   */
+  Invert = 'invert',
+  /**
+   * 棕褐色
+   */
+  Sepia = 'sepia',
+  /**
+   * 噪点
+   */
+  Noise = 'noise',
+}
+
+/**
+ * 图像滤镜
+ */
+export interface ImageFilter {
+  /**
+   * 滤镜类型
+   */
+  type: ImageFilterType;
+  /**
+   * 滤镜强度 (0-1)
+   */
+  intensity: number;
+  /**
+   * 滤镜参数
+   */
+  parameters?: Record<string, any>;
+  /**
+   * 是否启用
+   */
+  enabled: boolean;
 }
 
 /**
@@ -95,264 +192,43 @@ export interface ImageAdjustment {
    */
   hue?: number;
   /**
-   * 曝光 (-2 到 2)
-   */
-  exposure?: number;
-  /**
-   * 伽马值 (0.1 到 3)
+   * 伽马值
    */
   gamma?: number;
   /**
-   * 高光 (-1 到 1)
+   * 曝光
    */
-  highlights?: number;
+  exposure?: number;
   /**
-   * 阴影 (-1 到 1)
+   * 阴影
    */
   shadows?: number;
   /**
-   * 白平衡
+   * 高光
    */
-  whiteBalance?: number;
-  /**
-   * 色温 (-100 到 100)
-   */
-  temperature?: number;
-  /**
-   * 色调 (-100 到 100)
-   */
-  tint?: number;
+  highlights?: number;
 }
 
 /**
- * 图像裁剪区域
+ * 图像裁剪信息
  */
-export interface ImageCropRegion {
+export interface ImageCrop {
   /**
-   * X坐标 (0-1)
+   * X 坐标
    */
   x: number;
   /**
-   * Y坐标 (0-1)
+   * Y 坐标
    */
   y: number;
   /**
-   * 宽度 (0-1)
+   * 宽度
    */
   width: number;
   /**
-   * 高度 (0-1)
+   * 高度
    */
   height: number;
-}
-
-/**
- * 图像变换
- */
-export interface ImageTransform {
-  /**
-   * 水平翻转
-   */
-  flipX?: boolean;
-  /**
-   * 垂直翻转
-   */
-  flipY?: boolean;
-  /**
-   * 旋转角度
-   */
-  rotation?: number;
-  /**
-   * 裁剪区域
-   */
-  cropRegion?: ImageCropRegion;
-}
-
-/**
- * 通用图像元素
- */
-export interface CommonImageElement extends Omit<CommonElement, 'metadata'> {
-  type: CommonElementType.Image;
-  /**
-   * 图像源
-   */
-  source: string;
-  /**
-   * 缩放模式
-   */
-  scaleMode: ImageScaleMode;
-  /**
-   * 图像格式
-   */
-  format?: ImageFormat;
-  /**
-   * 图像滤镜
-   */
-  filters?: ImageFilter[];
-  /**
-   * 图像调整
-   */
-  adjustment?: ImageAdjustment;
-  /**
-   * 图像变换
-   */
-  imageTransform?: ImageTransform;
-  /**
-   * 色调颜色
-   */
-  tintColor?: Color;
-  /**
-   * 是否保持宽高比
-   */
-  preserveAspectRatio?: boolean;
-  /**
-   * 图像质量 (0-1)
-   */
-  quality?: number;
-  /**
-   * 是否启用压缩
-   */
-  enableCompression?: boolean;
-  /**
-   * 懒加载
-   */
-  lazyLoad?: boolean;
-  /**
-   * 占位符图像
-   */
-  placeholder?: string;
-  /**
-   * 错误时显示的图像
-   */
-  fallback?: string;
-  /**
-   * 图像元数据
-   */
-  imageMetadata?: ImageElementMetadata;
-  /**
-   * 通用元数据
-   */
-  metadata?: CommonMetadata;
-}
-
-/**
- * 图像元数据
- */
-export interface ImageElementMetadata {
-  /**
-   * 原始宽度
-   */
-  originalWidth: number;
-  /**
-   * 原始高度
-   */
-  originalHeight: number;
-  /**
-   * 文件大小（字节）
-   */
-  fileSize: number;
-  /**
-   * MIME类型
-   */
-  mimeType: string;
-  /**
-   * 创建时间
-   */
-  createdAt?: string;
-  /**
-   * 修改时间
-   */
-  modifiedAt?: string;
-  /**
-   * 拍摄时间
-   */
-  takenAt?: string;
-  /**
-   * 相机信息
-   */
-  camera?: CameraInfo;
-  /**
-   * GPS信息
-   */
-  gps?: GpsInfo;
-  /**
-   * 颜色配置文件
-   */
-  colorProfile?: string;
-  /**
-   * DPI
-   */
-  dpi?: number;
-}
-
-/**
- * 相机信息
- */
-export interface CameraInfo {
-  /**
-   * 相机制造商
-   */
-  make?: string;
-  /**
-   * 相机型号
-   */
-  model?: string;
-  /**
-   * 镜头型号
-   */
-  lens?: string;
-  /**
-   * 光圈值
-   */
-  aperture?: number;
-  /**
-   * 快门速度
-   */
-  shutterSpeed?: string;
-  /**
-   * ISO感光度
-   */
-  iso?: number;
-  /**
-   * 焦距
-   */
-  focalLength?: number;
-  /**
-   * 闪光灯
-   */
-  flash?: boolean;
-}
-
-/**
- * GPS信息
- */
-export interface GpsInfo {
-  /**
-   * 纬度
-   */
-  latitude?: number;
-  /**
-   * 经度
-   */
-  longitude?: number;
-  /**
-   * 海拔
-   */
-  altitude?: number;
-  /**
-   * 方向
-   */
-  direction?: number;
-}
-
-/**
- * 九宫格图像元素
- */
-export interface NineSliceImageElement extends CommonImageElement {
-  /**
-   * 九宫格配置
-   */
-  nineSlice: NineSliceConfig;
 }
 
 /**
@@ -368,25 +244,194 @@ export interface NineSliceConfig {
    */
   right: number;
   /**
-   * 顶部边距
+   * 上边距
    */
   top: number;
   /**
-   * 底部边距
+   * 下边距
    */
   bottom: number;
   /**
-   * 目标尺寸
-   */
-  targetSize?: {
-    width: number;
-    height: number;
-  };
-  /**
    * 是否填充中心
    */
-  fillCenter?: boolean;
+  fillCenter: boolean;
 }
 
-// 重新导出core中的类型以保持兼容性
-export type { ImageFilter } from '../core';
+/**
+ * 图像元数据
+ */
+export interface ImageMetadata {
+  /**
+   * 图像宽度
+   */
+  width: number;
+  /**
+   * 图像高度
+   */
+  height: number;
+  /**
+   * 文件大小（字节）
+   */
+  fileSize: number;
+  /**
+   * MIME类型
+   */
+  mimeType: string;
+  /**
+   * 色彩深度
+   */
+  colorDepth?: number;
+  /**
+   * 是否有透明通道
+   */
+  hasAlpha?: boolean;
+  /**
+   * DPI
+   */
+  dpi?: number;
+  /**
+   * EXIF 数据
+   */
+  exif?: Record<string, any>;
+}
+
+/**
+ * 通用图像元素
+ */
+export interface CommonImageElement extends CommonElement {
+  type: CommonElementType.Image;
+  /**
+   * 图像源路径
+   */
+  source: string;
+  /**
+   * 缩放模式
+   */
+  scaleMode: ImageScaleMode;
+  /**
+   * 图像格式
+   */
+  format?: ImageFormat;
+  /**
+   * 图像变换（重命名避免与 CommonElement.transform 冲突）
+   */
+  imageTransform?: ImageTransform;
+  /**
+   * 图像滤镜
+   */
+  filters?: ImageFilter[];
+  /**
+   * 图像调整
+   */
+  adjustment?: ImageAdjustment;
+  /**
+   * 裁剪信息
+   */
+  crop?: ImageCrop;
+  /**
+   * 九宫格配置
+   */
+  nineSlice?: NineSliceConfig;
+  /**
+   * 预加载
+   */
+  preload?: boolean;
+  /**
+   * 缓存策略
+   */
+  cacheStrategy?: 'auto' | 'force-cache' | 'no-cache';
+  /**
+   * 图像元数据（重命名避免与 CommonElement.metadata 冲突）
+   */
+  imageMetadata?: ImageMetadata;
+  /**
+   * 错误回退图像
+   */
+  fallbackImage?: string;
+  /**
+   * 加载占位符
+   */
+  placeholder?: string;
+  /**
+   * 懒加载
+   */
+  lazyLoad?: boolean;
+  /**
+   * 响应式图像源
+   */
+  responsiveSources?: ResponsiveImageSource[];
+}
+
+/**
+ * 响应式图像源
+ */
+export interface ResponsiveImageSource {
+  /**
+   * 图像源
+   */
+  source: string;
+  /**
+   * 最小宽度
+   */
+  minWidth?: number;
+  /**
+   * 最大宽度
+   */
+  maxWidth?: number;
+  /**
+   * 设备像素比
+   */
+  devicePixelRatio?: number;
+  /**
+   * 媒体查询
+   */
+  mediaQuery?: string;
+}
+
+/**
+ * 图像加载状态
+ */
+export enum ImageLoadState {
+  /**
+   * 未开始
+   */
+  Idle = 'idle',
+  /**
+   * 加载中
+   */
+  Loading = 'loading',
+  /**
+   * 加载成功
+   */
+  Loaded = 'loaded',
+  /**
+   * 加载失败
+   */
+  Error = 'error',
+}
+
+/**
+ * 图像加载事件
+ */
+export interface ImageLoadEvent {
+  /**
+   * 事件类型
+   */
+  type: 'load' | 'error' | 'progress';
+  /**
+   * 图像元素
+   */
+  target: CommonImageElement;
+  /**
+   * 加载进度 (0-1)
+   */
+  progress?: number;
+  /**
+   * 错误信息
+   */
+  error?: string;
+  /**
+   * 时间戳
+   */
+  timestamp: number;
+}

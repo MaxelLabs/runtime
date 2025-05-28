@@ -27,11 +27,10 @@ export * from './animation';
 // 渲染相关
 export * from './rendering';
 
+export * from './material';
+
 // 交互相关
 export * from './interaction';
-
-// 材质相关
-export * from './material';
 
 // 纹理相关
 export * from './texture';

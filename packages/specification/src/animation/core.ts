@@ -9,10 +9,14 @@ import type { CommonMetadata } from '../core/interfaces';
 import type { AnimationEvent, AnimationKeyframe, AnimationTrack } from '../common';
 
 /**
- * 动画基础接口
+ * 动画基础接口（重写 metadata 类型）
  */
-export interface AnimationPrim extends UsdPrim {
+export interface AnimationPrim extends Omit<UsdPrim, 'metadata'> {
   typeName: 'Animation';
+  /**
+   * 元数据（使用 CommonMetadata 类型）
+   */
+  metadata?: CommonMetadata;
 }
 
 /**
@@ -53,10 +57,6 @@ export interface AnimationClip extends AnimationPrim {
    * 动画事件（使用通用类型）
    */
   events?: AnimationEvent[];
-  /**
-   * 元数据
-   */
-  metadata: CommonMetadata;
 }
 
 /**
