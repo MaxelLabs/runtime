@@ -3,6 +3,7 @@
  * 包含字体系统、排版配置和文本处理
  */
 
+import type { WritingMode } from '../core';
 import type { CommonMetadata } from '../core/interfaces';
 import type { DesignTextStyle, FontStyle } from './styles';
 
@@ -267,15 +268,6 @@ export enum TextDirection {
   LeftToRight = 'ltr',
   RightToLeft = 'rtl',
   Auto = 'auto',
-}
-
-/**
- * 书写模式
- */
-export enum WritingMode {
-  HorizontalTb = 'horizontal-tb',
-  VerticalRl = 'vertical-rl',
-  VerticalLr = 'vertical-lr',
 }
 
 /**

@@ -89,15 +89,6 @@ export enum StrokeType {
 }
 
 /**
- * 描边位置
- */
-export enum StrokePosition {
-  Inside = 'inside',
-  Outside = 'outside',
-  Center = 'center',
-}
-
-/**
  * 线帽样式
  */
 export enum LineCap {
@@ -113,16 +104,6 @@ export enum LineJoin {
   Miter = 'miter',
   Round = 'round',
   Bevel = 'bevel',
-}
-
-/**
- * 渐变类型
- */
-export enum GradientType {
-  Linear = 'linear',
-  Radial = 'radial',
-  Angular = 'angular',
-  Diamond = 'diamond',
 }
 
 /**

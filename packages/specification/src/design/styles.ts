@@ -3,20 +3,9 @@
  * 包含填充、描边、阴影、模糊等视觉样式
  */
 
-import type { Transform, Color, ImageFilter } from '../core/interfaces';
-import type { BlendMode } from '../core/enums';
-import type {
-  StyleType,
-  FillType,
-  StrokeType,
-  StrokePosition,
-  LineCap,
-  LineJoin,
-  GradientType,
-  ImageScaleMode,
-  ShadowType,
-  BlurType,
-} from './base';
+import type { Transform, Color, ImageFilter, GradientStop } from '../core/interfaces';
+import type { BlendMode, GradientType, StrokePosition, VerticalAlign } from '../core/enums';
+import type { StyleType, FillType, StrokeType, LineCap, LineJoin, ImageScaleMode, ShadowType, BlurType } from './base';
 
 /**
  * 设计样式
@@ -139,25 +128,11 @@ export interface DesignGradient {
   /**
    * 渐变停止点
    */
-  stops: DesignGradientStop[];
+  stops: GradientStop[];
   /**
    * 变换矩阵
    */
   transform?: number[];
-}
-
-/**
- * 渐变停止点
- */
-export interface DesignGradientStop {
-  /**
-   * 位置 (0-1)
-   */
-  position: number;
-  /**
-   * 颜色（使用统一Color）
-   */
-  color: Color;
 }
 
 /**
@@ -296,15 +271,6 @@ export enum TextAlign {
   Center = 'center',
   Right = 'right',
   Justify = 'justify',
-}
-
-/**
- * 垂直对齐
- */
-export enum VerticalAlign {
-  Top = 'top',
-  Center = 'center',
-  Bottom = 'bottom',
 }
 
 /**

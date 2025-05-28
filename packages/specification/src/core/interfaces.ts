@@ -48,6 +48,24 @@ export interface Color {
 }
 
 /**
+ * 渐变停止点
+ */
+export interface GradientStop {
+  /**
+   * 位置 (0-1)
+   */
+  position: number;
+  /**
+   * 颜色
+   */
+  color: [number, number, number, number];
+  /**
+   * 中点
+   */
+  midpoint?: number;
+}
+
+/**
  * 统一材质属性接口
  */
 export interface MaterialProperties {

@@ -1,8 +1,13 @@
 /**
- * Maxellabs 媒体模块
- * 导出图像、图层、文本等媒体相关类型
+ * Maxellabs 媒体规范
+ * 统一导出媒体相关的所有类型定义
  */
 
+// 图像相关
 export * from './image';
-export * from './layer';
+
+// 文本相关
 export * from './text';
+
+// 图层相关
+export * from './layer';

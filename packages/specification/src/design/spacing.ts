@@ -3,6 +3,8 @@
  * 包含间距比例、使用场景和断点系统相关类型
  */
 
+import type { DeviceType } from '../core';
+
 /**
  * 设计间距系统
  */
@@ -115,15 +117,4 @@ export interface BreakpointUsage {
    * 设备类型
    */
   device?: DeviceType[];
-}
-
-/**
- * 设备类型
- */
-export enum DeviceType {
-  Mobile = 'mobile',
-  Tablet = 'tablet',
-  Desktop = 'desktop',
-  LargeDesktop = 'large-desktop',
-  TV = 'tv',
 }

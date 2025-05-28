@@ -4,6 +4,84 @@
  */
 
 /**
+ * 渐变类型
+ */
+export enum GradientType {
+  Linear = 'linear',
+  Radial = 'radial',
+  Angular = 'angular',
+  Diamond = 'diamond',
+  /**
+   * 圆锥渐变
+   */
+  Conic = 'conic',
+  /**
+   * 实色
+   */
+  Solid = 'solid',
+  /**
+   * 噪点
+   */
+  Noise = 'noise',
+}
+
+/**
+ * 垂直对齐
+ */
+export enum VerticalAlign {
+  /**
+   * 基线
+   */
+  Baseline = 'baseline',
+  /**
+   * 上标
+   */
+  Super = 'super',
+  /**
+   * 下标
+   */
+  Sub = 'sub',
+  /**
+   * 顶部
+   */
+  Top = 'top',
+  /**
+   * 文本顶部
+   */
+  TextTop = 'text-top',
+  /**
+   * 中间
+   */
+  Middle = 'middle',
+  /**
+   * 底部
+   */
+  Bottom = 'bottom',
+  /**
+   * 文本底部
+   */
+  TextBottom = 'text-bottom',
+}
+
+/**
+ * 描边位置
+ */
+export enum StrokePosition {
+  /**
+   * 内部
+   */
+  Inside = 'inside',
+  /**
+   * 中心
+   */
+  Center = 'center',
+  /**
+   * 外部
+   */
+  Outside = 'outside',
+}
+
+/**
  * 质量级别
  */
 export enum QualityLevel {

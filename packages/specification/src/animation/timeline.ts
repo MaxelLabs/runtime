@@ -3,7 +3,8 @@
  * 时间轴和属性动画的定义
  */
 
-import type { EasingFunction, PlaybackDirection, AnimationFillMode, TransformFunction } from './easing';
+import type { EasingFunction } from '../core';
+import type { PlaybackDirection, AnimationFillMode, TransformFunction } from './easing';
 
 /**
  * 时间轴

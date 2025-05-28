@@ -3,7 +3,8 @@
  * 包含页面、画板、网格和指南相关类型
  */
 
-import type { DesignBounds, GradientType } from './base';
+import type { GradientStop, GradientType } from '../core';
+import type { DesignBounds } from './base';
 import type { DesignElement } from './elements';
 
 /**
@@ -253,20 +254,6 @@ export interface BackgroundGradient {
    * 渐变停止点
    */
   stops: GradientStop[];
-}
-
-/**
- * 渐变停止点
- */
-export interface GradientStop {
-  /**
-   * 位置
-   */
-  position: number;
-  /**
-   * 颜色
-   */
-  color: string;
 }
 
 /**

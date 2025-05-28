@@ -12,6 +12,7 @@ import type {
   RenderingProperties,
   CommonMetadata,
 } from '../core/interfaces';
+import type { TextStyle } from '../media';
 import type { DesignElementType, DesignBounds, DesignConstraints, ComponentInstance, IconStyle } from './base';
 import type { DesignStyle } from './styles';
 
@@ -115,7 +116,7 @@ export interface TextElement extends DesignElement {
   /**
    * 文本样式
    */
-  textStyle?: any; // 将在styles.ts中定义具体类型
+  textStyle?: TextStyle;
 }
 
 /**

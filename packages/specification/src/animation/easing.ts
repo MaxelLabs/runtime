@@ -69,23 +69,23 @@ export enum EasingType {
   CubicBezier = 'cubic-bezier',
 }
 
-/**
- * 缓动函数定义
- */
-export interface EasingFunction {
-  /**
-   * 缓动类型
-   */
-  type: EasingType;
-  /**
-   * 贝塞尔控制点（仅用于 CubicBezier）
-   */
-  controlPoints?: [number, number, number, number];
-  /**
-   * 自定义参数
-   */
-  parameters?: Record<string, number>;
-}
+// /**
+//  * 缓动函数定义
+//  */
+// export interface EasingFunction {
+//   /**
+//    * 缓动类型
+//    */
+//   type: EasingType;
+//   /**
+//    * 贝塞尔控制点（仅用于 CubicBezier）
+//    */
+//   controlPoints?: [number, number, number, number];
+//   /**
+//    * 自定义参数
+//    */
+//   parameters?: Record<string, number>;
+// }
 
 /**
  * 播放方向
