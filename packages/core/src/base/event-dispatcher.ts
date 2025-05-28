@@ -51,7 +51,7 @@ export class EventDispatcher extends MaxObject {
    * @param type 事件类型
    * @param listener 回调函数
    */
-  on(type: string, listener: (event: Event) => void): void {
+  on(type: string, listener: EventListener): void {
     if (!this.listeners.has(type)) {
       this.listeners.set(type, new Set());
     }
@@ -65,11 +65,11 @@ export class EventDispatcher extends MaxObject {
    */
   once(type: string, listener: (event: Event) => void): void {
     const onceWrapper = (event: Event) => {
-      this.off(type, onceWrapper);
+      this.off(type, onceWrapper as unknown as EventListener);
       listener(event);
     };
 
-    this.on(type, onceWrapper);
+    this.on(type, onceWrapper as unknown as EventListener);
   }
 
   /**
@@ -77,7 +77,7 @@ export class EventDispatcher extends MaxObject {
    * @param type 事件类型
    * @param listener 回调函数
    */
-  off(type: string, listener: Function): void {
+  off(type: string, listener: EventListener): void {
     const listeners = this.listeners.get(type);
 
     if (listeners) {
