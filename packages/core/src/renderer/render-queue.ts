@@ -184,12 +184,7 @@ export class RenderQueue {
   /**
    * 收集渲染元素
    */
-  private collectRenderElements(
-    scene: Scene,
-    camera: Camera,
-    cameraPosition: ReadonlyArray<number>,
-    frustum: any
-  ): void {
+  private collectRenderElements(scene: Scene, camera: Camera, cameraPosition: Vector3, frustum: any): void {
     let totalObjects = 0;
 
     // 遍历场景中的所有游戏对象
@@ -234,9 +229,9 @@ export class RenderQueue {
       // 距离裁剪
       if (this.config.maxRenderDistance > 0) {
         this.tempVector3.set(
-          worldBounds.center[0] - cameraPosition[0],
-          worldBounds.center[1] - cameraPosition[1],
-          worldBounds.center[2] - cameraPosition[2]
+          worldBounds.center.x - cameraPosition.x,
+          worldBounds.center.y - cameraPosition.y,
+          worldBounds.center.z - cameraPosition.z
         );
 
         const distance = this.tempVector3.getLength();
@@ -276,7 +271,7 @@ export class RenderQueue {
   /**
    * 排序渲染元素
    */
-  private sortRenderElements(cameraPosition: ReadonlyArray<number>): void {
+  private sortRenderElements(cameraPosition: Vector3): void {
     if (!this.config.enableDistanceSorting) {
       return;
     }

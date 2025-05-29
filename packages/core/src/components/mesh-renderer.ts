@@ -8,9 +8,10 @@
 import { Component } from '../base/component';
 import type { Material } from '../material/material';
 import type { Entity } from '../base/entity';
-import { AlphaMode } from '@maxellabs/math';
+import type { BoundingBox } from '@maxellabs/math';
+import { AlphaMode, VertexAttribute } from '@maxellabs/math';
 import type { Geometry } from '../geometry';
-import { RHIVertexBufferLayout } from '../interface';
+import type { RHIVertexBufferLayout } from '../interface';
 
 /**
  * 网格渲染器组件
@@ -18,6 +19,21 @@ import { RHIVertexBufferLayout } from '../interface';
  * 负责将网格和材质结合，提供渲染所需的数据
  */
 export class MeshRenderer extends Component {
+  getVertexBuffer() {
+    return this.geometry?.getAttributeDescriptor(VertexAttribute.Position);
+  }
+  getIndexBuffer() {
+    throw new Error('Method not implemented.');
+  }
+  getIndexFormat(): import('../interface').RHIIndexFormat {
+    throw new Error('Method not implemented.');
+  }
+  getIndexCount() {
+    throw new Error('Method not implemented.');
+  }
+  getVertexCount() {
+    throw new Error('Method not implemented.');
+  }
   /**
    * 网格对象
    */
@@ -56,8 +72,8 @@ export class MeshRenderer extends Component {
     super(entity);
   }
 
-  getVertexLayout(): RHIVertexBufferLayoutVertexLayout {
-    return this.geometry?.getVertexLayout() || [];
+  getVertexLayout(): RHIVertexBufferLayout {
+    return this.geometry!.getVertexLayout() || [];
   }
 
   /**
@@ -324,7 +340,7 @@ export class MeshRenderer extends Component {
   /**
    * 获取世界空间包围盒（适配render-queue接口）
    */
-  getWorldBounds(): any {
+  getWorldBounds(): BoundingBox {
     const bounds = this.getBoundingBox();
     if (!bounds) {
       return {

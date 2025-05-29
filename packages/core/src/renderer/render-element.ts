@@ -4,7 +4,7 @@
  * 基于RHI硬件抽象层规范
  */
 
-import type { Matrix4, BoundingBox } from '@maxellabs/math';
+import type { Matrix4, BoundingBox, Vector3 } from '@maxellabs/math';
 import type { Material } from '../material/material';
 import type { GameObject } from '../scene/game-object';
 import type { IRHIRenderPipeline, IRHIBindGroup } from '../interface/rhi';
@@ -102,7 +102,7 @@ export interface RenderElement {
   /**
    * 更新距离相机的距离
    */
-  updateDistanceToCamera?(cameraPosition: ReadonlyArray<number>): void;
+  updateDistanceToCamera?(cameraPosition: Vector3): void;
 
   /**
    * 清理RHI资源缓存
@@ -161,11 +161,11 @@ export class RenderElementImpl implements RenderElement {
   /**
    * 更新距离相机的距离
    */
-  updateDistanceToCamera(cameraPosition: ReadonlyArray<number>): void {
+  updateDistanceToCamera(cameraPosition: Vector3): void {
     const bounds = this.worldBounds;
-    const dx = bounds.center.x - cameraPosition[0];
-    const dy = bounds.center.y - cameraPosition[1];
-    const dz = bounds.center.z - cameraPosition[2];
+    const dx = bounds.center.x - cameraPosition.x;
+    const dy = bounds.center.y - cameraPosition.y;
+    const dz = bounds.center.z - cameraPosition.z;
     this.distanceToCamera = Math.sqrt(dx * dx + dy * dy + dz * dz);
   }
 

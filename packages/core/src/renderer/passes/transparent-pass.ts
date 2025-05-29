@@ -230,7 +230,7 @@ export class TransparentPass extends RenderPassBase {
       void main() {
         // 采样基础颜色纹理
         vec4 textureColor = texture(u_baseColorTexture, v_texCoord);
-        
+
         // 采样透明度纹理
         float alphaFromTexture = texture(u_alphaTexture, v_texCoord).r;
 
@@ -248,7 +248,7 @@ export class TransparentPass extends RenderPassBase {
         // 简单的光照计算
         vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
         float lightIntensity = max(dot(normalize(v_worldNormal), lightDir), 0.0);
-        
+
         finalColor.rgb *= lightIntensity * 0.8 + 0.2; // 环境光
 
         // 距离衰减效果（可选）
@@ -445,7 +445,7 @@ export class TransparentPass extends RenderPassBase {
   /**
    * 更新配置
    */
-  updateConfig(newConfig: Partial<TransparentPassConfig>): void {
+  override updateConfig(newConfig: Partial<TransparentPassConfig>): void {
     Object.assign(this.config, newConfig);
     super.updateConfig(newConfig);
   }
@@ -453,7 +453,7 @@ export class TransparentPass extends RenderPassBase {
   /**
    * 销毁渲染通道
    */
-  destroy(): void {
+  override destroy(): void {
     // 清理管线缓存
     for (const pipeline of this.pipelineCache.values()) {
       pipeline.destroy();

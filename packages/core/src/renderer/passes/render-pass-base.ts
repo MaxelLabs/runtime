@@ -375,4 +375,7 @@ export abstract class RenderPassBase extends EventDispatcher {
     this.currentPipeline = null;
     this.removeAllListeners();
   }
+  removeAllListeners() {
+    throw new Error('Method not implemented.');
+  }
 }
