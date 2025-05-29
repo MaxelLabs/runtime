@@ -6,22 +6,23 @@
  */
 
 import { Resource, ResourceType } from '../resource/resource';
-import {
-  type MeshGeometry,
-  type GeometryProperties,
-  type MaterialBinding,
-  type LODConfiguration,
-  TopologyType,
-  GeometryType,
-  VertexAttribute,
-  UsdDataType,
+import { TopologyType, GeometryType, VertexAttribute, UsdDataType } from '@maxellabs/math';
+import type {
+  UsdValue,
+  BoundingBox,
+  BoundingSphere,
+  VertexAttributeDescriptor,
+  MeshGeometry,
+  GeometryProperties,
+  MaterialBinding,
+  LODConfiguration,
 } from '@maxellabs/math';
-import type { UsdValue, BoundingBox, BoundingSphere, VertexAttributeDescriptor } from '@maxellabs/math';
 import type { IRHIDevice } from '../interface/rhi/device';
 import type { IRHIBuffer } from '../interface/rhi/resources/buffer';
 import type { IRHIVertexArray } from '../interface/rhi/resources/vertexArray';
 import { RHIBufferUsage } from '../interface/rhi/types/enums';
-import { EventEmitter } from '../base/event-emitter';
+import type { EventListener } from '../base';
+import { EventDispatcher } from '../base';
 
 /**
  * 网格事件类型
@@ -92,7 +93,7 @@ export class Mesh extends Resource implements MeshGeometry {
   /**
    * 事件分发器
    */
-  private eventEmitter = new EventEmitter<Record<MeshEvent, any>>();
+  private eventEmitter = new EventDispatcher();
 
   /**
    * RHI设备引用
@@ -364,14 +365,14 @@ export class Mesh extends Resource implements MeshGeometry {
   /**
    * 监听网格事件
    */
-  on<T extends MeshEvent>(event: T, listener: (data: any) => void): void {
+  on<T extends MeshEvent>(event: T, listener: EventListener): void {
     this.eventEmitter.on(event, listener);
   }
 
   /**
    * 移除事件监听
    */
-  off<T extends MeshEvent>(event: T, listener: (data: any) => void): void {
+  off<T extends MeshEvent>(event: T, listener: EventListener): void {
     this.eventEmitter.off(event, listener);
   }
 
@@ -426,7 +427,7 @@ export class Mesh extends Resource implements MeshGeometry {
     }
 
     // 清理事件监听
-    this.eventEmitter.removeAllListeners();
+    this.eventEmitter.destroy();
 
     super.destroy();
   }

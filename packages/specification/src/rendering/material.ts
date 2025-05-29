@@ -4,7 +4,19 @@
  */
 
 import type { TextureFilterMode } from '../common';
-import type { CullMode, FillMode, InterpolationMode, MaterialProperties, IVector2, WrapMode } from '../core';
+import type {
+  CullMode,
+  FillMode,
+  InterpolationMode,
+  MaterialProperties,
+  IVector2,
+  WrapMode,
+  RHIBlendFactor,
+  RHIBlendOperation,
+  IColor,
+  RHICompareFunction,
+  RHIFrontFace,
+} from '../core';
 import type { UsdPrim, UsdValue } from '../core/usd';
 
 /**
@@ -17,7 +29,7 @@ export interface MaterialPrim extends UsdPrim {
 /**
  * 材质定义
  */
-export interface Material extends MaterialPrim {
+export interface IMaterial extends MaterialPrim {
   attributes: {
     /**
      * 材质名称
@@ -403,93 +415,31 @@ export interface BlendState {
   /**
    * 源混合因子
    */
-  srcFactor: BlendFactor;
+  srcFactor: RHIBlendFactor;
   /**
    * 目标混合因子
    */
-  dstFactor: BlendFactor;
+  dstFactor: RHIBlendFactor;
   /**
    * 混合操作
    */
-  operation: BlendOperation;
+  operation: RHIBlendOperation;
   /**
    * Alpha源混合因子
    */
-  srcAlphaFactor?: BlendFactor;
+  srcAlphaFactor?: RHIBlendFactor;
   /**
    * Alpha目标混合因子
    */
-  dstAlphaFactor?: BlendFactor;
+  dstAlphaFactor?: RHIBlendFactor;
   /**
    * Alpha混合操作
    */
-  alphaOperation?: BlendOperation;
+  alphaOperation?: RHIBlendOperation;
   /**
    * 混合颜色
    */
-  blendColor?: [number, number, number, number];
-}
-
-/**
- * 混合因子
- */
-export enum BlendFactor {
-  /**
-   * 零
-   */
-  Zero = 'zero',
-  /**
-   * 一
-   */
-  One = 'one',
-  /**
-   * 源颜色
-   */
-  SrcColor = 'src-color',
-  /**
-   * 一减源颜色
-   */
-  OneMinusSrcColor = 'one-minus-src-color',
-  /**
-   * 目标颜色
-   */
-  DstColor = 'dst-color',
-  /**
-   * 一减目标颜色
-   */
-  OneMinusDstColor = 'one-minus-dst-color',
-  /**
-   * 源Alpha
-   */
-  SrcAlpha = 'src-alpha',
-  /**
-   * 一减源Alpha
-   */
-  OneMinusSrcAlpha = 'one-minus-src-alpha',
-  /**
-   * 目标Alpha
-   */
-  DstAlpha = 'dst-alpha',
-  /**
-   * 一减目标Alpha
-   */
-  OneMinusDstAlpha = 'one-minus-dst-alpha',
-  /**
-   * 常量颜色
-   */
-  ConstantColor = 'constant-color',
-  /**
-   * 一减常量颜色
-   */
-  OneMinusConstantColor = 'one-minus-constant-color',
-  /**
-   * 常量Alpha
-   */
-  ConstantAlpha = 'constant-alpha',
-  /**
-   * 一减常量Alpha
-   */
-  OneMinusConstantAlpha = 'one-minus-constant-alpha',
+  blendColor?: IColor;
 }
 
 /**
@@ -533,49 +483,11 @@ export interface DepthState {
   /**
    * 深度比较函数
    */
-  compareFunction: CompareFunction;
+  compareFunction: RHICompareFunction;
   /**
    * 深度偏移
    */
   bias?: DepthBias;
-}
-
-/**
- * 比较函数
- */
-export enum CompareFunction {
-  /**
-   * 从不通过
-   */
-  Never = 'never',
-  /**
-   * 小于
-   */
-  Less = 'less',
-  /**
-   * 等于
-   */
-  Equal = 'equal',
-  /**
-   * 小于等于
-   */
-  LessEqual = 'less-equal',
-  /**
-   * 大于
-   */
-  Greater = 'greater',
-  /**
-   * 不等于
-   */
-  NotEqual = 'not-equal',
-  /**
-   * 大于等于
-   */
-  GreaterEqual = 'greater-equal',
-  /**
-   * 总是通过
-   */
-  Always = 'always',
 }
 
 /**
@@ -641,7 +553,7 @@ export interface StencilOperation {
   /**
    * 比较函数
    */
-  compareFunction: CompareFunction;
+  compareFunction: RHICompareFunction;
   /**
    * 参考值
    */
@@ -701,7 +613,7 @@ export interface RasterState {
   /**
    * 正面方向
    */
-  frontFace: FrontFace;
+  frontFace: RHIFrontFace;
   /**
    * 启用深度夹紧
    */
@@ -718,20 +630,6 @@ export interface RasterState {
    * 启用抗锯齿线
    */
   antialiasedLineEnabled: boolean;
-}
-
-/**
- * 正面方向
- */
-export enum FrontFace {
-  /**
-   * 顺时针
-   */
-  Clockwise = 'clockwise',
-  /**
-   * 逆时针
-   */
-  CounterClockwise = 'counter-clockwise',
 }
 
 /**
@@ -811,7 +709,7 @@ export interface MaterialLibrary {
   /**
    * 材质列表
    */
-  materials: Record<string, Material>;
+  materials: Record<string, IMaterial>;
   /**
    * 材质分类
    */
@@ -851,7 +749,7 @@ export interface MaterialCategory {
 /**
  * 程序化材质
  */
-export interface ProceduralMaterial extends Material {
+export interface ProceduralMaterial extends IMaterial {
   /**
    * 程序化参数
    */

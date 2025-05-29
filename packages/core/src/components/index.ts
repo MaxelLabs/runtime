@@ -3,4 +3,4 @@
  * 渲染器组件模块导出
  */
 
-export * from './MeshRenderer';
+export * from './mesh-renderer';

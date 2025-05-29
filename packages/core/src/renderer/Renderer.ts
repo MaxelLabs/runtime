@@ -6,15 +6,15 @@
  * 遵循规范包优先原则，支持规范包定义的几何体和材质接口
  */
 
-import { EventEmitter } from '../base/event-emitter';
 import type { IRHIDevice } from '../interface/rhi/device';
 import type { IRHITexture, IRHITextureView } from '../interface/rhi/resources/texture';
 import type { Camera } from '../camera/camera';
 import type { Scene } from '../scene/scene';
 import type { RenderPipeline } from './RenderPipeline';
-import type { RenderQueue } from './RenderQueue';
-import type { RenderContext } from './RenderContext';
-import { MeshRenderer } from './components/MeshRenderer';
+import { RenderQueue } from './RenderQueue';
+import { RenderContext } from './RenderContext';
+import { MeshRenderer } from '../components/mesh-renderer';
+import { EventDispatcher } from '../base';
 
 /**
  * 渲染器配置选项
@@ -165,7 +165,7 @@ export interface RendererEvents {
  * - 资源管理
  * - 性能统计
  */
-export class Renderer extends EventEmitter<RendererEvents> {
+export class Renderer extends EventDispatcher {
   /**
    * 渲染设备
    */
@@ -423,7 +423,7 @@ export class Renderer extends EventEmitter<RendererEvents> {
   /**
    * 销毁渲染器
    */
-  destroy(): void {
+  override destroy(): void {
     // 销毁渲染目标
     this.destroyRenderTargets();
 

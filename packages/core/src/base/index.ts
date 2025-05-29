@@ -4,7 +4,6 @@ export * from './component';
 export * from './transform';
 export * from './event';
 export * from './event-dispatcher';
-export * from './event-emitter';
 export * from './object-pool';
 export * from './object-pool-manager';
 export * from './refer-resource';

@@ -19,8 +19,8 @@ export * from './camera';
 // 几何体系统
 export * from './geometry';
 
-// 网格系统
-export * from './mesh';
+// 组件系统
+export * from './components';
 
 // 材质系统
 export * from './material';

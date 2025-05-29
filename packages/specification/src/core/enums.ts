@@ -4,6 +4,87 @@
  */
 
 /**
+ * 混合操作
+ */
+export enum RHIBlendOperation {
+  /** 加法 */
+  ADD = 0,
+  /** 减法(源-目标) */
+  SUBTRACT = 1,
+  /** 反向减法(目标-源) */
+  REVERSE_SUBTRACT = 2,
+  /** 最小值 */
+  MIN = 3,
+  /** 最大值 */
+  MAX = 4,
+}
+/**
+ * 正面方向
+ */
+export enum RHIFrontFace {
+  /** 顺时针 */
+  CW = 0,
+  /** 逆时针 */
+  CCW = 1,
+}
+/**
+ * 比较函数
+ */
+export enum RHICompareFunction {
+  /** 永不通过 */
+  NEVER = 0,
+  /** 通过当值小于参考值 */
+  LESS = 1,
+  /** 通过当值等于参考值 */
+  EQUAL = 2,
+  /** 通过当值小于等于参考值 */
+  LESS_EQUAL = 3,
+  /** 通过当值大于参考值 */
+  GREATER = 4,
+  /** 通过当值不等于参考值 */
+  NOT_EQUAL = 5,
+  /** 通过当值大于等于参考值 */
+  GREATER_EQUAL = 6,
+  /** 总是通过 */
+  ALWAYS = 7,
+}
+/**
+ * 混合因子
+ */
+export enum RHIBlendFactor {
+  /** 零 */
+  ZERO = 0,
+  /** 一 */
+  ONE = 1,
+  /** 源颜色 */
+  SRC_COLOR = 2,
+  /** 一减源颜色 */
+  ONE_MINUS_SRC_COLOR = 3,
+  /** 目标颜色 */
+  DST_COLOR = 4,
+  /** 一减目标颜色 */
+  ONE_MINUS_DST_COLOR = 5,
+  /** 源Alpha */
+  SRC_ALPHA = 6,
+  /** 一减源Alpha */
+  ONE_MINUS_SRC_ALPHA = 7,
+  /** 目标Alpha */
+  DST_ALPHA = 8,
+  /** 一减目标Alpha */
+  ONE_MINUS_DST_ALPHA = 9,
+  /** 常量颜色 */
+  CONSTANT_COLOR = 10,
+  /** 一减常量颜色 */
+  ONE_MINUS_CONSTANT_COLOR = 11,
+  /** 常量Alpha */
+  CONSTANT_ALPHA = 12,
+  /** 一减常量Alpha */
+  ONE_MINUS_CONSTANT_ALPHA = 13,
+  /** 源Alpha饱和 */
+  SRC_ALPHA_SATURATE = 14,
+}
+
+/**
  * 几何体优化配置
  */
 export interface GeometryOptimization {

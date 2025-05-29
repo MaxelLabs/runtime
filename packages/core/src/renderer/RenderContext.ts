@@ -566,13 +566,13 @@ export class RenderContext {
     const projectionMatrix = camera.getProjectionMatrix();
 
     // 更新矩阵
-    this.globalUniforms.viewMatrix.set(viewMatrix.elements);
-    this.globalUniforms.projectionMatrix.set(projectionMatrix.elements);
+    this.globalUniforms.viewMatrix.copyFrom(viewMatrix);
+    this.globalUniforms.projectionMatrix.copyFrom(projectionMatrix);
     this.globalUniforms.viewProjectionMatrix.multiplyMatrices(projectionMatrix, viewMatrix);
 
     // 计算逆矩阵
-    this.globalUniforms.inverseViewMatrix.set(viewMatrix.elements).invert();
-    this.globalUniforms.inverseProjectionMatrix.set(projectionMatrix.elements).invert();
+    this.globalUniforms.inverseViewMatrix.copyFrom(viewMatrix).invert();
+    this.globalUniforms.inverseProjectionMatrix.copyFrom(projectionMatrix).invert();
 
     // 更新相机位置和方向
     const cameraPosition = camera.getPosition();

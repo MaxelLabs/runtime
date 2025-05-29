@@ -7,23 +7,30 @@
 
 import { Resource, ResourceType } from '../resource/resource';
 import {
-  type Material as MaterialSpec,
-  type ShaderNetwork,
-  type RenderState,
-  type MaterialProperty,
-  type TextureReference,
   AlphaMode,
   MaterialType,
   UsdDataType,
   FillMode,
   CullMode,
+  RHIBlendFactor,
+  RHIBlendOperation,
+  RHICompareFunction,
+  RHIFrontFace,
 } from '@maxellabs/math';
-import type { MaterialProperties, UsdValue } from '@maxellabs/math';
-import { RHIBlendFactor, RHIBlendOperation, RHICompareFunction, RHIFrontFace } from '../interface/rhi/types/enums';
+import type {
+  MaterialProperties,
+  UsdValue,
+  IMaterial,
+  ShaderNetwork,
+  RenderState,
+  MaterialProperty,
+  TextureReference,
+} from '@maxellabs/math';
 import type { IRHIDevice } from '../interface/rhi/device';
 import type { IRHITexture } from '../interface/rhi/resources/texture';
 import type { IRHIBindGroup } from '../interface/rhi/bindings';
-import { EventEmitter } from '../base/event-emitter';
+import type { EventListener } from '../base';
+import { EventDispatcher } from '../base';
 
 /**
  * 材质事件类型
@@ -44,7 +51,7 @@ export enum MaterialEvent {
  *
  * 实现规范包的Material接口，提供完整的材质功能
  */
-export class Material extends Resource implements MaterialSpec {
+export class Material extends Resource implements IMaterial {
   readonly typeName = 'Material' as const;
 
   /**
@@ -102,7 +109,7 @@ export class Material extends Resource implements MaterialSpec {
   /**
    * 事件分发器
    */
-  private eventEmitter = new EventEmitter<Record<MaterialEvent, any>>();
+  private eventEmitter = new EventDispatcher();
 
   /**
    * RHI设备引用
@@ -168,7 +175,7 @@ export class Material extends Resource implements MaterialSpec {
       depthState: {
         testEnabled: true,
         writeEnabled: true,
-        compareFunction: RHICompareFunction.Less,
+        compareFunction: RHICompareFunction.LESS,
       },
       rasterState: {
         fillMode: FillMode.Solid,
@@ -337,14 +344,14 @@ export class Material extends Resource implements MaterialSpec {
   /**
    * 监听材质事件
    */
-  on<T extends MaterialEvent>(event: T, listener: (data: any) => void): void {
+  on<T extends MaterialEvent>(event: T, listener: EventListener): void {
     this.eventEmitter.on(event, listener);
   }
 
   /**
    * 移除事件监听
    */
-  off<T extends MaterialEvent>(event: T, listener: (data: any) => void): void {
+  off<T extends MaterialEvent>(event: T, listener: EventListener): void {
     this.eventEmitter.off(event, listener);
   }
 
@@ -381,7 +388,7 @@ export class Material extends Resource implements MaterialSpec {
     this.textureCache.clear();
 
     // 清理事件监听
-    this.eventEmitter.removeAllListeners();
+    this.eventEmitter.destroy();
 
     super.destroy();
   }
@@ -408,8 +415,8 @@ export class Material extends Resource implements MaterialSpec {
         break;
       case AlphaMode.Blend:
         this.renderState.blendState.enabled = true;
-        this.renderState.blendState.srcFactor = RHIBlendFactor.SrcAlpha;
-        this.renderState.blendState.dstFactor = RHIBlendFactor.OneMinusSrcAlpha;
+        this.renderState.blendState.srcFactor = RHIBlendFactor.SRC_ALPHA;
+        this.renderState.blendState.dstFactor = RHIBlendFactor.ONE_MINUS_SRC_ALPHA;
         break;
       case AlphaMode.Mask:
         this.renderState.blendState.enabled = false;

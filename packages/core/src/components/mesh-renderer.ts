@@ -5,12 +5,12 @@
  * 将Mesh和Material组合到GameObject上，使其成为可渲染对象
  */
 
-import { Component } from '../../base/component';
-import type { Material } from '../../material/material';
-import type { Mesh } from '../../mesh/mesh';
-import type { Entity } from '../../base/entity';
-import type { RenderElement } from '../RenderQueue';
+import { Component } from '../base/component';
+import type { Material } from '../material/material';
+import type { Entity } from '../base/entity';
+import type { RenderElement } from '../renderer/RenderQueue';
 import { AlphaMode } from '@maxellabs/math';
+import type { Geometry } from '../geometry';
 
 /**
  * 网格渲染器组件
@@ -21,7 +21,7 @@ export class MeshRenderer extends Component {
   /**
    * 网格对象
    */
-  private mesh: Mesh | null = null;
+  private geometry: Geometry | null = null;
 
   /**
    * 材质对象
@@ -59,16 +59,16 @@ export class MeshRenderer extends Component {
   /**
    * 获取网格
    */
-  getMesh(): Mesh | null {
-    return this.mesh;
+  getGeometry(): Geometry | null {
+    return this.geometry;
   }
 
   /**
    * 设置网格
    */
-  setMesh(mesh: Mesh | null): void {
-    if (this.mesh !== mesh) {
-      this.mesh = mesh;
+  setGeometry(geometry: Geometry | null): void {
+    if (this.geometry !== geometry) {
+      this.geometry = geometry;
       this.markDirty();
     }
   }
@@ -177,7 +177,7 @@ export class MeshRenderer extends Component {
    * 检查是否可以渲染
    */
   canRender(): boolean {
-    return this.getEnabled() && this.mesh !== null && this.material !== null;
+    return this.getEnabled() && this.geometry !== null && this.material !== null;
   }
 
   /**
@@ -197,7 +197,7 @@ export class MeshRenderer extends Component {
    * 创建渲染元素
    */
   createRenderElement(): RenderElement | null {
-    if (!this.canRender()) {
+    if (!this.canRender() || !this.geometry || !this.material) {
       return null;
     }
 
@@ -206,7 +206,7 @@ export class MeshRenderer extends Component {
 
     return {
       id: this.entity.id,
-      geometry: this.mesh.geometry,
+      geometry: this.geometry,
       material: this.material,
       transform,
       worldMatrix,
@@ -224,11 +224,11 @@ export class MeshRenderer extends Component {
    * 获取包围盒
    */
   private getBoundingBox() {
-    if (!this.mesh) {
+    if (!this.geometry) {
       return undefined;
     }
 
-    const boundingBox = this.mesh.getBoundingBox();
+    const boundingBox = this.geometry.getBoundingBox();
     // const worldMatrix = this.entity.transform.getWorldMatrix();
 
     // 将包围盒转换到世界空间
@@ -291,7 +291,7 @@ export class MeshRenderer extends Component {
    * 组件销毁
    */
   override destroy(): void {
-    this.mesh = null;
+    this.geometry = null;
     this.material = null;
     super.destroy();
   }

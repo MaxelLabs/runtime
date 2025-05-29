@@ -21,4 +21,4 @@ export * from './passes';
 export type { RenderElement, RenderBatch } from './RenderQueue';
 
 // 新组件
-export * from './components';
+export * from '../components';
