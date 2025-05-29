@@ -6,10 +6,10 @@
  * 支持多光源、透明度、阴影等功能
  */
 
-import { RenderPipeline, type RenderPipelineConfig } from './RenderPipeline';
-import type { RenderContext } from './RenderContext';
-import type { RenderQueue } from './RenderQueue';
-import { SortStrategy } from './RenderQueue';
+import { RenderPipeline, type RenderPipelineConfig } from './render-pipeline';
+import type { RenderContext } from './render-context';
+import type { RenderQueue } from './render-queue';
+import { SortStrategy } from './render-queue';
 import { ShadowPass, DepthPrepass, SkyboxPass, OpaquePass, TransparentPass, PostProcessPass } from './passes';
 
 /**

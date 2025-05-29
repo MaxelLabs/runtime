@@ -7,9 +7,9 @@
  */
 
 import type { Renderer } from './Renderer';
-import type { RenderContext } from './RenderContext';
-import type { RenderQueue } from './RenderQueue';
-import type { RenderPass } from './passes/RenderPass';
+import type { RenderContext } from './render-context';
+import type { RenderQueue } from './render-queue';
+import type { RenderPass } from './passes/render-pass';
 
 /**
  * 渲染管线配置

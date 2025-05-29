@@ -6,9 +6,9 @@
  * 所有具体的渲染通道都需要继承此类
  */
 
-import type { RenderPipeline } from '../RenderPipeline';
-import type { RenderContext } from '../RenderContext';
-import type { RenderQueue } from '../RenderQueue';
+import type { RenderPipeline } from '../render-pipeline';
+import type { RenderContext } from '../render-context';
+import type { RenderQueue } from '../render-queue';
 import type { IRHIRenderPass } from '../../interface/rhi/passes/renderPass';
 import type { IRHICommandEncoder } from '../../interface/rhi/commandEncoder';
 import type { RenderState } from '../../interface/renderer/renderState';

@@ -7,18 +7,18 @@
 export * from './Renderer';
 
 // 渲染管线
-export * from './RenderPipeline';
-export * from './ForwardRenderer';
+export * from './render-pipeline';
+export * from './forward-renderer';
 
 // 渲染队列和上下文
-export * from './RenderQueue';
-export * from './RenderContext';
+export * from './render-queue';
+export * from './render-context';
 
 // 渲染通道
 export * from './passes';
 
 // 类型定义
-export type { RenderElement, RenderBatch } from './RenderQueue';
+export type { RenderElement, RenderBatch } from './render-queue';
 
 // 新组件
 export * from '../components';

@@ -5,9 +5,9 @@
  * 负责渲染天空盒，通常在所有其他物体之后渲染
  */
 
-import { RenderPass } from './RenderPass';
-import type { RenderContext } from '../RenderContext';
-import type { RenderQueue } from '../RenderQueue';
+import { RenderPass } from './render-pass';
+import type { RenderContext } from '../render-context';
+import type { RenderQueue } from '../render-queue';
 import type { IRHIRenderPassEncoder } from '../../interface/rhi';
 
 /**

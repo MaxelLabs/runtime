@@ -5,9 +5,9 @@
  * 负责渲染所有透明的几何体，需要特殊的混合和排序处理
  */
 
-import { RenderPass } from './RenderPass';
-import type { RenderContext } from '../RenderContext';
-import type { RenderQueue } from '../RenderQueue';
+import { RenderPass } from './render-pass';
+import type { RenderContext } from '../render-context';
+import type { RenderQueue } from '../render-queue';
 import type { IRHIRenderPassEncoder } from '../../interface/rhi';
 
 /**

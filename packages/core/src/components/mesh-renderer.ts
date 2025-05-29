@@ -8,7 +8,7 @@
 import { Component } from '../base/component';
 import type { Material } from '../material/material';
 import type { Entity } from '../base/entity';
-import type { RenderElement } from '../renderer/RenderQueue';
+import type { RenderElement } from '../renderer/render-queue';
 import { AlphaMode } from '@maxellabs/math';
 import type { Geometry } from '../geometry';
 

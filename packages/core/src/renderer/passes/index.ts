@@ -4,13 +4,13 @@
  */
 
 // 基础渲染通道
-export { RenderPass } from './RenderPass';
+export { RenderPass } from './render-pass';
 
 // 具体渲染通道实现
-export { OpaquePass, type OpaquePassConfig } from './OpaquePass';
+export { OpaquePass, type OpaquePassConfig } from './opaque-pass';
 export { TransparentPass, type TransparentPassConfig, type BlendMode } from './TransparentPass';
 export { SkyboxPass, type SkyboxPassConfig, type SkyboxType } from './SkyboxPass';
-export { DepthPrepass, type DepthPrepassConfig } from './DepthPrepass';
+export { DepthPrepass, type DepthPrepassConfig } from './depth-prepass';
 export { ShadowPass, type ShadowPassConfig, type ShadowQuality, type ShadowType } from './ShadowPass';
 export {
   PostProcessPass,
@@ -18,4 +18,4 @@ export {
   type PostProcessEffect,
   type TonemappingType,
   type AntiAliasingType,
-} from './PostProcessPass';
+} from './postProcess-pass';

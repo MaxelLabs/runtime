@@ -10,9 +10,9 @@ import type { IRHIDevice } from '../interface/rhi/device';
 import type { IRHITexture, IRHITextureView } from '../interface/rhi/resources/texture';
 import type { Camera } from '../camera/camera';
 import type { Scene } from '../scene/scene';
-import type { RenderPipeline } from './RenderPipeline';
-import { RenderQueue } from './RenderQueue';
-import { RenderContext } from './RenderContext';
+import type { RenderPipeline } from './render-pipeline';
+import { RenderQueue } from './render-queue';
+import { RenderContext } from './render-context';
 import { MeshRenderer } from '../components/mesh-renderer';
 import { EventDispatcher } from '../base';
 

@@ -5,9 +5,9 @@
  * 在主渲染通道之前执行，只写入深度信息，用于减少overdraw
  */
 
-import { RenderPass } from './RenderPass';
-import type { RenderContext } from '../RenderContext';
-import type { RenderQueue } from '../RenderQueue';
+import { RenderPass } from './render-pass';
+import type { RenderContext } from '../render-context';
+import type { RenderQueue } from '../render-queue';
 import type { IRHIRenderPassEncoder } from '../../interface/rhi';
 
 /**

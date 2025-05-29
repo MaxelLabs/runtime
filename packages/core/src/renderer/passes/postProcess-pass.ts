@@ -5,9 +5,9 @@
  * 负责应用各种后处理效果，如色调映射、伽马校正、抗锯齿等
  */
 
-import { RenderPass } from './RenderPass';
-import type { RenderContext } from '../RenderContext';
-import type { RenderQueue } from '../RenderQueue';
+import { RenderPass } from './render-pass';
+import type { RenderContext } from '../render-context';
+import type { RenderQueue } from '../render-queue';
 import type { IRHIRenderPassEncoder } from '../../interface/rhi';
 
 /**

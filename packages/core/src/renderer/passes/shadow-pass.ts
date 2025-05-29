@@ -5,9 +5,9 @@
  * 负责生成阴影贴图，支持多种阴影技术
  */
 
-import { RenderPass } from './RenderPass';
-import type { RenderContext } from '../RenderContext';
-import type { RenderQueue } from '../RenderQueue';
+import { RenderPass } from './render-pass';
+import type { RenderContext } from '../render-context';
+import type { RenderQueue } from '../render-queue';
 import type { IRHIRenderPassEncoder } from '../../interface/rhi';
 
 /**

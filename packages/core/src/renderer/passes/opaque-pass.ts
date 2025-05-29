@@ -5,9 +5,9 @@
  * 负责渲染所有不透明的几何体，是前向渲染的核心通道
  */
 
-import { RenderPass } from './RenderPass';
-import type { RenderContext } from '../RenderContext';
-import type { RenderQueue } from '../RenderQueue';
+import { RenderPass } from './render-pass';
+import type { RenderContext } from '../render-context';
+import type { RenderQueue } from '../render-queue';
 import type { IRHIRenderPass } from '../../interface/rhi';
 
 /**
