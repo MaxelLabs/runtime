@@ -1,7 +1,7 @@
 {
   "name": "@maxellabs/specification",
   "version": "0.0.6",
-  "description": "基于 OpenUSD 格式的全流程数据描述包，支持 3D 引擎、动效引擎、Figma 设计数据和图标数据",
+  "description": "基于 OpenUSD 格式的全流程数据描述包，支持 3D 引擎、动效引擎、设计数据和图表数据",
   "type": "module",
   "module": "./dist/index.mjs",
   "main": "./dist/index.js",
@@ -20,10 +20,10 @@
   "scripts": {
     "dev": "rollup -c -w",
     "prebuild": "pnpm clean",
-    "build": "pnpm build:module && pnpm build:declaration",
-    "build:module": "rollup -c",
-    "build:declaration": "tsc -d --emitDeclarationOnly",
-    "clean": "rimraf dist",
+    "build": "pnpm build:types && pnpm build:js",
+    "build:js": "rollup -c",
+    "build:types": "tsc --emitDeclarationOnly",
+    "clean": "rimraf dist tsconfig.tsbuildinfo .rollup.cache",
     "test": "jest",
     "prepublishOnly": "pnpm build",
     "lint": "eslint src --ext .ts",

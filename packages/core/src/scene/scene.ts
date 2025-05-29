@@ -493,11 +493,23 @@ export class Scene extends EventDispatcher {
   }
 
   /**
-   * 根据组件类型查找游戏对象
-   * @param componentType 组件类型
-   * @returns 拥有该组件的游戏对象数组
+   * 递归遍历场景中的所有游戏对象（包括子对象）
+   * @param callback 回调函数，接收GameObject作为参数
    */
-  findGameObjectsWithComponent<T extends Component>(componentType: new (...args: any[]) => T): GameObject[] {
-    return this.findEntitiesByComponent(componentType).map((entity) => GameObject.fromEntity(entity));
+  traverseHierarchy(callback: (gameObject: GameObject) => void): void {
+    const traverseRecursive = (gameObject: GameObject) => {
+      callback(gameObject);
+      for (const child of gameObject.children) {
+        traverseRecursive(child);
+      }
+    };
+
+    const gameObjects = this.getAllGameObjects();
+    for (const gameObject of gameObjects) {
+      // 只遍历根级游戏对象，递归会处理子对象
+      if (gameObject.parent === null) {
+        traverseRecursive(gameObject);
+      }
+    }
   }
 }

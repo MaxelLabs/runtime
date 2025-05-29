@@ -100,6 +100,3 @@ export interface PropertyAnimation {
    */
   transform?: TransformType;
 }
-
-// 重新导出通用类型以保持兼容性
-export { AnimationTimeline, AnimationTimelineTrack } from '../common';

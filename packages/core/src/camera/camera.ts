@@ -544,4 +544,29 @@ export class Camera extends Component {
     this.viewDirty = true;
     return this;
   }
+
+  /**
+   * 获取相机视锥体
+   * 返回一个具有intersectsBoundingBox方法的对象
+   */
+  getFrustum(): { intersectsBoundingBox: (bounds: any) => boolean } {
+    // 简化的视锥体实现，实际项目中应该使用完整的Frustum类
+    return {
+      intersectsBoundingBox: (bounds: any) => {
+        // 简单的距离检查，实际应该做完整的视锥体裁剪
+        if (!bounds || !bounds.center) {
+          return true; // 如果没有包围盒信息，默认通过
+        }
+
+        const cameraPos = this.getPosition();
+        const dx = bounds.center.x - cameraPos.x;
+        const dy = bounds.center.y - cameraPos.y;
+        const dz = bounds.center.z - cameraPos.z;
+        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+        // 简单的距离裁剪，距离超过远裁剪面则剔除
+        return distance <= this.far;
+      },
+    };
+  }
 }

@@ -494,4 +494,25 @@ export abstract class Resource extends ReferResource {
     this.metadata = data.metadata || {};
     this.resourceCreateTime = data.createTime || this.resourceCreateTime;
   }
+
+  /**
+   * 获取资源名称
+   */
+  getName(): string {
+    return this.name;
+  }
+
+  /**
+   * 获取资源路径
+   */
+  getPath(): string {
+    return this.resourceUrl || this.name;
+  }
+
+  /**
+   * 标记资源为脏状态
+   */
+  markDirty(): void {
+    this.incrementVersion();
+  }
 }

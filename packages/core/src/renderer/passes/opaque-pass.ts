@@ -1,299 +1,371 @@
 /**
- * OpaquePass.ts
- * 不透明物体渲染通道
- *
- * 负责渲染所有不透明的几何体，是前向渲染的核心通道
+ * opaque-pass.ts
+ * 不透明物体渲染通道 - 基于RHI硬件抽象层
+ * 用于渲染不透明的几何体
  */
 
-import { RenderPass } from './render-pass';
-import type { RenderContext } from '../render-context';
-import type { RenderQueue } from '../render-queue';
-import type { IRHIRenderPass } from '../../interface/rhi';
+import type {
+  IRHIDevice,
+  IRHIRenderPass,
+  IRHIRenderPipeline,
+  IRHIBindGroup,
+  IRHIShaderModule,
+  IRHIBindGroupLayout,
+  IRHIPipelineLayout,
+} from '../../interface/rhi';
+import { RHIPrimitiveTopology, RHICullMode, RHIFrontFace, RHICompareFunction } from '@maxellabs/math';
+import type { Camera } from '../../camera/camera';
+import type { RenderElement } from '../render-element';
+import { RenderPassBase, type RenderPassConfig } from './render-pass-base';
 
 /**
- * 不透明物体通道配置
+ * 不透明渲染通道配置
  */
-export interface OpaquePassConfig {
+export interface OpaquePassConfig extends RenderPassConfig {
   /**
-   * 通道名称
+   * 是否启用深度预排序
    */
-  name: string;
+  enableDepthPreSort?: boolean;
 
   /**
-   * 是否启用光照
+   * 是否启用实例化渲染
    */
-  enableLighting?: boolean;
+  enableInstancing?: boolean;
 
   /**
-   * 是否启用阴影
+   * 最大实例数量
    */
-  enableShadows?: boolean;
-
-  /**
-   * 最大光源数量
-   */
-  maxLights?: number;
-
-  /**
-   * 深度测试模式
-   */
-  depthTest?: 'never' | 'less' | 'equal' | 'less-equal' | 'greater' | 'not-equal' | 'greater-equal' | 'always';
-
-  /**
-   * 是否写入深度
-   */
-  depthWrite?: boolean;
-
-  /**
-   * 面剔除模式
-   */
-  cullMode?: 'none' | 'front' | 'back';
+  maxInstances?: number;
 }
 
 /**
  * 不透明物体渲染通道
- *
- * 特点：
- * - 启用深度测试和深度写入
- * - 不启用混合
- * - 前到后排序以减少overdraw
- * - 支持多光源照明
+ * 按前到后的顺序渲染不透明几何体，减少过度绘制
  */
-export class OpaquePass extends RenderPass {
-  /**
-   * 通道配置
-   */
-  private readonly passConfig: Required<OpaquePassConfig>;
+export class OpaquePass extends RenderPassBase {
+  protected override config: Required<OpaquePassConfig>;
+  private pipelineCache = new Map<string, IRHIRenderPipeline>();
+  private bindGroupCache = new Map<string, IRHIBindGroup[]>();
 
-  /**
-   * 构造函数
-   */
-  constructor(config: OpaquePassConfig) {
-    // 创建基础渲染通道配置
-    const baseConfig = {
-      name: config.name,
-      enabled: true,
-      priority: 0,
-      depthTest: config.depthTest ?? 'less',
-      depthWrite: config.depthWrite ?? true,
-      cullMode: config.cullMode ?? 'back',
-      blendMode: 'none' as const,
-    };
+  // 着色器资源
+  private vertexShader: IRHIShaderModule | null = null;
+  private fragmentShader: IRHIShaderModule | null = null;
+  private bindGroupLayout: IRHIBindGroupLayout | null = null;
+  private pipelineLayout: IRHIPipelineLayout | null = null;
 
-    super(baseConfig);
+  constructor(device: IRHIDevice, config: OpaquePassConfig) {
+    super(device, config);
 
-    // 设置通道特定配置
-    this.passConfig = {
-      name: config.name,
-      enableLighting: config.enableLighting ?? true,
-      enableShadows: config.enableShadows ?? false,
-      maxLights: config.maxLights ?? 32,
-      depthTest: config.depthTest ?? 'less',
-      depthWrite: config.depthWrite ?? true,
-      cullMode: config.cullMode ?? 'back',
-    };
+    this.config = {
+      enableDepthPreSort: true,
+      enableInstancing: false,
+      maxInstances: 100,
+      ...config,
+    } as Required<OpaquePassConfig>;
+
+    this.initializeShaders();
   }
 
   /**
-   * 初始化通道
+   * 初始化着色器
    */
-  override async initialize(): Promise<void> {
-    await super.initialize();
+  private async initializeShaders(): Promise<void> {
+    try {
+      // 创建基础顶点着色器
+      this.vertexShader = this.device.createShaderModule({
+        code: this.getDefaultVertexShaderCode(),
+        language: 'glsl',
+        stage: 'vertex',
+        label: 'OpaquePass-VertexShader',
+      });
 
-    // 设置渲染状态
-    this.setRenderState({
-      depthTest: this.passConfig.depthTest,
-      depthWrite: this.passConfig.depthWrite,
-      cullMode: this.passConfig.cullMode,
-      blendMode: 'none', // 不透明物体不需要混合
-    });
+      // 创建基础片段着色器
+      this.fragmentShader = this.device.createShaderModule({
+        code: this.getDefaultFragmentShaderCode(),
+        language: 'glsl',
+        stage: 'fragment',
+        label: 'OpaquePass-FragmentShader',
+      });
 
-    if (process.env.NODE_ENV === 'development') {
-      // eslint-disable-next-line no-console
-      console.log(
-        `OpaquePass initialized: lighting=${this.passConfig.enableLighting}, shadows=${this.passConfig.enableShadows}`
+      // 创建绑定组布局
+      this.bindGroupLayout = this.device.createBindGroupLayout(
+        [
+          // 相机uniform缓冲区
+          {
+            binding: 0,
+            visibility: 'vertex',
+            type: 'uniform-buffer',
+          },
+          // 模型变换uniform缓冲区
+          {
+            binding: 1,
+            visibility: 'vertex',
+            type: 'uniform-buffer',
+          },
+          // 材质uniform缓冲区
+          {
+            binding: 2,
+            visibility: 'fragment',
+            type: 'uniform-buffer',
+          },
+          // 漫反射纹理
+          {
+            binding: 3,
+            visibility: 'fragment',
+            type: 'texture',
+          },
+          // 纹理采样器
+          {
+            binding: 4,
+            visibility: 'fragment',
+            type: 'sampler',
+          },
+        ],
+        'OpaquePass-BindGroupLayout'
       );
+
+      // 创建管线布局
+      this.pipelineLayout = this.device.createPipelineLayout([this.bindGroupLayout], 'OpaquePass-PipelineLayout');
+    } catch (error) {
+      console.error('OpaquePass: 着色器初始化失败:', error);
     }
   }
 
   /**
-   * 渲染不透明物体
+   * 获取默认顶点着色器代码
    */
-  protected override async render(context: RenderContext, queue: RenderQueue): Promise<void> {
-    const startTime = performance.now();
+  private getDefaultVertexShaderCode(): string {
+    return `
+      #version 300 es
+      precision highp float;
+
+      // 顶点属性
+      layout(location = 0) in vec3 a_position;
+      layout(location = 1) in vec3 a_normal;
+      layout(location = 2) in vec2 a_texCoord;
+
+      // Uniform块
+      layout(std140) uniform Camera {
+        mat4 u_viewMatrix;
+        mat4 u_projectionMatrix;
+        mat4 u_viewProjectionMatrix;
+        vec3 u_cameraPosition;
+      };
+
+      layout(std140) uniform Model {
+        mat4 u_modelMatrix;
+        mat4 u_normalMatrix;
+      };
+
+      // 输出到片段着色器
+      out vec3 v_worldPosition;
+      out vec3 v_worldNormal;
+      out vec2 v_texCoord;
+
+      void main() {
+        // 计算世界空间位置
+        vec4 worldPosition = u_modelMatrix * vec4(a_position, 1.0);
+        v_worldPosition = worldPosition.xyz;
+
+        // 计算世界空间法线
+        v_worldNormal = normalize((u_normalMatrix * vec4(a_normal, 0.0)).xyz);
+
+        // 传递纹理坐标
+        v_texCoord = a_texCoord;
+
+        // 计算裁剪空间位置
+        gl_Position = u_viewProjectionMatrix * worldPosition;
+      }
+    `;
+  }
+
+  /**
+   * 获取默认片段着色器代码
+   */
+  private getDefaultFragmentShaderCode(): string {
+    return `
+      #version 300 es
+      precision highp float;
+
+      // 来自顶点着色器的输入
+      in vec3 v_worldPosition;
+      in vec3 v_worldNormal;
+      in vec2 v_texCoord;
+
+      // Uniform块
+      layout(std140) uniform Material {
+        vec4 u_baseColor;
+        float u_metallic;
+        float u_roughness;
+        float u_transparency;
+      };
+
+      // 纹理
+      uniform sampler2D u_baseColorTexture;
+
+      // 输出
+      out vec4 fragColor;
+
+      void main() {
+        // 采样基础颜色纹理
+        vec4 textureColor = texture(u_baseColorTexture, v_texCoord);
+        
+        // 组合材质颜色和纹理颜色
+        vec4 finalColor = u_baseColor * textureColor;
+
+        // 简单的光照计算（临时）
+        vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
+        float lightIntensity = max(dot(normalize(v_worldNormal), lightDir), 0.0);
+        
+        finalColor.rgb *= lightIntensity * 0.8 + 0.2; // 环境光
+        finalColor.a *= u_transparency;
+
+        fragColor = finalColor;
+      }
+    `;
+  }
+
+  /**
+   * 执行渲染
+   */
+  protected render(renderPass: IRHIRenderPass, camera: Camera, renderElements: readonly RenderElement[]): void {
+    // 过滤不透明元素
+    const opaqueElements = renderElements.filter((element) => !element.isTransparent);
+
+    if (opaqueElements.length === 0) {
+      return;
+    }
+
+    // 如果启用深度预排序，按距离排序
+    if (this.config.enableDepthPreSort) {
+      opaqueElements.sort((a, b) => a.distanceToCamera - b.distanceToCamera);
+    }
+
+    // 渲染所有不透明元素
+    for (const element of opaqueElements) {
+      this.renderElement(renderPass, element);
+    }
+  }
+
+  /**
+   * 获取渲染管线
+   */
+  protected getRenderPipeline(element: RenderElement): IRHIRenderPipeline | null {
+    if (!this.vertexShader || !this.fragmentShader || !this.pipelineLayout) {
+      return null;
+    }
+
+    const material = element.material;
+    const mesh = element.mesh;
+
+    // 创建管线缓存键
+    const pipelineKey = `${material.getId()}-${mesh.getVertexLayout().toString()}`;
+
+    // 检查缓存
+    let pipeline = this.pipelineCache.get(pipelineKey);
+    if (pipeline) {
+      return pipeline;
+    }
 
     try {
-      // 获取不透明物体
-      const opaqueElements = queue.getOpaqueElements();
-      if (opaqueElements.length === 0) {
-        return;
-      }
-
-      // 开始渲染通道
-      const encoder = context.getCommandEncoder();
-      if (!encoder) {
-        throw new Error('Command encoder not available');
-      }
-
-      const renderPassEncoder = this.beginRenderPass(context, encoder);
-
-      // 设置全局uniform
-      await this.setupGlobalUniforms(context, renderPassEncoder);
-
-      // 渲染不透明物体
-      await this.renderOpaqueElements(context, renderPassEncoder, opaqueElements);
-
-      // 结束渲染通道
-      renderPassEncoder.end();
-
-      // 更新统计信息
-      this.updateStats({
-        drawCalls: opaqueElements.length,
-        triangles: opaqueElements.reduce((sum, element) => sum + (element.triangleCount || 0), 0),
-        vertices: opaqueElements.reduce((sum, element) => sum + (element.vertexCount || 0), 0),
+      // 创建新的渲染管线
+      pipeline = this.device.createRenderPipeline({
+        vertexShader: this.vertexShader,
+        fragmentShader: this.fragmentShader,
+        vertexLayout: {
+          buffers: mesh.getVertexLayout(),
+        },
+        primitiveTopology: RHIPrimitiveTopology.TRIANGLE_LIST,
+        layout: this.pipelineLayout,
+        rasterizationState: {
+          cullMode: RHICullMode.BACK,
+          frontFace: RHIFrontFace.CCW,
+        },
+        depthStencilState: {
+          depthWriteEnabled: true,
+          depthCompare: RHICompareFunction.LESS,
+        },
+        colorBlendState: {
+          attachments: [
+            {
+              enabled: false,
+              colorWriteMask: 0xf,
+            },
+          ],
+        },
+        label: `OpaquePass-Pipeline-${pipelineKey}`,
       });
+
+      // 缓存管线
+      this.pipelineCache.set(pipelineKey, pipeline);
+
+      return pipeline;
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('OpaquePass execution failed:', error);
-      throw error;
-    } finally {
-      const endTime = performance.now();
-      this.updateStats({
-        executionTime: endTime - startTime,
-      });
+      console.error(`OpaquePass: 创建渲染管线失败 ${pipelineKey}:`, error);
+      return null;
     }
   }
 
   /**
-   * 设置全局uniform
+   * 获取绑定组
    */
-  private async setupGlobalUniforms(context: RenderContext, encoder: IRHIRenderPass): Promise<void> {
-    // 设置相机矩阵
-    const camera = context.getCamera();
-    if (camera) {
-      const viewMatrix = camera.getViewMatrix();
-      const projectionMatrix = camera.getProjectionMatrix();
-      const viewProjectionMatrix = projectionMatrix.multiply(viewMatrix);
+  protected getBindGroups(element: RenderElement): IRHIBindGroup[] | null {
+    if (!this.bindGroupLayout) {
+      return null;
+    }
 
-      // 绑定相机uniform
-      const cameraUniform = context.getCameraUniform();
-      if (cameraUniform) {
-        encoder.setBindGroup(0, cameraUniform);
+    const cacheKey = `${element.material.getId()}-${element.gameObject.getId()}`;
+
+    // 检查缓存
+    const bindGroups = this.bindGroupCache.get(cacheKey);
+    if (bindGroups) {
+      return bindGroups;
+    }
+
+    try {
+      // TODO: 创建实际的uniform缓冲区和纹理绑定
+      // 这里需要根据材质和变换矩阵创建实际的绑定组
+      // 暂时返回null，等RHI实现完成后补充
+
+      return null;
+    } catch (error) {
+      console.error(`OpaquePass: 创建绑定组失败 ${cacheKey}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * 更新配置
+   */
+  override updateConfig(newConfig: Partial<OpaquePassConfig>): void {
+    Object.assign(this.config, newConfig);
+    super.updateConfig(newConfig);
+  }
+
+  /**
+   * 销毁渲染通道
+   */
+  override destroy(): void {
+    // 清理管线缓存
+    for (const pipeline of this.pipelineCache.values()) {
+      pipeline.destroy();
+    }
+    this.pipelineCache.clear();
+
+    // 清理绑定组缓存
+    for (const bindGroups of this.bindGroupCache.values()) {
+      for (const bindGroup of bindGroups) {
+        bindGroup.destroy();
       }
     }
+    this.bindGroupCache.clear();
 
-    // 设置光照uniform
-    if (this.passConfig.enableLighting) {
-      const lightingUniform = context.getLightingUniform();
-      if (lightingUniform) {
-        encoder.setBindGroup(1, lightingUniform);
-      }
-    }
+    // 清理着色器资源
+    this.vertexShader?.destroy();
+    this.fragmentShader?.destroy();
+    this.bindGroupLayout?.destroy();
+    this.pipelineLayout?.destroy();
 
-    // 设置阴影uniform
-    if (this.passConfig.enableShadows) {
-      const shadowUniform = context.getShadowUniform();
-      if (shadowUniform) {
-        encoder.setBindGroup(2, shadowUniform);
-      }
-    }
-  }
-
-  /**
-   * 渲染不透明物体
-   */
-  private async renderOpaqueElements(
-    context: RenderContext,
-    encoder: IRHIRenderPass,
-    elements: readonly any[]
-  ): Promise<void> {
-    let currentMaterial: any = null;
-    let currentGeometry: any = null;
-
-    for (const element of elements) {
-      try {
-        // 材质切换
-        if (element.material !== currentMaterial) {
-          currentMaterial = element.material;
-
-          // 绑定材质
-          if (currentMaterial?.bindGroup) {
-            encoder.setBindGroup(3, currentMaterial.bindGroup);
-          }
-
-          // 设置渲染管线
-          if (currentMaterial?.pipeline) {
-            encoder.setPipeline(currentMaterial.pipeline);
-          }
-        }
-
-        // 几何体切换
-        if (element.geometry !== currentGeometry) {
-          currentGeometry = element.geometry;
-
-          // 绑定顶点缓冲区
-          if (currentGeometry?.vertexBuffer) {
-            encoder.setVertexBuffer(0, currentGeometry.vertexBuffer);
-          }
-
-          // 绑定索引缓冲区
-          if (currentGeometry?.indexBuffer) {
-            encoder.setIndexBuffer(currentGeometry.indexBuffer, 'uint16');
-          }
-        }
-
-        // 设置实例数据
-        if (element.instanceData) {
-          // 绑定实例uniform
-          encoder.setBindGroup(4, element.instanceData.bindGroup);
-        }
-
-        // 执行绘制
-        if (currentGeometry?.indexBuffer) {
-          encoder.drawIndexed(currentGeometry.indexCount || 0, element.instanceCount || 1, 0, 0, 0);
-        } else {
-          encoder.draw(currentGeometry?.vertexCount || 0, element.instanceCount || 1, 0, 0);
-        }
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to render opaque element:', error);
-        // 继续渲染其他元素
-      }
-    }
-  }
-
-  /**
-   * 获取通道配置
-   */
-  getPassConfig(): Required<OpaquePassConfig> {
-    return { ...this.passConfig };
-  }
-
-  /**
-   * 设置光照启用状态
-   */
-  setLightingEnabled(enabled: boolean): void {
-    (this.passConfig as any).enableLighting = enabled;
-  }
-
-  /**
-   * 设置阴影启用状态
-   */
-  setShadowsEnabled(enabled: boolean): void {
-    (this.passConfig as any).enableShadows = enabled;
-  }
-
-  /**
-   * 获取光照启用状态
-   */
-  isLightingEnabled(): boolean {
-    return this.passConfig.enableLighting;
-  }
-
-  /**
-   * 获取阴影启用状态
-   */
-  isShadowsEnabled(): boolean {
-    return this.passConfig.enableShadows;
+    super.destroy();
   }
 }

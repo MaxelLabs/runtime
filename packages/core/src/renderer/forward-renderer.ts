@@ -1,493 +1,315 @@
 /**
- * ForwardRenderer.ts
- * 前向渲染管线
- *
- * 实现基础的前向渲染流程，适用于大多数场景
- * 支持多光源、透明度、阴影等功能
+ * forward-renderer.ts
+ * 前向渲染器 - 基于RHI硬件抽象层
+ * 实现前向渲染管线，按照不透明->透明的顺序渲染
  */
 
-import { RenderPipeline, type RenderPipelineConfig } from './render-pipeline';
-import type { RenderContext } from './render-context';
-import type { RenderQueue } from './render-queue';
-import { SortStrategy } from './render-queue';
-import { ShadowPass, DepthPrepass, SkyboxPass, OpaquePass, TransparentPass, PostProcessPass } from './passes';
+import type { Scene } from '../scene/scene';
+import type { Camera } from '../camera/camera';
+import type { IRHIDevice, IRHITextureView } from '../interface/rhi';
+import { Renderer, type RendererConfig } from './renderer';
+import { RenderQueue, type RenderQueueConfig } from './render-queue';
+import { OpaquePass, type OpaquePassConfig } from './passes/opaque-pass';
+import { TransparentPass, type TransparentPassConfig } from './passes/transparent-pass';
 
 /**
  * 前向渲染器配置
  */
-export interface ForwardRendererConfig extends RenderPipelineConfig {
+export interface ForwardRendererConfig extends RendererConfig {
+  /**
+   * 渲染队列配置
+   */
+  renderQueue?: RenderQueueConfig;
+
+  /**
+   * 不透明通道配置
+   */
+  opaquePass?: Partial<OpaquePassConfig>;
+
+  /**
+   * 透明通道配置
+   */
+  transparentPass?: Partial<TransparentPassConfig>;
+
   /**
    * 是否启用深度预通道
    */
   enableDepthPrepass?: boolean;
 
   /**
-   * 是否启用透明度排序
-   */
-  enableTransparencySort?: boolean;
-
-  /**
-   * 是否启用天空盒渲染
-   */
-  enableSkybox?: boolean;
-
-  /**
    * 是否启用后处理
    */
   enablePostProcessing?: boolean;
-
-  /**
-   * 是否启用抗锯齿
-   */
-  enableAntiAliasing?: boolean;
-
-  /**
-   * 抗锯齿类型
-   */
-  antiAliasingType?: 'msaa' | 'fxaa' | 'taa';
 }
 
 /**
- * 前向渲染管线
- *
- * 前向渲染是最直接的渲染方式，对每个像素计算所有光源的贡献
- * 适用于：
- * - 移动设备
- * - 透明物体较多的场景
- * - 光源数量较少的场景
+ * 前向渲染器
+ * 实现经典的前向渲染管线
  */
-export class ForwardRenderer extends RenderPipeline {
-  /**
-   * 前向渲染配置
-   */
-  declare readonly config: Required<ForwardRendererConfig>;
+export class ForwardRenderer extends Renderer {
+  protected override config: Required<ForwardRendererConfig>;
+  private renderQueue: RenderQueue;
+  private opaquePass: OpaquePass;
+  private transparentPass: TransparentPass;
 
-  /**
-   * 深度预通道
-   */
-  private depthPrepass: DepthPrepass | null = null;
-
-  /**
-   * 阴影通道
-   */
-  private shadowPass: ShadowPass | null = null;
-
-  /**
-   * 天空盒通道
-   */
-  private skyboxPass: SkyboxPass | null = null;
-
-  /**
-   * 不透明物体通道
-   */
-  private opaquePass: OpaquePass | null = null;
-
-  /**
-   * 透明物体通道
-   */
-  private transparentPass: TransparentPass | null = null;
-
-  /**
-   * 后处理通道
-   */
-  private postProcessPass: PostProcessPass | null = null;
+  // 渲染目标
+  private colorTarget: IRHITextureView | null = null;
+  private depthTarget: IRHITextureView | null = null;
 
   /**
    * 构造函数
    */
-  constructor(config: ForwardRendererConfig) {
-    // 设置默认配置
-    const defaultConfig: Required<ForwardRendererConfig> = {
-      ...config,
-      enableDepthTest: config.enableDepthTest ?? true,
-      enableStencilTest: config.enableStencilTest ?? false,
-      enableMSAA: config.enableMSAA ?? true,
-      enableHDR: config.enableHDR ?? false,
-      enableGammaCorrection: config.enableGammaCorrection ?? true,
-      maxLights: config.maxLights ?? 32,
-      enableShadows: config.enableShadows ?? true,
-      shadowQuality: config.shadowQuality ?? 'medium',
-      postProcessEffects: config.postProcessEffects ?? [],
-      enableDepthPrepass: config.enableDepthPrepass ?? false,
-      enableTransparencySort: config.enableTransparencySort ?? true,
-      enableSkybox: config.enableSkybox ?? true,
-      enablePostProcessing: config.enablePostProcessing ?? true,
-      enableAntiAliasing: config.enableAntiAliasing ?? true,
-      antiAliasingType: config.antiAliasingType ?? 'msaa',
-    };
+  constructor(device: IRHIDevice, config: ForwardRendererConfig = {}) {
+    super(device, config);
 
-    super(defaultConfig);
+    this.config = {
+      enableDepthPrepass: false,
+      enablePostProcessing: false,
+      renderQueue: {},
+      opaquePass: {},
+      transparentPass: {},
+      ...config,
+    } as Required<ForwardRendererConfig>;
+
+    // 初始化渲染组件
+    this.initializeComponents();
   }
 
   /**
-   * 初始化渲染通道
+   * 初始化渲染组件
    */
-  protected async initializePasses(): Promise<void> {
-    if (!this.renderer) {
-      throw new Error('Renderer not set');
+  private initializeComponents(): void {
+    // 创建渲染队列
+    this.renderQueue = new RenderQueue(this.config.renderQueue);
+
+    // 创建不透明渲染通道
+    this.opaquePass = new OpaquePass(this.device, {
+      name: 'OpaquePass',
+      colorAttachments: [], // 将在渲染时动态设置
+      ...this.config.opaquePass,
+    });
+
+    // 创建透明渲染通道
+    this.transparentPass = new TransparentPass(this.device, {
+      name: 'TransparentPass',
+      colorAttachments: [], // 将在渲染时动态设置
+      ...this.config.transparentPass,
+    });
+  }
+
+  /**
+   * 设置渲染目标
+   */
+  setRenderTargets(colorTarget: IRHITextureView, depthTarget?: IRHITextureView): void {
+    this.colorTarget = colorTarget;
+    this.depthTarget = depthTarget || null;
+  }
+
+  /**
+   * 渲染场景
+   */
+  render(scene: Scene, camera: Camera): void {
+    if (!this.colorTarget) {
+      console.warn('ForwardRenderer: 未设置渲染目标');
+      return;
     }
 
     try {
-      // 创建阴影通道
-      if (this.config.enableShadows) {
-        await this.createShadowPass();
+      // 开始渲染帧
+      this.beginFrame();
+
+      if (!this.commandEncoder) {
+        console.error('ForwardRenderer: 命令编码器未初始化');
+        return;
       }
 
-      // 创建深度预通道
-      if (this.config.enableDepthPrepass) {
-        await this.createDepthPrepass();
+      // 构建渲染队列
+      this.renderQueue.build(scene, camera);
+
+      // 获取渲染元素
+      const opaqueElements = this.renderQueue.getOpaqueElements();
+      const transparentElements = this.renderQueue.getTransparentElements();
+
+      // 更新通道配置
+      this.updatePassConfigurations();
+
+      // 执行深度预通道（可选）
+      if (this.config.enableDepthPrepass && this.depthTarget) {
+        this.executeDepthPrepass(camera, opaqueElements);
       }
 
-      // 创建天空盒通道
-      if (this.config.enableSkybox) {
-        await this.createSkyboxPass();
+      // 执行不透明物体渲染通道
+      if (opaqueElements.length > 0) {
+        this.opaquePass.execute(this.commandEncoder, camera, opaqueElements);
       }
 
-      // 创建不透明物体通道
-      await this.createOpaquePass();
+      // 执行透明物体渲染通道
+      if (transparentElements.length > 0) {
+        this.transparentPass.execute(this.commandEncoder, camera, transparentElements);
+      }
 
-      // 创建透明物体通道
-      await this.createTransparentPass();
-
-      // 创建后处理通道
+      // 执行后处理（可选）
       if (this.config.enablePostProcessing) {
-        await this.createPostProcessPass();
+        this.executePostProcessing(camera);
       }
 
-      if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
-        console.log(`ForwardRenderer passes initialized: ${this.passes.length} passes`);
-      }
+      // 结束渲染帧
+      this.endFrame();
+
+      // 更新统计信息
+      this.updateRenderStatistics();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to initialize ForwardRenderer passes:', error);
-      throw error;
+      console.error('ForwardRenderer: 渲染失败:', error);
+      this.dispatchEvent('renderError', { error });
     }
   }
 
   /**
-   * 准备渲染
+   * 更新通道配置
    */
-  protected override async prepare(context: RenderContext, queue: RenderQueue): Promise<void> {
-    // 设置渲染队列的排序策略
-    queue.updateConfig({
-      opaqueSortStrategy: SortStrategy.FrontToBack, // 不透明物体前到后排序，减少overdraw
-      transparentSortStrategy: this.config.enableTransparencySort ? SortStrategy.BackToFront : SortStrategy.None,
-      enableBatching: true,
-      enableInstancing: true,
-    });
-
-    // 构建渲染队列
-    queue.build();
-
-    // 更新渲染上下文
-    const camera = context.getCamera();
-    if (camera) {
-      queue.setCamera(camera);
-    }
-  }
-
-  /**
-   * 完成渲染
-   */
-  override async finalize(context: RenderContext, queue: RenderQueue): Promise<void> {
-    // 提交命令缓冲区
-    const encoder = context.getCommandEncoder();
-    if (encoder) {
-      const commandBuffer = encoder.finish({
-        label: 'ForwardRenderer_CommandBuffer',
-      });
-
-      this.renderer!.device.submit([commandBuffer]);
+  private updatePassConfigurations(): void {
+    if (!this.colorTarget) {
+      return;
     }
 
-    // 清理临时资源
-    context.clearTemporaryResources();
-  }
-
-  /**
-   * 创建阴影通道
-   */
-  private async createShadowPass(): Promise<void> {
-    if (process.env.NODE_ENV === 'development') {
-      // eslint-disable-next-line no-console
-      console.log('Creating shadow pass...');
-    }
-
-    this.shadowPass = new ShadowPass({
-      name: 'ShadowPass',
-      shadowQuality: this.config.shadowQuality,
-      enableSoftShadows: true,
-    });
-
-    await this.shadowPass.initialize(this.createRenderContext());
-    this.addPass(this.shadowPass);
-  }
-
-  /**
-   * 创建深度预通道
-   */
-  private async createDepthPrepass(): Promise<void> {
-    if (process.env.NODE_ENV === 'development') {
-      // eslint-disable-next-line no-console
-      console.log('Creating depth prepass...');
-    }
-
-    this.depthPrepass = new DepthPrepass({
-      name: 'DepthPrepass',
-      enableEarlyZ: true,
-      includeTransparent: false,
-    });
-
-    await this.depthPrepass.initialize(this.createRenderContext());
-    this.addPass(this.depthPrepass);
-  }
-
-  /**
-   * 创建天空盒通道
-   */
-  private async createSkyboxPass(): Promise<void> {
-    if (process.env.NODE_ENV === 'development') {
-      // eslint-disable-next-line no-console
-      console.log('Creating skybox pass...');
-    }
-
-    this.skyboxPass = new SkyboxPass({
-      name: 'SkyboxPass',
-      skyboxType: 'cubemap',
-      depthTest: 'less-equal',
-      depthWrite: false,
-    });
-
-    await this.skyboxPass.initialize(this.createRenderContext());
-    this.addPass(this.skyboxPass);
-  }
-
-  /**
-   * 创建不透明物体通道
-   */
-  private async createOpaquePass(): Promise<void> {
-    if (process.env.NODE_ENV === 'development') {
-      // eslint-disable-next-line no-console
-      console.log('Creating opaque pass...');
-    }
-
-    this.opaquePass = new OpaquePass({
-      name: 'OpaquePass',
-      enableLighting: true,
-      enableShadows: this.config.enableShadows,
-      maxLights: this.config.maxLights,
-      depthTest: 'less',
-      depthWrite: true,
-    });
-
-    await this.opaquePass.initialize(this.createRenderContext());
-    this.addPass(this.opaquePass);
-  }
-
-  /**
-   * 创建透明物体通道
-   */
-  private async createTransparentPass(): Promise<void> {
-    if (process.env.NODE_ENV === 'development') {
-      // eslint-disable-next-line no-console
-      console.log('Creating transparent pass...');
-    }
-
-    this.transparentPass = new TransparentPass({
-      name: 'TransparentPass',
-      enableLighting: true,
-      enableShadows: this.config.enableShadows,
-      depthTest: 'less',
-      depthWrite: false,
-      blendMode: 'alpha',
-      enableDepthSort: this.config.enableTransparencySort,
-    });
-
-    await this.transparentPass.initialize(this.createRenderContext());
-    this.addPass(this.transparentPass);
-  }
-
-  /**
-   * 创建后处理通道
-   */
-  private async createPostProcessPass(): Promise<void> {
-    if (process.env.NODE_ENV === 'development') {
-      // eslint-disable-next-line no-console
-      console.log('Creating post-process pass...');
-    }
-
-    const effects = ['tonemapping', 'gamma-correction'];
-    if (this.config.enableAntiAliasing) {
-      effects.push(this.config.antiAliasingType);
-    }
-
-    this.postProcessPass = new PostProcessPass({
-      name: 'PostProcessPass',
-      effects: effects as any,
-      enableGammaCorrection: this.config.enableGammaCorrection,
-      enableAntiAliasing: this.config.enableAntiAliasing,
-      antiAliasingType: this.config.antiAliasingType,
-    });
-
-    await this.postProcessPass.initialize(this.createRenderContext());
-    this.addPass(this.postProcessPass);
-  }
-
-  /**
-   * 创建渲染上下文（临时方法）
-   */
-  private createRenderContext(): RenderContext {
-    // TODO: 这里应该返回实际的渲染上下文
-    // 目前返回一个空对象作为占位符
-    return {} as RenderContext;
-  }
-
-  /**
-   * 获取渲染统计信息
-   */
-  getDetailedStats() {
-    const baseStats = this.getStats();
-
-    return {
-      ...baseStats,
-      passes: {
-        shadow: this.shadowPass?.getStats() || null,
-        depthPrepass: this.depthPrepass?.getStats() || null,
-        skybox: this.skyboxPass?.getStats() || null,
-        opaque: this.opaquePass?.getStats() || null,
-        transparent: this.transparentPass?.getStats() || null,
-        postProcess: this.postProcessPass?.getStats() || null,
+    // 配置不透明通道
+    const opaqueConfig = this.opaquePass.getConfig();
+    opaqueConfig.colorAttachments = [
+      {
+        view: this.colorTarget,
+        loadOp: 'clear',
+        storeOp: 'store',
+        clearValue: this.config.clearColor,
       },
-      features: {
-        enableDepthPrepass: this.config.enableDepthPrepass,
-        enableShadows: this.config.enableShadows,
-        enableSkybox: this.config.enableSkybox,
-        enablePostProcessing: this.config.enablePostProcessing,
-        enableAntiAliasing: this.config.enableAntiAliasing,
-        antiAliasingType: this.config.antiAliasingType,
+    ];
+
+    if (this.depthTarget) {
+      opaqueConfig.depthStencilAttachment = {
+        view: this.depthTarget,
+        loadOp: 'clear',
+        storeOp: 'store',
+        clearValue: this.config.clearDepth,
+        depthWriteEnabled: true,
+        stencilLoadOp: 'clear',
+        stencilStoreOp: 'store',
+        stencilClearValue: this.config.clearStencil,
+      };
+    }
+
+    this.opaquePass.updateConfig(opaqueConfig);
+
+    // 配置透明通道
+    const transparentConfig = this.transparentPass.getConfig();
+    transparentConfig.colorAttachments = [
+      {
+        view: this.colorTarget,
+        loadOp: 'load', // 透明通道需要加载之前的颜色
+        storeOp: 'store',
       },
-    };
-  }
+    ];
 
-  /**
-   * 动态启用/禁用功能
-   */
-  setFeatureEnabled(feature: string, enabled: boolean): void {
-    switch (feature) {
-      case 'shadows':
-        if (this.shadowPass) {
-          this.shadowPass.setEnabled(enabled);
-        }
-        break;
-
-      case 'skybox':
-        if (this.skyboxPass) {
-          this.skyboxPass.setEnabled(enabled);
-        }
-        break;
-
-      case 'postProcessing':
-        if (this.postProcessPass) {
-          this.postProcessPass.setEnabled(enabled);
-        }
-        break;
-
-      case 'depthPrepass':
-        if (this.depthPrepass) {
-          this.depthPrepass.setEnabled(enabled);
-        }
-        break;
-
-      default:
-        console.warn(`Unknown feature: ${feature}`);
+    if (this.depthTarget) {
+      transparentConfig.depthStencilAttachment = {
+        view: this.depthTarget,
+        loadOp: 'load', // 透明通道需要加载之前的深度
+        storeOp: 'store',
+        depthWriteEnabled: false, // 透明物体通常不写入深度
+      };
     }
+
+    this.transparentPass.updateConfig(transparentConfig);
   }
 
   /**
-   * 检查功能是否启用
+   * 执行深度预通道（可选）
    */
-  isFeatureEnabled(feature: string): boolean {
-    switch (feature) {
-      case 'shadows':
-        return this.shadowPass?.isEnabled() ?? false;
-
-      case 'skybox':
-        return this.skyboxPass?.isEnabled() ?? false;
-
-      case 'postProcessing':
-        return this.postProcessPass?.isEnabled() ?? false;
-
-      case 'depthPrepass':
-        return this.depthPrepass?.isEnabled() ?? false;
-
-      default:
-        return false;
-    }
+  private executeDepthPrepass(camera: Camera, opaqueElements: readonly any[]): void {
+    // TODO: 实现深度预通道
+    // 深度预通道可以提高复杂场景的渲染性能
   }
 
   /**
-   * 获取特定通道
+   * 执行后处理（可选）
    */
-  getShadowPass(): ShadowPass | null {
-    return this.shadowPass;
+  private executePostProcessing(camera: Camera): void {
+    // TODO: 实现后处理管线
+    // 支持HDR、色调映射、抗锯齿等后处理效果
   }
 
-  getDepthPrepass(): DepthPrepass | null {
-    return this.depthPrepass;
+  /**
+   * 更新渲染统计信息
+   */
+  private updateRenderStatistics(): void {
+    const queueStats = this.renderQueue.getStatistics();
+    const opaqueStats = this.opaquePass.getStatistics();
+    const transparentStats = this.transparentPass.getStatistics();
+
+    // 合并统计信息
+    this.statistics.objects = queueStats.culledElements;
+    this.statistics.drawCalls = opaqueStats.drawCalls + transparentStats.drawCalls;
+
+    // 估算三角形和顶点数量（需要从网格数据获取实际值）
+    this.statistics.triangles = this.statistics.drawCalls * 100; // 临时估算
+    this.statistics.vertices = this.statistics.triangles * 3;
   }
 
-  getSkyboxPass(): SkyboxPass | null {
-    return this.skyboxPass;
+  /**
+   * 获取渲染队列
+   */
+  getRenderQueue(): RenderQueue {
+    return this.renderQueue;
   }
 
-  getOpaquePass(): OpaquePass | null {
+  /**
+   * 获取不透明通道
+   */
+  getOpaquePass(): OpaquePass {
     return this.opaquePass;
   }
 
-  getTransparentPass(): TransparentPass | null {
+  /**
+   * 获取透明通道
+   */
+  getTransparentPass(): TransparentPass {
     return this.transparentPass;
   }
 
-  getPostProcessPass(): PostProcessPass | null {
-    return this.postProcessPass;
+  /**
+   * 更新配置
+   */
+  override updateConfig(newConfig: Partial<ForwardRendererConfig>): void {
+    Object.assign(this.config, newConfig);
+
+    // 更新渲染通道配置
+    this.opaquePass.updateConfig({
+      clearColor: this.config.clearColor,
+      clearDepth: this.config.clearDepth,
+      renderTarget: this.config.renderTarget,
+    });
+
+    this.transparentPass.updateConfig({
+      blendMode: this.config.transparentBlendMode,
+      renderTarget: this.config.renderTarget,
+    });
+
+    super.updateConfig(newConfig);
   }
 
   /**
-   * 销毁资源
+   * 销毁渲染器
    */
-  override async destroy(): Promise<void> {
-    // 销毁所有通道
-    if (this.shadowPass) {
-      await this.shadowPass.destroy();
-      this.shadowPass = null;
-    }
+  override destroy(): void {
+    // 销毁渲染通道
+    this.opaquePass.destroy();
+    this.transparentPass.destroy();
 
-    if (this.depthPrepass) {
-      await this.depthPrepass.destroy();
-      this.depthPrepass = null;
-    }
+    // 销毁渲染队列
+    this.renderQueue.destroy();
 
-    if (this.skyboxPass) {
-      await this.skyboxPass.destroy();
-      this.skyboxPass = null;
-    }
+    // 清理引用
+    this.colorTarget = null;
+    this.depthTarget = null;
 
-    if (this.opaquePass) {
-      await this.opaquePass.destroy();
-      this.opaquePass = null;
-    }
-
-    if (this.transparentPass) {
-      await this.transparentPass.destroy();
-      this.transparentPass = null;
-    }
-
-    if (this.postProcessPass) {
-      await this.postProcessPass.destroy();
-      this.postProcessPass = null;
-    }
-
-    await super.destroy();
+    super.destroy();
   }
 }

@@ -16,19 +16,19 @@
     }
   },
   "scripts": {
-    "prebuild": "pnpm clean",
-    "build": "pnpm build:declaration && pnpm build:module",
-    "build:module": "rollup -c",
-    "build:declaration": "tsc -d --emitDeclarationOnly",
-    "clean": "rimraf dist && rimraf \"*+(.tsbuildinfo)\"",
-    "prepublishOnly": "pnpm build",
     "dev": "rollup -c -w",
+    "prebuild": "pnpm clean",
+    "build": "pnpm build:types && pnpm build:js",
+    "build:js": "rollup -c",
+    "build:types": "tsc --emitDeclarationOnly",
+    "clean": "rimraf dist tsconfig.tsbuildinfo .rollup.cache",
     "test": "jest",
+    "prepublishOnly": "pnpm build",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
     "bench": "node test/bench-cjs.js",
     "bench:advanced": "node --expose-gc test/advanced-bench.js",
-    "bench:all": "pnpm bench && pnpm bench:advanced",
-    "lint": "eslint src --ext .ts",
-    "format": "prettier --write \"src/**/*.ts\""
+    "bench:all": "pnpm bench && pnpm bench:advanced"
   },
   "contributors": [
     {

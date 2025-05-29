@@ -1,85 +1,58 @@
 /**
- * Renderer.ts
- * 渲染器主类 - 渲染系统的核心控制器
- *
- * 遵循RHI硬件层优先原则，使用RHI抽象层进行渲染操作
- * 遵循规范包优先原则，支持规范包定义的几何体和材质接口
+ * renderer.ts
+ * 基于RHI硬件抽象层的渲染器基类
+ * 严格遵循RHI硬件抽象层接口规范
  */
 
-import type { IRHIDevice } from '../interface/rhi/device';
-import type { IRHITexture, IRHITextureView } from '../interface/rhi/resources/texture';
-import type { Camera } from '../camera/camera';
 import type { Scene } from '../scene/scene';
-import type { RenderPipeline } from './render-pipeline';
-import { RenderQueue } from './render-queue';
-import { RenderContext } from './render-context';
-import { MeshRenderer } from '../components/mesh-renderer';
-import { EventDispatcher } from '../base';
+import type { Camera } from '../camera/camera';
+import type { IRHIDevice, IRHICommandEncoder } from '../interface/rhi';
+import { EventDispatcher } from '../base/event-dispatcher';
 
 /**
- * 渲染器配置选项
+ * 渲染配置接口
  */
-export interface RendererOptions {
-  /**
-   * 画布元素
-   */
-  canvas: HTMLCanvasElement;
-
-  /**
-   * 渲染设备
-   */
-  device: IRHIDevice;
-
+export interface RendererConfig {
   /**
    * 是否启用深度测试
    */
   enableDepthTest?: boolean;
 
   /**
-   * 是否启用模板测试
+   * 是否启用面剔除
    */
-  enableStencilTest?: boolean;
+  enableFaceCulling?: boolean;
 
   /**
-   * 多重采样抗锯齿级别
+   * 是否启用多重采样抗锯齿
    */
-  msaaLevel?: number;
+  enableMSAA?: boolean;
 
   /**
-   * 是否启用HDR
+   * MSAA采样数量
    */
-  enableHDR?: boolean;
+  msaaSamples?: number;
 
   /**
-   * 是否启用伽马校正
+   * 清除颜色
    */
-  enableGammaCorrection?: boolean;
+  clearColor?: [number, number, number, number];
 
   /**
-   * 渲染分辨率缩放
+   * 清除深度值
    */
-  resolutionScale?: number;
+  clearDepth?: number;
 
   /**
-   * 最大光源数量
+   * 清除模板值
    */
-  maxLights?: number;
-
-  /**
-   * 是否启用阴影
-   */
-  enableShadows?: boolean;
-
-  /**
-   * 阴影贴图分辨率
-   */
-  shadowMapSize?: number;
+  clearStencil?: number;
 }
 
 /**
  * 渲染统计信息
  */
-export interface RenderStats {
+export interface RenderStatistics {
   /**
    * 绘制调用次数
    */
@@ -96,525 +69,210 @@ export interface RenderStats {
   vertices: number;
 
   /**
-   * 渲染的对象数量
+   * 渲染的物体数量
    */
   objects: number;
 
   /**
-   * 渲染时间 (毫秒)
+   * 帧渲染时间(毫秒)
    */
-  renderTime: number;
+  frameTime: number;
 
   /**
-   * GPU内存使用量 (字节)
+   * 帧率
    */
-  gpuMemoryUsage: number;
-
-  /**
-   * 纹理内存使用量 (字节)
-   */
-  textureMemoryUsage: number;
-
-  /**
-   * 缓冲区内存使用量 (字节)
-   */
-  bufferMemoryUsage: number;
+  fps: number;
 }
 
 /**
  * 渲染器事件
  */
-export interface RendererEvents {
-  /**
-   * 渲染开始前
-   */
-  beforeRender: { renderer: Renderer; camera: Camera; scene: Scene };
-
-  /**
-   * 渲染完成后
-   */
-  afterRender: { renderer: Renderer; camera: Camera; scene: Scene; stats: RenderStats };
-
-  /**
-   * 渲染错误
-   */
-  renderError: { error: Error; renderer: Renderer };
-
-  /**
-   * 设备丢失
-   */
-  deviceLost: { renderer: Renderer };
-
-  /**
-   * 设备恢复
-   */
-  deviceRestored: { renderer: Renderer };
-
-  /**
-   * 画布大小改变
-   */
-  resize: { width: number; height: number; renderer: Renderer };
-}
+export const RENDERER_EVENTS = {
+  BEFORE_RENDER: 'beforeRender',
+  AFTER_RENDER: 'afterRender',
+  RENDER_ERROR: 'renderError',
+} as const;
 
 /**
- * 渲染器主类
- *
- * 负责管理整个渲染流程，包括：
- * - 渲染管线管理
- * - 渲染队列调度
- * - 资源管理
- * - 性能统计
+ * 渲染器基类
+ * 基于RHI硬件抽象层，提供跨平台渲染能力
  */
-export class Renderer extends EventDispatcher {
-  /**
-   * 渲染设备
-   */
-  readonly device: IRHIDevice;
+export abstract class Renderer extends EventDispatcher {
+  protected device: IRHIDevice;
+  protected commandEncoder: IRHICommandEncoder | null = null;
+  protected config: Required<RendererConfig>;
+  protected statistics: RenderStatistics;
+  protected isRendering = false;
 
-  /**
-   * 画布元素
-   */
-  readonly canvas: HTMLCanvasElement;
-
-  /**
-   * 渲染配置
-   */
-  readonly options: Required<RendererOptions>;
-
-  /**
-   * 当前渲染管线
-   */
-  private currentPipeline: RenderPipeline | null = null;
-
-  /**
-   * 渲染队列
-   */
-  private renderQueue: RenderQueue;
-
-  /**
-   * 渲染上下文
-   */
-  private renderContext: RenderContext;
-
-  /**
-   * 颜色纹理
-   */
-  private colorTexture: IRHITexture | null = null;
-
-  /**
-   * 深度纹理
-   */
-  private depthTexture: IRHITexture | null = null;
-
-  /**
-   * 颜色纹理视图
-   */
-  private colorTextureView: IRHITextureView | null = null;
-
-  /**
-   * 深度纹理视图
-   */
-  private depthTextureView: IRHITextureView | null = null;
-
-  /**
-   * 当前画布尺寸
-   */
-  private canvasSize = { width: 0, height: 0 };
-
-  /**
-   * 渲染统计信息
-   */
-  private stats: RenderStats = {
-    drawCalls: 0,
-    triangles: 0,
-    vertices: 0,
-    objects: 0,
-    renderTime: 0,
-    gpuMemoryUsage: 0,
-    textureMemoryUsage: 0,
-    bufferMemoryUsage: 0,
-  };
-
-  /**
-   * 是否已初始化
-   */
-  private initialized = false;
-
-  /**
-   * 是否正在渲染
-   */
-  private rendering = false;
+  // 帧时间记录
+  private frameStartTime = 0;
 
   /**
    * 构造函数
+   * @param device RHI设备实例
+   * @param config 渲染配置
    */
-  constructor(options: RendererOptions) {
+  constructor(device: IRHIDevice, config: RendererConfig = {}) {
     super();
 
-    this.device = options.device;
-    this.canvas = options.canvas;
-
-    // 设置默认配置
-    this.options = {
-      canvas: options.canvas,
-      device: options.device,
-      enableDepthTest: options.enableDepthTest ?? true,
-      enableStencilTest: options.enableStencilTest ?? false,
-      msaaLevel: options.msaaLevel ?? 4,
-      enableHDR: options.enableHDR ?? false,
-      enableGammaCorrection: options.enableGammaCorrection ?? true,
-      resolutionScale: options.resolutionScale ?? 1.0,
-      maxLights: options.maxLights ?? 32,
-      enableShadows: options.enableShadows ?? true,
-      shadowMapSize: options.shadowMapSize ?? 1024,
+    this.device = device;
+    this.config = {
+      enableDepthTest: true,
+      enableFaceCulling: true,
+      enableMSAA: false,
+      msaaSamples: 4,
+      clearColor: [0.0, 0.0, 0.0, 1.0],
+      clearDepth: 1.0,
+      clearStencil: 0,
+      ...config,
     };
 
-    // 创建渲染队列和上下文
-    this.renderQueue = new RenderQueue();
-    this.renderContext = new RenderContext(this.device, this.options);
-
-    // 监听画布大小变化
-    this.setupResizeObserver();
+    this.statistics = {
+      drawCalls: 0,
+      triangles: 0,
+      vertices: 0,
+      objects: 0,
+      frameTime: 0,
+      fps: 0,
+    };
   }
 
   /**
-   * 初始化渲染器
+   * 获取RHI设备
    */
-  async initialize(): Promise<void> {
-    if (this.initialized) {
-      return;
-    }
-
-    try {
-      // 初始化渲染上下文
-      await this.renderContext.initialize();
-
-      // 创建渲染目标
-      this.updateRenderTargets();
-
-      // 设置初始化标志
-      this.initialized = true;
-
-      // 记录初始化成功
-      if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
-        console.log('Renderer initialized successfully');
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to initialize renderer:', error);
-      this.emit('renderError', { error: error as Error, renderer: this });
-      throw error;
-    }
+  getRHIDevice(): IRHIDevice {
+    return this.device;
   }
 
   /**
-   * 设置渲染管线
+   * 获取渲染配置
    */
-  setPipeline(pipeline: RenderPipeline): void {
-    this.currentPipeline = pipeline;
-    pipeline.setRenderer(this);
+  getConfig(): Required<RendererConfig> {
+    return { ...this.config };
   }
 
   /**
-   * 获取当前渲染管线
+   * 更新渲染配置
    */
-  getPipeline(): RenderPipeline | null {
-    return this.currentPipeline;
-  }
-
-  /**
-   * 渲染场景
-   */
-  async render(camera: Camera, scene: Scene): Promise<void> {
-    if (!this.initialized) {
-      throw new Error('Renderer not initialized');
-    }
-
-    if (this.rendering) {
-      console.warn('Renderer is already rendering, skipping frame');
-      return;
-    }
-
-    if (!this.currentPipeline) {
-      throw new Error('No render pipeline set');
-    }
-
-    this.rendering = true;
-    const startTime = performance.now();
-
-    try {
-      // 重置统计信息
-      this.resetStats();
-
-      // 触发渲染开始事件
-      this.emit('beforeRender', { renderer: this, camera, scene });
-
-      // 更新渲染上下文
-      this.renderContext.update(camera, scene);
-
-      // 构建渲染队列
-      this.buildRenderQueue(scene, camera);
-
-      // 执行渲染管线
-      await this.currentPipeline.execute(this.renderContext, this.renderQueue);
-
-      // 计算渲染时间
-      this.stats.renderTime = performance.now() - startTime;
-
-      // 触发渲染完成事件
-      this.emit('afterRender', { renderer: this, camera, scene, stats: this.stats });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Render error:', error);
-      this.emit('renderError', { error: error as Error, renderer: this });
-      throw error;
-    } finally {
-      this.rendering = false;
-    }
+  updateConfig(newConfig: Partial<RendererConfig>): void {
+    Object.assign(this.config, newConfig);
   }
 
   /**
    * 获取渲染统计信息
    */
-  getStats(): Readonly<RenderStats> {
-    return { ...this.stats };
+  getStatistics(): RenderStatistics {
+    return { ...this.statistics };
   }
 
   /**
-   * 获取渲染上下文
+   * 重置渲染统计信息
    */
-  getRenderContext(): RenderContext {
-    return this.renderContext;
+  resetStatistics(): void {
+    this.statistics.drawCalls = 0;
+    this.statistics.triangles = 0;
+    this.statistics.vertices = 0;
+    this.statistics.objects = 0;
   }
 
   /**
-   * 获取渲染队列
+   * 开始新的渲染帧
    */
-  getRenderQueue(): RenderQueue {
-    return this.renderQueue;
-  }
-
-  /**
-   * 重置渲染器大小
-   */
-  resize(width: number, height: number): void {
-    if (this.canvasSize.width === width && this.canvasSize.height === height) {
+  protected beginFrame(): void {
+    if (this.isRendering) {
+      console.warn('Renderer: 上一帧渲染尚未完成');
       return;
     }
 
-    this.canvasSize.width = width;
-    this.canvasSize.height = height;
+    this.isRendering = true;
+    this.frameStartTime = performance.now();
+    this.resetStatistics();
 
-    // 更新画布大小
-    this.canvas.width = width * this.options.resolutionScale;
-    this.canvas.height = height * this.options.resolutionScale;
+    // 创建新的命令编码器
+    this.commandEncoder = this.device.createCommandEncoder('MainRenderCommandEncoder');
 
-    // 重新创建渲染目标
-    this.updateRenderTargets();
+    // 触发渲染前事件
+    this.dispatchEvent(RENDERER_EVENTS.BEFORE_RENDER, {
+      renderer: this,
+      device: this.device,
+    });
+  }
 
-    // 更新渲染上下文
-    this.renderContext.resize(width, height);
+  /**
+   * 结束当前渲染帧
+   */
+  protected endFrame(): void {
+    if (!this.isRendering || !this.commandEncoder) {
+      return;
+    }
 
-    // 触发大小改变事件
-    this.emit('resize', { width, height, renderer: this });
+    try {
+      // 完成命令编码
+      const commandBuffer = this.commandEncoder.finish({
+        label: 'MainRenderCommandBuffer',
+      });
+
+      // 提交命令到GPU
+      this.device.submit([commandBuffer]);
+
+      // 更新统计信息
+      this.updateFrameStatistics();
+
+      // 触发渲染后事件
+      this.dispatchEvent(RENDERER_EVENTS.AFTER_RENDER, {
+        renderer: this,
+        statistics: this.statistics,
+      });
+    } catch (error) {
+      console.error('Renderer: 渲染帧结束时发生错误:', error);
+      this.dispatchEvent(RENDERER_EVENTS.RENDER_ERROR, { error });
+    } finally {
+      this.commandEncoder = null;
+      this.isRendering = false;
+    }
+  }
+
+  /**
+   * 更新帧统计信息
+   */
+  private updateFrameStatistics(): void {
+    const frameEndTime = performance.now();
+    const frameTime = frameEndTime - this.frameStartTime;
+
+    this.statistics.frameTime = frameTime;
+    this.statistics.fps = frameTime > 0 ? Math.round(1000 / frameTime) : 0;
+  }
+
+  /**
+   * 渲染场景
+   * 抽象方法，由子类实现具体的渲染逻辑
+   */
+  abstract render(scene: Scene, camera: Camera): void;
+
+  /**
+   * 检查设备状态
+   */
+  async checkDeviceState(): Promise<void> {
+    try {
+      await this.device.checkDeviceLost();
+    } catch (error) {
+      console.error('Renderer: 设备丢失检查失败:', error);
+      this.dispatchEvent(RENDERER_EVENTS.RENDER_ERROR, { error });
+    }
   }
 
   /**
    * 销毁渲染器
    */
   override destroy(): void {
-    // 销毁渲染目标
-    this.destroyRenderTargets();
-
-    // 销毁渲染上下文
-    this.renderContext.destroy();
-
-    // 清理渲染队列
-    this.renderQueue.clear();
-
-    // 重置状态
-    this.initialized = false;
-    this.rendering = false;
-    this.currentPipeline = null;
-
-    if (process.env.NODE_ENV === 'development') {
-      // eslint-disable-next-line no-console
-      console.log('Renderer destroyed');
-    }
-  }
-
-  /**
-   * 构建渲染队列
-   */
-  private buildRenderQueue(scene: Scene, camera: Camera): void {
-    // 清理渲染队列
-    this.renderQueue.clear();
-    this.renderQueue.setCamera(camera);
-
-    // 遍历场景中的所有游戏对象
-    const gameObjects = scene.getAllGameObjects();
-    for (const gameObject of gameObjects) {
-      this.collectRenderElements(gameObject);
+    if (this.isRendering) {
+      console.warn('Renderer: 正在渲染时销毁渲染器');
     }
 
-    // 构建渲染队列
-    this.renderQueue.build();
+    this.commandEncoder = null;
+    this.isRendering = false;
 
-    if (process.env.NODE_ENV === 'development') {
-      const opaqueCount = this.renderQueue.getOpaqueElements().length;
-      const transparentCount = this.renderQueue.getTransparentElements().length;
-      // eslint-disable-next-line no-console
-      console.log(`Render queue built: ${opaqueCount} opaque, ${transparentCount} transparent objects`);
-    }
-  }
-
-  /**
-   * 递归收集渲染元素
-   */
-  private collectRenderElements(gameObject: any): void {
-    // 检查GameObject是否激活
-    if (!gameObject.active) {
-      return;
-    }
-
-    // 尝试获取MeshRenderer组件
-    const meshRenderer = gameObject.getComponent(MeshRenderer);
-    if (meshRenderer && meshRenderer.canRender()) {
-      const renderElement = meshRenderer.createRenderElement();
-      if (renderElement) {
-        this.renderQueue.addElement(renderElement);
-        this.stats.objects++;
-      }
-    }
-
-    // 递归处理子对象
-    for (const child of gameObject.children) {
-      this.collectRenderElements(child);
-    }
-  }
-
-  /**
-   * 重置统计信息
-   */
-  private resetStats(): void {
-    this.stats.drawCalls = 0;
-    this.stats.triangles = 0;
-    this.stats.vertices = 0;
-    this.stats.objects = 0;
-    this.stats.renderTime = 0;
-    // GPU内存统计保持累积
-  }
-
-  /**
-   * 更新渲染目标
-   */
-  private updateRenderTargets(): void {
-    // 销毁旧的渲染目标
-    this.destroyRenderTargets();
-
-    const width = this.canvas.width;
-    const height = this.canvas.height;
-
-    if (width <= 0 || height <= 0) {
-      return;
-    }
-
-    // 创建颜色纹理
-    this.colorTexture = this.device.createTexture({
-      size: [width, height, 1],
-      format: this.options.enableHDR ? 'rgba16float' : 'rgba8unorm',
-      usage: 'render-attachment' | 'texture-binding',
-      sampleCount: this.options.msaaLevel,
-      label: 'ColorTexture',
-    });
-
-    // 创建深度纹理
-    if (this.options.enableDepthTest) {
-      this.depthTexture = this.device.createTexture({
-        size: [width, height, 1],
-        format: this.options.enableStencilTest ? 'depth24plus-stencil8' : 'depth24plus',
-        usage: 'render-attachment',
-        sampleCount: this.options.msaaLevel,
-        label: 'DepthTexture',
-      });
-    }
-
-    // 创建纹理视图
-    this.colorTextureView = this.colorTexture.createView();
-    if (this.depthTexture) {
-      this.depthTextureView = this.depthTexture.createView();
-    }
-  }
-
-  /**
-   * 销毁渲染目标
-   */
-  private destroyRenderTargets(): void {
-    if (this.colorTextureView) {
-      this.colorTextureView.destroy();
-      this.colorTextureView = null;
-    }
-
-    if (this.depthTextureView) {
-      this.depthTextureView.destroy();
-      this.depthTextureView = null;
-    }
-
-    if (this.colorTexture) {
-      this.colorTexture.destroy();
-      this.colorTexture = null;
-    }
-
-    if (this.depthTexture) {
-      this.depthTexture.destroy();
-      this.depthTexture = null;
-    }
-  }
-
-  /**
-   * 设置画布大小监听器
-   */
-  private setupResizeObserver(): void {
-    // 使用ResizeObserver监听画布大小变化
-    if (typeof ResizeObserver !== 'undefined') {
-      const resizeObserver = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          const { width, height } = entry.contentRect;
-          this.resize(width, height);
-        }
-      });
-
-      resizeObserver.observe(this.canvas);
-    } else {
-      // 降级到window resize事件
-      const handleResize = () => {
-        const rect = this.canvas.getBoundingClientRect();
-        this.resize(rect.width, rect.height);
-      };
-
-      window.addEventListener('resize', handleResize);
-    }
-  }
-
-  /**
-   * 更新统计信息
-   */
-  updateStats(stats: Partial<RenderStats>): void {
-    Object.assign(this.stats, stats);
-  }
-
-  /**
-   * 获取颜色纹理视图
-   */
-  getColorTextureView(): IRHITextureView | null {
-    return this.colorTextureView;
-  }
-
-  /**
-   * 获取深度纹理视图
-   */
-  getDepthTextureView(): IRHITextureView | null {
-    return this.depthTextureView;
+    // 清理事件监听器
+    super.destroy();
   }
 }

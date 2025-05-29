@@ -4,7 +4,7 @@ import { Time } from './base/time';
 import type { Scene } from './scene/scene';
 import type { SceneManager } from './scene/scene-manager';
 import type { ResourceManager } from './resource/resource-manager';
-import type { RenderContext } from './renderer/render-context';
+// import type { RenderContext } from './renderer/render-context';
 import type { InputManager } from './input/input-manager';
 
 /**

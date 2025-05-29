@@ -1,368 +1,134 @@
 /**
- * RenderQueue.ts
- * 渲染队列类
- *
- * 负责管理和排序渲染元素，优化渲染性能
- * 支持多种排序策略和批处理优化
+ * render-queue.ts
+ * 渲染队列 - 收集、排序和批处理渲染元素
+ * 基于RHI硬件抽象层规范
  */
 
+import { Vector3 } from '@maxellabs/math';
 import type { Camera } from '../camera/camera';
-import type { Material } from '../material/material';
-import type { Geometry } from '../geometry/geometry';
-import type { Transform } from '../base/transform';
-import type { Matrix4 } from '@maxellabs/math';
-
-/**
- * 渲染元素
- */
-export interface RenderElement {
-  /**
-   * 元素ID
-   */
-  id: string;
-
-  /**
-   * 几何体
-   */
-  geometry: Geometry;
-
-  /**
-   * 材质
-   */
-  material: Material;
-
-  /**
-   * 变换矩阵
-   */
-  transform: Transform;
-
-  /**
-   * 世界变换矩阵
-   */
-  worldMatrix: Matrix4;
-
-  /**
-   * 模型视图投影矩阵
-   */
-  mvpMatrix?: Matrix4;
-
-  /**
-   * 到相机的距离
-   */
-  distanceToCamera: number;
-
-  /**
-   * 渲染层级
-   */
-  renderLayer: number;
-
-  /**
-   * 渲染优先级
-   */
-  priority: number;
-
-  /**
-   * 是否透明
-   */
-  isTransparent: boolean;
-
-  /**
-   * 是否投射阴影
-   */
-  castShadows: boolean;
-
-  /**
-   * 是否接受阴影
-   */
-  receiveShadows: boolean;
-
-  /**
-   * 包围盒（用于视锥剔除）
-   */
-  boundingBox?: {
-    min: [number, number, number];
-    max: [number, number, number];
-  };
-
-  /**
-   * 用户数据
-   */
-  userData?: any;
-}
-
-/**
- * 渲染批次
- */
-export interface RenderBatch {
-  /**
-   * 批次ID
-   */
-  id: string;
-
-  /**
-   * 材质
-   */
-  material: Material;
-
-  /**
-   * 几何体
-   */
-  geometry: Geometry;
-
-  /**
-   * 元素列表
-   */
-  elements: RenderElement[];
-
-  /**
-   * 实例数据
-   */
-  instanceData?: {
-    /**
-     * 变换矩阵数组
-     */
-    transforms: Matrix4[];
-
-    /**
-     * 颜色数组
-     */
-    colors?: Float32Array;
-
-    /**
-     * 其他实例属性
-     */
-    attributes?: Record<string, Float32Array>;
-  };
-
-  /**
-   * 是否使用实例化渲染
-   */
-  useInstancing: boolean;
-
-  /**
-   * 渲染优先级
-   */
-  priority: number;
-}
-
-/**
- * 排序策略
- */
-export enum SortStrategy {
-  /**
-   * 不排序
-   */
-  None = 'none',
-
-  /**
-   * 按距离排序（前到后）
-   */
-  FrontToBack = 'front-to-back',
-
-  /**
-   * 按距离排序（后到前）
-   */
-  BackToFront = 'back-to-front',
-
-  /**
-   * 按材质排序
-   */
-  ByMaterial = 'by-material',
-
-  /**
-   * 按渲染状态排序
-   */
-  ByRenderState = 'by-render-state',
-
-  /**
-   * 按层级排序
-   */
-  ByLayer = 'by-layer',
-
-  /**
-   * 自定义排序
-   */
-  Custom = 'custom',
-}
+import type { Scene } from '../scene/scene';
+import { MeshRenderer } from '../components/mesh-renderer';
+import type { RenderElement } from './render-element';
+import { RenderElementImpl, RenderElementComparator } from './render-element';
+import type { GameObject } from '../scene';
 
 /**
  * 渲染队列配置
  */
 export interface RenderQueueConfig {
   /**
-   * 不透明物体排序策略
+   * 是否启用视锥裁剪
    */
-  opaqueSortStrategy: SortStrategy;
+  enableFrustumCulling?: boolean;
 
   /**
-   * 透明物体排序策略
+   * 是否启用距离排序
    */
-  transparentSortStrategy: SortStrategy;
+  enableDistanceSorting?: boolean;
 
   /**
-   * 是否启用批处理
+   * 最大渲染距离
    */
-  enableBatching: boolean;
+  maxRenderDistance?: number;
 
   /**
-   * 是否启用实例化渲染
+   * 渲染层级掩码
    */
-  enableInstancing: boolean;
+  layerMask?: number;
+}
+
+/**
+ * 渲染队列统计信息
+ */
+export interface RenderQueueStatistics {
+  /**
+   * 总的游戏对象数量
+   */
+  totalObjects: number;
 
   /**
-   * 最大批次大小
+   * 经过裁剪后的渲染元素数量
    */
-  maxBatchSize: number;
+  culledElements: number;
 
   /**
-   * 最大实例数量
+   * 不透明渲染元素数量
    */
-  maxInstanceCount: number;
+  opaqueElements: number;
 
   /**
-   * 是否启用视锥剔除
+   * 透明渲染元素数量
    */
-  enableFrustumCulling: boolean;
+  transparentElements: number;
 
   /**
-   * 是否启用遮挡剔除
+   * 阴影投射元素数量
    */
-  enableOcclusionCulling: boolean;
+  shadowCasterElements: number;
 
   /**
-   * 自定义排序函数
+   * 队列构建时间(毫秒)
    */
-  customSortFunction?: (a: RenderElement, b: RenderElement) => number;
+  buildTime: number;
 }
 
 /**
  * 渲染队列类
- *
- * 负责管理渲染元素的收集、排序和批处理
- * 提供多种优化策略以提高渲染性能
+ * 负责收集场景中的可渲染对象，并按照渲染需求进行排序和分组
  */
 export class RenderQueue {
-  /**
-   * 配置
-   */
   private config: Required<RenderQueueConfig>;
+  private statistics: RenderQueueStatistics;
 
-  /**
-   * 不透明渲染元素
-   */
+  // 渲染元素队列
   private opaqueElements: RenderElement[] = [];
-
-  /**
-   * 透明渲染元素
-   */
   private transparentElements: RenderElement[] = [];
+  private shadowCasterElements: RenderElement[] = [];
 
-  /**
-   * 渲染批次
-   */
-  private batches: RenderBatch[] = [];
-
-  /**
-   * 当前相机
-   */
-  private currentCamera: Camera | null = null;
-
-  /**
-   * 视锥体平面（用于剔除）
-   */
-  private frustumPlanes: Float32Array = new Float32Array(24); // 6个平面，每个4个分量
-
-  /**
-   * 统计信息
-   */
-  private stats = {
-    totalElements: 0,
-    opaqueElements: 0,
-    transparentElements: 0,
-    culledElements: 0,
-    batches: 0,
-    instancedElements: 0,
-  };
+  // 临时变量，避免频繁分配
+  private readonly tempVector3 = new Vector3();
 
   /**
    * 构造函数
    */
-  constructor(config: Partial<RenderQueueConfig> = {}) {
+  constructor(config: RenderQueueConfig = {}) {
     this.config = {
-      opaqueSortStrategy: config.opaqueSortStrategy ?? SortStrategy.FrontToBack,
-      transparentSortStrategy: config.transparentSortStrategy ?? SortStrategy.BackToFront,
-      enableBatching: config.enableBatching ?? true,
-      enableInstancing: config.enableInstancing ?? true,
-      maxBatchSize: config.maxBatchSize ?? 1000,
-      maxInstanceCount: config.maxInstanceCount ?? 1000,
-      enableFrustumCulling: config.enableFrustumCulling ?? true,
-      enableOcclusionCulling: config.enableOcclusionCulling ?? false,
-      customSortFunction: config.customSortFunction ?? undefined,
+      enableFrustumCulling: true,
+      enableDistanceSorting: true,
+      maxRenderDistance: 1000,
+      layerMask: 0xffffffff,
+      ...config,
+    };
+
+    this.statistics = {
+      totalObjects: 0,
+      culledElements: 0,
+      opaqueElements: 0,
+      transparentElements: 0,
+      shadowCasterElements: 0,
+      buildTime: 0,
     };
   }
 
   /**
-   * 设置相机
+   * 获取配置
    */
-  setCamera(camera: Camera): void {
-    this.currentCamera = camera;
-
-    if (this.config.enableFrustumCulling) {
-      this.updateFrustumPlanes(camera);
-    }
+  getConfig(): Required<RenderQueueConfig> {
+    return { ...this.config };
   }
 
   /**
-   * 添加渲染元素
+   * 更新配置
    */
-  addElement(element: RenderElement): void {
-    // 视锥剔除
-    if (this.config.enableFrustumCulling && this.currentCamera) {
-      if (!this.isInFrustum(element)) {
-        this.stats.culledElements++;
-        return;
-      }
-    }
-
-    // 计算到相机的距离
-    if (this.currentCamera) {
-      element.distanceToCamera = this.calculateDistanceToCamera(element);
-    }
-
-    // 根据透明度分类
-    if (element.isTransparent) {
-      this.transparentElements.push(element);
-    } else {
-      this.opaqueElements.push(element);
-    }
-
-    this.stats.totalElements++;
+  updateConfig(newConfig: Partial<RenderQueueConfig>): void {
+    Object.assign(this.config, newConfig);
   }
 
   /**
-   * 批量添加渲染元素
+   * 获取统计信息
    */
-  addElements(elements: RenderElement[]): void {
-    for (const element of elements) {
-      this.addElement(element);
-    }
-  }
-
-  /**
-   * 构建渲染队列
-   */
-  build(): void {
-    // 更新统计信息
-    this.stats.opaqueElements = this.opaqueElements.length;
-    this.stats.transparentElements = this.transparentElements.length;
-
-    // 排序元素
-    this.sortElements();
-
-    // 构建批次
-    if (this.config.enableBatching) {
-      this.buildBatches();
-    }
+  getStatistics(): RenderQueueStatistics {
+    return { ...this.statistics };
   }
 
   /**
@@ -380,248 +146,189 @@ export class RenderQueue {
   }
 
   /**
-   * 获取渲染批次
+   * 获取阴影投射元素
    */
-  getBatches(): readonly RenderBatch[] {
-    return this.batches;
+  getShadowCasterElements(): readonly RenderElement[] {
+    return this.shadowCasterElements;
   }
 
   /**
-   * 获取统计信息
+   * 构建渲染队列
+   * @param scene 场景
+   * @param camera 相机
    */
-  getStats() {
-    return { ...this.stats };
+  build(scene: Scene, camera: Camera): void {
+    const startTime = performance.now();
+
+    // 清空之前的队列
+    this.clear();
+
+    // 获取相机位置和视锥
+    const cameraPosition = camera.getPosition();
+    const frustum = camera.getFrustum();
+
+    // 遍历场景中的所有游戏对象
+    this.collectRenderElements(scene, camera, cameraPosition, frustum);
+
+    // 排序渲染元素
+    this.sortRenderElements(cameraPosition);
+
+    // 更新统计信息
+    this.statistics.buildTime = performance.now() - startTime;
+    this.statistics.opaqueElements = this.opaqueElements.length;
+    this.statistics.transparentElements = this.transparentElements.length;
+    this.statistics.shadowCasterElements = this.shadowCasterElements.length;
+    this.statistics.culledElements = this.statistics.opaqueElements + this.statistics.transparentElements;
+  }
+
+  /**
+   * 收集渲染元素
+   */
+  private collectRenderElements(
+    scene: Scene,
+    camera: Camera,
+    cameraPosition: ReadonlyArray<number>,
+    frustum: any
+  ): void {
+    let totalObjects = 0;
+
+    // 遍历场景中的所有游戏对象
+    scene.traverse((gameObject: GameObject) => {
+      totalObjects++;
+
+      // 检查游戏对象是否活跃
+      if (!gameObject.getActive()) {
+        return;
+      }
+
+      // 检查层级掩码
+      const layer = gameObject.getLayer();
+      if ((this.config.layerMask & (1 << layer)) === 0) {
+        return;
+      }
+
+      // 获取MeshRenderer组件
+      const meshRenderer = gameObject.getComponent(MeshRenderer);
+      if (!meshRenderer || !meshRenderer.getEnabled()) {
+        return;
+      }
+
+      const material = meshRenderer.getMaterial();
+      const mesh = meshRenderer.getMesh();
+
+      if (!material || !mesh) {
+        return;
+      }
+
+      // 获取世界变换矩阵和包围盒
+      const worldMatrix = gameObject.getTransform().getWorldMatrix();
+      const worldBounds = meshRenderer.getWorldBounds();
+
+      // 视锥裁剪
+      if (this.config.enableFrustumCulling && frustum) {
+        if (!frustum.intersectsBoundingBox(worldBounds)) {
+          return;
+        }
+      }
+
+      // 距离裁剪
+      if (this.config.maxRenderDistance > 0) {
+        this.tempVector3.set(
+          worldBounds.center[0] - cameraPosition[0],
+          worldBounds.center[1] - cameraPosition[1],
+          worldBounds.center[2] - cameraPosition[2]
+        );
+
+        const distance = this.tempVector3.getLength();
+        if (distance > this.config.maxRenderDistance) {
+          return;
+        }
+      }
+
+      // 创建渲染元素
+      const renderElement = new RenderElementImpl(gameObject, material, mesh, worldMatrix, worldBounds, {
+        layer: layer,
+        castShadow: meshRenderer.getCastShadow(),
+        receiveShadow: meshRenderer.getReceiveShadow(),
+      });
+
+      // 更新距离到相机
+      if (this.config.enableDistanceSorting) {
+        renderElement.updateDistanceToCamera(cameraPosition);
+      }
+
+      // 添加到相应的队列
+      if (renderElement.isTransparent) {
+        this.transparentElements.push(renderElement);
+      } else {
+        this.opaqueElements.push(renderElement);
+      }
+
+      // 添加到阴影投射队列
+      if (renderElement.castShadow) {
+        this.shadowCasterElements.push(renderElement);
+      }
+    });
+
+    this.statistics.totalObjects = totalObjects;
+  }
+
+  /**
+   * 排序渲染元素
+   */
+  private sortRenderElements(cameraPosition: ReadonlyArray<number>): void {
+    if (!this.config.enableDistanceSorting) {
+      return;
+    }
+
+    // 更新所有元素到相机的距离
+    const allElements = [...this.opaqueElements, ...this.transparentElements, ...this.shadowCasterElements];
+    for (const element of allElements) {
+      element.updateDistanceToCamera(cameraPosition);
+    }
+
+    // 排序不透明物体（前到后）
+    this.opaqueElements.sort(RenderElementComparator.compareOpaque);
+
+    // 排序透明物体（后到前）
+    this.transparentElements.sort(RenderElementComparator.compareTransparent);
+
+    // 排序阴影投射物体
+    this.shadowCasterElements.sort(RenderElementComparator.compareShadowCaster);
   }
 
   /**
    * 清空队列
    */
   clear(): void {
+    // 清理RHI缓存
+    for (const element of this.opaqueElements) {
+      element.clearRHICache?.();
+    }
+    for (const element of this.transparentElements) {
+      element.clearRHICache?.();
+    }
+    for (const element of this.shadowCasterElements) {
+      element.clearRHICache?.();
+    }
+
     this.opaqueElements.length = 0;
     this.transparentElements.length = 0;
-    this.batches.length = 0;
-    this.currentCamera = null;
+    this.shadowCasterElements.length = 0;
 
     // 重置统计信息
-    this.stats.totalElements = 0;
-    this.stats.opaqueElements = 0;
-    this.stats.transparentElements = 0;
-    this.stats.culledElements = 0;
-    this.stats.batches = 0;
-    this.stats.instancedElements = 0;
+    this.statistics.totalObjects = 0;
+    this.statistics.culledElements = 0;
+    this.statistics.opaqueElements = 0;
+    this.statistics.transparentElements = 0;
+    this.statistics.shadowCasterElements = 0;
+    this.statistics.buildTime = 0;
   }
 
   /**
-   * 更新配置
+   * 销毁渲染队列
    */
-  updateConfig(config: Partial<RenderQueueConfig>): void {
-    Object.assign(this.config, config);
-  }
-
-  /**
-   * 排序元素
-   */
-  private sortElements(): void {
-    // 排序不透明元素
-    this.sortElementArray(this.opaqueElements, this.config.opaqueSortStrategy);
-
-    // 排序透明元素
-    this.sortElementArray(this.transparentElements, this.config.transparentSortStrategy);
-  }
-
-  /**
-   * 排序元素数组
-   */
-  private sortElementArray(elements: RenderElement[], strategy: SortStrategy): void {
-    switch (strategy) {
-      case SortStrategy.None:
-        break;
-
-      case SortStrategy.FrontToBack:
-        elements.sort((a, b) => a.distanceToCamera - b.distanceToCamera);
-        break;
-
-      case SortStrategy.BackToFront:
-        elements.sort((a, b) => b.distanceToCamera - a.distanceToCamera);
-        break;
-
-      case SortStrategy.ByMaterial:
-        elements.sort((a, b) => {
-          const materialA = a.material.id || '';
-          const materialB = b.material.id || '';
-          return materialA.localeCompare(materialB);
-        });
-        break;
-
-      case SortStrategy.ByRenderState:
-        elements.sort((a, b) => {
-          // 按渲染状态排序（材质、着色器等）
-          const stateA = this.getRenderStateHash(a);
-          const stateB = this.getRenderStateHash(b);
-          return stateA - stateB;
-        });
-        break;
-
-      case SortStrategy.ByLayer:
-        elements.sort((a, b) => {
-          if (a.renderLayer !== b.renderLayer) {
-            return a.renderLayer - b.renderLayer;
-          }
-          return a.priority - b.priority;
-        });
-        break;
-
-      case SortStrategy.Custom:
-        if (this.config.customSortFunction) {
-          elements.sort(this.config.customSortFunction);
-        }
-        break;
-    }
-  }
-
-  /**
-   * 构建渲染批次
-   */
-  private buildBatches(): void {
-    this.batches.length = 0;
-
-    // 为不透明元素构建批次
-    this.buildBatchesForElements(this.opaqueElements);
-
-    // 为透明元素构建批次
-    this.buildBatchesForElements(this.transparentElements);
-
-    this.stats.batches = this.batches.length;
-  }
-
-  /**
-   * 为元素数组构建批次
-   */
-  private buildBatchesForElements(elements: RenderElement[]): void {
-    const batches = new Map<string, RenderElement[]>();
-
-    // 按材质和几何体分组
-    for (const element of elements) {
-      const key = this.getBatchKey(element);
-
-      if (!batches.has(key)) {
-        batches.set(key, []);
-      }
-
-      const batch = batches.get(key)!;
-      if (batch.length < this.config.maxBatchSize) {
-        batch.push(element);
-      } else {
-        // 创建新批次
-        this.createBatch(batch);
-        batches.set(key, [element]);
-      }
-    }
-
-    // 创建剩余的批次
-    for (const elements of batches.values()) {
-      if (elements.length > 0) {
-        this.createBatch(elements);
-      }
-    }
-  }
-
-  /**
-   * 创建渲染批次
-   */
-  private createBatch(elements: RenderElement[]): void {
-    if (elements.length === 0) {
-      return;
-    }
-
-    const firstElement = elements[0];
-    const useInstancing =
-      this.config.enableInstancing && elements.length > 1 && elements.length <= this.config.maxInstanceCount;
-
-    const batch: RenderBatch = {
-      id: `batch_${this.batches.length}`,
-      material: firstElement.material,
-      geometry: firstElement.geometry,
-      elements,
-      useInstancing,
-      priority: Math.min(...elements.map((e) => e.priority)),
-    };
-
-    if (useInstancing) {
-      batch.instanceData = {
-        transforms: elements.map((e) => e.worldMatrix),
-      };
-      this.stats.instancedElements += elements.length;
-    }
-
-    this.batches.push(batch);
-  }
-
-  /**
-   * 获取批次键
-   */
-  private getBatchKey(element: RenderElement): string {
-    return `${element.material.id || 'default'}_${element.geometry.id || 'default'}`;
-  }
-
-  /**
-   * 获取渲染状态哈希
-   */
-  private getRenderStateHash(element: RenderElement): number {
-    // 简单的哈希函数，实际实现可能更复杂
-    let hash = 0;
-    const materialId = element.material.id || '';
-    const geometryId = element.geometry.id || '';
-
-    for (let i = 0; i < materialId.length; i++) {
-      hash = ((hash << 5) - hash + materialId.charCodeAt(i)) & 0xffffffff;
-    }
-
-    for (let i = 0; i < geometryId.length; i++) {
-      hash = ((hash << 5) - hash + geometryId.charCodeAt(i)) & 0xffffffff;
-    }
-
-    return hash;
-  }
-
-  /**
-   * 计算到相机的距离
-   */
-  private calculateDistanceToCamera(element: RenderElement): number {
-    if (!this.currentCamera) {
-      return 0;
-    }
-
-    const cameraPosition = this.currentCamera.getPosition();
-    const elementPosition = element.transform.getPosition();
-
-    const dx = elementPosition.x - cameraPosition.x;
-    const dy = elementPosition.y - cameraPosition.y;
-    const dz = elementPosition.z - cameraPosition.z;
-
-    return Math.sqrt(dx * dx + dy * dy + dz * dz);
-  }
-
-  /**
-   * 更新视锥体平面
-   */
-  private updateFrustumPlanes(camera: Camera): void {
-    // TODO: 实现视锥体平面计算
-    // 这里需要根据相机的投影矩阵和视图矩阵计算6个视锥体平面
-    if (process.env.NODE_ENV === 'development') {
-      // eslint-disable-next-line no-console
-      console.log('Updating frustum planes for camera:', camera.name);
-    }
-  }
-
-  /**
-   * 检查元素是否在视锥体内
-   */
-  private isInFrustum(element: RenderElement): boolean {
-    // TODO: 实现视锥体剔除
-    // 这里需要检查元素的包围盒是否与视锥体相交
-
-    // 临时实现，总是返回true
-    return true;
+  destroy(): void {
+    this.clear();
   }
 }
