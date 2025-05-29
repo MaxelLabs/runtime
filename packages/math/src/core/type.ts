@@ -1,3 +1,5 @@
+import type { VertexAttribute } from '@maxellabs/specification';
+
 /**
  * 二维向量内部数据类型
  */
@@ -151,4 +153,22 @@ export interface TriangleLike {
 export interface PlaneLike {
   distance: number;
   normal: Vector3Like;
+}
+
+/**
+ * 顶点属性描述符
+ */
+export interface VertexAttributeDescriptor {
+  /** 属性类型 */
+  type: VertexAttribute;
+  /** 数据 */
+  data: Float32Array;
+  /** 组件数量 */
+  componentCount: number;
+  /** 是否归一化 */
+  normalized: boolean;
+  /** 步长 */
+  stride: number;
+  /** 偏移 */
+  offset: number;
 }

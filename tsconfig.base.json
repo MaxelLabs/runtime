@@ -21,28 +21,13 @@
     "moduleResolution": "node",
     "module": "ESNext",
     "target": "ESNext",
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ES2015",
-      "ESNext"
-    ],
+    "lib": ["DOM", "DOM.Iterable", "ES2015", "ESNext"],
     "paths": {
-      "@maxellabs/core": [
-        "./packages/core/src"
-      ],
-      "@maxellabs/math": [
-        "./packages/math/src"
-      ],
-      "@maxellabs/rhi": [
-        "./packages/rhi/src"
-      ],
-      "@maxellabs/specification": [
-        "./packages/specification/src"
-      ],
-      "@maxellabs/engine": [
-        "./packages/engine/src"
-      ]
+      "@maxellabs/specification": ["./packages/specification/src"],
+      "@maxellabs/core": ["./packages/core/src"],
+      "@maxellabs/math": ["./packages/math/src"],
+      "@maxellabs/rhi": ["./packages/rhi/src"],
+      "@maxellabs/engine": ["./packages/engine/src"]
     }
   }
 }

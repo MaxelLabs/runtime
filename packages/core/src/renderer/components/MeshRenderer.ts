@@ -1,0 +1,298 @@
+/**
+ * MeshRenderer.ts
+ * 网格渲染器组件
+ *
+ * 将Mesh和Material组合到GameObject上，使其成为可渲染对象
+ */
+
+import { Component } from '../../base/component';
+import type { Material } from '../../material/material';
+import type { Mesh } from '../../mesh/mesh';
+import type { Entity } from '../../base/entity';
+import type { RenderElement } from '../RenderQueue';
+import { AlphaMode } from '@maxellabs/math';
+
+/**
+ * 网格渲染器组件
+ *
+ * 负责将网格和材质结合，提供渲染所需的数据
+ */
+export class MeshRenderer extends Component {
+  /**
+   * 网格对象
+   */
+  private mesh: Mesh | null = null;
+
+  /**
+   * 材质对象
+   */
+  private material: Material | null = null;
+
+  /**
+   * 是否投射阴影
+   */
+  private castShadows = true;
+
+  /**
+   * 是否接受阴影
+   */
+  private receiveShadows = true;
+
+  /**
+   * 渲染层级
+   */
+  private renderLayer = 0;
+
+  /**
+   * 渲染优先级
+   */
+  private priority = 0;
+  readonly typeName = 'MeshRenderer';
+
+  /**
+   * 构造函数
+   */
+  constructor(entity: Entity) {
+    super(entity);
+  }
+
+  /**
+   * 获取网格
+   */
+  getMesh(): Mesh | null {
+    return this.mesh;
+  }
+
+  /**
+   * 设置网格
+   */
+  setMesh(mesh: Mesh | null): void {
+    if (this.mesh !== mesh) {
+      this.mesh = mesh;
+      this.markDirty();
+    }
+  }
+
+  /**
+   * 获取材质
+   */
+  getMaterial(): Material | null {
+    return this.material;
+  }
+
+  /**
+   * 设置材质
+   */
+  setMaterial(material: Material | null): void {
+    if (this.material !== material) {
+      this.material = material;
+      this.markDirty();
+    }
+  }
+
+  /**
+   * 是否启用渲染
+   */
+  isEnabled(): boolean {
+    return this.getEnabled();
+  }
+
+  /**
+   * 设置是否启用渲染
+   */
+  override setEnabled(enabled: boolean): void {
+    super.setEnabled(enabled);
+    this.markDirty();
+  }
+
+  /**
+   * 是否投射阴影
+   */
+  getCastShadows(): boolean {
+    return this.castShadows;
+  }
+
+  /**
+   * 设置是否投射阴影
+   */
+  setCastShadows(castShadows: boolean): void {
+    if (this.castShadows !== castShadows) {
+      this.castShadows = castShadows;
+      this.markDirty();
+    }
+  }
+
+  /**
+   * 是否接受阴影
+   */
+  getReceiveShadows(): boolean {
+    return this.receiveShadows;
+  }
+
+  /**
+   * 设置是否接受阴影
+   */
+  setReceiveShadows(receiveShadows: boolean): void {
+    if (this.receiveShadows !== receiveShadows) {
+      this.receiveShadows = receiveShadows;
+      this.markDirty();
+    }
+  }
+
+  /**
+   * 获取渲染层级
+   */
+  getRenderLayer(): number {
+    return this.renderLayer;
+  }
+
+  /**
+   * 设置渲染层级
+   */
+  setRenderLayer(layer: number): void {
+    if (this.renderLayer !== layer) {
+      this.renderLayer = layer;
+      this.markDirty();
+    }
+  }
+
+  /**
+   * 获取渲染优先级
+   */
+  getPriority(): number {
+    return this.priority;
+  }
+
+  /**
+   * 设置渲染优先级
+   */
+  setPriority(priority: number): void {
+    if (this.priority !== priority) {
+      this.priority = priority;
+      this.markDirty();
+    }
+  }
+
+  /**
+   * 检查是否可以渲染
+   */
+  canRender(): boolean {
+    return this.getEnabled() && this.mesh !== null && this.material !== null;
+  }
+
+  /**
+   * 检查是否透明
+   */
+  isTransparent(): boolean {
+    if (!this.material) {
+      return false;
+    }
+
+    // 检查材质透明模式
+    const alphaMode = this.material.getAlphaMode();
+    return alphaMode === AlphaMode.Blend || this.material.getOpacity() < 1.0;
+  }
+
+  /**
+   * 创建渲染元素
+   */
+  createRenderElement(): RenderElement | null {
+    if (!this.canRender()) {
+      return null;
+    }
+
+    const transform = this.entity.transform;
+    const worldMatrix = transform.getWorldMatrix();
+
+    return {
+      id: this.entity.id,
+      geometry: this.mesh.geometry,
+      material: this.material,
+      transform,
+      worldMatrix,
+      distanceToCamera: 0, // 将在渲染队列中计算
+      renderLayer: this.renderLayer,
+      priority: this.priority,
+      isTransparent: this.isTransparent(),
+      castShadows: this.castShadows,
+      receiveShadows: this.receiveShadows,
+      boundingBox: this.getBoundingBox(),
+    };
+  }
+
+  /**
+   * 获取包围盒
+   */
+  private getBoundingBox() {
+    if (!this.mesh) {
+      return undefined;
+    }
+
+    const boundingBox = this.mesh.getBoundingBox();
+    // const worldMatrix = this.entity.transform.getWorldMatrix();
+
+    // 将包围盒转换到世界空间
+    const corners = [
+      [boundingBox.min.x, boundingBox.min.y, boundingBox.min.z],
+      [boundingBox.max.x, boundingBox.min.y, boundingBox.min.z],
+      [boundingBox.min.x, boundingBox.max.y, boundingBox.min.z],
+      [boundingBox.max.x, boundingBox.max.y, boundingBox.min.z],
+      [boundingBox.min.x, boundingBox.min.y, boundingBox.max.z],
+      [boundingBox.max.x, boundingBox.min.y, boundingBox.max.z],
+      [boundingBox.min.x, boundingBox.max.y, boundingBox.max.z],
+      [boundingBox.max.x, boundingBox.max.y, boundingBox.max.z],
+    ];
+
+    // 计算世界空间包围盒
+    let minX = Infinity,
+      minY = Infinity,
+      minZ = Infinity;
+    let maxX = -Infinity,
+      maxY = -Infinity,
+      maxZ = -Infinity;
+
+    for (const corner of corners) {
+      // TODO: 使用worldMatrix变换corner
+      // 这里需要Matrix4的变换方法
+      const x = corner[0];
+      const y = corner[1];
+      const z = corner[2];
+
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      minZ = Math.min(minZ, z);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+      maxZ = Math.max(maxZ, z);
+    }
+
+    return {
+      min: [minX, minY, minZ] as [number, number, number],
+      max: [maxX, maxY, maxZ] as [number, number, number],
+    };
+  }
+
+  /**
+   * 标记为已修改
+   */
+  private markDirty(): void {
+    // 可以在这里触发渲染队列更新事件
+  }
+
+  /**
+   * 组件更新
+   */
+  override update(deltaTime: number): void {
+    // MeshRenderer通常不需要每帧更新
+    // 但可以在这里检查材质或网格的变化
+  }
+
+  /**
+   * 组件销毁
+   */
+  override destroy(): void {
+    this.mesh = null;
+    this.material = null;
+    super.destroy();
+  }
+}

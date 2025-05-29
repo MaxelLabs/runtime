@@ -1,4 +1,4 @@
-import type { GeometryPrim, BoundingBox } from '@maxellabs/math';
+import type { GeometryPrim, BoundingBox, VertexAttributeDescriptor } from '@maxellabs/math';
 import { VertexAttribute } from '@maxellabs/math';
 import { Resource, ResourceType } from '../resource/resource';
 import type { ResourceLoadOptions } from '../resource/resource';
@@ -42,10 +42,6 @@ export interface GeometryAttribute {
 }
 
 /**
- * 顶点属性类型枚举（继承规范包定义）
- */
-
-/**
  * 几何体数据类型
  */
 export enum GeometryDataType {
@@ -56,24 +52,6 @@ export enum GeometryDataType {
   INT = 5124,
   UNSIGNED_INT = 5125,
   FLOAT = 5126,
-}
-
-/**
- * 顶点属性描述
- */
-export interface VertexAttributeDescriptor {
-  /** 属性名称 */
-  name: VertexAttribute;
-  /** 数据类型 */
-  type: GeometryDataType;
-  /** 组件数量 */
-  size: number;
-  /** 是否归一化 */
-  normalized?: boolean;
-  /** 字节偏移 */
-  offset?: number;
-  /** 字节步长 */
-  stride?: number;
 }
 
 /**
