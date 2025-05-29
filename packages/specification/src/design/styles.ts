@@ -306,8 +306,3 @@ export interface DesignStyleDefinition {
    */
   metadata?: CommonMetadata;
 }
-
-// 重新导出通用类型以保持兼容性
-export { TextAlign, FontStyle, FontWeight, TextDecoration, TextTransform } from '../common/text';
-
-export { ImageFilter, ImageScaleMode } from '../common';

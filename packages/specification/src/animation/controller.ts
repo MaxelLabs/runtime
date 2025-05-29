@@ -47,6 +47,3 @@ export interface BoneAnimationMask extends AnimationMask {
    */
   excludedBones: string[];
 }
-
-// 重新导出通用类型以保持兼容性
-export { AnimationController, AnimationMixer, AnimationMixerLayer, AnimationMask } from '../common';

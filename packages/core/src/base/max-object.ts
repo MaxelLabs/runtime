@@ -34,6 +34,14 @@ export abstract class MaxObject {
     return this.destroyed;
   }
 
+  /**
+   * 获取对象的唯一标识
+   * @returns 唯一标识
+   */
+  getId(): string {
+    return this.id;
+  }
+
   /** 生成唯一ID */
   protected generateId(): string {
     return `${this.type}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;

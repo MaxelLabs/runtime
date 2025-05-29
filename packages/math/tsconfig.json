@@ -4,13 +4,9 @@
     "rootDir": "src",
     "outDir": "dist",
     "composite": true,
-    "declaration": true
+    "declaration": true // 生成声明文件
   },
-  "include": ["src", "../../types"],
-  "references": [
-    {
-      "path": "../specification"
-    }
-  ],
-  "exclude": ["test"]
+  "include": ["src"],
+  "exclude": ["dist", "node_modules", "**/*.test.ts"],
+  "references": [{ "path": "../specification" }]
 }

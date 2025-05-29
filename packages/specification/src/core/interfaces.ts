@@ -305,11 +305,11 @@ export interface BoundingBox {
   /**
    * 中心点
    */
-  center?: IVector3;
+  center: IVector3;
   /**
    * 尺寸
    */
-  size?: IVector3;
+  size: IVector3;
 }
 
 /**

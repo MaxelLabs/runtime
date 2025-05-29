@@ -8,9 +8,10 @@
 import { Component } from '../base/component';
 import type { Material } from '../material/material';
 import type { Entity } from '../base/entity';
-import type { RenderElement } from '../renderer/RenderQueue';
-import { AlphaMode } from '@maxellabs/math';
+import type { BoundingBox } from '@maxellabs/math';
+import { AlphaMode, VertexAttribute } from '@maxellabs/math';
 import type { Geometry } from '../geometry';
+import type { RHIVertexBufferLayout } from '../interface';
 
 /**
  * 网格渲染器组件
@@ -18,6 +19,21 @@ import type { Geometry } from '../geometry';
  * 负责将网格和材质结合，提供渲染所需的数据
  */
 export class MeshRenderer extends Component {
+  getVertexBuffer() {
+    return this.geometry?.getAttributeDescriptor(VertexAttribute.Position);
+  }
+  getIndexBuffer() {
+    throw new Error('Method not implemented.');
+  }
+  getIndexFormat(): import('../interface').RHIIndexFormat {
+    throw new Error('Method not implemented.');
+  }
+  getIndexCount() {
+    throw new Error('Method not implemented.');
+  }
+  getVertexCount() {
+    throw new Error('Method not implemented.');
+  }
   /**
    * 网格对象
    */
@@ -54,6 +70,10 @@ export class MeshRenderer extends Component {
    */
   constructor(entity: Entity) {
     super(entity);
+  }
+
+  getVertexLayout(): RHIVertexBufferLayout {
+    return this.geometry!.getVertexLayout() || [];
   }
 
   /**
@@ -196,7 +216,7 @@ export class MeshRenderer extends Component {
   /**
    * 创建渲染元素
    */
-  createRenderElement(): RenderElement | null {
+  createRenderElement(): any | null {
     if (!this.canRender() || !this.geometry || !this.material) {
       return null;
     }
@@ -294,5 +314,70 @@ export class MeshRenderer extends Component {
     this.geometry = null;
     this.material = null;
     super.destroy();
+  }
+
+  /**
+   * 获取网格（适配Mesh接口）
+   */
+  getMesh(): any {
+    // 将Geometry适配为Mesh接口
+    if (!this.geometry) {
+      return null;
+    }
+
+    return {
+      ...this.geometry,
+      getId: () => this.geometry?.name || 'unknown',
+      getVertexLayout: () => [], // TODO: 从geometry获取顶点布局
+      getVertexBuffer: () => null, // TODO: 从RHI获取
+      getIndexBuffer: () => null, // TODO: 从RHI获取
+      getIndexFormat: () => 'uint16' as const,
+      getVertexCount: () => 0, // TODO: 从geometry获取
+      getIndexCount: () => 0, // TODO: 从geometry获取
+    };
+  }
+
+  /**
+   * 获取世界空间包围盒（适配render-queue接口）
+   */
+  getWorldBounds(): BoundingBox {
+    const bounds = this.getBoundingBox();
+    if (!bounds) {
+      return {
+        center: { x: 0, y: 0, z: 0 },
+        min: { x: 0, y: 0, z: 0 },
+        max: { x: 0, y: 0, z: 0 },
+        size: { x: 0, y: 0, z: 0 },
+      };
+    }
+
+    const centerX = (bounds.min[0] + bounds.max[0]) * 0.5;
+    const centerY = (bounds.min[1] + bounds.max[1]) * 0.5;
+    const centerZ = (bounds.min[2] + bounds.max[2]) * 0.5;
+
+    return {
+      center: { x: centerX, y: centerY, z: centerZ },
+      min: { x: bounds.min[0], y: bounds.min[1], z: bounds.min[2] },
+      max: { x: bounds.max[0], y: bounds.max[1], z: bounds.max[2] },
+      size: {
+        x: bounds.max[0] - bounds.min[0],
+        y: bounds.max[1] - bounds.min[1],
+        z: bounds.max[2] - bounds.min[2],
+      },
+    };
+  }
+
+  /**
+   * 获取是否投射阴影（适配render-queue接口）
+   */
+  getCastShadow(): boolean {
+    return this.getCastShadows();
+  }
+
+  /**
+   * 获取是否接收阴影（适配render-queue接口）
+   */
+  getReceiveShadow(): boolean {
+    return this.getReceiveShadows();
   }
 }

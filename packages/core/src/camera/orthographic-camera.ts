@@ -1,4 +1,4 @@
-import { Camera, ProjectionType, CameraEvent } from './Camera';
+import { Camera, ProjectionType, CameraEvent } from './camera';
 import type { Entity } from '../base/entity';
 
 /**

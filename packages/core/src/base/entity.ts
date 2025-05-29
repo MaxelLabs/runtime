@@ -32,6 +32,9 @@ export class Entity extends ReferResource {
   /** 实体的变换组件，每个实体都有一个变换组件 */
   readonly transform: Transform;
 
+  /** 实体的元数据 */
+  private metadata: Map<string, any> = new Map();
+
   /**
    * 创建一个新的实体
    * @param name 实体的名称
@@ -506,5 +509,40 @@ export class Entity extends ReferResource {
     for (const child of this.children) {
       child.onSceneUnload();
     }
+  }
+
+  /**
+   * 获取元数据
+   */
+  getMetadata(key: string): any {
+    return this.metadata.get(key);
+  }
+
+  /**
+   * 设置元数据
+   */
+  setMetadata(key: string, value: any): void {
+    this.metadata.set(key, value);
+  }
+
+  /**
+   * 移除元数据
+   */
+  removeMetadata(key: string): boolean {
+    return this.metadata.delete(key);
+  }
+
+  /**
+   * 清空所有元数据
+   */
+  clearMetadata(): void {
+    this.metadata.clear();
+  }
+
+  /**
+   * 获取所有元数据
+   */
+  getAllMetadata(): Map<string, any> {
+    return new Map(this.metadata);
   }
 }

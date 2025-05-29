@@ -454,4 +454,35 @@ export class Material extends Resource implements IMaterial {
       console.log('Creating material bind group for:', this.name);
     }
   }
+
+  /**
+   * 获取材质ID
+   */
+  override getId(): string {
+    return this.getPath();
+  }
+
+  /**
+   * 获取透明度（1.0 - opacity）
+   */
+  getTransparency(): number {
+    return 1.0 - this.getOpacity();
+  }
+
+  /**
+   * 获取混合模式
+   */
+  getBlendMode(): string {
+    const alphaMode = this.getAlphaMode();
+    switch (alphaMode) {
+      case AlphaMode.Opaque:
+        return 'opaque';
+      case AlphaMode.Blend:
+        return 'alpha';
+      case AlphaMode.Mask:
+        return 'mask';
+      default:
+        return 'opaque';
+    }
+  }
 }

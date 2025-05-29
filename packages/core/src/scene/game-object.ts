@@ -405,4 +405,40 @@ export class GameObject {
       child.broadcastMessage(message, data);
     }
   }
+
+  /**
+   * 获取游戏对象ID
+   */
+  getId(): string {
+    return this.entity.id;
+  }
+
+  /**
+   * 获取游戏对象是否激活
+   */
+  getActive(): boolean {
+    return this.entity.getActive();
+  }
+
+  /**
+   * 获取游戏对象层级
+   */
+  getLayer(): number {
+    // 默认层级为0，可以通过metadata存储
+    return this.entity.getMetadata('layer') || 0;
+  }
+
+  /**
+   * 设置游戏对象层级
+   */
+  setLayer(layer: number): void {
+    this.entity.setMetadata('layer', layer);
+  }
+
+  /**
+   * 获取Transform组件
+   */
+  getTransform(): Transform {
+    return this.entity.transform;
+  }
 }
