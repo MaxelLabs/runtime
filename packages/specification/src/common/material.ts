@@ -3,7 +3,7 @@
  * 定义跨模块共享的基础材质类型
  */
 
-import type { Color, BlendMode, CommonMetadata } from '../core';
+import type { IColor, BlendMode, CommonMetadata } from '../core';
 
 /**
  * 通用材质类型枚举
@@ -124,7 +124,7 @@ export interface CommonMaterialProperties {
   /**
    * 主颜色
    */
-  color: Color;
+  color: IColor;
   /**
    * 透明度
    */

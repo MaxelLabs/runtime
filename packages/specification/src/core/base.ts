@@ -77,28 +77,6 @@ export enum CacheStrategy {
 }
 
 /**
- * 几何体优化
- */
-export interface GeometryOptimization {
-  /**
-   * 顶点合并
-   */
-  mergeVertices: boolean;
-  /**
-   * 索引优化
-   */
-  optimizeIndices: boolean;
-  /**
-   * 简化
-   */
-  simplification: boolean;
-  /**
-   * 压缩
-   */
-  compression: boolean;
-}
-
-/**
  * 共享设置
  */
 export interface SharingSettings {
@@ -185,11 +163,23 @@ export interface Timestamp {
 /**
  * 核心颜色接口
  */
-export interface Color {
+export interface IColor {
   /**
-   * 颜色值
+   * 红色分量
    */
-  value: UsdValue; // Color4f
+  r: number;
+  /**
+   * 绿色分量
+   */
+  g: number;
+  /**
+   * 蓝色分量
+   */
+  b: number;
+  /**
+   * 透明度分量
+   */
+  a: number;
   /**
    * 颜色空间
    */
@@ -205,7 +195,7 @@ export interface Color {
 /**
  * 2D向量
  */
-export interface Vector2 {
+export interface IVector2 {
   x: number;
   y: number;
 }
@@ -213,7 +203,7 @@ export interface Vector2 {
 /**
  * 3D向量
  */
-export interface Vector3 {
+export interface IVector3 {
   x: number;
   y: number;
   z: number;
@@ -222,7 +212,7 @@ export interface Vector3 {
 /**
  * 4D向量
  */
-export interface Vector4 {
+export interface IVector4 {
   x: number;
   y: number;
   z: number;
@@ -232,7 +222,7 @@ export interface Vector4 {
 /**
  * 四元数
  */
-export interface Quaternion {
+export interface IQuaternion {
   x: number;
   y: number;
   z: number;
@@ -242,7 +232,7 @@ export interface Quaternion {
 /**
  * 2x2矩阵
  */
-export interface Matrix2x2 {
+export interface IMatrix2x2 {
   m00: number;
   m01: number;
   m10: number;
@@ -252,7 +242,7 @@ export interface Matrix2x2 {
 /**
  * 3x3矩阵
  */
-export interface Matrix3x3 {
+export interface IMatrix3x3 {
   m00: number;
   m01: number;
   m02: number;
@@ -267,7 +257,7 @@ export interface Matrix3x3 {
 /**
  * 4x4矩阵
  */
-export interface Matrix4x4 {
+export interface IMatrix4x4 {
   m00: number;
   m01: number;
   m02: number;
@@ -293,7 +283,7 @@ export interface BoundingSphere {
   /**
    * 中心点
    */
-  center: Vector3;
+  center: IVector3;
   /**
    * 半径
    */

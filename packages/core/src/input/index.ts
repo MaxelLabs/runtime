@@ -7,7 +7,7 @@ export { PointerManager, PointerInfo } from './pointer/pointer-manager';
 export { WheelManager } from './wheel/wheel-manager';
 
 // 枚举类型
-export { InputEventType, KeyCode, MouseButton, PointerButton } from './enums/InputEventType';
+export { InputEventType, KeyCode, PointerButton } from './enums/InputEventType';
 
 // 事件接口
 export {

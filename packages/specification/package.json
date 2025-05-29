@@ -6,6 +6,7 @@
   "module": "./dist/index.mjs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "browser": "./dist/index.umd.js",
   "files": [
     "dist"
   ],
@@ -19,7 +20,7 @@
   "scripts": {
     "dev": "rollup -c -w",
     "prebuild": "pnpm clean",
-    "build": "pnpm build:declaration && pnpm build:module",
+    "build": "pnpm build:module && pnpm build:declaration",
     "build:module": "rollup -c",
     "build:declaration": "tsc -d --emitDeclarationOnly",
     "clean": "rimraf dist",
@@ -37,9 +38,6 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
-  },
-  "dependencies": {
-    "@maxellabs/math": "workspace:*"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

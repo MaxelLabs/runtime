@@ -5,9 +5,9 @@
 
 // 从 core 模块导入基础类型
 import type {
-  Color,
+  IColor,
   GradientStop,
-  Transform,
+  ITransform,
   CommonMetadata,
   BlendMode,
   GradientType,
@@ -69,7 +69,7 @@ export interface DesignFill {
   /**
    * 颜色（使用通用Color）
    */
-  color?: Color;
+  color?: IColor;
   /**
    * 渐变
    */
@@ -103,7 +103,7 @@ export interface DesignStroke {
   /**
    * 颜色（使用通用Color）
    */
-  color?: Color;
+  color?: IColor;
   /**
    * 渐变
    */
@@ -171,7 +171,7 @@ export interface DesignImage {
   /**
    * 图像变换（使用通用Transform）
    */
-  transform?: Transform;
+  transform?: ITransform;
   /**
    * 图像滤镜
    */
@@ -189,7 +189,7 @@ export interface DesignShadow {
   /**
    * 颜色（使用通用Color）
    */
-  color: Color;
+  color: IColor;
   /**
    * X 偏移
    */

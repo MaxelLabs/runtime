@@ -1,15 +1,31 @@
+import { VertexAttribute } from '@maxellabs/math';
+
 /**
- * 顶点属性枚举
+ * 几何体数据接口
  */
-export enum VertexAttribute {
-  Position = 'POSITION',
-  Normal = 'NORMAL',
-  Tangent = 'TANGENT',
-  Color = 'COLOR',
-  TexCoord0 = 'TEXCOORD_0',
-  TexCoord1 = 'TEXCOORD_1',
-  BoneIndex = 'JOINTS_0',
-  BoneWeight = 'WEIGHTS_0',
+export interface GeometryData {
+  attributes: {
+    [key: string]: number[] | Float32Array;
+  };
+  indices: number[] | Uint16Array | Uint32Array;
+  vertexCount?: number;
+  indexCount?: number;
+  boundingBox?: {
+    min: [number, number, number];
+    max: [number, number, number];
+  };
+}
+
+/**
+ * 几何体创建选项
+ */
+export interface GeometryOptions {
+  /** 是否使用32位索引 */
+  use32BitIndices?: boolean;
+  /** 是否计算包围盒 */
+  computeBoundingBox?: boolean;
+  /** 是否使用TypedArray */
+  useTypedArrays?: boolean;
 }
 
 /**
@@ -25,6 +41,7 @@ export class GeometryUtils {
    * @param widthSegments 宽度分段数
    * @param heightSegments 高度分段数
    * @param depthSegments 深度分段数
+   * @param options 创建选项
    * @returns 几何体数据对象
    */
   static createBox(
@@ -33,24 +50,47 @@ export class GeometryUtils {
     depth: number = 1,
     widthSegments: number = 1,
     heightSegments: number = 1,
-    depthSegments: number = 1
+    depthSegments: number = 1,
+    options: GeometryOptions = {}
   ): GeometryData {
     // 规范化分段数，至少为1
     widthSegments = Math.floor(Math.max(1, widthSegments));
     heightSegments = Math.floor(Math.max(1, heightSegments));
     depthSegments = Math.floor(Math.max(1, depthSegments));
 
+    // 预计算顶点和索引数量
+    const totalVertices =
+      2 *
+      ((widthSegments + 1) * (heightSegments + 1) +
+        (widthSegments + 1) * (depthSegments + 1) +
+        (depthSegments + 1) * (heightSegments + 1));
+
+    const totalIndices =
+      2 * (widthSegments * heightSegments + widthSegments * depthSegments + depthSegments * heightSegments) * 6;
+
+    // 预分配数组容量
+    const positions = options.useTypedArrays
+      ? new Float32Array(totalVertices * 3)
+      : new Array<number>(totalVertices * 3);
+    const normals = options.useTypedArrays ? new Float32Array(totalVertices * 3) : new Array<number>(totalVertices * 3);
+    const uvs = options.useTypedArrays ? new Float32Array(totalVertices * 2) : new Array<number>(totalVertices * 2);
+    const indices = options.use32BitIndices ? new Uint32Array(totalIndices) : new Uint16Array(totalIndices);
+
     // 半尺寸
     const halfWidth = width / 2;
     const halfHeight = height / 2;
     const halfDepth = depth / 2;
 
-    // 创建六个面
+    // 创建结果对象
     const result = {
-      positions: [] as number[],
-      normals: [] as number[],
-      uvs: [] as number[],
-      indices: [] as number[],
+      positions: positions as number[],
+      normals: normals as number[],
+      uvs: uvs as number[],
+      indices: indices as unknown as number[],
+      posIndex: 0,
+      normalIndex: 0,
+      uvIndex: 0,
+      indexIndex: 0,
     };
 
     // 添加每个面的顶点数据
@@ -189,20 +229,40 @@ export class GeometryUtils {
     );
 
     // 缩放到正确尺寸
-    for (let i = 0; i < result.positions.length; i += 3) {
+    for (let i = 0; i < result.posIndex; i += 3) {
       result.positions[i] *= halfWidth;
       result.positions[i + 1] *= halfHeight;
       result.positions[i + 2] *= halfDepth;
     }
 
-    return {
+    // 创建最终几何体数据
+    const geometryData: GeometryData = {
       attributes: {
-        [VertexAttribute.Position]: result.positions,
-        [VertexAttribute.Normal]: result.normals,
-        [VertexAttribute.TexCoord0]: result.uvs,
+        [VertexAttribute.Position]: result.positions.slice(0, result.posIndex),
+        [VertexAttribute.Normal]: result.normals.slice(0, result.normalIndex),
+        [VertexAttribute.TexCoord0]: result.uvs.slice(0, result.uvIndex),
       },
-      indices: result.indices,
+      indices: result.indices.slice(0, result.indexIndex),
+      vertexCount: vertexCount,
+      indexCount: result.indexIndex,
     };
+
+    // 计算包围盒
+    if (options.computeBoundingBox) {
+      geometryData.boundingBox = this.computeBoundingBox(geometryData.attributes[VertexAttribute.Position]);
+    }
+
+    // 验证几何体数据完整性
+    if (!this.validateGeometry(geometryData)) {
+      console.warn('创建的立方体几何体数据验证失败');
+    }
+
+    // 转换为TypedArray
+    if (options.useTypedArrays) {
+      return this.toTypedArrays(geometryData);
+    }
+
+    return geometryData;
   }
 
   /**
@@ -228,7 +288,16 @@ export class GeometryUtils {
    * @returns 更新后的顶点数量
    */
   private static addBoxFace(
-    result: { positions: number[]; normals: number[]; uvs: number[]; indices: number[] },
+    result: {
+      positions: number[];
+      normals: number[];
+      uvs: number[];
+      indices: number[];
+      posIndex: number;
+      normalIndex: number;
+      uvIndex: number;
+      indexIndex: number;
+    },
     segmentsW: number,
     segmentsH: number,
     width: number,
@@ -249,6 +318,16 @@ export class GeometryUtils {
   ): number {
     const { positions, normals, uvs, indices } = result;
 
+    // 使用局部变量提高性能
+    let posIdx = result.posIndex;
+    let normalIdx = result.normalIndex;
+    let uvIdx = result.uvIndex;
+    let indexIdx = result.indexIndex;
+
+    // 批量计算顶点
+    const verticesPerRow = segmentsW + 1;
+    const totalVertices = verticesPerRow * (segmentsH + 1);
+
     // 遍历网格点
     for (let y = 0; y <= segmentsH; y++) {
       const vPct = y / segmentsH;
@@ -261,36 +340,48 @@ export class GeometryUtils {
         const posY = startY + uDirY * uPct * width + vDirY * vPct * height;
         const posZ = startZ + uDirZ * uPct * width + vDirZ * vPct * height;
 
-        // 添加顶点
-        positions.push(posX, posY, posZ);
+        // 使用索引直接赋值而不是push
+        positions[posIdx++] = posX;
+        positions[posIdx++] = posY;
+        positions[posIdx++] = posZ;
 
-        // 添加法线
-        normals.push(normalX, normalY, normalZ);
+        normals[normalIdx++] = normalX;
+        normals[normalIdx++] = normalY;
+        normals[normalIdx++] = normalZ;
 
-        // 添加UV
-        uvs.push(uPct, vPct);
+        uvs[uvIdx++] = uPct;
+        uvs[uvIdx++] = vPct;
       }
     }
 
-    // 添加索引
-    const rowVerts = segmentsW + 1;
-
+    // 批量添加索引
     for (let y = 0; y < segmentsH; y++) {
       for (let x = 0; x < segmentsW; x++) {
         // 每个单元格由两个三角形组成
-        const v1 = vertexOffset + y * rowVerts + x;
-        const v2 = vertexOffset + y * rowVerts + x + 1;
-        const v3 = vertexOffset + (y + 1) * rowVerts + x + 1;
-        const v4 = vertexOffset + (y + 1) * rowVerts + x;
+        const v1 = vertexOffset + y * verticesPerRow + x;
+        const v2 = v1 + 1;
+        const v3 = v1 + verticesPerRow;
+        const v4 = v3 + 1;
 
-        // 添加两个三角形
-        indices.push(v1, v2, v4);
-        indices.push(v2, v3, v4);
+        // 第一个三角形
+        indices[indexIdx++] = v1;
+        indices[indexIdx++] = v2;
+        indices[indexIdx++] = v3;
+
+        // 第二个三角形
+        indices[indexIdx++] = v2;
+        indices[indexIdx++] = v4;
+        indices[indexIdx++] = v3;
       }
     }
 
-    // 返回新的顶点偏移
-    return vertexOffset + (segmentsW + 1) * (segmentsH + 1);
+    // 更新索引
+    result.posIndex = posIdx;
+    result.normalIndex = normalIdx;
+    result.uvIndex = uvIdx;
+    result.indexIndex = indexIdx;
+
+    return vertexOffset + totalVertices;
   }
 
   /**
@@ -302,6 +393,7 @@ export class GeometryUtils {
    * @param phiLength 水平扫描角度
    * @param thetaStart 垂直起始角度
    * @param thetaLength 垂直扫描角度
+   * @param options 创建选项
    * @returns 几何体数据对象
    */
   static createSphere(
@@ -311,16 +403,30 @@ export class GeometryUtils {
     phiStart: number = 0,
     phiLength: number = Math.PI * 2,
     thetaStart: number = 0,
-    thetaLength: number = Math.PI
+    thetaLength: number = Math.PI,
+    options: GeometryOptions = {}
   ): GeometryData {
     // 规范化分段数
     widthSegments = Math.max(3, Math.floor(widthSegments));
     heightSegments = Math.max(2, Math.floor(heightSegments));
 
+    const totalVertices = (widthSegments + 1) * (heightSegments + 1);
+    const totalIndices = widthSegments * heightSegments * 6;
+
     const positions: number[] = [];
     const normals: number[] = [];
     const uvs: number[] = [];
     const indices: number[] = [];
+
+    positions.length = totalVertices * 3;
+    normals.length = totalVertices * 3;
+    uvs.length = totalVertices * 2;
+    indices.length = totalIndices;
+
+    let posIdx = 0;
+    let normalIdx = 0;
+    let uvIdx = 0;
+    let indexIdx = 0;
 
     // 生成顶点
     for (let y = 0; y <= heightSegments; y++) {
@@ -343,14 +449,16 @@ export class GeometryUtils {
         const nz = cosPhi * sinTheta;
 
         // 顶点位置
-        const px = radius * nx;
-        const py = radius * ny;
-        const pz = radius * nz;
+        positions[posIdx++] = radius * nx;
+        positions[posIdx++] = radius * ny;
+        positions[posIdx++] = radius * nz;
 
-        // 添加顶点数据
-        positions.push(px, py, pz);
-        normals.push(nx, ny, nz);
-        uvs.push(phiPct, 1 - thetaPct);
+        normals[normalIdx++] = nx;
+        normals[normalIdx++] = ny;
+        normals[normalIdx++] = nz;
+
+        uvs[uvIdx++] = phiPct;
+        uvs[uvIdx++] = 1 - thetaPct;
       }
     }
 
@@ -366,19 +474,36 @@ export class GeometryUtils {
         const nextRowNext = nextRow + 1;
 
         // 两个三角形
-        indices.push(current, next, nextRow);
-        indices.push(next, nextRowNext, nextRow);
+        indices[indexIdx++] = current;
+        indices[indexIdx++] = next;
+        indices[indexIdx++] = nextRow;
+
+        indices[indexIdx++] = next;
+        indices[indexIdx++] = nextRowNext;
+        indices[indexIdx++] = nextRow;
       }
     }
 
-    return {
+    const geometryData: GeometryData = {
       attributes: {
         [VertexAttribute.Position]: positions,
         [VertexAttribute.Normal]: normals,
         [VertexAttribute.TexCoord0]: uvs,
       },
       indices: indices,
+      vertexCount: totalVertices,
+      indexCount: indexIdx,
     };
+
+    if (options.computeBoundingBox) {
+      geometryData.boundingBox = this.computeBoundingBox(positions);
+    }
+
+    if (options.useTypedArrays) {
+      return this.toTypedArrays(geometryData);
+    }
+
+    return geometryData;
   }
 
   /**
@@ -387,17 +512,21 @@ export class GeometryUtils {
    * @param height 高度
    * @param widthSegments 宽度分段数
    * @param heightSegments 高度分段数
+   * @param options 创建选项
    * @returns 几何体数据对象
    */
   static createPlane(
     width: number = 1,
     height: number = 1,
     widthSegments: number = 1,
-    heightSegments: number = 1
+    heightSegments: number = 1,
+    options: GeometryOptions = {}
   ): GeometryData {
     // 规范化分段数
     widthSegments = Math.floor(Math.max(1, widthSegments));
     heightSegments = Math.floor(Math.max(1, heightSegments));
+
+    const totalVertices = (widthSegments + 1) * (heightSegments + 1);
 
     const positions: number[] = [];
     const normals: number[] = [];
@@ -412,6 +541,11 @@ export class GeometryUtils {
     const segmentWidth = width / widthSegments;
     const segmentHeight = height / heightSegments;
 
+    let posIdx = 0;
+    let normalIdx = 0;
+    let uvIdx = 0;
+    let indexIdx = 0;
+
     // 生成顶点
     for (let y = 0; y <= heightSegments; y++) {
       const py = y * segmentHeight - halfHeight;
@@ -420,13 +554,18 @@ export class GeometryUtils {
         const px = x * segmentWidth - halfWidth;
 
         // 位置
-        positions.push(px, 0, py);
+        positions[posIdx++] = px;
+        positions[posIdx++] = 0;
+        positions[posIdx++] = py;
 
         // 法线（朝上）
-        normals.push(0, 1, 0);
+        normals[normalIdx++] = 0;
+        normals[normalIdx++] = 1;
+        normals[normalIdx++] = 0;
 
         // UV
-        uvs.push(x / widthSegments, 1 - y / heightSegments);
+        uvs[uvIdx++] = x / widthSegments;
+        uvs[uvIdx++] = 1 - y / heightSegments;
       }
     }
 
@@ -439,19 +578,36 @@ export class GeometryUtils {
         const d = c + 1;
 
         // 两个三角形
-        indices.push(a, b, c);
-        indices.push(b, d, c);
+        indices[indexIdx++] = a;
+        indices[indexIdx++] = b;
+        indices[indexIdx++] = c;
+
+        indices[indexIdx++] = b;
+        indices[indexIdx++] = d;
+        indices[indexIdx++] = c;
       }
     }
 
-    return {
+    const geometryData: GeometryData = {
       attributes: {
         [VertexAttribute.Position]: positions,
         [VertexAttribute.Normal]: normals,
         [VertexAttribute.TexCoord0]: uvs,
       },
       indices: indices,
+      vertexCount: totalVertices,
+      indexCount: indexIdx,
     };
+
+    if (options.computeBoundingBox) {
+      geometryData.boundingBox = this.computeBoundingBox(positions);
+    }
+
+    if (options.useTypedArrays) {
+      return this.toTypedArrays(geometryData);
+    }
+
+    return geometryData;
   }
 
   /**
@@ -462,6 +618,7 @@ export class GeometryUtils {
    * @param radialSegments 径向分段数
    * @param heightSegments 高度分段数
    * @param openEnded 是否开口（不包含顶部和底部）
+   * @param options 创建选项
    * @returns 几何体数据对象
    */
   static createCylinder(
@@ -470,7 +627,8 @@ export class GeometryUtils {
     height: number = 1,
     radialSegments: number = 32,
     heightSegments: number = 1,
-    openEnded: boolean = false
+    openEnded: boolean = false,
+    options: GeometryOptions = {}
   ): GeometryData {
     // 规范化分段数
     radialSegments = Math.floor(Math.max(3, radialSegments));
@@ -511,8 +669,9 @@ export class GeometryUtils {
         positions.push(px, py, pz);
 
         // 顶点法线
+        const slope = (radiusBottom - radiusTop) / height;
         const nx = sinTheta;
-        const ny = 0;
+        const ny = slope;
         const nz = cosTheta;
         const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
 
@@ -606,23 +765,229 @@ export class GeometryUtils {
       }
     }
 
-    return {
+    const geometryData: GeometryData = {
       attributes: {
         [VertexAttribute.Position]: positions,
         [VertexAttribute.Normal]: normals,
         [VertexAttribute.TexCoord0]: uvs,
       },
       indices: indices,
+      vertexCount: index,
+      indexCount: indices.length,
+    };
+
+    if (options.computeBoundingBox) {
+      geometryData.boundingBox = this.computeBoundingBox(positions);
+    }
+
+    if (options.useTypedArrays) {
+      return this.toTypedArrays(geometryData);
+    }
+
+    return geometryData;
+  }
+
+  /**
+   * 计算几何体包围盒
+   */
+  static computeBoundingBox(positions: number[] | Float32Array): {
+    min: [number, number, number];
+    max: [number, number, number];
+  } {
+    let minX = Infinity,
+      minY = Infinity,
+      minZ = Infinity;
+    let maxX = -Infinity,
+      maxY = -Infinity,
+      maxZ = -Infinity;
+
+    for (let i = 0; i < positions.length; i += 3) {
+      const x = positions[i];
+      const y = positions[i + 1];
+      const z = positions[i + 2];
+
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      minZ = Math.min(minZ, z);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+      maxZ = Math.max(maxZ, z);
+    }
+
+    return {
+      min: [minX, minY, minZ],
+      max: [maxX, maxY, maxZ],
     };
   }
-}
 
-/**
- * 几何体数据接口
- */
-export interface GeometryData {
-  attributes: {
-    [key: string]: number[];
-  };
-  indices: number[];
+  /**
+   * 转换为TypedArray
+   */
+  static toTypedArrays(data: GeometryData): GeometryData {
+    const result: GeometryData = {
+      attributes: {},
+      indices:
+        data.indices instanceof Array
+          ? new (data.indices.length > 65535 ? Uint32Array : Uint16Array)(data.indices)
+          : data.indices,
+      vertexCount: data.vertexCount,
+      indexCount: data.indexCount,
+      boundingBox: data.boundingBox,
+    };
+
+    // 转换属性数组
+    for (const [key, value] of Object.entries(data.attributes)) {
+      result.attributes[key] = value instanceof Array ? new Float32Array(value) : value;
+    }
+
+    return result;
+  }
+
+  /**
+   * 验证几何体数据完整性
+   */
+  static validateGeometry(data: GeometryData): boolean {
+    const positions = data.attributes[VertexAttribute.Position];
+    const normals = data.attributes[VertexAttribute.Normal];
+    const uvs = data.attributes[VertexAttribute.TexCoord0];
+
+    // 检查基本属性存在
+    if (!positions || positions.length === 0) {
+      console.error('几何体缺少位置属性');
+      return false;
+    }
+
+    if (!normals || normals.length !== positions.length) {
+      console.error('几何体法线数量与位置不匹配');
+      return false;
+    }
+
+    if (!uvs || uvs.length !== (positions.length / 3) * 2) {
+      console.error('几何体UV坐标数量不正确');
+      return false;
+    }
+
+    // 检查索引有效性
+    const maxIndex = positions.length / 3 - 1;
+    for (let i = 0; i < data.indices.length; i++) {
+      if (data.indices[i] > maxIndex) {
+        console.error(`无效的索引值: ${data.indices[i]}, 最大允许: ${maxIndex}`);
+        return false;
+      }
+    }
+
+    // 检查索引数量是否为3的倍数
+    if (data.indices.length % 3 !== 0) {
+      console.error('索引数量必须是3的倍数（三角形）');
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * 计算几何体的切线向量
+   */
+  static computeTangents(data: GeometryData): void {
+    const positions = data.attributes[VertexAttribute.Position] as number[];
+    const normals = data.attributes[VertexAttribute.Normal] as number[];
+    const uvs = data.attributes[VertexAttribute.TexCoord0] as number[];
+    const indices = data.indices as number[];
+
+    const tangents = new Array<number>(positions.length);
+    const bitangents = new Array<number>(positions.length);
+
+    // 初始化为零
+    tangents.fill(0);
+    bitangents.fill(0);
+
+    // 计算每个三角形的切线和副切线
+    for (let i = 0; i < indices.length; i += 3) {
+      const i1 = indices[i];
+      const i2 = indices[i + 1];
+      const i3 = indices[i + 2];
+
+      // 获取顶点位置
+      const x1 = positions[i1 * 3],
+        y1 = positions[i1 * 3 + 1],
+        z1 = positions[i1 * 3 + 2];
+      const x2 = positions[i2 * 3],
+        y2 = positions[i2 * 3 + 1],
+        z2 = positions[i2 * 3 + 2];
+      const x3 = positions[i3 * 3],
+        y3 = positions[i3 * 3 + 1],
+        z3 = positions[i3 * 3 + 2];
+
+      // 获取UV坐标
+      const u1 = uvs[i1 * 2],
+        v1 = uvs[i1 * 2 + 1];
+      const u2 = uvs[i2 * 2],
+        v2 = uvs[i2 * 2 + 1];
+      const u3 = uvs[i3 * 2],
+        v3 = uvs[i3 * 2 + 1];
+
+      // 计算边向量
+      const dx1 = x2 - x1,
+        dy1 = y2 - y1,
+        dz1 = z2 - z1;
+      const dx2 = x3 - x1,
+        dy2 = y3 - y1,
+        dz2 = z3 - z1;
+
+      // 计算UV增量
+      const du1 = u2 - u1,
+        dv1 = v2 - v1;
+      const du2 = u3 - u1,
+        dv2 = v3 - v1;
+
+      // 计算切线和副切线
+      const det = du1 * dv2 - du2 * dv1;
+
+      if (Math.abs(det) > 1e-6) {
+        const invDet = 1.0 / det;
+
+        const tx = invDet * (dv2 * dx1 - dv1 * dx2);
+        const ty = invDet * (dv2 * dy1 - dv1 * dy2);
+        const tz = invDet * (dv2 * dz1 - dv1 * dz2);
+
+        // 累加到顶点
+        for (const idx of [i1, i2, i3]) {
+          tangents[idx * 3] += tx;
+          tangents[idx * 3 + 1] += ty;
+          tangents[idx * 3 + 2] += tz;
+        }
+      }
+    }
+
+    // 正交化和归一化切线
+    for (let i = 0; i < positions.length / 3; i++) {
+      const nx = normals[i * 3];
+      const ny = normals[i * 3 + 1];
+      const nz = normals[i * 3 + 2];
+
+      let tx = tangents[i * 3];
+      let ty = tangents[i * 3 + 1];
+      let tz = tangents[i * 3 + 2];
+
+      // Gram-Schmidt正交化
+      const dot = nx * tx + ny * ty + nz * tz;
+      tx -= nx * dot;
+      ty -= ny * dot;
+      tz -= nz * dot;
+
+      // 归一化
+      const len = Math.sqrt(tx * tx + ty * ty + tz * tz);
+      if (len > 1e-6) {
+        tangents[i * 3] = tx / len;
+        tangents[i * 3 + 1] = ty / len;
+        tangents[i * 3 + 2] = tz / len;
+      } else {
+        tangents[i * 3] = 1;
+        tangents[i * 3 + 1] = 0;
+        tangents[i * 3 + 2] = 0;
+      }
+    }
+
+    data.attributes[VertexAttribute.Tangent] = tangents;
+  }
 }

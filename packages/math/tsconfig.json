@@ -3,13 +3,14 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
-    "composite": true
+    "composite": true,
+    "declaration": true
   },
-  "include": [
-    "src",
-    "../../types" 
+  "include": ["src", "../../types"],
+  "references": [
+    {
+      "path": "../specification"
+    }
   ],
-  "exclude": [
-    "test"
-  ]
+  "exclude": ["test"]
 }

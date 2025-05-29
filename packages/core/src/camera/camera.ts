@@ -482,4 +482,66 @@ export class Camera extends Component {
     // 调用基类销毁方法
     super.destroy();
   }
+
+  /**
+   * 获取相机世界位置
+   */
+  getPosition(): Vector3 {
+    return this.entity.transform.getPosition();
+  }
+
+  /**
+   * 设置相机世界位置
+   */
+  setPosition(position: Vector3): this {
+    this.entity.transform.setPosition(position);
+    this.viewDirty = true;
+    return this;
+  }
+
+  /**
+   * 获取相机前方向量（世界空间）
+   */
+  getForward(): Vector3 {
+    return this.entity.transform.getForward();
+  }
+
+  /**
+   * 获取相机上方向量（世界空间）
+   */
+  getUp(): Vector3 {
+    return this.entity.transform.getUp();
+  }
+
+  /**
+   * 获取相机右方向量（世界空间）
+   */
+  getRight(): Vector3 {
+    return this.entity.transform.getRight();
+  }
+
+  /**
+   * 设置相机朝向目标点
+   */
+  lookAt(target: Vector3, up?: Vector3): this {
+    this.entity.transform.lookAt(target, up);
+    this.viewDirty = true;
+    return this;
+  }
+
+  /**
+   * 获取相机旋转（四元数）
+   */
+  getRotation() {
+    return this.entity.transform.getRotation();
+  }
+
+  /**
+   * 设置相机旋转（四元数）
+   */
+  setRotation(rotation: any): this {
+    this.entity.transform.setRotation(rotation);
+    this.viewDirty = true;
+    return this;
+  }
 }

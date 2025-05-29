@@ -425,4 +425,86 @@ export class Entity extends ReferResource {
     this.components.clear();
     super.destroy();
   }
+
+  /**
+   * 获取实体标签
+   */
+  getTag(): string {
+    return this.tag;
+  }
+
+  /**
+   * 设置实体启用状态
+   * @param enabled 是否启用
+   */
+  setEnabled(enabled: boolean): void {
+    this.setActive(enabled);
+  }
+
+  /**
+   * 检查实体是否启用
+   */
+  isEnabled(): boolean {
+    return this.getActive();
+  }
+
+  /**
+   * 更新实体及其组件
+   * @param deltaTime 时间增量（秒）
+   */
+  update(deltaTime: number): void {
+    if (!this.getActive()) {
+      return;
+    }
+
+    // 更新所有启用的组件
+    for (const component of this.components.values()) {
+      if (component.getEnabled() && component.getLifecycleState() === ComponentLifecycleState.ENABLED) {
+        component.update(deltaTime);
+      }
+    }
+
+    // 递归更新所有子实体
+    for (const child of this.children) {
+      if (child.getActive()) {
+        child.update(deltaTime);
+      }
+    }
+  }
+
+  /**
+   * 场景加载时调用
+   */
+  onSceneLoad(): void {
+    // 通知所有组件场景已加载
+    for (const component of this.components.values()) {
+      if (component.getEnabled()) {
+        // TODO: 添加组件的场景加载回调
+        // component.onSceneLoad?.();
+      }
+    }
+
+    // 递归通知所有子实体
+    for (const child of this.children) {
+      child.onSceneLoad();
+    }
+  }
+
+  /**
+   * 场景卸载时调用
+   */
+  onSceneUnload(): void {
+    // 通知所有组件场景将卸载
+    for (const component of this.components.values()) {
+      if (component.getEnabled()) {
+        // TODO: 添加组件的场景卸载回调
+        // component.onSceneUnload?.();
+      }
+    }
+
+    // 递归通知所有子实体
+    for (const child of this.children) {
+      child.onSceneUnload();
+    }
+  }
 }

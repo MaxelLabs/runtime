@@ -6,7 +6,7 @@
 import type { UsdPrim } from '../core/usd';
 import type {
   CommonMetadata,
-  Transform,
+  ITransform,
   AnimationProperties,
   InteractionProperties,
   MaterialProperties,
@@ -193,7 +193,7 @@ export interface CommonElement extends Omit<UsdPrim, 'metadata' | 'children'> {
   /**
    * 变换
    */
-  transform?: Transform;
+  transform?: ITransform;
   /**
    * 可见性
    */

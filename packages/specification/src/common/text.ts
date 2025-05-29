@@ -4,7 +4,7 @@
  */
 
 import type { CommonElement, CommonElementType } from './elements';
-import type { Color, VerticalAlign } from '../core';
+import type { IColor, VerticalAlign } from '../core';
 
 /**
  * 文本对齐方式
@@ -229,7 +229,7 @@ export interface CommonTextStyle {
   /**
    * 文本颜色
    */
-  color?: Color;
+  color?: IColor;
   /**
    * 文本对齐
    */
@@ -287,7 +287,7 @@ export interface TextShadow {
   /**
    * 阴影颜色
    */
-  color: Color;
+  color: IColor;
 }
 
 /**
@@ -301,7 +301,7 @@ export interface TextStroke {
   /**
    * 描边颜色
    */
-  color: Color;
+  color: IColor;
 }
 
 /**

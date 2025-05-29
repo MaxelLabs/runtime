@@ -4,7 +4,7 @@
  */
 
 // 从 core 模块导入基础类型
-import type { Transform } from '../core/interfaces';
+import type { ITransform } from '../core/interfaces';
 
 // 从 common 模块导入通用类型
 import type { CommonBounds, CommonElement, OverflowMode } from '../common';
@@ -34,7 +34,7 @@ export interface DesignElement extends Omit<CommonElement, 'type' | 'children' |
   /**
    * 变换信息（可选，用于3D变换）
    */
-  transform?: Transform;
+  transform?: ITransform;
   /**
    * 样式
    */

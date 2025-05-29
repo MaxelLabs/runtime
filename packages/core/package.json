@@ -38,8 +38,7 @@
     "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "@maxellabs/math": "workspace:*",
-    "@maxellabs/specification": "workspace:*"
+    "@maxellabs/math": "workspace:*"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

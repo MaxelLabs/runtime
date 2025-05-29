@@ -38,7 +38,7 @@ export class ReferResource extends MaxObject implements IReferable {
   private referenceCount: number = 0;
 
   /** 是否已加载完成 */
-  protected isLoaded: boolean = false;
+  isLoaded: boolean = false;
 
   /** 资源URL */
   protected url: string = '';

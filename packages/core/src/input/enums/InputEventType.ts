@@ -129,18 +129,6 @@ export enum KeyCode {
 }
 
 /**
- * 鼠标按键枚举
- */
-export enum MouseButton {
-  /** 左键 */
-  LEFT = 0,
-  /** 中键 */
-  MIDDLE = 1,
-  /** 右键 */
-  RIGHT = 2,
-}
-
-/**
  * 指针按键枚举
  */
 export enum PointerButton {
@@ -150,4 +138,4 @@ export enum PointerButton {
   SECONDARY = 2,
   /** 中键/辅助按键 */
   AUXILIARY = 4,
-} 
+}

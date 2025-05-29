@@ -26,11 +26,12 @@ import { UsdStage, UsdPrim, Transform, Color } from '@maxellabs/specification/co
 const transform: Transform = {
   position: [0, 0, 0],
   rotation: [0, 0, 0, 1],
-  scale: [1, 1, 1]
+  scale: [1, 1, 1],
 };
 ```
 
 **特性：**
+
 - 统一的基础类型定义
 - 跨模块共享的接口规范
 - 标准化的枚举和常量
@@ -41,6 +42,7 @@ const transform: Transform = {
 模块化的设计工具数据格式支持：
 
 #### 2.1 基础定义 (`design/base.ts` + `design/enums.ts`)
+
 ```typescript
 import { DesignBounds, DesignConstraints, ComponentInstance } from '@maxellabs/specification/design';
 import { DesignElementType, ConstraintType } from '@maxellabs/specification/design';
@@ -49,11 +51,12 @@ import { DesignElementType, ConstraintType } from '@maxellabs/specification/desi
 const bounds: DesignBounds = { x: 0, y: 0, width: 100, height: 40 };
 const constraints: DesignConstraints = {
   horizontal: ConstraintType.Left,
-  vertical: ConstraintType.Top
+  vertical: ConstraintType.Top,
 };
 ```
 
 #### 2.2 设计元素 (`design/elements.ts`)
+
 ```typescript
 import { DesignElement, SpriteElement, IconElement } from '@maxellabs/specification/design';
 
@@ -65,11 +68,12 @@ const element: DesignElement = {
   bounds: { x: 0, y: 0, width: 100, height: 40 },
   visible: true,
   locked: false,
-  opacity: 1.0
+  opacity: 1.0,
 };
 ```
 
 #### 2.3 样式系统 (`design/styles.ts`)
+
 ```typescript
 import { DesignStyle, DesignFill, DesignStroke } from '@maxellabs/specification/design';
 
@@ -80,14 +84,15 @@ const style: DesignStyle = {
       type: 'solid',
       color: { value: [0.2, 0.4, 0.8, 1.0] },
       opacity: 1.0,
-      visible: true
-    }
+      visible: true,
+    },
   ],
-  cornerRadius: 8
+  cornerRadius: 8,
 };
 ```
 
 #### 2.4 颜色系统 (`design/colors.ts`)
+
 ```typescript
 import { DesignColorSystem, DesignColorPalette } from '@maxellabs/specification/design';
 
@@ -99,12 +104,13 @@ const colorSystem: DesignColorSystem = {
     success: successPalette,
     warning: warningPalette,
     error: errorPalette,
-    info: infoPalette
-  }
+    info: infoPalette,
+  },
 };
 ```
 
 #### 2.5 组件库 (`design/components.ts`)
+
 ```typescript
 import { DesignComponent, DesignComponentLibrary } from '@maxellabs/specification/design';
 
@@ -113,13 +119,14 @@ const library: DesignComponentLibrary = {
   name: 'UI Components',
   version: '1.0.0',
   components: {
-    'button': buttonComponent,
-    'input': inputComponent
-  }
+    button: buttonComponent,
+    input: inputComponent,
+  },
 };
 ```
 
 #### 2.6 图标库 (`design/icons.ts`)
+
 ```typescript
 import { DesignIconLibrary, DesignIcon } from '@maxellabs/specification/design';
 
@@ -128,18 +135,19 @@ const iconLibrary: DesignIconLibrary = {
   name: 'App Icons',
   version: '1.0.0',
   icons: {
-    'home': {
+    home: {
       id: 'home',
       name: 'Home',
       category: 'navigation',
       sizes: [16, 24, 32, 48],
-      svg: '<svg>...</svg>'
-    }
-  }
+      svg: '<svg>...</svg>',
+    },
+  },
 };
 ```
 
 #### 2.7 字体排版 (`design/typography.ts`)
+
 ```typescript
 import { DesignTypographySystem, DesignFontFamily } from '@maxellabs/specification/design';
 
@@ -147,11 +155,12 @@ import { DesignTypographySystem, DesignFontFamily } from '@maxellabs/specificati
 const typography: DesignTypographySystem = {
   fontFamilies: fontFamilies,
   scale: typographyScale,
-  textStyles: textStyles
+  textStyles: textStyles,
 };
 ```
 
 #### 2.8 主题系统 (`design/themes.ts`)
+
 ```typescript
 import { DesignTheme, DesignStyleLibrary } from '@maxellabs/specification/design';
 
@@ -160,11 +169,12 @@ const lightTheme: DesignTheme = {
   name: 'Light Theme',
   type: 'light',
   colors: lightColors,
-  typography: typographyOverrides
+  typography: typographyOverrides,
 };
 ```
 
 #### 2.9 页面管理 (`design/page.ts`)
+
 ```typescript
 import { DesignPage, PageConfig } from '@maxellabs/specification/design';
 
@@ -174,11 +184,12 @@ const page: DesignPage = {
   name: 'Home Page',
   type: 'page',
   canvasSize: { width: 375, height: 812, unit: 'px' },
-  elements: pageElements
+  elements: pageElements,
 };
 ```
 
 #### 2.10 设计系统 (`design/systems.ts`)
+
 ```typescript
 import { DesignSystem } from '@maxellabs/specification/design';
 
@@ -191,11 +202,12 @@ const designSystem: DesignSystem = {
   spacing: spacingSystem,
   components: componentLibrary,
   icons: iconLibrary,
-  styles: styleLibrary
+  styles: styleLibrary,
 };
 ```
 
 #### 2.11 设计文档 (`design/document.ts`)
+
 ```typescript
 import { DesignDocument } from '@maxellabs/specification/design';
 
@@ -206,7 +218,7 @@ const document: DesignDocument = {
   type: 'design',
   version: '1.0.0',
   pages: designPages,
-  designSystem: designSystem
+  designSystem: designSystem,
 };
 ```
 
@@ -222,11 +234,12 @@ const workflow: Workflow = {
   name: 'Design to Production',
   stages: workflowStages,
   triggers: automationTriggers,
-  notifications: notificationConfig
+  notifications: notificationConfig,
 };
 ```
 
 **工作流程阶段：**
+
 - Design（设计）
 - Development（开发）
 - Review（审查）
@@ -250,11 +263,12 @@ const package: MaxellabsPackage = {
   designDocuments: designDocs,
   workflows: workflows,
   assetManifest: assetManifest,
-  configuration: packageConfig
+  configuration: packageConfig,
 };
 ```
 
 **包格式特性：**
+
 - 基于 USDZ 的压缩包格式
 - 完整的资产清单和依赖管理
 - 多平台兼容性配置
@@ -266,19 +280,14 @@ const package: MaxellabsPackage = {
 ### 创建完整的设计到生产流程
 
 ```typescript
-import {
-  DesignDocument,
-  UsdStage,
-  Workflow,
-  MaxellabsPackage
-} from '@maxellabs/specification';
+import { DesignDocument, UsdStage, Workflow, MaxellabsPackage } from '@maxellabs/specification';
 
 // 1. 创建设计文档
 const designDoc: DesignDocument = {
   typeName: 'DesignDocument',
   attributes: {
     name: { type: 'string', value: 'Mobile App UI' },
-    version: { type: 'string', value: '1.0.0' }
+    version: { type: 'string', value: '1.0.0' },
   },
   pages: [
     {
@@ -286,8 +295,8 @@ const designDoc: DesignDocument = {
       name: 'Home Page',
       type: 'page',
       canvasSize: { width: 375, height: 812 },
-      elements: designElements
-    }
+      elements: designElements,
+    },
   ],
   designSystem: {
     name: 'App Design System',
@@ -297,8 +306,8 @@ const designDoc: DesignDocument = {
     spacing: spacingSystem,
     components: componentLibrary,
     icons: iconLibrary, // 图标库
-    styles: styleLibrary
-  }
+    styles: styleLibrary,
+  },
 };
 
 // 2. 创建 3D 场景
@@ -307,7 +316,7 @@ const stage: UsdStage = {
   pseudoRoot: rootPrim,
   timeCodesPerSecond: 60,
   startTimeCode: 0,
-  endTimeCode: 300
+  endTimeCode: 300,
 };
 
 // 3. 定义工作流程
@@ -319,15 +328,15 @@ const workflow: Workflow = {
       name: 'Design',
       type: 'design',
       tasks: designTasks,
-      approvers: ['design-lead']
+      approvers: ['design-lead'],
     },
     {
       name: 'Development',
       type: 'development',
       tasks: devTasks,
-      dependencies: ['Design']
-    }
-  ]
+      dependencies: ['Design'],
+    },
+  ],
 };
 
 // 4. 打包为 .maxz 格式
@@ -338,13 +347,13 @@ const package: MaxellabsPackage = {
     version: '1.0.0',
     author: { name: 'Design Team' },
     createdAt: new Date().toISOString(),
-    modifiedAt: new Date().toISOString()
+    modifiedAt: new Date().toISOString(),
   },
   stage: stage,
   designDocuments: [designDoc],
   workflows: [workflow],
   assetManifest: assetManifest,
-  configuration: packageConfig
+  configuration: packageConfig,
 };
 ```
 
@@ -358,7 +367,7 @@ const iconLibrary: DesignIconLibrary = {
   name: 'App Icons',
   version: '1.0.0',
   icons: {
-    'home': {
+    home: {
       id: 'home',
       name: 'Home',
       category: 'navigation',
@@ -369,50 +378,55 @@ const iconLibrary: DesignIconLibrary = {
         {
           name: 'outline',
           style: 'outline',
-          svg: '<svg>...</svg>'
+          svg: '<svg>...</svg>',
         },
         {
           name: 'filled',
           style: 'filled',
-          svg: '<svg>...</svg>'
-        }
-      ]
-    }
+          svg: '<svg>...</svg>',
+        },
+      ],
+    },
   },
   categories: [
     {
       id: 'navigation',
       name: 'Navigation',
-      description: 'Navigation related icons'
-    }
-  ]
+      description: 'Navigation related icons',
+    },
+  ],
 };
 ```
 
 ## 技术特性
 
 ### 1. 基于 OpenUSD 标准
+
 - 完全兼容 OpenUSD 规范
 - 支持 USD 的所有组合功能
 - 可与现有 USD 工具链集成
 
 ### 2. 全流程数据描述
+
 - 设计工具数据（Figma、Sketch 等）
 - 3D 引擎数据（几何体、材质、动画）
 - 工作流程管理数据
 - 部署和配置数据
 
 ### 3. 高性能和可扩展性
+
 - 支持大规模场景和资产
 - 延迟加载和流式传输
 - 多线程和 GPU 加速支持
 
 ### 4. 跨平台兼容性
+
 - Web、iOS、Android、Desktop
 - 多种渲染 API（WebGL、WebGPU、Metal、Vulkan）
 - 多种浏览器和设备支持
 
 ### 5. 安全和版本控制
+
 - 内容安全策略（CSP）
 - 资源完整性验证（SRI）
 - 完整的版本控制和依赖管理

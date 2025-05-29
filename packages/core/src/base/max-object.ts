@@ -6,7 +6,7 @@ export abstract class MaxObject {
   /** 对象的唯一标识 */
   readonly id: string;
   /** 对象的标签 */
-  protected tag: string = '';
+  tag: string = '';
 
   /** 对象的名称 */
   name: string = '';

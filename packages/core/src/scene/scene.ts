@@ -1,7 +1,8 @@
 import { EventDispatcher } from '../base/event-dispatcher';
 import { Entity } from '../base/entity';
+import { GameObject } from './game-object';
 import { ShaderData } from '../shader/shader-data';
-import { Container, ServiceKeys } from '../base/IOC';
+import { Container } from '../base/IOC';
 import type { Component } from '../base/component';
 import { ObjectPool } from '../base/object-pool';
 
@@ -408,5 +409,95 @@ export class Scene extends EventDispatcher {
     this.releaseEntityArray(entities);
 
     return this;
+  }
+
+  /**
+   * 创建新游戏对象并添加到场景
+   * @param name 游戏对象名称
+   * @returns 创建的游戏对象
+   */
+  createGameObject(name?: string): GameObject {
+    const gameObject = new GameObject(name, this);
+    this.addEntity(gameObject.getEntity());
+
+    // 派发游戏对象创建事件
+    this.dispatchEvent(SceneEvent.ENTITY_CREATED, { entity: gameObject.getEntity() });
+
+    return gameObject;
+  }
+
+  /**
+   * 添加游戏对象到场景
+   * @param gameObject 游戏对象
+   * @returns 当前场景实例，用于链式调用
+   */
+  addGameObject(gameObject: GameObject): this {
+    this.addEntity(gameObject.getEntity());
+    return this;
+  }
+
+  /**
+   * 从场景中移除游戏对象
+   * @param gameObject 游戏对象
+   * @returns 当前场景实例，用于链式调用
+   */
+  removeGameObject(gameObject: GameObject): this {
+    this.removeEntity(gameObject.getEntity());
+    return this;
+  }
+
+  /**
+   * 查找游戏对象
+   * @param id 游戏对象ID
+   * @returns 找到的游戏对象或null
+   */
+  findGameObject(id: string): GameObject | null {
+    const entity = this.findEntity(id);
+    return entity ? GameObject.fromEntity(entity) : null;
+  }
+
+  /**
+   * 查找游戏对象通过名称
+   * @param name 游戏对象名称
+   * @returns 找到的第一个匹配游戏对象或null
+   */
+  findGameObjectByName(name: string): GameObject | null {
+    const entity = this.findEntityByName(name);
+    return entity ? GameObject.fromEntity(entity) : null;
+  }
+
+  /**
+   * 销毁游戏对象
+   * @param gameObject 要销毁的游戏对象
+   */
+  destroyGameObject(gameObject: GameObject): void {
+    this.removeGameObject(gameObject);
+    gameObject.destroy();
+  }
+
+  /**
+   * 获取场景中的所有游戏对象
+   * @returns 游戏对象数组
+   */
+  getAllGameObjects(): GameObject[] {
+    return this.getAllEntities().map((entity) => GameObject.fromEntity(entity));
+  }
+
+  /**
+   * 根据标签查找游戏对象
+   * @param tag 标签名称
+   * @returns 游戏对象数组
+   */
+  findGameObjectsByTag(tag: string): GameObject[] {
+    return this.getEntitiesByTag(tag).map((entity) => GameObject.fromEntity(entity));
+  }
+
+  /**
+   * 根据组件类型查找游戏对象
+   * @param componentType 组件类型
+   * @returns 拥有该组件的游戏对象数组
+   */
+  findGameObjectsWithComponent<T extends Component>(componentType: new (...args: any[]) => T): GameObject[] {
+    return this.findEntitiesByComponent(componentType).map((entity) => GameObject.fromEntity(entity));
   }
 }

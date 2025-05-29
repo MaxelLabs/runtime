@@ -1,6 +1,6 @@
 import type { EngineOptions } from './engine';
 import { Engine } from './engine';
-import { Scene, Camera, DirectionalLight, BoxGeometry, PBRMaterial, MeshRenderer, Transform } from '@maxellabs/core';
+import { Scene, Camera, DirectionalLight, BoxGeometry, PBRMaterial, MeshRenderer, ITransform } from '@maxellabs/core';
 import { Vector3, Quaternion } from '@maxellabs/math';
 
 /**

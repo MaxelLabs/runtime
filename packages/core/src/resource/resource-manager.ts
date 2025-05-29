@@ -1,165 +1,144 @@
 import { EventDispatcher } from '../base/event-dispatcher';
-import type { Engine } from '../engine';
-
-/**
- * 资源加载状态枚举
- */
-export enum ResourceLoadState {
-  /** 未加载 */
-  Unloaded,
-  /** 加载中 */
-  Loading,
-  /** 已加载 */
-  Loaded,
-  /** 加载失败 */
-  Failed,
-}
-
-/**
- * 资源接口
- */
-export interface IResource {
-  /** 资源ID */
-  id: string;
-  /** 资源名称 */
-  name: string;
-  /** 资源类型 */
-  type: ResourceType;
-  /** 资源URL */
-  url: string;
-  /** 资源数据 */
-  data: any;
-  /** 是否已加载 */
-  loaded: boolean;
-  /** 引用计数 */
-  referenceCount: number;
-  /** 资源大小(字节) */
-  size: number;
-  /** 加载时间戳 */
-  loadTime: number;
-  /** 销毁资源 */
-  destroy(): void;
-}
-
-/**
- * 资源加载选项
- */
-export interface ResourceLoadOptions {
-  /** 是否异步加载 */
-  async?: boolean;
-  /** 超时时间(毫秒) */
-  timeout?: number;
-  /** 是否使用缓存 */
-  useCache?: boolean;
-  /** 重试次数 */
-  retries?: number;
-  /** 优先级 */
-  priority?: number;
-  /** 是否跨域 */
-  crossOrigin?: boolean;
-  /** 加载进度回调 */
-  onProgress?: (loaded: number, total: number) => void;
-}
+import { Container, ServiceKeys } from '../base/IOC';
+import { ObjectPool } from '../base/object-pool';
+import type { Resource, ResourceType, IResourceLoader, ResourceLoadOptions } from './resource';
 
 /**
  * 资源管理器事件类型
  */
-export enum ResourceManagerEventType {
+export enum ResourceManagerEvent {
+  /** 资源加载开始 */
+  LOAD_START = 'loadStart',
+  /** 资源加载进度 */
+  LOAD_PROGRESS = 'loadProgress',
   /** 资源加载完成 */
-  RESOURCE_LOADED = 'resource-loaded',
+  LOAD_COMPLETE = 'loadComplete',
   /** 资源加载失败 */
-  RESOURCE_LOAD_FAILED = 'resource-load-failed',
-  /** 资源被释放 */
-  RESOURCE_RELEASED = 'resource-released',
-  /** 资源加载中 */
-  RESOURCE_LOADING = 'resource-loading',
-  /** 资源缺失 */
-  RESOURCE_MISSING = 'resource-missing',
-  /** 垃圾回收开始 */
-  GC_START = 'gc-start',
-  /** 垃圾回收完成 */
-  GC_COMPLETE = 'gc-complete',
+  LOAD_ERROR = 'loadError',
+  /** 资源释放 */
+  RESOURCE_RELEASED = 'resourceReleased',
+  /** 资源销毁 */
+  RESOURCE_DESTROYED = 'resourceDestroyed',
+  /** 缓存清理 */
+  CACHE_CLEARED = 'cacheCleared',
 }
 
 /**
- * 资源类型枚举
+ * 资源缓存配置
  */
-export enum ResourceType {
-  TEXTURE = 'texture',
-  MODEL = 'model',
-  AUDIO = 'audio',
-  SHADER = 'shader',
-  MATERIAL = 'material',
-  FONT = 'font',
-  JSON = 'json',
-  TEXT = 'text',
-  BINARY = 'binary',
-  OTHER = 'other',
+export interface ResourceCacheConfig {
+  /** 最大缓存大小（字节） */
+  maxSize: number;
+  /** 最大缓存项数 */
+  maxItems: number;
+  /** 缓存过期时间（毫秒） */
+  maxAge: number;
+  /** 是否启用LRU策略 */
+  enableLRU: boolean;
 }
 
 /**
- * 增强的资源管理器，提供更完善的资源生命周期管理和性能优化
+ * 资源加载统计
+ */
+export interface ResourceLoadStats {
+  /** 总加载次数 */
+  totalLoads: number;
+  /** 成功加载次数 */
+  successfulLoads: number;
+  /** 失败加载次数 */
+  failedLoads: number;
+  /** 缓存命中次数 */
+  cacheHits: number;
+  /** 总加载时间（毫秒） */
+  totalLoadTime: number;
+  /** 平均加载时间（毫秒） */
+  averageLoadTime: number;
+}
+
+/**
+ * 资源管理器
+ * 负责资源的加载、缓存、引用计数和生命周期管理
  */
 export class ResourceManager extends EventDispatcher {
-  /** 引擎实例 */
-  private engine: Engine;
   /** 资源缓存 */
-  private cache: Map<string, IResource> = new Map();
-  /** 资源加载状态 */
-  private loadingPromises: Map<string, Promise<IResource>> = new Map();
-  /** 资源加载计数 */
-  private loadingCounter: number = 0;
-  /** 内置资源 */
-  private builtins: Map<string, IResource> = new Map();
-  /** 默认资源 */
-  private defaults: Map<ResourceType, IResource> = new Map();
-  /** 资源别名映射 */
-  private aliases: Map<string, string> = new Map();
-  /** 资源依赖关系图 */
-  private dependencies: Map<string, Set<string>> = new Map();
-  /** 引用资源的对象 */
-  private references: Map<string, Set<any>> = new Map();
-  /** 是否进行垃圾回收 */
-  private isGarbageCollecting: boolean = false;
-  /** 自动垃圾回收间隔 (毫秒) */
-  private gcInterval: number = 30000;
-  /** 上次垃圾回收时间 */
-  private lastGCTime: number = 0;
-  /** 资源预加载队列 */
-  private preloadQueue: Array<{ type: ResourceType; path: string; priority: number }> = [];
-  /** 是否开启自动垃圾回收 */
-  private autoGC: boolean = true;
-  /** 资源加载策略 */
-  private loadingStrategy: 'sequential' | 'concurrent' = 'concurrent';
-  /** 最大并发加载数 */
-  private maxConcurrentLoads: number = 8;
+  private resources: Map<string, Resource> = new Map();
+  /** 资源加载器映射 */
+  private loaders: Map<string, IResourceLoader> = new Map();
+  /** 加载中的资源 */
+  private loadingResources: Map<string, Promise<Resource>> = new Map();
+  /** 缓存配置 */
+  private cacheConfig: ResourceCacheConfig;
+  /** 加载统计 */
+  private loadStats: ResourceLoadStats;
+  /** IOC容器 */
+  private container: Container;
+  /** 资源引用映射 */
+  private resourceRefs: Map<string, Set<object>> = new Map();
+  /** 临时数组对象池 */
+  private static readonly arrayPool = new ObjectPool<Resource[]>(
+    'resourceManagerArrayPool',
+    () => [],
+    (array) => (array.length = 0),
+    2,
+    10
+  );
 
   /**
-   * 创建增强的资源管理器
-   * @param engine 引擎实例
+   * 创建资源管理器
+   * @param cacheConfig 缓存配置
    */
-  constructor(engine: Engine) {
+  constructor(cacheConfig?: Partial<ResourceCacheConfig>) {
     super();
-    this.engine = engine;
+
+    this.container = Container.getInstance();
+    this.container.register(ServiceKeys.RESOURCE_MANAGER, this);
+
+    // 默认缓存配置
+    this.cacheConfig = {
+      maxSize: 100 * 1024 * 1024, // 100MB
+      maxItems: 1000,
+      maxAge: 30 * 60 * 1000, // 30分钟
+      enableLRU: true,
+      ...cacheConfig,
+    };
+
+    // 初始化统计信息
+    this.loadStats = {
+      totalLoads: 0,
+      successfulLoads: 0,
+      failedLoads: 0,
+      cacheHits: 0,
+      totalLoadTime: 0,
+      averageLoadTime: 0,
+    };
   }
 
   /**
-   * 获取资源
-   * @param path 资源路径
-   * @returns 资源对象，如果不存在则返回null
+   * 注册资源加载器
+   * @param mimeType MIME类型或文件扩展名
+   * @param loader 加载器实例
    */
-  getResource(path: string): IResource | null {
-    // 检查路径别名
-    const actualPath = this.aliases.get(path) || path;
+  registerLoader(mimeType: string, loader: IResourceLoader): void {
+    this.loaders.set(mimeType.toLowerCase(), loader);
+  }
 
-    // 检查内置资源
-    if (this.builtins.has(actualPath)) {
-      return this.builtins.get(actualPath);
+  /**
+   * 获取资源加载器
+   * @param url 资源URL
+   * @returns 加载器实例或null
+   */
+  private getLoader(url: string): IResourceLoader | null {
+    // 尝试从文件扩展名获取加载器
+    const extension = url.split('.').pop()?.toLowerCase();
+    if (extension && this.loaders.has(extension)) {
+      return this.loaders.get(extension)!;
     }
 
-    // 检查缓存
-    if (this.cache.has(actualPath)) {
-      return this.cache.get(actualPath);
+    // 遍历所有加载器，找到支持该URL的加载器
+    for (const loader of this.loaders.values()) {
+      if (loader.canLoad(url)) {
+        return loader;
+      }
     }
 
     return null;
@@ -167,423 +146,273 @@ export class ResourceManager extends EventDispatcher {
 
   /**
    * 异步加载资源
+   * @param url 资源URL
    * @param type 资源类型
-   * @param path 资源路径
    * @param options 加载选项
-   * @returns 资源加载Promise
+   * @returns Promise<Resource>
    */
-  loadResource<T extends IResource>(
-    type: ResourceType,
-    path: string,
-    options: {
-      cache?: boolean;
-      priority?: number;
-      onProgress?: (progress: number) => void;
-      timeout?: number;
-    } = {}
-  ): Promise<T> {
-    const actualPath = this.aliases.get(path) || path;
+  async loadAsync<T extends Resource>(url: string, type: ResourceType, options?: ResourceLoadOptions): Promise<T> {
+    const cacheKey = this.getCacheKey(url, type);
 
-    // 设置默认选项
-    const defaultOptions = {
-      cache: true,
-      priority: 0,
-      timeout: 30000,
-    };
-
-    const finalOptions = { ...defaultOptions, ...options };
-
-    // 检查是否已加载
-    const existingResource = this.getResource(actualPath);
-
-    if (existingResource && existingResource.loadState === ResourceLoadState.Loaded) {
-      return Promise.resolve(existingResource as T);
+    // 检查缓存
+    const cachedResource = this.resources.get(cacheKey);
+    if (cachedResource && cachedResource.isLoaded) {
+      this.loadStats.cacheHits++;
+      return cachedResource as T;
     }
 
     // 检查是否正在加载
-    if (this.loadingPromises.has(actualPath)) {
-      return this.loadingPromises.get(actualPath) as Promise<T>;
+    const loadingPromise = this.loadingResources.get(cacheKey);
+    if (loadingPromise) {
+      return loadingPromise as Promise<T>;
     }
 
-    // 创建加载Promise
-    const loadPromise = new Promise<T>((resolve, reject) => {
-      // 增加加载计数
-      this.loadingCounter++;
+    // 开始加载
+    const loadPromise = this.performLoad<T>(url, type, options);
+    this.loadingResources.set(cacheKey, loadPromise);
 
-      // 创建资源实例
-      const resource = this.createResourceInstance(type, actualPath);
+    try {
+      const resource = await loadPromise;
+      this.loadingResources.delete(cacheKey);
+      return resource;
+    } catch (error) {
+      this.loadingResources.delete(cacheKey);
+      throw error;
+    }
+  }
 
-      // 更新资源状态
-      resource.loadState = ResourceLoadState.Loading;
+  /**
+   * 执行实际的资源加载
+   * @param url 资源URL
+   * @param type 资源类型
+   * @param options 加载选项
+   * @private
+   */
+  private async performLoad<T extends Resource>(
+    url: string,
+    type: ResourceType,
+    options?: ResourceLoadOptions
+  ): Promise<T> {
+    const startTime = performance.now();
+    const cacheKey = this.getCacheKey(url, type);
 
-      // 触发加载事件
-      this.dispatchEvent(ResourceManagerEventType.RESOURCE_LOADING, { resource });
+    this.loadStats.totalLoads++;
+    this.dispatchEvent(ResourceManagerEvent.LOAD_START, { url, type });
 
-      // 设置超时计时器
-      const timeoutId = setTimeout(() => {
-        if (resource.loadState === ResourceLoadState.Loading) {
-          resource.loadState = ResourceLoadState.Failed;
-          this.dispatchEvent(ResourceManagerEventType.RESOURCE_LOAD_FAILED, {
-            resource,
-            error: new Error(`Resource load timeout: ${actualPath}`),
-          });
-          reject(new Error(`Resource load timeout: ${actualPath}`));
-        }
-      }, finalOptions.timeout);
+    try {
+      // 获取加载器
+      const loader = options?.loader || this.getLoader(url);
+      if (!loader) {
+        throw new Error(`No loader found for resource: ${url}`);
+      }
 
-      // 加载资源
-      resource
-        .load()
-        .then(() => {
-          // 清除超时计时器
-          clearTimeout(timeoutId);
+      // 加载资源数据
+      const data = await loader.load(url, options);
 
-          // 更新状态
-          resource.loadState = ResourceLoadState.Loaded;
+      // 创建资源实例（需要具体的资源类型工厂）
+      const resource = await this.createResource<T>(type, url, data);
 
-          // 如果需要缓存，则添加到缓存中
-          if (finalOptions.cache) {
-            this.cache.set(actualPath, resource);
-          }
+      // 缓存资源
+      this.cacheResource(cacheKey, resource);
 
-          // 减少加载计数
-          this.loadingCounter--;
+      // 更新统计信息
+      const loadTime = performance.now() - startTime;
+      this.loadStats.successfulLoads++;
+      this.loadStats.totalLoadTime += loadTime;
+      this.loadStats.averageLoadTime = this.loadStats.totalLoadTime / this.loadStats.totalLoads;
 
-          // 触发加载完成事件
-          this.dispatchEvent(ResourceManagerEventType.RESOURCE_LOADED, { resource });
-
-          // 完成Promise
-          resolve(resource as T);
-
-          // 从加载Promise映射中移除
-          this.loadingPromises.delete(actualPath);
-        })
-        .catch((error: Error) => {
-          // 清除超时计时器
-          clearTimeout(timeoutId);
-
-          // 更新状态
-          resource.loadState = ResourceLoadState.Failed;
-
-          // 减少加载计数
-          this.loadingCounter--;
-
-          // 触发加载失败事件
-          this.dispatchEvent(ResourceManagerEventType.RESOURCE_LOAD_FAILED, { resource, error });
-
-          // 拒绝Promise
-          reject(error);
-
-          // 从加载Promise映射中移除
-          this.loadingPromises.delete(actualPath);
-        });
-    });
-
-    // 存储加载Promise
-    this.loadingPromises.set(actualPath, loadPromise);
-
-    return loadPromise;
+      this.dispatchEvent(ResourceManagerEvent.LOAD_COMPLETE, { url, type, resource, loadTime });
+      return resource;
+    } catch (error) {
+      this.loadStats.failedLoads++;
+      this.dispatchEvent(ResourceManagerEvent.LOAD_ERROR, { url, type, error });
+      throw error;
+    }
   }
 
   /**
    * 创建资源实例
    * @param type 资源类型
-   * @param path 资源路径
-   * @returns 资源实例
+   * @param url 资源URL
+   * @param data 资源数据
+   * @private
    */
-  private createResourceInstance(type: ResourceType, path: string): IResource {
-    // 此方法需要实现具体的资源创建逻辑
-    // 简化示例，实际实现需根据不同类型创建不同资源
-    return {
-      type,
-      path,
-      name: path.split('/').pop(),
-      loadState: ResourceLoadState.Unloaded,
-      isInternal: false,
-      referenceCount: 0,
-      isGCIgnored: false,
-      load: () => Promise.resolve(null),
-      unload: () => {},
-      destroy: () => {},
-    } as IResource;
+  private async createResource<T extends Resource>(type: ResourceType, url: string, data: any): Promise<T> {
+    // TODO: 实现资源工厂模式
+    // 这里应该根据type创建相应的资源实例
+    throw new Error('Resource factory not implemented yet');
   }
 
   /**
-   * 增加资源引用计数
-   * @param resource 资源
-   * @param owner 引用资源的对象
+   * 缓存资源
+   * @param key 缓存键
+   * @param resource 资源实例
+   * @private
    */
-  addReference(resource: IResource, owner: any): void {
-    if (!resource) {
-      return;
+  private cacheResource(key: string, resource: Resource): void {
+    // 检查缓存大小限制
+    if (this.shouldEvictCache()) {
+      this.evictLRU();
     }
 
-    // 增加资源引用计数
-    resource.referenceCount++;
-
-    // 更新引用映射
-    if (!this.references.has(resource.path)) {
-      this.references.set(resource.path, new Set());
-    }
-
-    this.references.get(resource.path).add(owner);
+    this.resources.set(key, resource);
   }
 
   /**
-   * 减少资源引用计数
-   * @param resource 资源
-   * @param owner 引用资源的对象
+   * 获取缓存键
+   * @param url 资源URL
+   * @param type 资源类型
+   * @private
    */
-  removeReference(resource: IResource, owner: any): void {
-    if (!resource) {
+  private getCacheKey(url: string, type: ResourceType): string {
+    return `${type}:${url}`;
+  }
+
+  /**
+   * 检查是否需要清理缓存
+   * @private
+   */
+  private shouldEvictCache(): boolean {
+    if (this.resources.size >= this.cacheConfig.maxItems) {
+      return true;
+    }
+
+    let totalSize = 0;
+    for (const resource of this.resources.values()) {
+      totalSize += resource.getSize();
+    }
+
+    return totalSize >= this.cacheConfig.maxSize;
+  }
+
+  /**
+   * LRU缓存清理
+   * @private
+   */
+  private evictLRU(): void {
+    if (!this.cacheConfig.enableLRU) {
       return;
     }
 
-    // 减少资源引用计数
-    resource.referenceCount = Math.max(0, resource.referenceCount - 1);
+    // 找到最久未使用的资源
+    let oldestResource: Resource | null = null;
+    let oldestTime = Date.now();
 
-    // 更新引用映射
-    const refs = this.references.get(resource.path);
-
-    if (refs) {
-      refs.delete(owner);
-
-      // 如果没有引用了，移除映射
-      if (refs.size === 0) {
-        this.references.delete(resource.path);
+    for (const resource of this.resources.values()) {
+      const lastAccess = resource.getLastAccessTime();
+      if (lastAccess < oldestTime) {
+        oldestTime = lastAccess;
+        oldestResource = resource;
       }
     }
+
+    if (oldestResource) {
+      this.releaseResource(oldestResource);
+    }
+  }
+
+  /**
+   * 获取资源
+   * @param url 资源URL
+   * @param type 资源类型
+   */
+  getResource<T extends Resource>(url: string, type: ResourceType): T | null {
+    const cacheKey = this.getCacheKey(url, type);
+    return (this.resources.get(cacheKey) as T) || null;
   }
 
   /**
    * 释放资源
-   * @param resource 要释放的资源
-   * @param force 是否强制释放，即使引用计数大于0
+   * @param resource 资源实例
    */
-  releaseResource(resource: IResource, force: boolean = false): void {
-    if (!resource) {
-      return;
-    }
+  releaseResource(resource: Resource): void {
+    // 减少引用计数
+    const refCount = resource.removeReference();
 
-    // 内置资源不释放
-    if (resource.isInternal) {
-      return;
-    }
-
-    // 如果引用计数大于0且不强制释放，则不执行
-    if (resource.referenceCount > 0 && !force) {
-      return;
-    }
-
-    // 从缓存中移除
-    this.cache.delete(resource.path);
-
-    // 清理引用
-    this.references.delete(resource.path);
-
-    // 卸载资源
-    resource.unload();
-
-    // 触发资源释放事件
-    this.dispatchEvent(ResourceManagerEventType.RESOURCE_RELEASED, { resource });
-
-    // 检查依赖资源
-    this.releaseDependencies(resource.path);
-  }
-
-  /**
-   * 释放依赖资源
-   * @param parentPath 父资源路径
-   */
-  private releaseDependencies(parentPath: string): void {
-    const deps = this.dependencies.get(parentPath);
-
-    if (!deps) {
-      return;
-    }
-
-    // 遍历所有依赖
-    for (const depPath of deps) {
-      const depResource = this.getResource(depPath);
-
-      if (depResource) {
-        // 减少引用计数
-        depResource.referenceCount = Math.max(0, depResource.referenceCount - 1);
-
-        // 如果引用计数为0且不忽略GC，则尝试释放
-        if (depResource.referenceCount === 0 && !depResource.isGCIgnored) {
-          this.releaseResource(depResource);
+    if (refCount <= 0) {
+      // 从缓存中移除
+      for (const [key, cachedResource] of this.resources.entries()) {
+        if (cachedResource === resource) {
+          this.resources.delete(key);
+          break;
         }
       }
-    }
 
-    // 清除依赖关系
-    this.dependencies.delete(parentPath);
+      // 释放资源
+      resource.release();
+
+      this.dispatchEvent(ResourceManagerEvent.RESOURCE_RELEASED, { resource });
+    }
   }
 
   /**
-   * 垃圾回收，释放未被引用的资源
+   * 清理缓存
+   * @param force 是否强制清理所有资源
    */
-  garbageCollect(): void {
-    // 如果已经在进行GC，则不执行
-    if (this.isGarbageCollecting) {
-      return;
-    }
+  clearCache(force: boolean = false): void {
+    const resourcesToRemove: Resource[] = [];
 
-    this.isGarbageCollecting = true;
-    this.dispatchEvent(ResourceManagerEventType.GC_START);
-
-    // 收集要释放的资源
-    const toRelease: IResource[] = [];
-
-    // 检查所有缓存的资源
-    for (const [resource] of this.cache.entries()) {
-      // 跳过内置资源和GC忽略的资源
-      if (resource.isInternal || resource.isGCIgnored) {
-        continue;
-      }
-
-      // 如果引用计数为0，则添加到释放列表
-      if (resource.referenceCount === 0) {
-        toRelease.push(resource);
+    for (const [key, resource] of this.resources.entries()) {
+      if (force || resource.getReferenceCount() <= 0) {
+        resourcesToRemove.push(resource);
+        this.resources.delete(key);
       }
     }
 
     // 释放资源
-    for (const resource of toRelease) {
-      this.releaseResource(resource);
+    for (const resource of resourcesToRemove) {
+      resource.release();
     }
 
-    // 更新上次GC时间
-    this.lastGCTime = Date.now();
-
-    this.isGarbageCollecting = false;
-    this.dispatchEvent(ResourceManagerEventType.GC_COMPLETE, { releasedCount: toRelease.length });
+    this.dispatchEvent(ResourceManagerEvent.CACHE_CLEARED, {
+      clearedCount: resourcesToRemove.length,
+      force,
+    });
   }
 
   /**
-   * 更新资源管理器，进行自动垃圾回收
-   * @param time 当前时间戳
+   * 获取加载统计信息
    */
-  update(time: number): void {
-    // 如果启用了自动GC，并且超过了GC间隔，则执行GC
-    if (this.autoGC && time - this.lastGCTime > this.gcInterval) {
-      this.garbageCollect();
-    }
-
-    // 处理预加载队列
-    this.processPreloadQueue();
+  getLoadStats(): ResourceLoadStats {
+    return { ...this.loadStats };
   }
 
   /**
-   * 处理预加载队列
+   * 获取缓存统计信息
    */
-  private processPreloadQueue(): void {
-    // 如果队列为空或达到最大并发数，则不处理
-    if (this.preloadQueue.length === 0 || this.loadingCounter >= this.maxConcurrentLoads) {
-      return;
+  getCacheStats() {
+    let totalSize = 0;
+    let totalRefs = 0;
+
+    for (const resource of this.resources.values()) {
+      totalSize += resource.getSize();
+      totalRefs += resource.getReferenceCount();
     }
 
-    // 按优先级排序
-    this.preloadQueue.sort((a, b) => b.priority - a.priority);
-
-    // 根据加载策略处理
-    if (this.loadingStrategy === 'sequential') {
-      // 顺序加载一个资源
-      if (this.loadingCounter === 0) {
-        const item = this.preloadQueue.shift();
-
-        this.loadResource(item.type, item.path, { priority: item.priority });
-      }
-    } else {
-      // 并发加载多个资源
-      const availableSlots = this.maxConcurrentLoads - this.loadingCounter;
-
-      for (let i = 0; i < Math.min(availableSlots, this.preloadQueue.length); i++) {
-        const item = this.preloadQueue.shift();
-
-        this.loadResource(item.type, item.path, { priority: item.priority });
-      }
-    }
-  }
-
-  /**
-   * 添加资源到预加载队列
-   * @param type 资源类型
-   * @param path 资源路径
-   * @param priority 加载优先级
-   */
-  preloadResource(type: ResourceType, path: string, priority: number = 0): void {
-    this.preloadQueue.push({ type, path, priority });
-  }
-
-  /**
-   * 设置资源别名
-   * @param alias 别名
-   * @param path 实际路径
-   */
-  setAlias(alias: string, path: string): void {
-    this.aliases.set(alias, path);
-  }
-
-  /**
-   * 获取资源别名的实际路径
-   * @param alias 别名
-   * @returns 实际路径
-   */
-  getAliasPath(alias: string): string {
-    return this.aliases.get(alias) || alias;
-  }
-
-  /**
-   * 设置资源依赖关系
-   * @param parentPath 父资源路径
-   * @param dependencies 依赖资源路径数组
-   */
-  setDependencies(parentPath: string, dependencies: string[]): void {
-    // 创建依赖集合
-    if (!this.dependencies.has(parentPath)) {
-      this.dependencies.set(parentPath, new Set());
-    }
-
-    const deps = this.dependencies.get(parentPath);
-
-    // 添加每个依赖
-    for (const depPath of dependencies) {
-      deps.add(depPath);
-
-      // 获取依赖资源并增加引用计数
-      const depResource = this.getResource(depPath);
-
-      if (depResource) {
-        depResource.referenceCount++;
-      }
-    }
+    return {
+      itemCount: this.resources.size,
+      totalSize,
+      totalReferences: totalRefs,
+      maxSize: this.cacheConfig.maxSize,
+      maxItems: this.cacheConfig.maxItems,
+    };
   }
 
   /**
    * 销毁资源管理器
    */
-  destroy(): void {
-    // 释放所有资源
-    for (const [path, resource] of this.cache.entries()) {
-      if (!resource.isInternal) {
-        resource.unload();
-        resource.destroy();
-      }
-    }
+  override destroy(): void {
+    // 清理所有资源
+    this.clearCache(true);
 
-    // 清空映射
-    this.cache.clear();
-    this.loadingPromises.clear();
-    this.builtins.clear();
-    this.defaults.clear();
-    this.aliases.clear();
-    this.dependencies.clear();
-    this.references.clear();
-    this.preloadQueue = [];
+    // 清理加载器
+    this.loaders.clear();
+    this.loadingResources.clear();
+    this.resourceRefs.clear();
 
-    // 移除所有事件监听器
-    this.removeAllEventListeners();
+    // 从IOC容器移除
+    this.container.remove(ServiceKeys.RESOURCE_MANAGER);
+
+    super.destroy();
   }
 }

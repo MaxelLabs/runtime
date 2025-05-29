@@ -3,7 +3,7 @@
  * 包含主题配置、样式库和主题覆盖相关类型
  */
 
-import type { CommonMetadata, Color } from '../core';
+import type { CommonMetadata, IColor } from '../core';
 import type { DesignTypographySystem } from './typography';
 import type { DesignSpacingSystem } from './spacing';
 import type { DesignStyleDefinition } from './styles';
@@ -23,7 +23,7 @@ export interface DesignTheme {
   /**
    * 颜色覆盖
    */
-  colors?: Record<string, Color>;
+  colors?: Record<string, IColor>;
   /**
    * 字体覆盖
    */
