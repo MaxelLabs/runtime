@@ -209,14 +209,14 @@ export class OpaquePass extends RenderPassBase {
       void main() {
         // 采样基础颜色纹理
         vec4 textureColor = texture(u_baseColorTexture, v_texCoord);
-        
+
         // 组合材质颜色和纹理颜色
         vec4 finalColor = u_baseColor * textureColor;
 
         // 简单的光照计算（临时）
         vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
         float lightIntensity = max(dot(normalize(v_worldNormal), lightDir), 0.0);
-        
+
         finalColor.rgb *= lightIntensity * 0.8 + 0.2; // 环境光
         finalColor.a *= u_transparency;
 
