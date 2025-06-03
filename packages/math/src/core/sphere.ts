@@ -56,7 +56,7 @@ export class Sphere {
 
       box.getCenter(center);
 
-      this.radius = box.getSize().length() / 2;
+      this.radius = box.getSize().getLength() / 2;
     }
 
     return this;
@@ -216,7 +216,7 @@ export class Sphere {
    */
   expandByPoint(point: Vector3): this {
     const vector = new Vector3().subtractVectors(point, this.center);
-    const lengthSquared = vector.lengthSquared();
+    const lengthSquared = vector.getLengthSquared();
 
     if (lengthSquared > this.radius * this.radius) {
       const length = Math.sqrt(lengthSquared);
@@ -288,7 +288,7 @@ export class Sphere {
    */
   intersect(other: Sphere): this {
     const vector = new Vector3().subtractVectors(this.center, other.center);
-    const distance = vector.length();
+    const distance = vector.getLength();
     const radiusSum = this.radius + other.radius;
 
     if (distance > radiusSum) {

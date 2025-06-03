@@ -9,9 +9,10 @@ import { Component } from '../base/component';
 import type { Material } from '../material/material';
 import type { Entity } from '../base/entity';
 import type { BoundingBox } from '@maxellabs/math';
-import { AlphaMode, VertexAttribute } from '@maxellabs/math';
+import { AlphaMode } from '@maxellabs/math';
 import type { Geometry } from '../geometry';
 import type { RHIVertexBufferLayout } from '../interface';
+import { RHIIndexFormat } from '../interface/rhi/types/enums';
 
 /**
  * 网格渲染器组件
@@ -20,19 +21,23 @@ import type { RHIVertexBufferLayout } from '../interface';
  */
 export class MeshRenderer extends Component {
   getVertexBuffer() {
-    return this.geometry?.getAttributeDescriptor(VertexAttribute.Position);
+    return this.geometry?.getVertexBuffer();
   }
+
   getIndexBuffer() {
-    throw new Error('Method not implemented.');
+    return this.geometry?.getIndexBuffer();
   }
-  getIndexFormat(): import('../interface').RHIIndexFormat {
-    throw new Error('Method not implemented.');
+
+  getIndexFormat(): RHIIndexFormat {
+    return this.geometry?.getIndexFormat() || RHIIndexFormat.UINT16;
   }
+
   getIndexCount() {
-    throw new Error('Method not implemented.');
+    return this.geometry?.getIndexCount() || 0;
   }
+
   getVertexCount() {
-    throw new Error('Method not implemented.');
+    return this.geometry?.getVertexCount() || 0;
   }
   /**
    * 网格对象
@@ -72,8 +77,8 @@ export class MeshRenderer extends Component {
     super(entity);
   }
 
-  getVertexLayout(): RHIVertexBufferLayout {
-    return this.geometry!.getVertexLayout() || [];
+  getVertexLayout(): RHIVertexBufferLayout[] {
+    return this.geometry?.getVertexLayout() || [];
   }
 
   /**

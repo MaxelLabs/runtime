@@ -3,10 +3,10 @@
  * 定义渲染和计算管线接口
  */
 
-import type { RHIColorBlendState, RHIDepthStencilState, RHIRasterizationState, RHIVertexLayout } from './types/states';
-import type { IRHIBindGroupLayout } from './bindings';
 import type { IRHIShaderModule } from './resources/shader';
-import type { RHIPrimitiveTopology } from './types/enums';
+import type { IRHIBindGroupLayout } from './bindings';
+import type { RHIColorBlendState, RHIDepthStencilState, RHIRasterizationState, RHIVertexLayout } from './types/states';
+import type { RHIPrimitiveTopology } from '@maxellabs/math';
 
 /**
  * 管线布局接口

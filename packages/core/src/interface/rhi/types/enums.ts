@@ -375,21 +375,21 @@ export enum RHIStencilOperation {
   DECR_WRAP = 7,
 }
 
-/**
- * 图元类型
- */
-export enum RHIPrimitiveType {
-  /** 点列表 */
-  POINT_LIST = 0,
-  /** 线列表 */
-  LINE_LIST = 1,
-  /** 线条带 */
-  LINE_STRIP = 2,
-  /** 三角形列表 */
-  TRIANGLE_LIST = 3,
-  /** 三角形条带 */
-  TRIANGLE_STRIP = 4,
-}
+// /**
+//  * 图元类型
+//  */
+// export enum RHIPrimitiveType {
+//   /** 点列表 */
+//   POINT_LIST = 0,
+//   /** 线列表 */
+//   LINE_LIST = 1,
+//   /** 线条带 */
+//   LINE_STRIP = 2,
+//   /** 三角形列表 */
+//   TRIANGLE_LIST = 3,
+//   /** 三角形条带 */
+//   TRIANGLE_STRIP = 4,
+// }
 
 /**
  * 绑定组布局条目类型

@@ -154,43 +154,31 @@ export class RenderQueue {
 
   /**
    * 构建渲染队列
-   * @param scene 场景
-   * @param camera 相机
    */
-  build(scene: Scene, camera: Camera): void {
-    const startTime = performance.now();
-
+  buildQueue(scene: Scene, camera: Camera): void {
     // 清空之前的队列
     this.clear();
 
-    // 获取相机位置和视锥
+    // 获取相机位置和视锥体
     const cameraPosition = camera.getPosition();
     const frustum = camera.getFrustum();
 
-    // 遍历场景中的所有游戏对象
+    // 收集渲染元素
     this.collectRenderElements(scene, camera, cameraPosition, frustum);
 
     // 排序渲染元素
     this.sortRenderElements(cameraPosition);
 
     // 更新统计信息
-    this.statistics.buildTime = performance.now() - startTime;
-    this.statistics.opaqueElements = this.opaqueElements.length;
-    this.statistics.transparentElements = this.transparentElements.length;
-    this.statistics.shadowCasterElements = this.shadowCasterElements.length;
-    this.statistics.culledElements = this.statistics.opaqueElements + this.statistics.transparentElements;
+    this.updateStatistics();
   }
 
   /**
    * 收集渲染元素
    */
   private collectRenderElements(scene: Scene, camera: Camera, cameraPosition: Vector3, frustum: any): void {
-    let totalObjects = 0;
-
     // 遍历场景中的所有游戏对象
-    scene.traverse((gameObject: GameObject) => {
-      totalObjects++;
-
+    scene.traverseHierarchy((gameObject: GameObject) => {
       // 检查游戏对象是否活跃
       if (!gameObject.getActive()) {
         return;
@@ -264,22 +252,18 @@ export class RenderQueue {
         this.shadowCasterElements.push(renderElement);
       }
     });
-
-    this.statistics.totalObjects = totalObjects;
   }
 
   /**
    * 排序渲染元素
    */
   private sortRenderElements(cameraPosition: Vector3): void {
-    if (!this.config.enableDistanceSorting) {
-      return;
-    }
-
     // 更新所有元素到相机的距离
     const allElements = [...this.opaqueElements, ...this.transparentElements, ...this.shadowCasterElements];
     for (const element of allElements) {
-      element.updateDistanceToCamera(cameraPosition);
+      if (element.updateDistanceToCamera) {
+        element.updateDistanceToCamera(cameraPosition);
+      }
     }
 
     // 排序不透明物体（前到后）
@@ -325,5 +309,18 @@ export class RenderQueue {
    */
   destroy(): void {
     this.clear();
+  }
+
+  /**
+   * 更新统计信息
+   */
+  private updateStatistics(): void {
+    this.statistics.totalObjects =
+      this.opaqueElements.length + this.transparentElements.length + this.shadowCasterElements.length;
+    this.statistics.culledElements = this.opaqueElements.length + this.transparentElements.length;
+    this.statistics.opaqueElements = this.opaqueElements.length;
+    this.statistics.transparentElements = this.transparentElements.length;
+    this.statistics.shadowCasterElements = this.shadowCasterElements.length;
+    this.statistics.buildTime = performance.now() - this.statistics.buildTime;
   }
 }

@@ -513,7 +513,7 @@ export class Transform extends Component implements ITransform {
       const direction = Vector3.subtract(target, worldPosition).normalize();
 
       // 如果方向几乎为零向量，或者与上向量平行，我们无法创建有效的朝向
-      const directionNorm = direction.length();
+      const directionNorm = direction.getLength();
       const upDot = upVector.normalize().dot(direction);
 
       if (directionNorm < 0.0001 || Math.abs(Math.abs(upDot) - 1) < 0.0001) {

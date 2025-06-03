@@ -360,7 +360,7 @@ export class Box3 {
   distanceToPoint(point: Vector3): number {
     const clampedPoint = point.clone().clamp(this.min, this.max);
 
-    return clampedPoint.subtract(point).length();
+    return clampedPoint.subtract(point).getLength();
   }
 
   /**
@@ -446,7 +446,7 @@ export class Box3 {
 
     const vector = new Vector3();
 
-    target.radius = this.getSize(vector).length() * 0.5;
+    target.radius = this.getSize(vector).getLength() * 0.5;
 
     return target;
   }

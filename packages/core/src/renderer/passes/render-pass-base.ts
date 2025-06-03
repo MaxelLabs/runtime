@@ -336,7 +336,9 @@ export abstract class RenderPassBase extends EventDispatcher {
         renderPass.drawIndexed(indexCount);
       } else {
         const vertexCount = mesh.getVertexCount();
-        renderPass.draw(vertexCount);
+        if (vertexCount > 0) {
+          renderPass.draw(vertexCount);
+        }
       }
 
       this.statistics.drawCalls++;
@@ -370,12 +372,9 @@ export abstract class RenderPassBase extends EventDispatcher {
   /**
    * 销毁渲染通道
    */
-  destroy(): void {
+  override destroy(): void {
     this.currentRenderPass = null;
     this.currentPipeline = null;
-    this.removeAllListeners();
-  }
-  removeAllListeners() {
-    throw new Error('Method not implemented.');
+    super.destroy();
   }
 }

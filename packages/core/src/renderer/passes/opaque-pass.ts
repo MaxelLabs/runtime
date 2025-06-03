@@ -4,16 +4,24 @@
  * 用于渲染不透明的几何体
  */
 
-import type {
-  IRHIDevice,
-  IRHIRenderPass,
-  IRHIRenderPipeline,
-  IRHIBindGroup,
-  IRHIShaderModule,
-  IRHIBindGroupLayout,
-  IRHIPipelineLayout,
+import {
+  type IRHIDevice,
+  type IRHIRenderPass,
+  type IRHIRenderPipeline,
+  type IRHIBindGroup,
+  type IRHIShaderModule,
+  type IRHIBindGroupLayout,
+  type IRHIPipelineLayout,
+  RHITextureFormat,
 } from '../../interface/rhi';
-import { RHIPrimitiveTopology, RHICullMode, RHIFrontFace, RHICompareFunction } from '@maxellabs/math';
+import {
+  RHIPrimitiveTopology,
+  RHICullMode,
+  RHIFrontFace,
+  RHICompareFunction,
+  RHIBlendFactor,
+  RHIBlendOperation,
+} from '@maxellabs/math';
 import type { Camera } from '../../camera/camera';
 import type { RenderElement } from '../render-element';
 import { RenderPassBase, type RenderPassConfig } from './render-pass-base';
@@ -283,13 +291,24 @@ export class OpaquePass extends RenderPassBase {
         },
         depthStencilState: {
           depthWriteEnabled: true,
+          format: RHITextureFormat.DEPTH24_UNORM_STENCIL8,
           depthCompare: RHICompareFunction.LESS,
         },
         colorBlendState: {
           attachments: [
             {
-              enabled: false,
-              colorWriteMask: 0xf,
+              color: {
+                enable: false,
+                srcFactor: RHIBlendFactor.SRC_ALPHA,
+                dstFactor: RHIBlendFactor.ONE_MINUS_SRC_ALPHA,
+                operation: RHIBlendOperation.ADD,
+              },
+              alpha: {
+                enable: false,
+                srcFactor: RHIBlendFactor.SRC_ALPHA,
+                dstFactor: RHIBlendFactor.ONE_MINUS_SRC_ALPHA,
+                operation: RHIBlendOperation.ADD,
+              },
             },
           ],
         },
