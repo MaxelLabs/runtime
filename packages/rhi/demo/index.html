@@ -1,19 +1,319 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>RHI Demo</title>
+  <title>RHI Demo - Maxellabs 3D Engine</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+    }
+    
+    .header h1 {
+      font-size: 2.5em;
+      margin: 0;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .header p {
+      font-size: 1.2em;
+      margin: 10px 0;
+      opacity: 0.9;
+    }
+    
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .demo-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .demo-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    }
+    
+    .demo-card h3 {
+      margin: 0 0 10px 0;
+      color: #333;
+      font-size: 1.3em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .demo-card p {
+      color: #666;
+      line-height: 1.6;
+      margin: 10px 0;
+    }
+    
+    .demo-card .tech-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 15px 0;
+    }
+    
+    .tech-tag {
+      background: #f0f0f0;
+      color: #555;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8em;
+      font-weight: 500;
+    }
+    
+    .demo-link {
+      display: inline-block;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      padding: 12px 24px;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+    
+    .demo-link:hover {
+      background: linear-gradient(45deg, #764ba2, #667eea);
+      transform: scale(1.05);
+      text-decoration: none;
+      color: white;
+    }
+    
+    .category {
+      grid-column: 1 / -1;
+      text-align: center;
+      margin: 30px 0 10px 0;
+    }
+    
+    .category h2 {
+      color: white;
+      font-size: 1.8em;
+      margin: 0;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .difficulty {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    
+    .difficulty.beginner {
+      background: #4CAF50;
+      color: white;
+    }
+    
+    .difficulty.intermediate {
+      background: #FF9800;
+      color: white;
+    }
+    
+    .difficulty.advanced {
+      background: #F44336;
+      color: white;
+    }
+    
+    .footer {
+      text-align: center;
+      color: white;
+      margin-top: 50px;
+      opacity: 0.8;
+    }
+  </style>
 </head>
 <body>
-  <h1>RHI Demo</h1>
-  <div class="am-list">
-    <div class="am-list-header">Runtime Demo</div>
-    <div class="am-list-body">
-      <a class="am-list-item" href="html/basic.html">基础渲染</a>
-      <a class="am-list-item" href="html/deferred.html">延迟渲染</a>
+  <div class="header">
+    <h1>🚀 RHI Demo Gallery</h1>
+    <p>Maxellabs 3D Engine - 渲染硬件抽象层演示</p>
+    <p>探索现代图形渲染技术的强大功能</p>
+  </div>
+
+  <div class="demo-grid">
+    <!-- 基础功能Demo -->
+    <div class="category">
+      <h2>🎯 基础功能Demo</h2>
+    </div>
+    
+    <div class="demo-card">
+      <h3>🔺 三角形渲染 <span class="difficulty beginner">入门</span></h3>
+      <p>最基础的RHI渲染示例，展示如何渲染一个彩色三角形。每个顶点都有不同的颜色，GPU会自动进行颜色插值。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">顶点着色器</span>
+        <span class="tech-tag">片段着色器</span>
+        <span class="tech-tag">顶点缓冲区</span>
+        <span class="tech-tag">颜色插值</span>
+      </div>
+      <a class="demo-link" href="html/triangle.html">🎮 运行Demo</a>
+    </div>
+
+    <div class="demo-card">
+      <h3>🎨 纹理映射 <span class="difficulty beginner">入门</span></h3>
+      <p>展示纹理采样和多种纹理效果，包括程序化纹理生成、多纹理混合和动态纹理坐标变换。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">纹理采样</span>
+        <span class="tech-tag">多纹理混合</span>
+        <span class="tech-tag">程序化纹理</span>
+        <span class="tech-tag">动态效果</span>
+      </div>
+      <a class="demo-link" href="html/texture.html">🎮 运行Demo</a>
+    </div>
+
+    <div class="demo-card">
+      <h3>⚡ 基础渲染 <span class="difficulty intermediate">中级</span></h3>
+      <p>综合展示基础渲染功能，包括顶点变换、纹理映射、动画效果和用户交互。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">矩阵变换</span>
+        <span class="tech-tag">动画循环</span>
+        <span class="tech-tag">用户交互</span>
+        <span class="tech-tag">实时渲染</span>
+      </div>
+      <a class="demo-link" href="html/basic.html">🎮 运行Demo</a>
+    </div>
+
+    <!-- 高级渲染Demo -->
+    <div class="category">
+      <h2>🔥 高级渲染Demo</h2>
+    </div>
+
+    <div class="demo-card">
+      <h3>🌟 延迟渲染 <span class="difficulty advanced">高级</span></h3>
+      <p>展示延迟渲染管线技术，支持多光源照明和高质量的光照效果，适用于复杂场景渲染。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">G-Buffer</span>
+        <span class="tech-tag">多光源</span>
+        <span class="tech-tag">延迟着色</span>
+        <span class="tech-tag">高级光照</span>
+      </div>
+      <a class="demo-link" href="html/deferred.html">🎮 运行Demo</a>
+    </div>
+
+    <div class="demo-card">
+      <h3>💡 光照系统 <span class="difficulty intermediate">中级</span></h3>
+      <p>展示各种光照模型，包括Phong光照、PBR材质和实时阴影效果。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">Phong光照</span>
+        <span class="tech-tag">PBR材质</span>
+        <span class="tech-tag">实时阴影</span>
+        <span class="tech-tag">多光源</span>
+      </div>
+      <a class="demo-link" href="html/lighting.html" style="opacity: 0.6; pointer-events: none;">🚧 开发中</a>
+    </div>
+
+    <div class="demo-card">
+      <h3>🌑 阴影映射 <span class="difficulty advanced">高级</span></h3>
+      <p>实现高质量的阴影映射技术，包括级联阴影映射和软阴影效果。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">阴影映射</span>
+        <span class="tech-tag">级联阴影</span>
+        <span class="tech-tag">软阴影</span>
+        <span class="tech-tag">深度缓冲</span>
+      </div>
+      <a class="demo-link" href="html/shadow.html" style="opacity: 0.6; pointer-events: none;">🚧 开发中</a>
+    </div>
+
+    <div class="demo-card">
+      <h3>🎭 后处理效果 <span class="difficulty advanced">高级</span></h3>
+      <p>展示各种后处理效果，如泛光、景深、色调映射和抗锯齿技术。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">泛光效果</span>
+        <span class="tech-tag">景深模糊</span>
+        <span class="tech-tag">色调映射</span>
+        <span class="tech-tag">FXAA</span>
+      </div>
+      <a class="demo-link" href="html/postprocess.html" style="opacity: 0.6; pointer-events: none;">🚧 开发中</a>
+    </div>
+
+    <!-- 性能测试Demo -->
+    <div class="category">
+      <h2>⚡ 性能测试Demo</h2>
+    </div>
+
+    <div class="demo-card">
+      <h3>📊 性能基准 <span class="difficulty intermediate">中级</span></h3>
+      <p>渲染性能基准测试，评估不同场景下的渲染性能和GPU利用率。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">性能监控</span>
+        <span class="tech-tag">FPS测试</span>
+        <span class="tech-tag">GPU利用率</span>
+        <span class="tech-tag">内存使用</span>
+      </div>
+      <a class="demo-link" href="html/performance.html" style="opacity: 0.6; pointer-events: none;">🚧 开发中</a>
+    </div>
+
+    <div class="demo-card">
+      <h3>🔄 实例化渲染 <span class="difficulty advanced">高级</span></h3>
+      <p>展示实例化渲染技术，高效渲染大量相似物体，提升渲染性能。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">实例化</span>
+        <span class="tech-tag">批处理</span>
+        <span class="tech-tag">GPU实例</span>
+        <span class="tech-tag">性能优化</span>
+      </div>
+      <a class="demo-link" href="html/instancing.html" style="opacity: 0.6; pointer-events: none;">🚧 开发中</a>
     </div>
   </div>
+
+  <div class="footer">
+    <p>💻 基于 Maxellabs 3D Engine RHI 构建</p>
+    <p>🔧 支持 WebGL 2.0 / WebGPU</p>
+    <p>📚 查看 <a href="README.md" style="color: #FFD93D;">开发规范文档</a> 了解更多</p>
+  </div>
+
+  <script>
+    // 添加一些交互效果
+    document.addEventListener('DOMContentLoaded', () => {
+      const cards = document.querySelectorAll('.demo-card');
+      
+      cards.forEach((card, index) => {
+        // 添加进入动画
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+          card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, index * 100);
+      });
+      
+      // 添加点击统计
+      const demoLinks = document.querySelectorAll('.demo-link');
+      demoLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          const demoName = e.target.closest('.demo-card').querySelector('h3').textContent;
+          console.log(`🎮 启动Demo: ${demoName}`);
+        });
+      });
+    });
+  </script>
 </body>
 </html>

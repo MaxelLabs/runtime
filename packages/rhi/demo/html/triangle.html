@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>三角形渲染 - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .container {
+      width: 100vw;
+      height: 100vh;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    #J-canvas {
+      display: block;
+      cursor: crosshair;
+    }
+    
+    .controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 14px;
+      max-width: 300px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .controls h3 {
+      margin: 0 0 10px 0;
+      color: #4CAF50;
+      font-size: 16px;
+    }
+    
+    .controls p {
+      margin: 5px 0;
+      line-height: 1.4;
+    }
+    
+    .controls .description {
+      color: #ccc;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+    
+    .controls .shortcuts {
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      padding-top: 10px;
+      margin-top: 10px;
+    }
+    
+    .controls .shortcuts h4 {
+      margin: 0 0 5px 0;
+      color: #FFC107;
+      font-size: 14px;
+    }
+    
+    .controls .shortcuts p {
+      margin: 2px 0;
+      font-family: monospace;
+      font-size: 11px;
+    }
+    
+    .error-message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 0, 0, 0.9);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      font-family: monospace;
+      z-index: 1000;
+      max-width: 80%;
+      text-align: center;
+    }
+    
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 18px;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+  </div>
+  
+  <div class="controls">
+    <h3>🔺 三角形渲染Demo</h3>
+    <p class="description">
+      这是最基础的RHI渲染示例，展示如何使用WebGL渲染一个彩色三角形。
+      每个顶点都有不同的颜色，GPU会自动进行颜色插值。
+    </p>
+    
+    <div class="shortcuts">
+      <h4>⌨️ 快捷键</h4>
+      <p><strong>ESC</strong> - 退出demo</p>
+      <p><strong>F11</strong> - 切换全屏模式</p>
+    </div>
+    
+    <div style="margin-top: 10px; font-size: 11px; color: #888;">
+      <p>💡 技术要点：</p>
+      <p>• 顶点着色器处理位置和颜色</p>
+      <p>• 片段着色器输出插值后的颜色</p>
+      <p>• 使用RHI抽象层进行渲染</p>
+    </div>
+  </div>
+  
+  <div class="loading" id="loading">
+    正在加载三角形demo...
+  </div>
+  
+  <script type="module" src="../src/triangle.ts"></script>
+  
+  <script>
+    // 隐藏加载提示
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const loading = document.getElementById('loading');
+        if (loading) {
+          loading.style.display = 'none';
+        }
+      }, 1000);
+    });
+    
+    // 添加一些交互提示
+    let hintShown = false;
+    document.addEventListener('click', () => {
+      if (!hintShown) {
+        console.log('🎨 这个三角形的每个顶点都有不同的颜色！');
+        console.log('🔍 打开开发者工具查看更多技术细节');
+        hintShown = true;
+      }
+    });
+  </script>
+</body>
+</html> 
