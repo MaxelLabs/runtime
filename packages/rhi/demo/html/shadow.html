@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>阴影映射Demo - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background: #000;
+      overflow: hidden;
+    }
+    
+    .container {
+      width: 100vw;
+      height: 100vh;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    
+    #J-canvas {
+      display: block;
+      background: #000;
+    }
+    
+    .controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 12px;
+      min-width: 220px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    
+    .controls h3 {
+      margin: 0 0 10px 0;
+      color: #FF9800;
+      font-size: 14px;
+    }
+    
+    .controls p {
+      margin: 5px 0;
+      line-height: 1.4;
+    }
+    
+    .control-group {
+      margin: 10px 0;
+      padding: 8px 0;
+      border-top: 1px solid #333;
+    }
+    
+    .control-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 5px 0;
+    }
+    
+    .control-item label {
+      font-size: 11px;
+      color: #ccc;
+    }
+    
+    .control-item input[type="range"] {
+      background: #333;
+      width: 80px;
+    }
+    
+    .control-item input[type="checkbox"] {
+      margin-left: 10px;
+    }
+    
+    .control-item select {
+      background: #333;
+      border: 1px solid #555;
+      color: white;
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+    
+    .fps-counter {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.8);
+      color: #00ff00;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    
+    .shadow-map-preview {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      width: 200px;
+      height: 200px;
+      border: 2px solid #fff;
+      background: #000;
+      border-radius: 5px;
+    }
+    
+    .shadow-map-preview canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 3px;
+    }
+    
+    .shadow-map-label {
+      position: absolute;
+      bottom: -20px;
+      left: 0;
+      color: white;
+      font-size: 10px;
+      text-align: center;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+  </div>
+  
+  <div class="controls">
+    <h3>阴影映射Demo</h3>
+    <p>展示实时阴影映射技术，支持软阴影效果</p>
+    
+    <div class="control-group">
+      <div class="control-item">
+        <label>阴影类型:</label>
+        <select id="shadowType">
+          <option value="hard">硬阴影</option>
+          <option value="soft">软阴影</option>
+          <option value="pcf">PCF</option>
+        </select>
+      </div>
+      
+      <div class="control-item">
+        <label>阴影强度:</label>
+        <input type="range" id="shadowIntensity" min="0" max="1" step="0.1" value="0.8">
+        <span id="shadowIntensityValue">0.8</span>
+      </div>
+      
+      <div class="control-item">
+        <label>阴影偏移:</label>
+        <input type="range" id="shadowBias" min="0" max="0.01" step="0.0001" value="0.005">
+        <span id="shadowBiasValue">0.005</span>
+      </div>
+      
+      <div class="control-item">
+        <label>PCF半径:</label>
+        <input type="range" id="pcfRadius" min="1" max="5" step="0.5" value="2">
+        <span id="pcfRadiusValue">2</span>
+      </div>
+    </div>
+    
+    <div class="control-group">
+      <div class="control-item">
+        <label>光源距离:</label>
+        <input type="range" id="lightDistance" min="5" max="20" step="0.5" value="10">
+        <span id="lightDistanceValue">10</span>
+      </div>
+      
+      <div class="control-item">
+        <label>光源高度:</label>
+        <input type="range" id="lightHeight" min="3" max="15" step="0.5" value="8">
+        <span id="lightHeightValue">8</span>
+      </div>
+      
+      <div class="control-item">
+        <label>自动旋转:</label>
+        <input type="checkbox" id="autoRotate" checked>
+      </div>
+      
+      <div class="control-item">
+        <label>显示阴影图:</label>
+        <input type="checkbox" id="showShadowMap" checked>
+      </div>
+    </div>
+    
+    <div class="control-group">
+      <p><strong>控制说明:</strong></p>
+      <p>• 鼠标拖拽: 旋转场景</p>
+      <p>• 滚轮: 缩放视角</p>
+      <p>• L键: 切换光源视角</p>
+      <p>• ESC: 退出演示</p>
+      <p>• F11: 全屏模式</p>
+      <p>• Space: 重置视角</p>
+    </div>
+  </div>
+  
+  <div class="fps-counter" id="fpsCounter">
+    FPS: 60
+  </div>
+  
+  <div class="shadow-map-preview" id="shadowMapPreview" style="display: none;">
+    <canvas id="shadowMapCanvas" width="200" height="200"></canvas>
+    <div class="shadow-map-label">阴影贴图</div>
+  </div>
+  
+  <script type="module" src="../src/shadow.ts"></script>
+</body>
+</html> 
