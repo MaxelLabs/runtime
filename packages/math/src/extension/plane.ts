@@ -16,7 +16,7 @@ export class Plane {
   set(distance: number, normal: Vector3): Plane {
     this.normal.copyFrom(normal);
 
-    const length = this.normal.length();
+    const length = this.normal.getLength();
 
     if (length === 0) {
       this.normal.set(0, 0, 1);

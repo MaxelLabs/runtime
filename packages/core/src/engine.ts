@@ -4,7 +4,6 @@ import { Time } from './base/time';
 import type { Scene } from './scene/scene';
 import type { SceneManager } from './scene/scene-manager';
 import type { ResourceManager } from './resource/resource-manager';
-// import type { RenderContext } from './renderer/render-context';
 import type { InputManager } from './input/input-manager';
 
 /**
@@ -265,7 +264,7 @@ export class Engine extends EventDispatcher {
   /** 输入管理器 */
   private inputManager: InputManager;
   /** 渲染上下文 */
-  private renderContext: RenderContext;
+  // private renderContext: RenderContext;
   /** 引擎配置选项 */
   private options: EngineOptions;
   /** 调试模式 */
@@ -689,16 +688,16 @@ export class Engine extends EventDispatcher {
     return this.time;
   }
 
-  /**
-   * 获取渲染上下文
-   * @returns 渲染上下文实例
-   */
-  getRenderContext(): RenderContext {
-    if (!this.renderContext) {
-      throw new Error('Render context not initialized');
-    }
-    return this.renderContext;
-  }
+  // /**
+  //  * 获取渲染上下文
+  //  * @returns 渲染上下文实例
+  //  */
+  // getRenderContext(): RenderContext {
+  //   if (!this.renderContext) {
+  //     throw new Error('Render context not initialized');
+  //   }
+  //   return this.renderContext;
+  // }
 
   /**
    * 获取性能统计信息

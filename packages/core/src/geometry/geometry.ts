@@ -2,68 +2,20 @@ import type { GeometryPrim, BoundingBox, VertexAttributeDescriptor } from '@maxe
 import { VertexAttribute } from '@maxellabs/math';
 import { Resource, ResourceType } from '../resource/resource';
 import type { ResourceLoadOptions } from '../resource/resource';
+import type { IRHIBuffer, IRHIDevice } from '../interface/rhi';
+import type { RHIVertexBufferLayout } from '../interface/rhi/types/states';
+import { RHIBufferUsage, RHIIndexFormat, RHIVertexFormat } from '../interface/rhi/types/enums';
 
 /**
- * 网格属性类型
+ * 几何体缓冲区数据
  */
-export enum AttributeType {
-  /** 顶点位置 */
-  Position,
-  /** 顶点法线 */
-  Normal,
-  /** 纹理坐标 */
-  UV,
-  /** 顶点颜色 */
-  Color,
-  /** 切线 */
-  Tangent,
-  /** 骨骼权重 */
-  BoneWeight,
-  /** 骨骼索引 */
-  BoneIndex,
-  /** 自定义属性 */
-  Custom,
-}
-
-/**
- * 几何体属性接口
- */
-export interface GeometryAttribute {
-  /** 属性类型 */
-  type: AttributeType;
-  /** 属性名称（用于自定义属性） */
-  name?: string;
-  /** 每个顶点的分量数 */
-  size: number;
-  /** 属性数据 */
-  data: Float32Array;
-  /** 是否需要更新 */
-  dirty?: boolean;
-}
-
-/**
- * 几何体数据类型
- */
-export enum GeometryDataType {
-  BYTE = 5120,
-  UNSIGNED_BYTE = 5121,
-  SHORT = 5122,
-  UNSIGNED_SHORT = 5123,
-  INT = 5124,
-  UNSIGNED_INT = 5125,
-  FLOAT = 5126,
-}
-
-/**
- * 几何体数据缓冲区
- */
-export interface GeometryBuffer {
-  /** 缓冲区数据 */
+interface GeometryBufferData {
+  /** 原始数据 */
   data: ArrayBuffer | ArrayBufferView;
-  /** 目标类型（顶点缓冲区或索引缓冲区） */
-  target: number;
-  /** 使用方式 */
-  usage: number;
+  /** RHI缓冲区（如果已创建） */
+  rhiBuffer?: IRHIBuffer;
+  /** 缓冲区用途 */
+  usage: RHIBufferUsage;
 }
 
 /**
@@ -79,20 +31,33 @@ export abstract class Geometry extends Resource implements GeometryPrim {
   readonly attributes: Record<string, any> = {};
   readonly relationships: Record<string, any> = {};
   readonly children: any[] = [];
+
   /** 顶点数据缓冲区 */
-  protected vertexBuffers: Map<VertexAttribute, GeometryBuffer> = new Map();
+  protected vertexBuffers: Map<VertexAttribute, GeometryBufferData> = new Map();
+
   /** 索引数据缓冲区 */
-  protected indexBuffer: GeometryBuffer | null = null;
+  protected indexBuffer: GeometryBufferData | null = null;
+
   /** 顶点属性描述 */
   protected attributeDescriptors: Map<VertexAttribute, VertexAttributeDescriptor> = new Map();
+
   /** 顶点数量 */
   protected vertexCount: number = 0;
+
   /** 索引数量 */
   protected indexCount: number = 0;
+
+  /** 索引格式 */
+  protected indexFormat: RHIIndexFormat = RHIIndexFormat.UINT16;
+
   /** 包围盒 */
   protected boundingBox: BoundingBox | null = null;
+
   /** 是否需要更新包围盒 */
   protected needsUpdateBounds: boolean = true;
+
+  /** RHI设备引用 */
+  protected device: IRHIDevice | null = null;
 
   /**
    * 创建几何体
@@ -101,6 +66,13 @@ export abstract class Geometry extends Resource implements GeometryPrim {
   constructor(name?: string) {
     super(ResourceType.GEOMETRY, name);
     this.path = `/geometry/${this.name}`;
+  }
+
+  /**
+   * 设置RHI设备
+   */
+  setDevice(device: IRHIDevice): void {
+    this.device = device;
   }
 
   /**
@@ -116,8 +88,7 @@ export abstract class Geometry extends Resource implements GeometryPrim {
   ): void {
     this.vertexBuffers.set(attribute, {
       data,
-      target: 34962, // GL_ARRAY_BUFFER
-      usage: 35044, // GL_STATIC_DRAW
+      usage: RHIBufferUsage.VERTEX,
     });
 
     this.attributeDescriptors.set(attribute, descriptor);
@@ -130,24 +101,25 @@ export abstract class Geometry extends Resource implements GeometryPrim {
    * @param attribute 属性类型
    * @returns 缓冲区数据或null
    */
-  getVertexAttribute(attribute: VertexAttribute): GeometryBuffer | null {
+  getVertexAttribute(attribute: VertexAttribute): GeometryBufferData | null {
     return this.vertexBuffers.get(attribute) || null;
   }
 
   /**
    * 设置索引数据
    * @param data 索引数据
-   * @param type 数据类型
+   * @param format 索引格式
    */
-  setIndices(data: ArrayBuffer | ArrayBufferView, type: GeometryDataType = GeometryDataType.UNSIGNED_SHORT): void {
+  setIndices(data: ArrayBuffer | ArrayBufferView, format: RHIIndexFormat = RHIIndexFormat.UINT16): void {
     this.indexBuffer = {
       data,
-      target: 34963, // GL_ELEMENT_ARRAY_BUFFER
-      usage: 35044, // GL_STATIC_DRAW
+      usage: RHIBufferUsage.INDEX,
     };
 
+    this.indexFormat = format;
+
     // 计算索引数量
-    const elementSize = this.getDataTypeSize(type);
+    const elementSize = format === RHIIndexFormat.UINT32 ? 4 : 2;
     this.indexCount = data.byteLength / elementSize;
     this.incrementVersion();
   }
@@ -156,8 +128,15 @@ export abstract class Geometry extends Resource implements GeometryPrim {
    * 获取索引数据
    * @returns 索引缓冲区或null
    */
-  getIndices(): GeometryBuffer | null {
+  getIndices(): GeometryBufferData | null {
     return this.indexBuffer;
+  }
+
+  /**
+   * 获取索引格式
+   */
+  getIndexFormat(): RHIIndexFormat {
+    return this.indexFormat;
   }
 
   /**
@@ -175,6 +154,132 @@ export abstract class Geometry extends Resource implements GeometryPrim {
    */
   getAllAttributes(): Map<VertexAttribute, VertexAttributeDescriptor> {
     return new Map(this.attributeDescriptors);
+  }
+
+  /**
+   * 获取顶点布局（用于RHI渲染管线）
+   */
+  getVertexLayout(): RHIVertexBufferLayout[] {
+    const layouts: RHIVertexBufferLayout[] = [];
+    let bufferIndex = 0;
+
+    for (const [attribute, descriptor] of this.attributeDescriptors) {
+      const bufferData = this.vertexBuffers.get(attribute);
+      if (!bufferData) {
+        continue;
+      }
+
+      layouts.push({
+        index: bufferIndex++,
+        stride: descriptor.stride || this.getAttributeSize(descriptor),
+        stepMode: 'vertex',
+        attributes: [
+          {
+            shaderLocation: this.getAttributeLocation(attribute),
+            format: this.getAttributeFormat(descriptor),
+            offset: descriptor.offset || 0,
+          },
+        ],
+      });
+    }
+
+    return layouts;
+  }
+
+  /**
+   * 获取顶点缓冲区（RHI）
+   */
+  getVertexBuffer(attribute?: VertexAttribute): IRHIBuffer | null {
+    if (attribute) {
+      const bufferData = this.vertexBuffers.get(attribute);
+      return bufferData?.rhiBuffer || null;
+    }
+
+    // 返回第一个可用的顶点缓冲区
+    for (const bufferData of this.vertexBuffers.values()) {
+      if (bufferData.rhiBuffer) {
+        return bufferData.rhiBuffer;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 获取索引缓冲区（RHI）
+   */
+  getIndexBuffer(): IRHIBuffer | null {
+    return this.indexBuffer?.rhiBuffer || null;
+  }
+
+  /**
+   * 创建RHI缓冲区
+   */
+  createRHIBuffers(): void {
+    if (!this.device) {
+      console.warn('Geometry: RHI设备未设置，无法创建缓冲区');
+      return;
+    }
+
+    // 创建顶点缓冲区
+    for (const [attribute, bufferData] of this.vertexBuffers) {
+      if (!bufferData.rhiBuffer) {
+        bufferData.rhiBuffer = this.device.createBuffer({
+          size: bufferData.data.byteLength,
+          usage: bufferData.usage,
+          initialData: bufferData.data,
+          label: `Geometry-${this.name}-${attribute}`,
+        });
+      }
+    }
+
+    // 创建索引缓冲区
+    if (this.indexBuffer && !this.indexBuffer.rhiBuffer) {
+      this.indexBuffer.rhiBuffer = this.device.createBuffer({
+        size: this.indexBuffer.data.byteLength,
+        usage: this.indexBuffer.usage,
+        initialData: this.indexBuffer.data,
+        label: `Geometry-${this.name}-Index`,
+      });
+    }
+  }
+
+  /**
+   * 获取属性位置
+   */
+  private getAttributeLocation(attribute: VertexAttribute): number {
+    switch (attribute) {
+      case VertexAttribute.Position:
+        return 0;
+      case VertexAttribute.Normal:
+        return 1;
+      case VertexAttribute.TexCoord0:
+        return 2;
+      case VertexAttribute.TexCoord1:
+        return 3;
+      case VertexAttribute.Color:
+        return 4;
+      case VertexAttribute.Tangent:
+        return 5;
+      default:
+        return 0;
+    }
+  }
+
+  /**
+   * 获取属性格式
+   */
+  private getAttributeFormat(descriptor: VertexAttributeDescriptor): RHIVertexFormat {
+    // 根据描述符返回RHI格式枚举
+    // 这里需要根据实际的RHI格式枚举来实现
+    return RHIVertexFormat.FLOAT32X3; // 默认格式，实际应该根据descriptor计算
+  }
+
+  /**
+   * 获取属性大小
+   */
+  private getAttributeSize(descriptor: VertexAttributeDescriptor): number {
+    // 根据描述符计算属性大小
+    return 12; // 默认3个float32，实际应该根据descriptor计算
   }
 
   /**
@@ -269,34 +374,18 @@ export abstract class Geometry extends Resource implements GeometryPrim {
   }
 
   /**
-   * 获取数据类型的字节大小
-   * @param type 数据类型
-   * @returns 字节大小
-   */
-  protected getDataTypeSize(type: GeometryDataType): number {
-    switch (type) {
-      case GeometryDataType.BYTE:
-      case GeometryDataType.UNSIGNED_BYTE:
-        return 1;
-      case GeometryDataType.SHORT:
-      case GeometryDataType.UNSIGNED_SHORT:
-        return 2;
-      case GeometryDataType.INT:
-      case GeometryDataType.UNSIGNED_INT:
-      case GeometryDataType.FLOAT:
-        return 4;
-      default:
-        return 1;
-    }
-  }
-
-  /**
    * 清空几何体数据
    */
   clear(): void {
+    // 销毁RHI缓冲区
+    for (const bufferData of this.vertexBuffers.values()) {
+      bufferData.rhiBuffer?.destroy();
+    }
+    this.indexBuffer?.rhiBuffer?.destroy();
+
     this.vertexBuffers.clear();
-    this.attributeDescriptors.clear();
     this.indexBuffer = null;
+    this.attributeDescriptors.clear();
     this.vertexCount = 0;
     this.indexCount = 0;
     this.boundingBox = null;
@@ -312,29 +401,30 @@ export abstract class Geometry extends Resource implements GeometryPrim {
   }
 
   /**
-   * 实现Resource基类的loadImpl方法
+   * 实现Resource的loadImpl方法
    */
   protected async loadImpl(url: string, options?: ResourceLoadOptions): Promise<void> {
-    // 默认实现，子类可以重写来支持从URL加载几何体数据
-    throw new Error('Geometry.loadImpl not implemented. Override in subclass.');
+    // 子类实现具体的加载逻辑
+    throw new Error('Geometry.loadImpl must be implemented by subclass');
   }
 
   /**
    * 克隆几何体
    */
   clone(): Geometry {
-    throw new Error('Geometry.clone not implemented. Override in subclass.');
+    // 子类实现具体的克隆逻辑
+    throw new Error('Geometry.clone must be implemented by subclass');
   }
 
   /**
-   * 计算几何体的内存使用情况
+   * 更新资源大小
    */
   protected override updateSize(): void {
     let totalSize = 0;
 
     // 计算顶点缓冲区大小
-    for (const buffer of this.vertexBuffers.values()) {
-      totalSize += buffer.data.byteLength;
+    for (const bufferData of this.vertexBuffers.values()) {
+      totalSize += bufferData.data.byteLength;
     }
 
     // 计算索引缓冲区大小
@@ -342,11 +432,11 @@ export abstract class Geometry extends Resource implements GeometryPrim {
       totalSize += this.indexBuffer.data.byteLength;
     }
 
-    this.size = totalSize;
+    this.setSize(totalSize);
   }
 
   /**
-   * 释放几何体资源
+   * 资源释放时的清理
    */
   protected override onRelease(): void {
     this.clear();

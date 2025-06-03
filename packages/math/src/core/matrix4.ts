@@ -1157,13 +1157,13 @@ export class Matrix4 implements IMatrix4x4, Poolable {
   lookAt(eye: Vector3, target: Vector3, up: Vector3): this {
     const z = Vector3.subtract(eye, target).normalize();
 
-    if (z.lengthSquared() === 0) {
+    if (z.getLengthSquared() === 0) {
       z.z = 1;
     }
 
     const x = Vector3.cross(up, z).normalize();
 
-    if (x.lengthSquared() === 0) {
+    if (x.getLengthSquared() === 0) {
       z.x += 0.0001;
       x.copyFrom(Vector3.cross(up, z).normalize());
     }
@@ -1356,9 +1356,9 @@ export class Matrix4 implements IMatrix4x4, Poolable {
 
     // 提取缩放
     // 计算矩阵各列的长度
-    const sx = new Vector3(me[0], me[1], me[2]).length();
-    const sy = new Vector3(me[4], me[5], me[6]).length();
-    const sz = new Vector3(me[8], me[9], me[10]).length();
+    const sx = new Vector3(me[0], me[1], me[2]).getLength();
+    const sy = new Vector3(me[4], me[5], me[6]).getLength();
+    const sz = new Vector3(me[8], me[9], me[10]).getLength();
 
     scale.x = sx;
     scale.y = sy;

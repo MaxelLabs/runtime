@@ -1,3 +1,4 @@
+//@ts-nocheck
 import type { RHIVertexLayout } from '@maxellabs/core';
 import {
   RHIBufferUsage,
@@ -7,8 +8,6 @@ import {
   RHITextureFormat,
   RHITextureUsage,
   RHIVertexFormat,
-  RHIBlendFactor,
-  RHIBlendOperation,
   RHIIndexFormat,
   RHIFeatureFlags,
 } from '@maxellabs/core';
@@ -41,21 +40,21 @@ out vec3 vWorldPos;
 
 void main() {
   vTexCoord = aTexCoord;
-  
+
   // 将法线从模型空间转换到世界空间
   vNormal = mat3(uModelMatrix) * aNormal;
-  
+
   // 计算世界空间位置
   vec4 worldPos = uModelMatrix * vec4(aPosition, 1.0);
   vWorldPos = worldPos.xyz;
-  
+
   // 调试输出
   // if(gl_VertexID == 0) {
   //   // 仅对第一个顶点打印输出，避免控制台过载
   //   // 在着色器中用整型来表示布尔值更安全
-  //   int debug = 1; 
+  //   int debug = 1;
   // }
-  
+
   gl_Position = uProjectionMatrix * uViewMatrix * worldPos;
 }
 `;
@@ -78,24 +77,24 @@ layout(location = 2) out vec4 outAlbedo;    // RGB = 反照率, A = 高光强度
 void main() {
   // 确保法线是归一化的
   vec3 normal = normalize(vNormal);
-  
+
   // 位置 G-Buffer (xyz = 世界位置)
   // 对世界位置进行映射，确保数据在合理范围内
   vec3 normalizedPos = (vWorldPos + vec3(5.0)) * 0.1;
   outPosition = vec4(normalizedPos, 1.0);
-  
+
   // 法线 G-Buffer (xyz = 法线) - 使用归一化的法线
   // 将法线从[-1,1]转换到[0,1]范围，以便正确存储
   outNormal = vec4(normal * 0.5 + 0.5, 1.0);
-  
+
   // 反照率 G-Buffer (rgb = 漫反射颜色, a = 高光强度)
   vec4 albedo = texture(uAlbedoTexture, vTexCoord);
-  
+
   // 为了调试，如果纹理采样失败，使用顶点颜色作为后备
   if(albedo.a < 0.1) {
     albedo = vec4(1.0, 0.5, 0.5, 1.0); // 使用明亮的粉色作为默认颜色
   }
-  
+
   outAlbedo = vec4(albedo.rgb, 0.7); // 固定高光强度为0.7
 }
 `;
@@ -135,43 +134,43 @@ void main() {
   // 从G-Buffer读取数据
   vec4 positionData = texture(uPositionBuffer, vTexCoord);
   vec3 worldPos = positionData.rgb * 10.0 - vec3(5.0); // 反向映射回原始范围
-  
+
   // 正确解码法线数据 - 将[0,1]范围转回[-1,1]
   vec3 normal = normalize(texture(uNormalBuffer, vTexCoord).rgb * 2.0 - 1.0);
-  
+
   vec4 albedoSpec = texture(uAlbedoBuffer, vTexCoord);
   vec3 albedo = albedoSpec.rgb;
   float specularStrength = albedoSpec.a;
-  
+
   // 检查G-Buffer数据是否有效
   if(length(normal) < 0.1 || positionData.a < 0.1) {
     // 如果数据无效，输出紫色以便调试
     fragColor = vec4(1.0, 0.0, 1.0, 1.0);
     return;
   }
-  
+
   // 环境光
   float ambientStrength = 0.3; // 增加环境光强度，使场景更亮
   vec3 ambient = ambientStrength * albedo;
-  
+
   // 漫反射
   vec3 lightDir = normalize(uLightPosition - worldPos);
   float diff = max(dot(normal, lightDir), 0.0);
   vec3 diffuse = diff * uLightColor * albedo;
-  
+
   // 高光 (Blinn-Phong)
   vec3 viewDir = normalize(uCameraPosition - worldPos);
   vec3 halfwayDir = normalize(lightDir + viewDir);
   float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
   vec3 specular = specularStrength * spec * uLightColor;
-  
+
   // 衰减
   float distance = length(uLightPosition - worldPos);
   float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
-  
+
   // 组合所有光照
   vec3 result = ambient + (diffuse + specular) * attenuation;
-  
+
   fragColor = vec4(result, 1.0);
 }
 `;
@@ -360,9 +359,9 @@ const albedoTextureView = albedoTexture.createView();
 let deviceFeatures = 0;
 
 try {
-  // @ts-expect-error - 绕过info私有属性访问限制
   deviceFeatures = device.info?.features || 0;
-} catch (e) {
+} catch (_error) {
+  console.warn('无法获取设备特性，使用默认值。可能是因为设备不支持相关查询。' + _error);
   // 直接使用预设值，假设支持基本特性
   deviceFeatures = 0;
 }
@@ -370,7 +369,7 @@ try {
 const supportsFloat = (deviceFeatures & RHIFeatureFlags.FLOAT_TEXTURE) !== 0;
 const supportsHalfFloat = (deviceFeatures & RHIFeatureFlags.HALF_FLOAT_TEXTURE) !== 0;
 
-console.log('G-Buffer纹理格式:', {
+console.info('G-Buffer纹理格式:', {
   supportsFloat,
   supportsHalfFloat,
 });
@@ -977,6 +976,8 @@ function render() {
       G-Buffer格式: ${positionFormat}, ${normalFormat}
     `;
   } catch (e) {
+    console.error('更新调试信息时出错:', e);
+
     // 忽略UI更新错误
   }
 
@@ -1050,10 +1051,10 @@ function render() {
       // 在此处添加WebGL调试代码，获取和检查Framebuffer状态
       const framebufferStatus = checkFramebufferStatus(gl, null);
 
-      console.log(`Framebuffer状态检查: ${framebufferStatus ? '正常' : '异常'}`);
+      console.info(`Framebuffer状态检查: ${framebufferStatus ? '正常' : '异常'}`);
     }
   } catch (e) {
-    console.log('无法直接访问WebGL上下文进行调试', e);
+    console.error('无法直接访问WebGL上下文进行调试', e);
   }
 
   // ======== 第一阶段: G-Buffer 绘制 ========
@@ -1090,7 +1091,7 @@ function render() {
 
   const gbufferPass = commandEncoder.beginRenderPass(gbufferPassDescriptor);
 
-  console.log('开始G-Buffer通道渲染', { width: canvas.width, height: canvas.height });
+  console.info('开始G-Buffer通道渲染', { width: canvas.width, height: canvas.height });
 
   gbufferPass.setPipeline(gbufferPipeline);
   gbufferPass.setBindGroup(0, gbufferBindGroup);
@@ -1098,7 +1099,7 @@ function render() {
   gbufferPass.setIndexBuffer(cubeIndexBuffer, RHIIndexFormat.UINT16);
 
   // 记录顶点和索引数量
-  console.log('绘制立方体', {
+  console.info('绘制立方体', {
     vertexCount: cubeVertices.length / 8, // 8 = 位置(3) + 纹理坐标(2) + 法线(3)
     indexCount: cubeIndices.length,
     modelMatrix: modelMatrix.getElements(),
@@ -1106,7 +1107,7 @@ function render() {
 
   gbufferPass.drawIndexed(36);
   gbufferPass.end();
-  console.log('G-Buffer通道渲染完成');
+  console.info('G-Buffer通道渲染完成');
 
   // ======== 第二阶段: 光照处理 ========
   const lightingPassDescriptor = {
@@ -1124,14 +1125,14 @@ function render() {
 
   const lightingPass = commandEncoder.beginRenderPass(lightingPassDescriptor);
 
-  console.log('开始光照处理通道渲染');
+  console.info('开始光照处理通道渲染');
 
   lightingPass.setPipeline(lightingPipeline);
   lightingPass.setBindGroup(0, lightingBindGroup);
   lightingPass.setVertexBuffer(0, quadVertexBuffer);
   lightingPass.setIndexBuffer(quadIndexBuffer, RHIIndexFormat.UINT16);
 
-  console.log('绘制全屏四边形', {
+  console.info('绘制全屏四边形', {
     vertexCount: quadVertices.length / 5, // 5 = 位置(3) + 纹理坐标(2)
     indexCount: quadIndices.length,
     lightPosition: Array.from(lightPosition).slice(0, 3),
@@ -1139,21 +1140,23 @@ function render() {
 
   lightingPass.drawIndexed(6);
   lightingPass.end();
-  console.log('光照处理通道渲染完成');
+  console.info('光照处理通道渲染完成');
 
   // 将最终结果复制到画布
   switch (currentDebugMode) {
     case 0: // 最终渲染
-      commandEncoder.copyTextureToCanvas({
-        source: finalRenderTarget.createView(),
-        destination: canvas,
-      });
+      {
+        commandEncoder.copyTextureToCanvas({
+          source: finalRenderTarget.createView(),
+          destination: canvas,
+        });
 
-      // 更新调试信息
-      const finalInfo = document.getElementById('gbuffer-debug-info');
+        // 更新调试信息
+        const finalInfo = document.getElementById('gbuffer-debug-info');
 
-      if (finalInfo) {
-        finalInfo.textContent = `调试模式: ${debugModes[currentDebugMode]}`;
+        if (finalInfo) {
+          finalInfo.textContent = `调试模式: ${debugModes[currentDebugMode]}`;
+        }
       }
 
       break;
@@ -1183,7 +1186,7 @@ function render() {
 
 // ==================== 处理窗口大小变化 ====================
 window.addEventListener('resize', () => {
-  console.log('窗口大小变化，重新创建渲染目标');
+  console.info('窗口大小变化，重新创建渲染目标');
 
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -1281,23 +1284,23 @@ window.addEventListener('resize', () => {
   projectionMatrix.perspective(45, canvas.width / canvas.height, 0.1, 100.0);
   projectionMatrixBuffer.update(new Float32Array(projectionMatrix.getElements()));
 
-  console.log('渲染目标重建完成，新分辨率:', canvas.width, 'x', canvas.height);
+  console.info('渲染目标重建完成，新分辨率:', canvas.width, 'x', canvas.height);
 });
 
 // 创建一些函数来调试G-Buffer
 function debugRenderPass(commandEncoder, gbufferView, targetView, label) {
   // 创建一个简单的渲染通道，直接将G-Buffer复制到目标
-  const debugPassDescriptor = {
-    colorAttachments: [
-      {
-        view: targetView,
-        loadOp: 'clear',
-        storeOp: 'store',
-        clearColor: [0.0, 0.0, 0.0, 1.0],
-      },
-    ],
-    label: label,
-  };
+  // const debugPassDescriptor = {
+  //   colorAttachments: [
+  //     {
+  //       view: targetView,
+  //       loadOp: 'clear',
+  //       storeOp: 'store',
+  //       clearColor: [0.0, 0.0, 0.0, 1.0],
+  //     },
+  //   ],
+  //   label: label,
+  // };
 
   // 放到屏幕右上角的调试信息
   const debugInfo = document.createElement('div');
@@ -1341,7 +1344,7 @@ document.addEventListener('keydown', (event) => {
 
   // R键重载着色器和管线
   if (event.key === 'r' || event.key === 'R') {
-    console.log('尝试重新创建着色器和管线...');
+    console.info('尝试重新创建着色器和管线...');
     // 这里可以添加重载逻辑
   }
 });

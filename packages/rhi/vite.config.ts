@@ -77,6 +77,7 @@ function configureServerPlugin() {
     const baseUrl: string = `http://${host}:${port}`;
 
     setTimeout(() => {
+      // eslint-disable-next-line no-console
       console.log(`  \x1b[1m\x1b[32m->\x1b[97m Demo: \x1b[0m\x1b[96m${baseUrl}/demo/index.html\x1b[0m`);
     }, 1000);
   };

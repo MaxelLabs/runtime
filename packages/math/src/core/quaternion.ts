@@ -311,7 +311,7 @@ export class Quaternion implements IQuaternion, Poolable {
     const normalizedDirection = Vector3.ZERO.copyFrom(direction).normalize();
 
     // 如果方向向量接近零向量，则返回单位四元数
-    if (normalizedDirection.lengthSquared() < 0.0001) {
+    if (normalizedDirection.getLengthSquared() < 0.0001) {
       return this.identity();
     }
 
@@ -319,7 +319,7 @@ export class Quaternion implements IQuaternion, Poolable {
     const right = Vector3.cross(upVector, normalizedDirection).normalize();
 
     // 如果右向量接近零向量（上向量和方向向量平行），使用一个后备方案
-    if (right.lengthSquared() < 0.0001) {
+    if (right.getLengthSquared() < 0.0001) {
       // 选择一个不与方向向量平行的轴
       const fallbackUp = Math.abs(normalizedDirection.y) > 0.9 ? new Vector3(1, 0, 0) : new Vector3(0, 1, 0);
 

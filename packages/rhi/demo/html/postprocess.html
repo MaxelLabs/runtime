@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>后处理效果Demo - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background: #000;
+      overflow: hidden;
+    }
+    
+    .container {
+      width: 100vw;
+      height: 100vh;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    
+    #J-canvas {
+      display: block;
+      background: #000;
+    }
+    
+    .controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.9);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 12px;
+      min-width: 250px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+    }
+    
+    .controls h3 {
+      margin: 0 0 10px 0;
+      color: #E91E63;
+      font-size: 14px;
+    }
+    
+    .controls p {
+      margin: 5px 0;
+      line-height: 1.4;
+    }
+    
+    .control-group {
+      margin: 10px 0;
+      padding: 8px 0;
+      border-top: 1px solid #333;
+    }
+    
+    .control-group:first-child {
+      border-top: none;
+    }
+    
+    .control-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 5px 0;
+    }
+    
+    .control-item label {
+      font-size: 11px;
+      color: #ccc;
+      min-width: 80px;
+    }
+    
+    .control-item input[type="range"] {
+      background: #333;
+      width: 100px;
+      margin: 0 5px;
+    }
+    
+    .control-item input[type="checkbox"] {
+      margin-left: 10px;
+    }
+    
+    .control-item select {
+      background: #333;
+      border: 1px solid #555;
+      color: white;
+      padding: 2px 5px;
+      border-radius: 3px;
+      width: 120px;
+    }
+    
+    .fps-counter {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.8);
+      color: #00ff00;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    
+    .effect-preview {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      width: 220px;
+    }
+    
+    .preview-item {
+      background: rgba(0,0,0,0.8);
+      border: 1px solid #555;
+      border-radius: 3px;
+      padding: 5px;
+      text-align: center;
+    }
+    
+    .preview-item canvas {
+      width: 100px;
+      height: 60px;
+      border-radius: 2px;
+    }
+    
+    .preview-item label {
+      color: white;
+      font-size: 9px;
+      display: block;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+  </div>
+  
+  <div class="controls">
+    <h3>后处理效果Demo</h3>
+    <p>实时后处理效果链，支持多种图像增强技术</p>
+    
+    <div class="control-group">
+      <div class="control-item">
+        <label>主效果:</label>
+        <select id="mainEffect">
+          <option value="none">无效果</option>
+          <option value="blur">模糊</option>
+          <option value="bloom">光晕</option>
+          <option value="dof">景深</option>
+          <option value="tonemap">色调映射</option>
+          <option value="fxaa">抗锯齿</option>
+        </select>
+      </div>
+    </div>
+    
+    <!-- 模糊效果 -->
+    <div class="control-group" id="blurControls" style="display: none;">
+      <h4 style="color: #ccc; margin: 5px 0;">模糊设置</h4>
+      <div class="control-item">
+        <label>模糊强度:</label>
+        <input type="range" id="blurStrength" min="0" max="10" step="0.5" value="2">
+        <span id="blurStrengthValue">2</span>
+      </div>
+      <div class="control-item">
+        <label>模糊类型:</label>
+        <select id="blurType">
+          <option value="gaussian">高斯模糊</option>
+          <option value="box">方框模糊</option>
+          <option value="motion">运动模糊</option>
+        </select>
+      </div>
+    </div>
+    
+    <!-- 光晕效果 -->
+    <div class="control-group" id="bloomControls" style="display: none;">
+      <h4 style="color: #ccc; margin: 5px 0;">光晕设置</h4>
+      <div class="control-item">
+        <label>阈值:</label>
+        <input type="range" id="bloomThreshold" min="0.5" max="2" step="0.1" value="1">
+        <span id="bloomThresholdValue">1</span>
+      </div>
+      <div class="control-item">
+        <label>强度:</label>
+        <input type="range" id="bloomIntensity" min="0" max="3" step="0.1" value="1">
+        <span id="bloomIntensityValue">1</span>
+      </div>
+      <div class="control-item">
+        <label>半径:</label>
+        <input type="range" id="bloomRadius" min="0.5" max="3" step="0.1" value="1">
+        <span id="bloomRadiusValue">1</span>
+      </div>
+    </div>
+    
+    <!-- 景深效果 -->
+    <div class="control-group" id="dofControls" style="display: none;">
+      <h4 style="color: #ccc; margin: 5px 0;">景深设置</h4>
+      <div class="control-item">
+        <label>焦距:</label>
+        <input type="range" id="dofFocus" min="0.1" max="10" step="0.1" value="5">
+        <span id="dofFocusValue">5</span>
+      </div>
+      <div class="control-item">
+        <label>光圈:</label>
+        <input type="range" id="dofAperture" min="0.1" max="2" step="0.1" value="0.5">
+        <span id="dofApertureValue">0.5</span>
+      </div>
+      <div class="control-item">
+        <label>焦平面:</label>
+        <input type="range" id="dofFocalLength" min="1" max="20" step="0.5" value="10">
+        <span id="dofFocalLengthValue">10</span>
+      </div>
+    </div>
+    
+    <!-- 色调映射 -->
+    <div class="control-group" id="tonemapControls" style="display: none;">
+      <h4 style="color: #ccc; margin: 5px 0;">色调映射</h4>
+      <div class="control-item">
+        <label>曝光:</label>
+        <input type="range" id="exposure" min="0.1" max="3" step="0.1" value="1">
+        <span id="exposureValue">1</span>
+      </div>
+      <div class="control-item">
+        <label>对比度:</label>
+        <input type="range" id="contrast" min="0.5" max="2" step="0.1" value="1">
+        <span id="contrastValue">1</span>
+      </div>
+      <div class="control-item">
+        <label>饱和度:</label>
+        <input type="range" id="saturation" min="0" max="2" step="0.1" value="1">
+        <span id="saturationValue">1</span>
+      </div>
+    </div>
+    
+    <!-- FXAA抗锯齿 -->
+    <div class="control-group" id="fxaaControls" style="display: none;">
+      <h4 style="color: #ccc; margin: 5px 0;">抗锯齿设置</h4>
+      <div class="control-item">
+        <label>质量:</label>
+        <select id="fxaaQuality">
+          <option value="low">低</option>
+          <option value="medium" selected>中</option>
+          <option value="high">高</option>
+          <option value="ultra">极高</option>
+        </select>
+      </div>
+      <div class="control-item">
+        <label>子像素:</label>
+        <input type="range" id="fxaaSubpixel" min="0" max="1" step="0.1" value="0.5">
+        <span id="fxaaSubpixelValue">0.5</span>
+      </div>
+    </div>
+    
+    <!-- 通用设置 -->
+    <div class="control-group">
+      <h4 style="color: #ccc; margin: 5px 0;">通用设置</h4>
+      <div class="control-item">
+        <label>混合强度:</label>
+        <input type="range" id="effectStrength" min="0" max="1" step="0.1" value="1">
+        <span id="effectStrengthValue">1</span>
+      </div>
+      <div class="control-item">
+        <label>显示原图:</label>
+        <input type="checkbox" id="showOriginal">
+      </div>
+      <div class="control-item">
+        <label>自动旋转:</label>
+        <input type="checkbox" id="autoRotate" checked>
+      </div>
+    </div>
+    
+    <div class="control-group">
+      <p><strong>控制说明:</strong></p>
+      <p>• 鼠标拖拽: 旋转场景</p>
+      <p>• 滚轮: 缩放视角</p>
+      <p>• Tab: 切换效果预览</p>
+      <p>• ESC: 退出演示</p>
+      <p>• F11: 全屏模式</p>
+      <p>• Space: 重置设置</p>
+    </div>
+  </div>
+  
+  <div class="fps-counter" id="fpsCounter">
+    FPS: 60
+  </div>
+  
+  <div class="effect-preview" id="effectPreview" style="display: none;">
+    <div class="preview-item">
+      <canvas id="originalPreview" width="100" height="60"></canvas>
+      <label>原始图像</label>
+    </div>
+    <div class="preview-item">
+      <canvas id="processedPreview" width="100" height="60"></canvas>
+      <label>处理结果</label>
+    </div>
+  </div>
+  
+  <script type="module" src="../src/postprocess.ts"></script>
+</body>
+</html> 

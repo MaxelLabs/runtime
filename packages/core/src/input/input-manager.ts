@@ -143,58 +143,118 @@ export class InputManager extends EventDispatcher {
    */
   private setupEventForwarding(): void {
     // 转发键盘事件
-    this.keyboardManager.on(InputEventType.KEY_DOWN, (event: KeyboardEvent) => {
-      this.dispatchEvent(event);
+    this.keyboardManager.on(InputEventType.KEY_DOWN, {
+      callback: (event: any) => {
+        this.dispatchEvent(event as KeyboardEvent);
+      },
+      priority: 0,
+      once: false,
     });
-    this.keyboardManager.on(InputEventType.KEY_UP, (event: KeyboardEvent) => {
-      this.dispatchEvent(event);
+    this.keyboardManager.on(InputEventType.KEY_UP, {
+      callback: (event: any) => {
+        this.dispatchEvent(event as KeyboardEvent);
+      },
+      priority: 0,
+      once: false,
     });
-    this.keyboardManager.on(InputEventType.KEY_PRESSING, (event: KeyboardEvent) => {
-      this.dispatchEvent(event);
+    this.keyboardManager.on(InputEventType.KEY_PRESSING, {
+      callback: (event: any) => {
+        this.dispatchEvent(event as KeyboardEvent);
+      },
+      priority: 0,
+      once: false,
     });
 
     // 转发指针事件
-    this.pointerManager.on(InputEventType.POINTER_DOWN, (event: PointerEvent) => {
-      this.dispatchEvent(event);
+    this.pointerManager.on(InputEventType.POINTER_DOWN, {
+      callback: (event: any) => {
+        this.dispatchEvent(event as PointerEvent);
+      },
+      priority: 0,
+      once: false,
     });
-    this.pointerManager.on(InputEventType.POINTER_MOVE, (event: PointerEvent) => {
-      this.dispatchEvent(event);
+    this.pointerManager.on(InputEventType.POINTER_MOVE, {
+      callback: (event: any) => {
+        this.dispatchEvent(event as PointerEvent);
+      },
+      priority: 0,
+      once: false,
     });
-    this.pointerManager.on(InputEventType.POINTER_UP, (event: PointerEvent) => {
-      this.dispatchEvent(event);
+    this.pointerManager.on(InputEventType.POINTER_UP, {
+      callback: (event: any) => {
+        this.dispatchEvent(event as PointerEvent);
+      },
+      priority: 0,
+      once: false,
     });
-    this.pointerManager.on(InputEventType.POINTER_CANCEL, (event: PointerEvent) => {
-      this.dispatchEvent(event);
+    this.pointerManager.on(InputEventType.POINTER_CANCEL, {
+      callback: (event: any) => {
+        this.dispatchEvent(event as PointerEvent);
+      },
+      priority: 0,
+      once: false,
     });
 
     // 转发鼠标事件
-    this.pointerManager.on(InputEventType.MOUSE_DOWN, (event: MouseEvent) => {
-      this.dispatchEvent(event);
+    this.pointerManager.on(InputEventType.MOUSE_DOWN, {
+      callback: (event: any) => {
+        this.dispatchEvent(event as MouseEvent);
+      },
+      priority: 0,
+      once: false,
     });
-    this.pointerManager.on(InputEventType.MOUSE_MOVE, (event: MouseEvent) => {
-      this.dispatchEvent(event);
+    this.pointerManager.on(InputEventType.MOUSE_MOVE, {
+      callback: (event: any) => {
+        this.dispatchEvent(event as MouseEvent);
+      },
+      priority: 0,
+      once: false,
     });
-    this.pointerManager.on(InputEventType.MOUSE_UP, (event: MouseEvent) => {
-      this.dispatchEvent(event);
+    this.pointerManager.on(InputEventType.MOUSE_UP, {
+      callback: (event: any) => {
+        this.dispatchEvent(event as MouseEvent);
+      },
+      priority: 0,
+      once: false,
     });
 
     // 转发触摸事件
-    this.pointerManager.on(InputEventType.TOUCH_START, (event: TouchEvent) => {
-      this.dispatchEvent(event);
+    this.pointerManager.on(InputEventType.TOUCH_START, {
+      callback: (event: any) => {
+        this.dispatchEvent(event as TouchEvent);
+      },
+      priority: 0,
+      once: false,
     });
-    this.pointerManager.on(InputEventType.TOUCH_MOVE, (event: TouchEvent) => {
-      this.dispatchEvent(event);
+    this.pointerManager.on(InputEventType.TOUCH_MOVE, {
+      callback: (event: any) => {
+        this.dispatchEvent(event as TouchEvent);
+      },
+      priority: 0,
+      once: false,
     });
-    this.pointerManager.on(InputEventType.TOUCH_END, (event: TouchEvent) => {
-      this.dispatchEvent(event);
+    this.pointerManager.on(InputEventType.TOUCH_END, {
+      callback: (event: any) => {
+        this.dispatchEvent(event as TouchEvent);
+      },
+      priority: 0,
+      once: false,
     });
-    this.pointerManager.on(InputEventType.TOUCH_CANCEL, (event: TouchEvent) => {
-      this.dispatchEvent(event);
+    this.pointerManager.on(InputEventType.TOUCH_CANCEL, {
+      callback: (event: any) => {
+        this.dispatchEvent(event as TouchEvent);
+      },
+      priority: 0,
+      once: false,
     });
 
     // 转发滚轮事件
-    this.wheelManager.on(InputEventType.MOUSE_WHEEL, (event: MouseEvent) => {
-      this.dispatchEvent(event);
+    this.wheelManager.on(InputEventType.MOUSE_WHEEL, {
+      callback: (event: any) => {
+        this.dispatchEvent(event as MouseEvent);
+      },
+      priority: 0,
+      once: false,
     });
   }
 

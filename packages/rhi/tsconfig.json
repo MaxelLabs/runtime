@@ -15,7 +15,7 @@
     "types": ["@types/jest", "@types/node"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test/**/*"],
+  "exclude": ["node_modules", "demo", "dist", "test/**/*", "vite.config.ts", "jest.config.ts"],
   "references": [
     {
       "path": "../math"

@@ -1,6 +1,5 @@
 import { GLState } from '../../src/webgl/GLState';
 import { GLConstants } from '../../src/webgl/GLConstants';
-import { expect } from '@jest/globals';
 
 describe('GLState', () => {
   let state: GLState;

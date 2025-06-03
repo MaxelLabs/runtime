@@ -4,15 +4,17 @@
  * 用于渲染透明的几何体，后到前排序
  */
 
-import type {
-  IRHIDevice,
-  IRHIRenderPass,
-  IRHIRenderPipeline,
-  IRHIBindGroup,
-  IRHIShaderModule,
-  IRHIBindGroupLayout,
-  IRHIPipelineLayout,
+import {
+  type IRHIDevice,
+  type IRHIRenderPass,
+  type IRHIRenderPipeline,
+  type IRHIBindGroup,
+  type IRHIShaderModule,
+  type IRHIBindGroupLayout,
+  type IRHIPipelineLayout,
+  RHITextureFormat,
 } from '../../interface/rhi';
+import { RHIPrimitiveTopology, RHICullMode, RHIFrontFace, RHICompareFunction } from '@maxellabs/math';
 import type { Camera } from '../../camera/camera';
 import type { RenderElement } from '../render-element';
 import { RenderPassBase, type RenderPassConfig } from './render-pass-base';
@@ -47,7 +49,7 @@ export interface TransparentPassConfig extends RenderPassConfig {
  * 按后到前的顺序渲染透明几何体，确保正确的混合效果
  */
 export class TransparentPass extends RenderPassBase {
-  private config: Required<TransparentPassConfig>;
+  protected override config: Required<TransparentPassConfig>;
   private pipelineCache = new Map<string, IRHIRenderPipeline>();
   private bindGroupCache = new Map<string, IRHIBindGroup[]>();
 
@@ -80,6 +82,7 @@ export class TransparentPass extends RenderPassBase {
       this.vertexShader = this.device.createShaderModule({
         code: this.getTransparentVertexShaderCode(),
         language: 'glsl',
+        stage: 'vertex',
         label: 'TransparentPass-VertexShader',
       });
 
@@ -87,6 +90,7 @@ export class TransparentPass extends RenderPassBase {
       this.fragmentShader = this.device.createShaderModule({
         code: this.getTransparentFragmentShaderCode(),
         language: 'glsl',
+        stage: 'fragment',
         label: 'TransparentPass-FragmentShader',
       });
 
@@ -316,16 +320,19 @@ export class TransparentPass extends RenderPassBase {
       pipeline = this.device.createRenderPipeline({
         vertexShader: this.vertexShader,
         fragmentShader: this.fragmentShader,
-        vertexLayout: mesh.getVertexLayout(),
-        primitiveTopology: 'triangle-list',
+        vertexLayout: {
+          buffers: mesh.getVertexLayout(),
+        },
+        primitiveTopology: RHIPrimitiveTopology.TRIANGLE_LIST,
         layout: this.pipelineLayout,
         rasterizationState: {
-          cullMode: 'none', // 透明物体通常不剔除背面
-          frontFace: 'ccw',
+          cullMode: RHICullMode.NONE, // 透明物体通常不剔除背面
+          frontFace: RHIFrontFace.CCW,
         },
         depthStencilState: {
           depthWriteEnabled: this.config.enableDepthWrite,
-          depthCompare: 'less-equal',
+          depthCompare: RHICompareFunction.LESS_EQUAL,
+          format: RHITextureFormat.DEPTH24_UNORM_STENCIL8,
         },
         colorBlendState,
         label: `TransparentPass-Pipeline-${pipelineKey}`,

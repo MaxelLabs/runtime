@@ -3,11 +3,10 @@
  * 包含所有RHI资源描述符的类型定义
  */
 
-import type { IRHIBindGroupLayout } from '../bindings';
-import type { IRHIPipelineLayout } from '../pipeline';
-import type { IRHIShaderModule } from '../resources';
-import type { RHIBufferUsage, RHITextureFormat, RHITextureUsage, RHIPrimitiveTopology } from './enums';
+import type { IRHIShaderModule, IRHIBindGroupLayout, IRHIPipelineLayout } from '../index';
+import type { RHIBufferUsage, RHITextureFormat, RHITextureUsage } from './enums';
 import type { RHIVertexLayout, RHIColorBlendState, RHIDepthStencilState, RHIRasterizationState } from './states';
+import type { RHIPrimitiveTopology } from '@maxellabs/math';
 
 /**
  * 缓冲区描述符

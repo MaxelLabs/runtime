@@ -356,7 +356,7 @@ export class Vector3 implements IVector3, Poolable {
    * 向量长度
    * @returns 长度
    */
-  length(): number {
+  getLength(): number {
     const e = this.elements;
     const x = e[0],
       y = e[1],
@@ -369,7 +369,7 @@ export class Vector3 implements IVector3, Poolable {
    * 向量长度平方
    * @returns 长度平方
    */
-  lengthSquared(): number {
+  getLengthSquared(): number {
     return this.x * this.x + this.y * this.y + this.z * this.z;
   }
 
@@ -936,7 +936,7 @@ export class Vector3 implements IVector3, Poolable {
    * @returns 归一化后的新向量
    */
   normalized(): Vector3 {
-    const len = this.length();
+    const len = this.getLength();
 
     if (len < NumberEpsilon) {
       return Vector3.create();

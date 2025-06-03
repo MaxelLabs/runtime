@@ -124,7 +124,7 @@ export class ForwardRenderer extends Renderer {
       }
 
       // 构建渲染队列
-      this.renderQueue.build(scene, camera);
+      this.renderQueue.buildQueue(scene, camera);
 
       // 获取渲染元素
       const opaqueElements = this.renderQueue.getOpaqueElements();
@@ -281,16 +281,17 @@ export class ForwardRenderer extends Renderer {
     Object.assign(this.config, newConfig);
 
     // 更新渲染通道配置
-    this.opaquePass.updateConfig({
-      clearColor: this.config.clearColor,
-      clearDepth: this.config.clearDepth,
-      renderTarget: this.config.renderTarget,
-    });
+    if (newConfig.opaquePass) {
+      this.opaquePass.updateConfig(newConfig.opaquePass);
+    }
 
-    this.transparentPass.updateConfig({
-      blendMode: this.config.transparentBlendMode,
-      renderTarget: this.config.renderTarget,
-    });
+    if (newConfig.transparentPass) {
+      this.transparentPass.updateConfig(newConfig.transparentPass);
+    }
+
+    if (newConfig.renderQueue) {
+      this.renderQueue.updateConfig(newConfig.renderQueue);
+    }
 
     super.updateConfig(newConfig);
   }

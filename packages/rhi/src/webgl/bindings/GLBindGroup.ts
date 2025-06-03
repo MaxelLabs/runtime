@@ -28,150 +28,140 @@ function applyKnownUniformFromBufferData(
     // 检查GLBuffer是否提供了类型信息
     const typeInfo = glBuffer?.getTypeInfo?.();
 
-    if (typeInfo && (typeInfo.uniformName === uniformName || uniformName.endsWith(typeInfo.uniformName || ''))) {
+    if (typeInfo && typeInfo.uniformType) {
       // 使用类型信息设置uniform
       const type = typeInfo.uniformType;
 
-      if (type) {
+      // 处理string类型的uniformType（新的格式）
+      if (typeof type === 'string') {
+        switch (type) {
+          case 'float':
+            gl.uniform1f(location, new Float32Array(data, 0, 1)[0]);
+            return;
+          case 'vec2':
+            gl.uniform2fv(location, new Float32Array(data, 0, 2));
+            return;
+          case 'vec3':
+            gl.uniform3fv(location, new Float32Array(data, 0, 3));
+            return;
+          case 'vec4':
+            gl.uniform4fv(location, new Float32Array(data, 0, 4));
+            return;
+          case 'mat2':
+            gl.uniformMatrix2fv(location, false, new Float32Array(data, 0, 4));
+            return;
+          case 'mat3':
+            gl.uniformMatrix3fv(location, false, new Float32Array(data, 0, 9));
+            return;
+          case 'mat4':
+            gl.uniformMatrix4fv(location, false, new Float32Array(data, 0, 16));
+            return;
+          case 'int':
+            gl.uniform1i(location, new Int32Array(data, 0, 1)[0]);
+            return;
+          default:
+            console.warn(`未知的string类型uniformType: ${type} 用于 ${uniformName}`);
+        }
+      } else {
+        // 处理enum类型的uniformType（旧的格式）
         switch (type) {
           // 矩阵类型
           case UniformType.FLOAT_MAT2:
             gl.uniformMatrix2fv(location, false, new Float32Array(data, 0, 4));
-
-            break;
+            return;
           case UniformType.FLOAT_MAT3:
             gl.uniformMatrix3fv(location, false, new Float32Array(data, 0, 9));
-
-            break;
+            return;
           case UniformType.FLOAT_MAT4:
             gl.uniformMatrix4fv(location, false, new Float32Array(data, 0, 16));
-
-            break;
+            return;
           // 向量类型
           case UniformType.FLOAT:
             gl.uniform1f(location, new Float32Array(data, 0, 1)[0]);
-
-            break;
+            return;
           case UniformType.FLOAT_VEC2:
             gl.uniform2fv(location, new Float32Array(data, 0, 2));
-
-            break;
+            return;
           case UniformType.FLOAT_VEC3:
             gl.uniform3fv(location, new Float32Array(data, 0, 3));
-
-            break;
+            return;
           case UniformType.FLOAT_VEC4:
             gl.uniform4fv(location, new Float32Array(data, 0, 4));
-
-            break;
+            return;
           // 整数类型
           case UniformType.INT:
             gl.uniform1i(location, new Int32Array(data, 0, 1)[0]);
-
-            break;
+            return;
           case UniformType.INT_VEC2:
             gl.uniform2iv(location, new Int32Array(data, 0, 2));
-
-            break;
+            return;
           case UniformType.INT_VEC3:
             gl.uniform3iv(location, new Int32Array(data, 0, 3));
-
-            break;
+            return;
           case UniformType.INT_VEC4:
             gl.uniform4iv(location, new Int32Array(data, 0, 4));
-
-            break;
+            return;
           default:
-            console.warn(`未处理的uniform类型: ${type} 用于 ${uniformName}`);
+            console.warn(`未处理的enum类型uniformType: ${type} 用于 ${uniformName}`);
         }
-
-        return;
       }
     }
 
     // 基于名称的自动检测 (向后兼容)
     const isMatrix = uniformName.includes('Matrix');
-    const isVector =
-      uniformName.includes('Position') ||
-      uniformName.includes('Direction') ||
-      uniformName.includes('Color') ||
-      uniformName.includes('Factor');
+    const isFloat = uniformName === 'uTime' || uniformName === 'uMixFactor' || uniformName.includes('Factor');
 
     if (isMatrix) {
-      // 检查矩阵大小 - 假设是4x4矩阵
+      // 矩阵uniform处理 - 假设是4x4矩阵
       if (data.byteLength >= 64) {
         const matrixData = new Float32Array(data, 0, 16);
-
-        console.debug(`设置${uniformName}矩阵:`, Array.from(matrixData).slice(0, 4) + '...');
         gl.uniformMatrix4fv(location, false, matrixData);
+        return;
       } else {
         console.error(`矩阵${uniformName}的缓冲区数据过小: ${data.byteLength} 字节`);
+        return;
       }
-    } else if (isVector) {
-      // 检测向量维度
-      if (data.byteLength >= 12) {
-        // 假设是vec3
-        const vecData = new Float32Array(data, 0, 3);
+    }
 
-        console.debug(`设置${uniformName}向量:`, Array.from(vecData));
-        gl.uniform3fv(location, vecData);
-      } else if (data.byteLength >= 8) {
-        // 假设是vec2
-        const vecData = new Float32Array(data, 0, 2);
-
-        console.debug(`设置${uniformName}向量:`, Array.from(vecData));
-        gl.uniform2fv(location, vecData);
-      } else if (data.byteLength >= 16) {
-        // 假设是vec4
-        const vecData = new Float32Array(data, 0, 4);
-
-        console.debug(`设置${uniformName}向量:`, Array.from(vecData));
-        gl.uniform4fv(location, vecData);
-      }
-    } else if (uniformName === 'uTime') {
+    if (isFloat) {
+      // 浮点数uniform处理
       if (data.byteLength >= 4) {
-        const timeData = new Float32Array(data, 0, 1);
-
-        console.debug(`设置${uniformName}:`, timeData[0]);
-        gl.uniform1f(location, timeData[0]);
+        const floatData = new Float32Array(data, 0, 1);
+        gl.uniform1f(location, floatData[0]);
+        return;
       } else {
         console.error(`浮点数${uniformName}的缓冲区数据过小: ${data.byteLength} 字节`);
+        return;
       }
+    }
+
+    // 如果以上都不匹配，尝试基于数据大小猜测类型
+    if (data.byteLength >= 64) {
+      // 可能是4x4矩阵
+      const matrixData = new Float32Array(data, 0, 16);
+      gl.uniformMatrix4fv(location, false, matrixData);
+    } else if (data.byteLength >= 36) {
+      // 可能是3x3矩阵
+      const matrixData = new Float32Array(data, 0, 9);
+      gl.uniformMatrix3fv(location, false, matrixData);
+    } else if (data.byteLength >= 16) {
+      // 可能是vec4
+      const vecData = new Float32Array(data, 0, 4);
+      gl.uniform4fv(location, vecData);
+    } else if (data.byteLength >= 12) {
+      // 可能是vec3
+      const vecData = new Float32Array(data, 0, 3);
+      gl.uniform3fv(location, vecData);
+    } else if (data.byteLength >= 8) {
+      // 可能是vec2
+      const vecData = new Float32Array(data, 0, 2);
+      gl.uniform2fv(location, vecData);
+    } else if (data.byteLength >= 4) {
+      // 可能是float
+      const floatData = new Float32Array(data, 0, 1);
+      gl.uniform1f(location, floatData[0]);
     } else {
-      // 尝试基于数据大小猜测类型
-      if (data.byteLength >= 64) {
-        // 可能是矩阵
-        const matrixData = new Float32Array(data, 0, 16);
-
-        console.debug(`设置${uniformName}(推测为矩阵):`, Array.from(matrixData).slice(0, 4) + '...');
-        gl.uniformMatrix4fv(location, false, matrixData);
-      } else if (data.byteLength >= 12) {
-        // 可能是vec3
-        const vecData = new Float32Array(data, 0, 3);
-
-        console.debug(`设置${uniformName}(推测为vec3):`, Array.from(vecData));
-        gl.uniform3fv(location, vecData);
-      } else if (data.byteLength >= 8) {
-        // 可能是vec2
-        const vecData = new Float32Array(data, 0, 2);
-
-        console.debug(`设置${uniformName}(推测为vec2):`, Array.from(vecData));
-        gl.uniform2fv(location, vecData);
-      } else if (data.byteLength >= 16) {
-        // 可能是vec4
-        const vecData = new Float32Array(data, 0, 4);
-
-        console.debug(`设置${uniformName}(推测为vec4):`, Array.from(vecData));
-        gl.uniform4fv(location, vecData);
-      } else if (data.byteLength >= 4) {
-        // 可能是float
-        const floatData = new Float32Array(data, 0, 1);
-
-        console.debug(`设置${uniformName}(推测为float):`, floatData[0]);
-        gl.uniform1f(location, floatData[0]);
-      } else {
-        console.warn(`无法从缓冲区应用uniform: 未知的uniform名称 '${uniformName}'。提供类型信息可解决此问题`);
-      }
+      console.warn(`无法从缓冲区应用uniform: 数据大小过小 ${data.byteLength} 字节，uniform名称: '${uniformName}'`);
     }
   } catch (e) {
     console.error(`设置uniform ${uniformName} 时出错:`, e);
