@@ -194,6 +194,128 @@ main();
 - 包含控制面板用于调整参数
 - 支持全屏模式
 
+## 常见问题和最佳实践
+
+### 1. Uniform缓冲区数据传递问题
+
+**问题描述**: 在texture.ts开发过程中发现，uniform缓冲区的数据没有正确传递到GPU，导致着色器中的uniform值始终为0。
+
+**根本原因**:
+- 直接使用 `matrix.getElements()` 返回的Float32Array可能存在引用问题
+- RHI系统的缓冲区更新可能需要新的Float32Array实例
+
+**解决方案**:
+```typescript
+// ❌ 错误的方式 - 直接使用getElements()
+resources.modelMatrixBuffer.update(resources.modelMatrix.getElements());
+
+// ✅ 正确的方式 - 创建新的Float32Array
+resources.modelMatrixBuffer.update(new Float32Array(resources.modelMatrix.getElements()));
+```
+
+**最佳实践**:
+1. 始终使用 `new Float32Array()` 包装矩阵数据
+2. 确保在初始化时就设置所有uniform的初始值
+3. 使用WebGL调试工具验证uniform值是否正确传递
+
+### 2. 绑定组布局配置问题
+
+**问题描述**: 使用字符串形式的visibility会导致绑定失败。
+
+**解决方案**:
+```typescript
+// ❌ 错误的方式
+{
+  binding: 0,
+  visibility: 'vertex',  // 字符串形式
+  buffer: { type: 'uniform' }
+}
+
+// ✅ 正确的方式
+{
+  binding: 0,
+  visibility: RHIShaderStage.VERTEX,  // 使用枚举常量
+  buffer: { type: 'uniform' }
+}
+```
+
+**最佳实践**:
+1. 导入并使用 `RHIShaderStage` 枚举
+2. 参考 `basic.ts` 等成功案例的实现方式
+3. 确保绑定组布局与着色器中的uniform声明一致
+
+### 3. 调试技巧
+
+**WebGL调试工具使用**:
+1. 使用Spector.js等工具进行抓帧分析
+2. 检查uniform值是否正确传递
+3. 验证纹理绑定和采样器设置
+4. 监控WebGL命令执行序列
+
+**控制台调试**:
+```typescript
+// 添加调试信息
+console.info('矩阵数据:', Array.from(matrix.getElements()));
+console.info('Uniform值:', uniformValue);
+
+// 定期输出状态
+if (frameCount % 60 === 0) {
+  console.info(`帧数: ${frameCount}, 时间: ${currentTime}`);
+}
+```
+
+### 4. 渲染管线问题排查
+
+**常见问题检查清单**:
+- [ ] 所有required导入是否正确
+- [ ] 绑定组布局是否使用正确的枚举值
+- [ ] uniform缓冲区是否使用new Float32Array包装
+- [ ] 初始化时是否设置了所有uniform的初始值
+- [ ] 着色器源码是否与绑定组布局匹配
+- [ ] 纹理和采样器是否正确绑定
+
+### 5. copyTextureToCanvas问题
+
+**问题描述**: copyTextureToCanvas显示的是原始纹理而不是渲染结果。
+
+**可能原因**:
+1. 渲染目标纹理没有正确设置
+2. 片段着色器输出有问题
+3. uniform值传递失败导致着色器逻辑错误
+
+**排查步骤**:
+```typescript
+// 1. 验证渲染目标纹理配置
+const renderTargetTexture = device.createTexture({
+  width: canvas.width,
+  height: canvas.height,
+  format: RHITextureFormat.RGBA8_UNORM,
+  usage: RHITextureUsage.RENDER_TARGET | RHITextureUsage.SAMPLED,  // 必须包含SAMPLED
+  dimension: '2d',
+});
+
+// 2. 确认渲染通道配置
+const renderPassDescriptor = {
+  colorAttachments: [{
+    view: renderTargetTexture.createView(),  // 渲染到正确的纹理
+    loadOp: 'clear' as const,
+    storeOp: 'store' as const,
+    clearColor: [0, 0, 0, 1.0] as [number, number, number, number],
+  }],
+};
+
+// 3. 验证copyTextureToCanvas调用
+commandEncoder.copyTextureToCanvas({
+  source: renderTargetTexture.createView(),  // 确保使用正确的源纹理
+  destination: canvas,
+});
+```
+
+**最佳实践**:
+1. 先确保uniform值正确传递
+2. 使用简化的片段着色器测试基本功能
+3. 逐步添加复杂的渲染效果
+
 ## 着色器规范
 
 ### 1. 着色器命名

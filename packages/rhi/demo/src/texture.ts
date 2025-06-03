@@ -12,6 +12,7 @@ import {
   RHITextureFormat,
   RHITextureUsage,
   RHIIndexFormat,
+  RHIShaderStage,
 } from '@maxellabs/core';
 import { WebGLDevice } from '../../src/webgl/GLDevice';
 import { Matrix4, Vector3 } from '@maxellabs/math';
@@ -87,24 +88,25 @@ void main() {
 `;
 
 /**
- * 生成棋盘格纹理
+ * 生成红蓝条纹纹理（替代棋盘格）
  */
-function generateCheckerboardTexture(size: number, checkSize: number): Uint8Array {
+function generateRedBlueStripesTexture(size: number, stripeWidth: number): Uint8Array {
   const data = new Uint8Array(size * size * 4);
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const index = (y * size + x) * 4;
-      const isWhite = (Math.floor(x / checkSize) % 2 === 0) !== (Math.floor(y / checkSize) % 2 === 0);
+      // 创建垂直红蓝条纹
+      const isRed = Math.floor(x / stripeWidth) % 2 === 0;
 
-      if (isWhite) {
-        data[index] = 255; // R
-        data[index + 1] = 255; // G
-        data[index + 2] = 255; // B
-      } else {
-        data[index] = 0; // R
+      if (isRed) {
+        data[index] = 255; // R - 红色
         data[index + 1] = 0; // G
         data[index + 2] = 0; // B
+      } else {
+        data[index] = 0; // R
+        data[index + 1] = 0; // G - 蓝色
+        data[index + 2] = 255; // B
       }
       data[index + 3] = 255; // A
     }
@@ -307,17 +309,17 @@ async function init(): Promise<void> {
   // ===== 第7步：创建纹理资源 =====
   const textureSize = 256;
 
-  // 生成并创建棋盘格纹理
-  const checkerboardData = generateCheckerboardTexture(textureSize, 32);
+  // 生成并创建红蓝条纹纹理
+  const redBlueStripesData = generateRedBlueStripesTexture(textureSize, 32);
   const texture1 = device.createTexture({
     width: textureSize,
     height: textureSize,
     format: RHITextureFormat.RGBA8_UNORM,
     usage: RHITextureUsage.SAMPLED | RHITextureUsage.COPY_DST,
     dimension: '2d',
-    label: 'Checkerboard Texture',
+    label: 'Red Blue Stripes Texture',
   });
-  texture1.update(checkerboardData);
+  texture1.update(redBlueStripesData);
 
   // 生成并创建渐变纹理
   const gradientData = generateGradientTexture(textureSize);
@@ -340,6 +342,25 @@ async function init(): Promise<void> {
     usage: RHIBufferUsage.UNIFORM,
     hint: 'dynamic',
     label: 'Time Buffer',
+    extension: {
+      typeInfo: {
+        uniformName: 'uTime',
+        uniformType: 'float',
+      },
+    },
+  });
+
+  const mixFactorBuffer = device.createBuffer({
+    size: 4, // 单个float
+    usage: RHIBufferUsage.UNIFORM,
+    hint: 'dynamic',
+    label: 'Mix Factor Buffer',
+    extension: {
+      typeInfo: {
+        uniformName: 'uMixFactor',
+        uniformType: 'float',
+      },
+    },
   });
 
   // ===== 第9步：创建绑定组布局和绑定组 =====
@@ -349,7 +370,7 @@ async function init(): Promise<void> {
       // 模型矩阵
       {
         binding: 0,
-        visibility: 'vertex',
+        visibility: RHIShaderStage.VERTEX,
         name: 'uModelMatrix',
         buffer: {
           type: 'uniform',
@@ -358,7 +379,7 @@ async function init(): Promise<void> {
       // 视图矩阵
       {
         binding: 1,
-        visibility: 'vertex',
+        visibility: RHIShaderStage.VERTEX,
         name: 'uViewMatrix',
         buffer: {
           type: 'uniform',
@@ -367,7 +388,7 @@ async function init(): Promise<void> {
       // 投影矩阵
       {
         binding: 2,
-        visibility: 'vertex',
+        visibility: RHIShaderStage.VERTEX,
         name: 'uProjectionMatrix',
         buffer: {
           type: 'uniform',
@@ -376,7 +397,7 @@ async function init(): Promise<void> {
       // 时间uniform
       {
         binding: 3,
-        visibility: 'fragment',
+        visibility: RHIShaderStage.FRAGMENT,
         name: 'uTime',
         buffer: {
           type: 'uniform',
@@ -385,7 +406,7 @@ async function init(): Promise<void> {
       // 混合因子uniform
       {
         binding: 4,
-        visibility: 'fragment',
+        visibility: RHIShaderStage.FRAGMENT,
         name: 'uMixFactor',
         buffer: {
           type: 'uniform',
@@ -394,7 +415,7 @@ async function init(): Promise<void> {
       // 纹理1
       {
         binding: 5,
-        visibility: 'fragment',
+        visibility: RHIShaderStage.FRAGMENT,
         name: 'uTexture1',
         texture: {
           sampleType: 'float',
@@ -404,16 +425,33 @@ async function init(): Promise<void> {
       // 纹理2
       {
         binding: 6,
-        visibility: 'fragment',
+        visibility: RHIShaderStage.FRAGMENT,
         name: 'uTexture2',
         texture: {
           sampleType: 'float',
           viewDimension: '2d',
         },
       },
+      // 纹理采样器
+      {
+        binding: 7,
+        visibility: RHIShaderStage.FRAGMENT,
+        sampler: { type: 'filtering' },
+        name: 'uTextureSampler',
+      },
     ],
     'Texture BindGroup Layout'
   );
+
+  // 创建采样器
+  const sampler = device.createSampler({
+    magFilter: 'linear',
+    minFilter: 'linear',
+    mipmapFilter: 'linear',
+    addressModeU: 'repeat',
+    addressModeV: 'repeat',
+    label: 'Texture Sampler',
+  });
 
   // 创建分离的uniform缓冲区
   const modelMatrixBuffer = device.createBuffer({
@@ -421,6 +459,12 @@ async function init(): Promise<void> {
     usage: RHIBufferUsage.UNIFORM,
     hint: 'dynamic',
     label: 'Model Matrix Buffer',
+    extension: {
+      typeInfo: {
+        uniformName: 'uModelMatrix',
+        uniformType: 'mat4',
+      },
+    },
   });
 
   const viewMatrixBuffer = device.createBuffer({
@@ -428,6 +472,12 @@ async function init(): Promise<void> {
     usage: RHIBufferUsage.UNIFORM,
     hint: 'dynamic',
     label: 'View Matrix Buffer',
+    extension: {
+      typeInfo: {
+        uniformName: 'uViewMatrix',
+        uniformType: 'mat4',
+      },
+    },
   });
 
   const projectionMatrixBuffer = device.createBuffer({
@@ -435,26 +485,26 @@ async function init(): Promise<void> {
     usage: RHIBufferUsage.UNIFORM,
     hint: 'dynamic',
     label: 'Projection Matrix Buffer',
-  });
-
-  const mixFactorBuffer = device.createBuffer({
-    size: 4, // 单个float
-    usage: RHIBufferUsage.UNIFORM,
-    hint: 'dynamic',
-    label: 'Mix Factor Buffer',
+    extension: {
+      typeInfo: {
+        uniformName: 'uProjectionMatrix',
+        uniformType: 'mat4',
+      },
+    },
   });
 
   // 创建绑定组
   const bindGroup = device.createBindGroup(
     bindGroupLayout,
     [
-      { binding: 0, resource: { buffer: modelMatrixBuffer } },
-      { binding: 1, resource: { buffer: viewMatrixBuffer } },
-      { binding: 2, resource: { buffer: projectionMatrixBuffer } },
-      { binding: 3, resource: { buffer: timeBuffer } },
-      { binding: 4, resource: { buffer: mixFactorBuffer } },
+      { binding: 0, resource: modelMatrixBuffer },
+      { binding: 1, resource: viewMatrixBuffer },
+      { binding: 2, resource: projectionMatrixBuffer },
+      { binding: 3, resource: timeBuffer },
+      { binding: 4, resource: mixFactorBuffer },
       { binding: 5, resource: texture1.createView() },
       { binding: 6, resource: texture2.createView() },
+      { binding: 7, resource: sampler },
     ],
     'Texture BindGroup'
   );
@@ -482,6 +532,7 @@ async function init(): Promise<void> {
     format: RHITextureFormat.RGBA8_UNORM,
     usage: RHITextureUsage.RENDER_TARGET | RHITextureUsage.SAMPLED,
     dimension: '2d',
+    label: 'Render Target Texture',
   });
 
   // ===== 第12步：初始化3D变换矩阵 =====
@@ -507,14 +558,22 @@ async function init(): Promise<void> {
 
   // ===== 初始化矩阵缓冲区数据 =====
   // 立即更新矩阵缓冲区，确保初始数据正确传递到GPU
-  modelMatrixBuffer.update(modelMatrix.getElements());
-  viewMatrixBuffer.update(viewMatrix.getElements());
-  projectionMatrixBuffer.update(projectionMatrix.getElements());
+  modelMatrixBuffer.update(new Float32Array(modelMatrix.getElements()));
+  viewMatrixBuffer.update(new Float32Array(viewMatrix.getElements()));
+  projectionMatrixBuffer.update(new Float32Array(projectionMatrix.getElements()));
+
+  // 初始化时间和混合因子缓冲区
+  const initialTimeData = new Float32Array([0.0]);
+  const initialMixFactorData = new Float32Array([0.5]); // 初始混合因子设为0.5
+  timeBuffer.update(initialTimeData);
+  mixFactorBuffer.update(initialMixFactorData);
 
   // 调试：打印矩阵数据
   console.info('模型矩阵:', Array.from(modelMatrix.getElements()));
   console.info('视图矩阵:', Array.from(viewMatrix.getElements()));
   console.info('投影矩阵:', Array.from(projectionMatrix.getElements()));
+  console.info('初始时间:', initialTimeData[0]);
+  console.info('初始混合因子:', initialMixFactorData[0]);
 
   console.info('矩阵初始化完成，数据已同步到GPU');
 
@@ -533,6 +592,7 @@ async function init(): Promise<void> {
     modelMatrix,
     viewMatrix,
     projectionMatrix,
+    renderTargetTexture,
     indexCount: indices.length,
   };
 
@@ -555,14 +615,14 @@ function render(): void {
     // ===== 渲染步骤1：更新动画数据 =====
     // 更新模型矩阵（旋转动画）
     resources.modelMatrix.identity();
-    resources.modelMatrix.rotateY(currentTime * 0.5); // Y轴旋转
+    resources.modelMatrix.rotateY(currentTime * 0.1); // Y轴旋转
     resources.modelMatrix.rotateX(Math.sin(currentTime) * 0.3); // X轴摆动
 
     // ===== 渲染步骤2：更新Uniform缓冲区 =====
-    // 直接使用getElements()获取矩阵内部的Float32Array数据
-    resources.modelMatrixBuffer.update(resources.modelMatrix.getElements());
-    resources.viewMatrixBuffer.update(resources.viewMatrix.getElements());
-    resources.projectionMatrixBuffer.update(resources.projectionMatrix.getElements());
+    // 按照basic.ts的成功模式，使用new Float32Array包装数据
+    resources.modelMatrixBuffer.update(new Float32Array(resources.modelMatrix.getElements()));
+    resources.viewMatrixBuffer.update(new Float32Array(resources.viewMatrix.getElements()));
+    resources.projectionMatrixBuffer.update(new Float32Array(resources.projectionMatrix.getElements()));
 
     // 更新时间uniform缓冲区
     const timeData = new Float32Array([currentTime]);
@@ -571,6 +631,11 @@ function render(): void {
     // 更新混合因子uniform缓冲区
     const mixFactorData = new Float32Array([(Math.sin(currentTime * 0.8) + 1) * 0.5]);
     resources.mixFactorBuffer.update(mixFactorData);
+
+    // 调试信息：每秒打印一次状态
+    if (Math.floor(currentTime) !== Math.floor(currentTime - 1 / 60)) {
+      console.info(`渲染状态 - 时间: ${currentTime.toFixed(2)}, 混合因子: ${mixFactorData[0].toFixed(3)}`);
+    }
 
     // ===== 渲染步骤3：创建命令编码器 =====
     // 开始记录渲染命令
@@ -581,7 +646,7 @@ function render(): void {
     const renderPassDescriptor = {
       colorAttachments: [
         {
-          view: renderTargetTexture.createView(), // 渲染到纹理
+          view: resources.renderTargetTexture.createView(), // 渲染到纹理
           loadOp: 'clear' as const, // 清除颜色缓冲区
           storeOp: 'store' as const, // 保存渲染结果
           clearColor: [0, 0, 0, 1.0] as [number, number, number, number], // 深蓝色背景
@@ -617,7 +682,7 @@ function render(): void {
     // ===== 渲染步骤11：拷贝到画布 =====
     // 将渲染结果从纹理拷贝到画布显示
     commandEncoder.copyTextureToCanvas({
-      source: renderTargetTexture.createView(),
+      source: resources.renderTargetTexture.createView(),
       destination: canvas,
     });
 
@@ -643,10 +708,27 @@ function setupEventHandlers(): void {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
 
-      // 更新投影矩阵
+      // 获取resources
       const resources = (window as any).textureResources;
       if (resources) {
+        // 销毁之前的渲染目标纹理
+        if (resources.renderTargetTexture) {
+          resources.renderTargetTexture.destroy();
+        }
+
+        // 创建新的渲染目标纹理
+        resources.renderTargetTexture = device.createTexture({
+          width: canvas.width,
+          height: canvas.height,
+          format: RHITextureFormat.RGBA8_UNORM,
+          usage: RHITextureUsage.RENDER_TARGET | RHITextureUsage.SAMPLED,
+          dimension: '2d',
+          label: 'Render Target Texture',
+        });
+
+        // 更新投影矩阵
         resources.projectionMatrix.perspective((45 * Math.PI) / 180, canvas.width / canvas.height, 0.1, 100.0);
+        resources.projectionMatrixBuffer.update(new Float32Array(resources.projectionMatrix.getElements()));
       }
     }
   });
@@ -700,6 +782,7 @@ function cleanup(): void {
     resources.projectionMatrixBuffer?.destroy();
     resources.timeBuffer?.destroy();
     resources.mixFactorBuffer?.destroy();
+    resources.renderTargetTexture?.destroy();
     (window as any).textureResources = null;
   }
 

@@ -653,7 +653,6 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
   private executeCopyTextureToCanvas(params: any): void {
     const { source } = params;
     const gl = this.gl;
-
     // 绑定到默认帧缓冲区（画布）
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
@@ -683,22 +682,45 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
 
     // 创建着色器
     const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-
     gl.shaderSource(vertexShader, vertexShaderSource);
     gl.compileShader(vertexShader);
 
-    const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+    // 检查顶点着色器编译状态
+    if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+      const error = gl.getShaderInfoLog(vertexShader);
+      console.error('顶点着色器编译失败:', error);
+      gl.deleteShader(vertexShader);
+      return;
+    }
 
+    const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(fragmentShader, fragmentShaderSource);
     gl.compileShader(fragmentShader);
 
+    // 检查片段着色器编译状态
+    if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+      const error = gl.getShaderInfoLog(fragmentShader);
+      console.error('片段着色器编译失败:', error);
+      gl.deleteShader(vertexShader);
+      gl.deleteShader(fragmentShader);
+      return;
+    }
+
     // 创建程序
     const program = gl.createProgram();
-
     gl.attachShader(program, vertexShader);
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
 
+    // 检查程序链接状态
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      const error = gl.getProgramInfoLog(program);
+      console.error('着色器程序链接失败:', error);
+      gl.deleteShader(vertexShader);
+      gl.deleteShader(fragmentShader);
+      gl.deleteProgram(program);
+      return;
+    }
     // 使用程序
     gl.useProgram(program);
 
@@ -725,38 +747,42 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
 
     // 创建缓冲区
     const vertexBuffer = gl.createBuffer();
-
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
 
     // 位置属性
     const positionLoc = gl.getAttribLocation(program, 'a_position');
-
     gl.enableVertexAttribArray(positionLoc);
     gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 16, 0);
 
     // 纹理坐标属性
     const texcoordLoc = gl.getAttribLocation(program, 'a_texcoord');
-
     gl.enableVertexAttribArray(texcoordLoc);
     gl.vertexAttribPointer(texcoordLoc, 2, gl.FLOAT, false, 16, 8);
 
-    // 设置纹理
-    const texture = gl.createTexture();
+    // 绑定源纹理
+    const sourceTexture = source.getGLTexture();
 
-    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, sourceTexture);
+
+    // 设置纹理参数（在源纹理上设置）
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-    // 绑定源纹理
-    const sourceTexture = source.getGLTexture();
-
-    gl.bindTexture(gl.TEXTURE_2D, sourceTexture);
-
+    // 设置纹理uniform（使用纹理单元0）
+    const textureLoc = gl.getUniformLocation(program, 'u_texture');
+    gl.uniform1i(textureLoc, 0);
     // 绘制四边形
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+    // 检查WebGL错误
+    const error = gl.getError();
+    if (error !== gl.NO_ERROR) {
+      console.error('copyTextureToCanvas WebGL错误:', this.getGLErrorString(error));
+    }
 
     // 清理资源
     gl.deleteBuffer(vertexBuffer);
