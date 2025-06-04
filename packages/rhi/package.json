@@ -1,6 +1,6 @@
 {
   "name": "@maxellabs/rhi",
-  "version": "0.0.1",
+  "version": "0.0.7",
   "description": "WebGL渲染层",
   "module": "./dist/index.mjs",
   "main": "./dist/index.js",
@@ -18,9 +18,9 @@
   "scripts": {
     "dev": "vite",
     "prebuild": "pnpm clean",
-    "build": "pnpm build:module",
-    "build:module": "rollup -c",
-    "build:declaration": "echo 'Skipping declaration generation'",
+    "build": "pnpm build:types && pnpm build:js",
+    "build:js": "rollup -c",
+    "build:types": "tsc --build --force",
     "build:old": "pnpm clean && tsc && vite build",
     "clean": "rimraf dist",
     "prepublishOnly": "pnpm build",

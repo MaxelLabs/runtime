@@ -1,21 +1,13 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "noEmit": false,
     "rootDir": "src",
-    "baseUrl": ".",
+    "outDir": "dist",
     "composite": true,
-    "skipLibCheck": true,
-    "noImplicitAny": false,
-    "strict": false,
-    "types": ["@types/jest", "@types/node"]
+    "declaration": true // 生成声明文件
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "demo", "dist", "test/**/*", "vite.config.ts", "jest.config.ts"],
+  "exclude": ["node_modules", "dist", "test/**/*", "**/*.test.ts"],
   "references": [
     {
       "path": "../math"

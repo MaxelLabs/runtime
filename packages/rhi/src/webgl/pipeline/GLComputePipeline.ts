@@ -20,9 +20,9 @@ export class WebGLComputePipeline implements IRHIComputePipeline {
     this.computeShader.destroy();
     this.layout.destroy();
 
-    this.computeShader = null;
-    this.layout = null;
-    this.label = null;
-    this.entryPoint = null;
+    this.computeShader = null as unknown as IRHIShaderModule;
+    this.layout = null as unknown as IRHIPipelineLayout;
+    this.label = '';
+    this.entryPoint = '';
   }
 }

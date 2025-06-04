@@ -323,12 +323,16 @@ export class WebGLRenderPass implements IRHIRenderPass {
     this.currentIndexBuffer = buffer as GLBuffer;
     this.currentIndexFormat = indexFormat;
     this.currentIndexOffset = offset;
+    if (!this.currentIndexBuffer) {
+      console.error('索引缓冲区为空');
+      return;
+    }
 
     // 添加设置索引缓冲区的命令
     this.encoder.addCommand(() => {
       const gl = this.gl;
 
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.currentIndexBuffer.getGLBuffer());
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.currentIndexBuffer!.getGLBuffer());
     });
   }
 
@@ -356,8 +360,8 @@ export class WebGLRenderPass implements IRHIRenderPass {
 
         const glBuffer = (buffer as any).getGLBuffer();
 
-        if (!glBuffer) {
-          console.error('获取WebGL缓冲区对象失败');
+        if (!glBuffer || !this.currentPipeline) {
+          console.error('获取WebGL缓冲区对象失败 或 没有设置渲染管线');
 
           return;
         }
