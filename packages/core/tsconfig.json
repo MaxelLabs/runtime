@@ -6,10 +6,7 @@
     "composite": true,
     "declaration": true // 生成声明文件
   },
-  "include": [
-    "src",
-    "../../types"
-  ],
+  "include": ["src", "../../types"],
   "references": [
     {
       "path": "../math"
