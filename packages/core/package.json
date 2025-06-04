@@ -20,7 +20,7 @@
     "prebuild": "pnpm clean",
     "build": "pnpm build:types && pnpm build:js",
     "build:js": "rollup -c",
-    "build:types": "tsc --emitDeclarationOnly",
+    "build:types": "tsc --build --force --emitDeclarationOnly",
     "clean": "rimraf dist",
     "prepublishOnly": "pnpm build",
     "test": "jest",
