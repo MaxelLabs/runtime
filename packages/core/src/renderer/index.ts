@@ -15,3 +15,6 @@ export * from './render-queue';
 
 // 渲染通道
 export * from './passes';
+
+// 渲染测试（用于验证和示例）
+export * from './render-test';
