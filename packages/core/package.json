@@ -1,6 +1,6 @@
 {
   "name": "@maxellabs/core",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "核心库",
   "module": "./dist/index.mjs",
   "main": "./dist/index.js",

@@ -1,6 +1,6 @@
 {
   "name": "@maxellabs/demo",
-  "version": "1.0.0",
+  "version": "0.0.8",
   "description": "maxellabs demo",
   "type": "module",
   "main": "index.js",
