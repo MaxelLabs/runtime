@@ -1,6 +1,7 @@
 {
   "name": "monorepo-root",
   "private": true,
+  "version": "1.0.0",
   "scripts": {
     "dev": "pnpm --filter @galacean/effects-demo dev",
     "preview": "pnpm --filter @galacean/effects-demo preview",
@@ -26,8 +27,8 @@
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky install",
     "prepublish": "pnpm build",
-    "publish": "pnpm -r publish --no-git-checks --filter \"./packages/**\"",
-    "publish:dry": "pnpm -r publish --dry-run --no-git-checks --filter \"./packages/**\"",
+    "publish": "pnpm -r publish --no-git-checks --filter \"./packages/**\" --access public",
+    "publish:dry": "pnpm -r publish --dry-run --no-git-checks --filter \"./packages/**\" --access public",
     "test:watch": "pnpm --filter \"./packages/**\" test:watch",
     "test:coverage": "pnpm --filter \"./packages/**\" test:coverage"
   },
