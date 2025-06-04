@@ -1,6 +1,6 @@
 {
   "name": "@maxellabs/test",
-  "version": "1.0.0",
+  "version": "0.0.8",
   "description": "WebGL渲染接口性能测试工具",
   "type": "module",
   "main": "index.js",
