@@ -7,7 +7,7 @@
     "declaration": true // 生成声明文件
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "demo", "dist", "test/**/*", "vite.config.ts", "jest.config.ts", "**/*.test.ts"],
+  "exclude": ["node_modules", "dist", "test/**/*", "**/*.test.ts"],
   "references": [
     {
       "path": "../math"
@@ -17,4 +17,3 @@
     }
   ]
 }
-
