@@ -18,9 +18,9 @@
   "scripts": {
     "dev": "vite",
     "prebuild": "pnpm clean",
-    "build": "pnpm build:module",
-    "build:module": "rollup -c",
-    "build:declaration": "echo 'Skipping declaration generation'",
+    "build": "pnpm build:types && pnpm build:js",
+    "build:js": "rollup -c",
+    "build:types": "tsc --emitDeclarationOnly",
     "build:old": "pnpm clean && tsc && vite build",
     "clean": "rimraf dist",
     "prepublishOnly": "pnpm build",
