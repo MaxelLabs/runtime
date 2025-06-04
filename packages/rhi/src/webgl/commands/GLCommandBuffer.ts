@@ -682,6 +682,10 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
 
     // 创建着色器
     const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    if (!vertexShader) {
+      console.error('创建顶点着色器失败');
+      return;
+    }
     gl.shaderSource(vertexShader, vertexShaderSource);
     gl.compileShader(vertexShader);
 
@@ -694,6 +698,10 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
     }
 
     const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+    if (!fragmentShader) {
+      console.error('创建片段着色器失败');
+      return;
+    }
     gl.shaderSource(fragmentShader, fragmentShaderSource);
     gl.compileShader(fragmentShader);
 
@@ -819,7 +827,7 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
 
       // 获取活跃的顶点属性
       const maxAttribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
-      const enabledAttribs = [];
+      const enabledAttribs: number[] = [];
 
       for (let i = 0; i < maxAttribs; i++) {
         if (gl.getVertexAttrib(i, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
