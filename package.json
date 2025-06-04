@@ -26,7 +26,9 @@
     "clean:all": "pnpm clean:artifacts && pnpm clean:declaration && pnpm clean:dist && pnpm clean:nm",
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky install",
+    "prepublish": "pnpm build && pnpm test",
     "publish": "pnpm -r publish --no-git-checks --filter \"./packages/**\"",
+    "publish:dry": "pnpm -r publish --dry-run --filter \"./packages/**\"",
     "test:watch": "pnpm --filter \"./packages/**\" test:watch",
     "test:coverage": "pnpm --filter \"./packages/**\" test:coverage"
   },
