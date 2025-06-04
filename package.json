@@ -1,7 +1,6 @@
 {
   "name": "monorepo-root",
   "private": true,
-  "version": "1.0.0",
   "scripts": {
     "dev": "pnpm --filter @galacean/effects-demo dev",
     "preview": "pnpm --filter @galacean/effects-demo preview",
