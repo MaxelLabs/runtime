@@ -32,6 +32,9 @@
     "test:watch": "pnpm --filter \"./packages/**\" test:watch",
     "test:coverage": "pnpm --filter \"./packages/**\" test:coverage"
   },
+  "commitlint": {
+    "extends": ["@commitlint/config-conventional"]
+  },
   "browserslist": [
     "iOS 9"
   ],

@@ -716,6 +716,10 @@ export class WebGLCommandBuffer implements IRHICommandBuffer {
 
     // 创建程序
     const program = gl.createProgram();
+    if (!program) {
+      console.error('创建着色器程序失败');
+      return;
+    }
     gl.attachShader(program, vertexShader);
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
