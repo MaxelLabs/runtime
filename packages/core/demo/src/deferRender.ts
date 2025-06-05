@@ -11,7 +11,7 @@ import {
   RHIIndexFormat,
   RHIFeatureFlags,
 } from '@maxellabs/core';
-import { WebGLDevice } from '../../src/webgl/GLDevice';
+import { WebGLDevice } from '@maxellabs/rhi';
 import { Matrix4, Vector3 } from '@maxellabs/math';
 
 // 获取画布并调整大小

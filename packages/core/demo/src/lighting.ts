@@ -14,7 +14,7 @@ import {
   RHIIndexFormat,
   RHIShaderStage,
 } from '@maxellabs/core';
-import { WebGLDevice } from '../../src/webgl/GLDevice';
+import { WebGLDevice } from '@maxellabs/rhi';
 import { Matrix4, Vector3 } from '@maxellabs/math';
 
 // 常量定义
@@ -88,13 +88,13 @@ void main() {
   // 世界空间位置
   vec4 worldPosition = uModelMatrix * vec4(aPosition, 1.0);
   vPosition = worldPosition.xyz;
-  
+
   // 世界空间法线
   vNormal = normalize(uNormalMatrix * aNormal);
-  
+
   // 纹理坐标
   vTexCoord = aTexCoord;
-  
+
   // 最终位置
   gl_Position = uProjectionMatrix * uViewMatrix * worldPosition;
 }
@@ -125,19 +125,19 @@ out vec4 fragColor;
 void main() {
   // 环境光
   vec3 ambient = uAmbientStrength * uLightColor;
-  
+
   // 漫反射光
   vec3 norm = normalize(vNormal);
   vec3 lightDir = normalize(uLightPosition - vPosition);
   float diff = max(dot(norm, lightDir), 0.0);
   vec3 diffuse = uDiffuseStrength * diff * uLightColor;
-  
+
   // 镜面反射光
   vec3 viewDir = normalize(uViewPosition - vPosition);
   vec3 reflectDir = reflect(-lightDir, norm);
   float spec = pow(max(dot(viewDir, reflectDir), 0.0), uShininess);
   vec3 specular = uSpecularStrength * spec * uLightColor;
-  
+
   // 最终颜色
   vec3 result = (ambient + diffuse + specular) * uObjectColor;
   fragColor = vec4(result, 1.0);
@@ -177,11 +177,11 @@ float DistributionGGX(vec3 N, vec3 H, float roughness) {
   float a2 = a * a;
   float NdotH = max(dot(N, H), 0.0);
   float NdotH2 = NdotH * NdotH;
-  
+
   float num = a2;
   float denom = (NdotH2 * (a2 - 1.0) + 1.0);
   denom = PI * denom * denom;
-  
+
   return num / denom;
 }
 
@@ -189,10 +189,10 @@ float DistributionGGX(vec3 N, vec3 H, float roughness) {
 float GeometrySchlickGGX(float NdotV, float roughness) {
   float r = (roughness + 1.0);
   float k = (r * r) / 8.0;
-  
+
   float num = NdotV;
   float denom = NdotV * (1.0 - k) + k;
-  
+
   return num / denom;
 }
 
@@ -201,7 +201,7 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
   float NdotL = max(dot(N, L), 0.0);
   float ggx2 = GeometrySchlickGGX(NdotV, roughness);
   float ggx1 = GeometrySchlickGGX(NdotL, roughness);
-  
+
   return ggx1 * ggx2;
 }
 
@@ -214,50 +214,50 @@ void main() {
   vec3 albedo = uAlbedo;
   float metallic = uMetallic;
   float roughness = max(uRoughness, 0.04); // 限制最小粗糙度
-  
+
   vec3 N = normalize(vNormal);
   vec3 V = normalize(uViewPosition - vPosition);
-  
+
   // 计算F0（表面反射率）
   vec3 F0 = vec3(0.04);
   F0 = mix(F0, albedo, metallic);
-  
+
   // 反射率方程
   vec3 Lo = vec3(0.0);
-  
+
   // 光源方向
   vec3 L = normalize(uLightPosition - vPosition);
   vec3 H = normalize(V + L);
   float distance = length(uLightPosition - vPosition);
   float attenuation = 1.0 / (distance * distance);
   vec3 radiance = uLightColor * attenuation;
-  
+
   // Cook-Torrance BRDF
   float NDF = DistributionGGX(N, H, roughness);
   float G = GeometrySmith(N, V, L, roughness);
   vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
-  
+
   vec3 kS = F;
   vec3 kD = vec3(1.0) - kS;
   kD *= 1.0 - metallic;
-  
+
   vec3 numerator = NDF * G * F;
   float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
   vec3 specular = numerator / denominator;
-  
+
   float NdotL = max(dot(N, L), 0.0);
   Lo += (kD * albedo / PI + specular) * radiance * NdotL;
-  
+
   // 环境光
   vec3 ambient = vec3(uAmbientStrength) * albedo;
-  
+
   vec3 color = ambient + Lo;
-  
+
   // HDR色调映射
   color = color / (color + vec3(1.0));
   // Gamma校正
   color = pow(color, vec3(1.0/2.2));
-  
+
   fragColor = vec4(color, 1.0);
 }
 `;

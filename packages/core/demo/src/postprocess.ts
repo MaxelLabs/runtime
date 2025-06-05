@@ -4,18 +4,9 @@
  * 展示各种后处理效果，如泛光、景深、色调映射和抗锯齿技术
  */
 
-import type { IRHITexture, RHIVertexLayout, IRHIBuffer, IRHIRenderPipeline, IRHIBindGroup } from '@maxellabs/core';
-import {
-  RHIBufferUsage,
-  RHIVertexFormat,
-  RHIPrimitiveTopology,
-  RHITextureFormat,
-  RHITextureUsage,
-  RHIIndexFormat,
-  RHIShaderStage,
-  RHICompareFunction,
-} from '@maxellabs/core';
-import { WebGLDevice } from '../../src/webgl/GLDevice';
+import type { RHIVertexLayout } from '@maxellabs/core';
+import { RHIBufferUsage, RHIVertexFormat, RHITextureFormat, RHITextureUsage } from '@maxellabs/core';
+import { WebGLDevice } from '@maxellabs/rhi';
 import { Matrix4, Vector3 } from '@maxellabs/math';
 
 // 常量定义
@@ -127,7 +118,7 @@ void main() {
   vWorldPosition = worldPosition.xyz;
   vNormal = normalize(mat3(uModelMatrix) * aNormal);
   vTexCoord = aTexCoord;
-  
+
   gl_Position = uProjectionMatrix * uViewMatrix * worldPosition;
 }
 `;
@@ -151,35 +142,35 @@ void main() {
   // 程序化纹理
   vec2 uv = vTexCoord;
   vec3 baseColor = vec3(0.8, 0.6, 0.4);
-  
+
   // 添加一些图案
   float pattern = sin(uv.x * 20.0 + uTime) * sin(uv.y * 20.0 + uTime) * 0.1 + 0.9;
   baseColor *= pattern;
-  
+
   // 简单光照
   vec3 normal = normalize(vNormal);
   vec3 lightDir = normalize(uLightPosition - vWorldPosition);
   vec3 viewDir = normalize(uViewPosition - vWorldPosition);
-  
+
   // 环境光
   vec3 ambient = 0.3 * baseColor;
-  
+
   // 漫反射
   float diff = max(dot(normal, lightDir), 0.0);
   vec3 diffuse = diff * uLightColor * baseColor;
-  
+
   // 镜面反射
   vec3 reflectDir = reflect(-lightDir, normal);
   float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
   vec3 specular = spec * uLightColor * 0.5;
-  
+
   vec3 result = ambient + diffuse + specular;
-  
+
   // 增加一些亮点用于光晕效果
   if(length(vWorldPosition - vec3(2.0, 2.0, 0.0)) < 0.5) {
     result += vec3(2.0, 1.5, 1.0); // 亮光源
   }
-  
+
   fragColor = vec4(result, 1.0);
 }
 `;
@@ -227,7 +218,7 @@ out vec4 fragColor;
 void main() {
   vec2 texelSize = 1.0 / vec2(textureSize(uInputTexture, 0));
   vec4 result = vec4(0.0);
-  
+
   // 5-tap高斯模糊
   float weights[5];
   weights[0] = 0.227027;
@@ -235,15 +226,15 @@ void main() {
   weights[2] = 0.1216216;
   weights[3] = 0.054054;
   weights[4] = 0.016216;
-  
+
   result += texture(uInputTexture, vTexCoord) * weights[0];
-  
+
   for(int i = 1; i < 5; ++i) {
     vec2 offset = uDirection * float(i) * texelSize * uBlurStrength;
     result += texture(uInputTexture, vTexCoord + offset) * weights[i];
     result += texture(uInputTexture, vTexCoord - offset) * weights[i];
   }
-  
+
   fragColor = result;
 }
 `;
@@ -261,7 +252,7 @@ out vec4 fragColor;
 void main() {
   vec4 color = texture(uInputTexture, vTexCoord);
   float brightness = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));
-  
+
   if(brightness > uThreshold) {
     fragColor = color;
   } else {
@@ -284,7 +275,7 @@ out vec4 fragColor;
 void main() {
   vec4 original = texture(uOriginalTexture, vTexCoord);
   vec4 bloom = texture(uBloomTexture, vTexCoord);
-  
+
   fragColor = original + bloom * uBloomIntensity;
 }
 `;
@@ -317,22 +308,22 @@ vec3 adjustSaturation(vec3 color, float saturation) {
 
 void main() {
   vec4 color = texture(uInputTexture, vTexCoord);
-  
+
   // 曝光调整
   color.rgb *= uExposure;
-  
+
   // 色调映射
   color.rgb = tonemap(color.rgb);
-  
+
   // 对比度调整
   color.rgb = adjustContrast(color.rgb, uContrast);
-  
+
   // 饱和度调整
   color.rgb = adjustSaturation(color.rgb, uSaturation);
-  
+
   // Gamma校正
   color.rgb = pow(color.rgb, vec3(1.0/2.2));
-  
+
   fragColor = color;
 }
 `;
@@ -354,40 +345,40 @@ float luminance(vec3 color) {
 
 void main() {
   vec2 tc = vTexCoord;
-  
+
   // 采样周围像素
   vec3 colorC = texture(uInputTexture, tc).rgb;
   vec3 colorN = texture(uInputTexture, tc + vec2(0.0, -uTexelSize.y)).rgb;
   vec3 colorS = texture(uInputTexture, tc + vec2(0.0, uTexelSize.y)).rgb;
   vec3 colorE = texture(uInputTexture, tc + vec2(uTexelSize.x, 0.0)).rgb;
   vec3 colorW = texture(uInputTexture, tc + vec2(-uTexelSize.x, 0.0)).rgb;
-  
+
   // 计算亮度
   float lumaC = luminance(colorC);
   float lumaN = luminance(colorN);
   float lumaS = luminance(colorS);
   float lumaE = luminance(colorE);
   float lumaW = luminance(colorW);
-  
+
   // 检测边缘
   float lumaMin = min(lumaC, min(min(lumaN, lumaS), min(lumaE, lumaW)));
   float lumaMax = max(lumaC, max(max(lumaN, lumaS), max(lumaE, lumaW)));
   float lumaRange = lumaMax - lumaMin;
-  
+
   // 如果对比度太低，不需要抗锯齿
   if(lumaRange < max(0.0833, lumaMax * 0.125)) {
     fragColor = vec4(colorC, 1.0);
     return;
   }
-  
+
   // 简化的FXAA实现
   vec3 colorNE = texture(uInputTexture, tc + vec2(uTexelSize.x, -uTexelSize.y)).rgb;
   vec3 colorNW = texture(uInputTexture, tc + vec2(-uTexelSize.x, -uTexelSize.y)).rgb;
   vec3 colorSE = texture(uInputTexture, tc + vec2(uTexelSize.x, uTexelSize.y)).rgb;
   vec3 colorSW = texture(uInputTexture, tc + vec2(-uTexelSize.x, uTexelSize.y)).rgb;
-  
+
   vec3 colorAvg = (colorN + colorS + colorE + colorW + colorNE + colorNW + colorSE + colorSW) * 0.125;
-  
+
   fragColor = vec4(mix(colorC, colorAvg, uSubpixelQuality), 1.0);
 }
 `;
