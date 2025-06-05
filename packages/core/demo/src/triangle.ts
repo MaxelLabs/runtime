@@ -12,7 +12,7 @@ import {
   RHITextureFormat,
   RHITextureUsage,
 } from '@maxellabs/core';
-import { WebGLDevice } from '../../src/webgl/GLDevice';
+import { WebGLDevice } from '@maxellabs/rhi';
 
 // 常量定义
 const CANVAS_ID = 'J-canvas';
