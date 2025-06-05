@@ -190,6 +190,9 @@ importers:
       '@jest/globals':
         specifier: ^29.7.0
         version: 29.7.0
+      '@maxellabs/rhi':
+        specifier: workspace:*
+        version: link:../rhi
       '@types/jest':
         specifier: ^29.5.12
         version: 29.5.14
