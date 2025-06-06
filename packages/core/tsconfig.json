@@ -10,6 +10,10 @@
   "references": [
     {
       "path": "../math"
+    },
+    // DEMO 依赖
+    {
+      "path": "../rhi"
     }
   ]
 }

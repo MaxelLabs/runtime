@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔄 Core渲染流程概念Demo - Maxellabs 3D Engine</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: white;
+      overflow: hidden;
+    }
+    
+    .container {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px 20px;
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .header h1 {
+      font-size: 1.8em;
+      margin-bottom: 5px;
+      color: #FFD93D;
+    }
+    
+    .header p {
+      opacity: 0.9;
+      font-size: 0.9em;
+    }
+    
+    .controls {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px;
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .controls h3 {
+      color: #FFD93D;
+      margin-bottom: 10px;
+      font-size: 1em;
+    }
+    
+    .control-item {
+      margin-bottom: 8px;
+      font-size: 0.85em;
+      display: flex;
+      align-items: center;
+    }
+    
+    .key {
+      display: inline-block;
+      background: #333;
+      color: #FFD93D;
+      padding: 3px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+      margin-right: 8px;
+      min-width: 20px;
+      text-align: center;
+    }
+    
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    #J-canvas {
+      background: transparent;
+      border-radius: 10px;
+      box-shadow: 0 0 50px rgba(255, 217, 61, 0.3);
+    }
+    
+    .info-overlay {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+      text-align: center;
+      max-width: 600px;
+    }
+    
+    .info-overlay h2 {
+      color: #FFD93D;
+      margin-bottom: 10px;
+    }
+    
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .feature {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 8px;
+      border-radius: 5px;
+      font-size: 0.8em;
+    }
+    
+    .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      font-size: 1.2em;
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255, 217, 61, 0.3);
+      border-top: 3px solid #FFD93D;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .error {
+      color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.1);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px;
+    }
+    
+    .back-button {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(255, 217, 61, 0.2);
+      color: #FFD93D;
+      border: 1px solid #FFD93D;
+      padding: 10px 20px;
+      border-radius: 25px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+    
+    .back-button:hover {
+      background: #FFD93D;
+      color: #1e3c72;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔄 Core WebGL渲染流程</h1>
+      <p>Engine · Scene · Component · @maxellabs/rhi WebGL</p>
+    </div>
+    
+    <div class="controls">
+      <h3>🎮 控制说明</h3>
+      <div class="control-item">
+        <span class="key">空格</span>
+        <span>暂停/继续</span>
+      </div>
+      <div class="control-item">
+        <span class="key">R</span>
+        <span>重启</span>
+      </div>
+      <div class="control-item">
+        <span class="key">D</span>
+        <span>调试模式</span>
+      </div>
+      <div class="control-item">
+        <span class="key">ESC</span>
+        <span>退出</span>
+      </div>
+    </div>
+    
+    <div class="canvas-container">
+      <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        <div>🚀 正在初始化Core引擎...</div>
+      </div>
+      
+      <canvas id="J-canvas" style="display: none;"></canvas>
+    </div>
+    
+    <div class="info-overlay">
+      <h2>🎯 Core包WebGL渲染演示</h2>
+      <p>使用@maxellabs/rhi进行真正的WebGL渲染，展示完整的Core到RHI渲染流程</p>
+      
+      <div class="features">
+        <div class="feature">✨ Engine生命周期</div>
+        <div class="feature">🎬 Scene场景管理</div>
+        <div class="feature">📦 GameObject组件</div>
+        <div class="feature">📷 Camera视图控制</div>
+        <div class="feature">🎨 Material材质系统</div>
+        <div class="feature">🌐 WebGL真实渲染</div>
+      </div>
+    </div>
+    
+    <a href="../index.html" class="back-button">← 返回Demo列表</a>
+  </div>
+
+  <!-- 错误显示 -->
+  <script>
+    window.addEventListener('error', (event) => {
+      console.error('Demo运行错误:', event.error);
+      
+      const loading = document.getElementById('loading');
+      if (loading) {
+        loading.innerHTML = `
+          <div class="error">
+            <h3>❌ Demo运行错误</h3>
+            <p>${event.error ? event.error.message : '未知错误'}</p>
+            <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">
+              请检查浏览器控制台获取详细信息
+            </p>
+          </div>
+        `;
+      }
+    });
+  </script>
+
+  <!-- 引入Demo脚本 -->
+  <script type="module" src="../src/renderFlowDemo.ts"></script>
+  
+  <script>
+    // 隐藏加载提示
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const loading = document.getElementById('loading');
+        if (loading) {
+          loading.style.display = 'none';
+        }
+        
+        const canvas = document.getElementById('J-canvas');
+        if (canvas) {
+          canvas.style.display = 'block';
+        }
+        
+        console.info('🎉 渲染流程概念Demo加载完成');
+      }, 1000);
+    });
+    
+    // 错误处理
+    window.addEventListener('error', (event) => {
+      console.error('Demo运行错误:', event.error);
+      
+      const loading = document.getElementById('loading');
+      if (loading) {
+        loading.innerHTML = `
+          <div class="error">
+            <h3>❌ Demo运行错误</h3>
+            <p>${event.error ? event.error.message : '未知错误'}</p>
+            <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">
+              请检查浏览器控制台获取详细信息
+            </p>
+          </div>
+        `;
+      }
+    });
+  </script>
+</body>
+</html> 
