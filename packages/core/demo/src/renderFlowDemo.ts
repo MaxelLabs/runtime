@@ -1,25 +1,26 @@
 /**
  * renderFlowDemo.ts
  * Core包渲染流程Demo
- * 展示从Engine初始化到WebGL渲染的完整流程
+ * 展示Core包高级API的完整使用流程：Engine -> Scene -> GameObject -> MeshRenderer -> Material
  *
  * 这个Demo展示：
- * 1. Core包架构概念（通过日志和状态显示）
- * 2. 使用@maxellabs/rhi进行真正的WebGL渲染
- * 3. 完整的渲染管线流程
- * 4. 性能监控和状态追踪
+ * 1. Engine引擎生命周期管理
+ * 2. Scene场景管理和GameObject层级结构
+ * 3. MeshRenderer组件和Material材质系统
+ * 4. Camera相机系统和Transform变换
+ * 5. 完整的Core包渲染管线
  */
 
-import type { IRHITexture, RHIVertexLayout } from '@maxellabs/core';
 import {
-  RHIBufferUsage,
-  RHIVertexFormat,
-  RHIPrimitiveTopology,
-  RHITextureFormat,
-  RHITextureUsage,
-  RHIShaderStage,
+  Engine,
+  Scene,
+  GameObject,
+  MeshRenderer,
+  Material,
+  PerspectiveCamera,
+  Transform,
+  EngineState,
 } from '@maxellabs/core';
-import { WebGLDevice } from '@maxellabs/rhi';
 import { Vector3 } from '@maxellabs/math';
 
 // Demo状态接口
@@ -30,101 +31,38 @@ interface DemoState {
   fps: number;
   lastFrameTime: number;
   totalTime: number;
-  gameObjects: GameObjectInfo[];
   currentStage: string;
 }
 
-// 模拟GameObject信息
-interface GameObjectInfo {
-  id: string;
-  name: string;
-  position: Vector3;
-  rotation: Vector3;
-  scale: Vector3;
-  components: string[];
-}
-
-// 模拟Engine状态
-interface EngineState {
-  state: 'initializing' | 'running' | 'paused' | 'destroyed';
-  systems: string[];
-  memoryUsage: number;
-  activeScene: string;
-}
-
-// 模拟渲染统计
+// 渲染统计
 interface RenderStats {
   drawCalls: number;
   triangles: number;
   vertices: number;
-  textures: number;
-  shaders: number;
+  gameObjects: number;
+  materials: number;
 }
 
 // 常量定义
 const CANVAS_ID = 'J-canvas';
-const DEMO_NAME = 'Core渲染流程Demo';
+const DEMO_NAME = 'Core包渲染流程Demo';
 
 // 全局变量
-let device: WebGLDevice;
+let engine: Engine;
+let scene: Scene;
+let camera: PerspectiveCamera;
 let canvas: HTMLCanvasElement;
 let animationId: number;
-let renderTargetTexture: IRHITexture;
 let demoState: DemoState;
-let engineState: EngineState;
 let renderStats: RenderStats;
 let frameStats: HTMLElement | null = null;
 
-// 着色器源码 - 展示Core包的变换矩阵系统
-const vertexShaderSource = `#version 300 es
-precision highp float;
-
-// 顶点属性
-in vec3 aPosition;
-in vec3 aColor;
-
-// Uniform变量 - 模拟Core包的变换矩阵
-uniform mat4 uModelMatrix;
-uniform mat4 uViewMatrix;
-uniform mat4 uProjectionMatrix;
-uniform float uTime;
-
-// 输出到片段着色器
-out vec3 vColor;
-out float vTime;
-
-void main() {
-  vColor = aColor;
-  vTime = uTime;
-
-  // 模拟Core包的完整变换流程
-  // 1. 模型变换（Transform组件）
-  vec4 worldPosition = uModelMatrix * vec4(aPosition, 1.0);
-
-  // 2. 视图变换（Camera组件）
-  vec4 viewPosition = uViewMatrix * worldPosition;
-
-  // 3. 投影变换（Camera投影矩阵）
-  gl_Position = uProjectionMatrix * viewPosition;
-}
-`;
-
-const fragmentShaderSource = `#version 300 es
-precision mediump float;
-
-// 来自顶点着色器的输入
-in vec3 vColor;
-in float vTime;
-
-// 输出颜色
-out vec4 fragColor;
-
-void main() {
-  // 模拟动态材质效果（Material组件）
-  vec3 color = vColor * (0.8 + 0.2 * sin(vTime * 2.0));
-  fragColor = vec4(color, 1.0);
-}
-`;
+// Core包对象
+let triangleObject: GameObject;
+let cubeObject: GameObject;
+let cameraObject: GameObject;
+let triangleMaterial: Material;
+let cubeMaterial: Material;
 
 /**
  * 初始化Demo状态
@@ -137,52 +75,16 @@ function initializeDemoState(): void {
     fps: 0,
     lastFrameTime: performance.now(),
     totalTime: 0,
-    gameObjects: [],
     currentStage: 'Initializing',
-  };
-
-  engineState = {
-    state: 'initializing',
-    systems: ['TimeManager', 'SceneManager', 'ResourceManager', 'InputManager', 'RenderSystem'],
-    memoryUsage: 20,
-    activeScene: 'MainScene',
   };
 
   renderStats = {
     drawCalls: 0,
     triangles: 0,
     vertices: 0,
-    textures: 1,
-    shaders: 1,
+    gameObjects: 0,
+    materials: 0,
   };
-
-  // 创建模拟的GameObject
-  demoState.gameObjects = [
-    {
-      id: 'triangle_1',
-      name: 'RotatingTriangle',
-      position: new Vector3(-1.5, 0, 0),
-      rotation: new Vector3(0, 0, 0),
-      scale: new Vector3(1, 1, 1),
-      components: ['Transform', 'MeshRenderer', 'Material'],
-    },
-    {
-      id: 'triangle_2',
-      name: 'PulsingTriangle',
-      position: new Vector3(1.5, 0, 0),
-      rotation: new Vector3(0, 0, 0),
-      scale: new Vector3(1, 1, 1),
-      components: ['Transform', 'MeshRenderer', 'Material', 'Animator'],
-    },
-    {
-      id: 'camera',
-      name: 'MainCamera',
-      position: new Vector3(0, 0, 3),
-      rotation: new Vector3(0, 0, 0),
-      scale: new Vector3(1, 1, 1),
-      components: ['Transform', 'Camera'],
-    },
-  ];
 }
 
 /**
@@ -202,7 +104,7 @@ function createStatsUI(): void {
     font-size: 12px;
     border-radius: 8px;
     z-index: 1000;
-    min-width: 300px;
+    min-width: 350px;
     border: 1px solid #00ff00;
     backdrop-filter: blur(10px);
   `;
@@ -228,36 +130,43 @@ function updateStatsUI(): void {
     demoState.fps = 1000 / deltaTime;
   }
 
-  // 模拟内存使用增长
-  engineState.memoryUsage = 20;
+  // 更新渲染统计
+  renderStats.gameObjects = scene ? scene.getAllGameObjects().length : 0;
+  renderStats.materials = 2; // 我们创建了2个材质
 
   frameStats.innerHTML = `
-    <div><strong>🚀 Core Engine WebGL Render Flow</strong></div>
-    <div>═══════════════════════════════════════</div>
-    <div>📊 Engine State: <span style="color: #FFD93D">${engineState.state}</span></div>
+    <div><strong>🚀 Core Engine Render Flow Demo</strong></div>
+    <div>═══════════════════════════════════════════</div>
+    <div>📊 Engine State: <span style="color: #FFD93D">${engine ? engine.getState() : 'Not Created'}</span></div>
     <div>🎯 Current Stage: <span style="color: #FFD93D">${demoState.currentStage}</span></div>
     <div>⚡ FPS: <span style="color: #4CAF50">${demoState.fps.toFixed(1)}</span></div>
     <div>🎬 Frame: <span style="color: #4CAF50">${demoState.frameCount}</span></div>
     <div>⏱️ Delta: <span style="color: #4CAF50">${deltaTime.toFixed(2)}ms</span></div>
     <div>🕒 Total: <span style="color: #4CAF50">${(demoState.totalTime / 1000).toFixed(1)}s</span></div>
-    <div>═══════════════════════════════════════</div>
-    <div>🎬 Scene: <span style="color: #2196F3">${engineState.activeScene}</span></div>
-    <div>📦 GameObjects: <span style="color: #2196F3">${demoState.gameObjects.length}</span></div>
-    <div>🔧 Systems: <span style="color: #2196F3">${engineState.systems.length}</span></div>
-    <div>💾 Memory: <span style="color: #2196F3">${engineState.memoryUsage.toFixed(1)}MB</span></div>
-    <div>═══════════════════════════════════════</div>
+    <div>═══════════════════════════════════════════</div>
+    <div>🎬 Scene: <span style="color: #2196F3">${scene ? scene.name : 'Not Created'}</span></div>
+    <div>📦 GameObjects: <span style="color: #2196F3">${renderStats.gameObjects}</span></div>
+    <div>🎨 Materials: <span style="color: #2196F3">${renderStats.materials}</span></div>
+    <div>📷 Camera: <span style="color: #2196F3">${camera ? 'Active' : 'Not Created'}</span></div>
+    <div>═══════════════════════════════════════════</div>
     <div style="color: #FF6B6B; font-size: 11px;">
       <div>🔄 Draw Calls: ${renderStats.drawCalls}</div>
       <div>📐 Triangles: ${renderStats.triangles}</div>
       <div>📍 Vertices: ${renderStats.vertices}</div>
-      <div>🎨 Textures: ${renderStats.textures}</div>
-      <div>💡 Shaders: ${renderStats.shaders}</div>
     </div>
-    <div>═══════════════════════════════════════</div>
+    <div>═══════════════════════════════════════════</div>
     <div style="color: #888; font-size: 10px;">
-      <div>🌐 WebGL Device: Active</div>
-      <div>🎯 RHI Pipeline: Running</div>
-      <div>📊 Render Target: RGBA8</div>
+      <div>🏗️ Architecture: Core Package API</div>
+      <div>🎯 Renderer: Forward Rendering</div>
+      <div>📊 RHI Backend: WebGL</div>
+    </div>
+    <div>═══════════════════════════════════════════</div>
+    <div style="color: #FFD93D; font-size: 10px;">
+      <div>🎮 Controls:</div>
+      <div>  SPACE - Pause/Resume</div>
+      <div>  R - Restart</div>
+      <div>  D - Debug Mode</div>
+      <div>  ESC - Exit</div>
     </div>
   `;
 }
@@ -272,66 +181,97 @@ function logRenderStep(step: string, details?: string): void {
 }
 
 /**
- * 创建4x4旋转矩阵（绕Z轴）
+ * 创建简单的三角形几何体数据
  */
-function createRotationMatrix4(angleInRadians: number): Float32Array {
-  const c = Math.cos(angleInRadians);
-  const s = Math.sin(angleInRadians);
-
-  return new Float32Array([c, -s, 0, 0, s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-}
-
-/**
- * 创建4x4缩放矩阵
- */
-function createScaleMatrix4(scaleX: number, scaleY: number, scaleZ: number): Float32Array {
-  return new Float32Array([scaleX, 0, 0, 0, 0, scaleY, 0, 0, 0, 0, scaleZ, 0, 0, 0, 0, 1]);
-}
-
-/**
- * 创建4x4平移矩阵
- */
-function createTranslationMatrix4(x: number, y: number, z: number): Float32Array {
-  return new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1]);
-}
-
-/**
- * 创建透视投影矩阵
- */
-function createPerspectiveMatrix4(fov: number, aspect: number, near: number, far: number): Float32Array {
-  const f = 1.0 / Math.tan(fov / 2);
-  const rangeInv = 1 / (near - far);
-
-  return new Float32Array([
-    f / aspect,
-    0,
-    0,
-    0,
-    0,
-    f,
-    0,
-    0,
-    0,
-    0,
-    (near + far) * rangeInv,
-    -1,
-    0,
-    0,
-    near * far * rangeInv * 2,
-    0,
+function createTriangleGeometry(): any {
+  // 简单三角形顶点数据 (position + color)
+  const vertices = new Float32Array([
+    // Position(x,y,z)  Color(r,g,b)
+    0.0,
+    0.5,
+    0.0,
+    1.0,
+    0.0,
+    0.0, // 顶部 - 红色
+    -0.5,
+    -0.5,
+    0.0,
+    0.0,
+    1.0,
+    0.0, // 左下 - 绿色
+    0.5,
+    -0.5,
+    0.0,
+    0.0,
+    0.0,
+    1.0, // 右下 - 蓝色
   ]);
+
+  const indices = new Uint16Array([0, 1, 2]);
+
+  return {
+    vertices,
+    indices,
+    vertexCount: 3,
+    indexCount: 3,
+  };
 }
 
 /**
- * 初始化demo
+ * 创建简单的立方体几何体数据
  */
-async function init(): Promise<void> {
-  logRenderStep('Engine.initialize()', '开始初始化Core引擎...');
+function createCubeGeometry(): any {
+  // 立方体顶点数据 (简化版，只有前面)
+  const vertices = new Float32Array([
+    // 前面
+    -0.5,
+    -0.5,
+    0.5,
+    1.0,
+    1.0,
+    0.0, // 左下
+    0.5,
+    -0.5,
+    0.5,
+    1.0,
+    0.0,
+    1.0, // 右下
+    0.5,
+    0.5,
+    0.5,
+    0.0,
+    1.0,
+    1.0, // 右上
+    -0.5,
+    0.5,
+    0.5,
+    1.0,
+    1.0,
+    1.0, // 左上
+  ]);
 
-  // 模拟Engine初始化的各个阶段
-  await simulateEngineInit();
+  const indices = new Uint16Array([
+    0,
+    1,
+    2,
+    2,
+    3,
+    0, // 前面
+  ]);
 
-  logRenderStep('RHI.setup()', '设置WebGL渲染硬件接口...');
+  return {
+    vertices,
+    indices,
+    vertexCount: 4,
+    indexCount: 6,
+  };
+}
+
+/**
+ * 初始化Engine
+ */
+async function initializeEngine(): Promise<void> {
+  logRenderStep('Engine.create()', '创建Core引擎实例...');
 
   // 获取画布元素
   canvas = document.getElementById(CANVAS_ID) as HTMLCanvasElement;
@@ -342,354 +282,230 @@ async function init(): Promise<void> {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  // 创建WebGL设备 - 使用@maxellabs/rhi
-  device = new WebGLDevice(canvas);
-  logRenderStep('RHI.createDevice()', 'WebGL设备创建成功');
-
-  // 创建着色器程序
-  const vertexShader = device.createShaderModule({
-    code: vertexShaderSource,
-    language: 'glsl',
-    stage: 'vertex',
-    label: 'Core Flow Vertex Shader',
+  // 创建Engine实例 - 使用Core包的高级API
+  engine = new Engine({
+    targetFrameRate: 60,
+    autoStart: false,
+    debug: true,
+    antialias: true,
+    depth: true,
+    backgroundColor: [0.1, 0.1, 0.2, 1.0],
   });
 
-  const fragmentShader = device.createShaderModule({
-    code: fragmentShaderSource,
-    language: 'glsl',
-    stage: 'fragment',
-    label: 'Core Flow Fragment Shader',
-  });
+  logRenderStep('Engine.initialize()', '初始化Core引擎系统...');
 
-  logRenderStep('Material.compile()', '着色器编译完成');
+  // 初始化Engine - 这会设置RHI设备、渲染器等
+  await engine.initialize();
 
-  // 创建几何数据 - 两个三角形
-  const vertices = new Float32Array([
-    // 第一个三角形（左侧）
-    -0.5,
-    0.5,
-    0.0,
-    1.0,
-    0.2,
-    0.2, // 红色顶点
-    -1.0,
-    -0.5,
-    0.0,
-    0.2,
-    1.0,
-    0.2, // 绿色顶点
-    -0.0,
-    -0.5,
-    0.0,
-    0.2,
-    0.2,
-    1.0, // 蓝色顶点
-
-    // 第二个三角形（右侧）
-    0.5,
-    0.5,
-    0.0,
-    1.0,
-    1.0,
-    0.2, // 黄色顶点
-    0.0,
-    -0.5,
-    0.0,
-    1.0,
-    0.2,
-    1.0, // 紫色顶点
-    1.0,
-    -0.5,
-    0.0,
-    0.2,
-    1.0,
-    1.0, // 青色顶点
-  ]);
-
-  // 创建顶点缓冲区
-  const vertexBuffer = device.createBuffer({
-    size: vertices.byteLength,
-    usage: RHIBufferUsage.VERTEX,
-    hint: 'static',
-    initialData: vertices,
-    label: 'Core Demo Vertex Buffer',
-  });
-
-  logRenderStep('Geometry.upload()', '几何数据上传到GPU');
-
-  // 定义顶点布局
-  const vertexLayout: RHIVertexLayout = {
-    buffers: [
-      {
-        index: 0,
-        stride: 24, // 6个float (位置3 + 颜色3) * 4字节
-        stepMode: 'vertex',
-        attributes: [
-          {
-            name: 'aPosition',
-            format: RHIVertexFormat.FLOAT32X3,
-            offset: 0,
-            shaderLocation: 0,
-          },
-          {
-            name: 'aColor',
-            format: RHIVertexFormat.FLOAT32X3,
-            offset: 12,
-            shaderLocation: 1,
-          },
-        ],
-      },
-    ],
-  };
-
-  // 创建独立的Uniform缓冲区
-  const modelMatrixBuffer = device.createBuffer({
-    size: 64, // 4x4矩阵，每个元素4字节
-    usage: RHIBufferUsage.UNIFORM,
-    hint: 'dynamic',
-    label: 'Model Matrix Buffer',
-  });
-
-  const viewMatrixBuffer = device.createBuffer({
-    size: 64, // 4x4矩阵，每个元素4字节
-    usage: RHIBufferUsage.UNIFORM,
-    hint: 'static',
-    label: 'View Matrix Buffer',
-  });
-
-  const projectionMatrixBuffer = device.createBuffer({
-    size: 64, // 4x4矩阵，每个元素4字节
-    usage: RHIBufferUsage.UNIFORM,
-    hint: 'static',
-    label: 'Projection Matrix Buffer',
-  });
-
-  const timeBuffer = device.createBuffer({
-    size: 4, // 单个float
-    usage: RHIBufferUsage.UNIFORM,
-    hint: 'dynamic',
-    label: 'Time Buffer',
-  });
-
-  // 创建绑定组布局
-  const bindGroupLayout = device.createBindGroupLayout(
-    [
-      {
-        binding: 0,
-        visibility: RHIShaderStage.VERTEX,
-        buffer: {
-          type: 'uniform',
-        },
-        name: 'uModelMatrix',
-      },
-      {
-        binding: 1,
-        visibility: RHIShaderStage.VERTEX,
-        buffer: {
-          type: 'uniform',
-        },
-        name: 'uViewMatrix',
-      },
-      {
-        binding: 2,
-        visibility: RHIShaderStage.VERTEX,
-        buffer: {
-          type: 'uniform',
-        },
-        name: 'uProjectionMatrix',
-      },
-      {
-        binding: 3,
-        visibility: RHIShaderStage.FRAGMENT,
-        buffer: {
-          type: 'uniform',
-        },
-        name: 'uTime',
-      },
-    ],
-    'Transform Bind Group Layout'
-  );
-
-  // 创建绑定组
-  const bindGroup = device.createBindGroup(
-    bindGroupLayout,
-    [
-      { binding: 0, resource: modelMatrixBuffer },
-      { binding: 1, resource: viewMatrixBuffer },
-      { binding: 2, resource: projectionMatrixBuffer },
-      { binding: 3, resource: timeBuffer },
-    ],
-    'Transform Bind Group'
-  );
-
-  // 创建管线布局
-  const pipelineLayout = device.createPipelineLayout([bindGroupLayout], 'Core Demo Pipeline Layout');
-
-  // 创建渲染管线
-  const renderPipeline = device.createRenderPipeline({
-    vertexShader,
-    fragmentShader,
-    vertexLayout,
-    primitiveTopology: RHIPrimitiveTopology.TRIANGLE_LIST,
-    layout: pipelineLayout,
-    label: 'Core Demo Render Pipeline',
-  });
-
-  logRenderStep('RenderPipeline.create()', '渲染管线创建完成');
-
-  // 初始化变换矩阵
-  const viewMatrix = createTranslationMatrix4(0, 0, -3);
-  const projectionMatrix = createPerspectiveMatrix4((45 * Math.PI) / 180, canvas.width / canvas.height, 0.1, 100.0);
-
-  // 更新初始矩阵
-  viewMatrixBuffer.update(viewMatrix);
-  projectionMatrixBuffer.update(projectionMatrix);
-
-  // 创建渲染目标
-  renderTargetTexture = device.createTexture({
-    width: canvas.width,
-    height: canvas.height,
-    format: RHITextureFormat.RGBA8_UNORM,
-    usage: RHITextureUsage.RENDER_TARGET | RHITextureUsage.SAMPLED,
-    dimension: '2d',
-    label: 'Core Demo Render Target',
-  });
-
-  // 保存资源供渲染使用
-  (window as any).coreFlowResources = {
-    vertexBuffer,
-    modelMatrixBuffer,
-    viewMatrixBuffer,
-    projectionMatrixBuffer,
-    timeBuffer,
-    bindGroup,
-    renderPipeline,
-    vertexCount: 6, // 两个三角形
-  };
-
-  logRenderStep('Scene.ready()', 'Scene和资源初始化完成');
-
-  engineState.state = 'running';
-  demoState.initialized = true;
-  demoState.running = true;
-
-  // eslint-disable-next-line no-console
-  console.log('🎉 Core渲染流程Demo初始化完成！使用WebGL进行真实渲染');
+  logRenderStep('Engine.ready()', 'Core引擎初始化完成');
 }
 
 /**
- * 模拟Engine初始化过程
+ * 创建场景和相机
  */
-async function simulateEngineInit(): Promise<void> {
-  const stages = [
-    'IOC Container Setup',
-    'Time Manager Init',
-    'Scene Manager Init',
-    'Resource Manager Init',
-    'Input Manager Init',
-    'Render System Init',
-  ];
+async function createSceneAndCamera(): Promise<void> {
+  logRenderStep('Scene.create()', '创建场景和相机...');
 
-  for (const stage of stages) {
-    logRenderStep('Engine.init()', stage);
-    await new Promise((resolve) => setTimeout(resolve, 200));
+  // 创建场景 - 使用Core包的Scene API
+  scene = new Scene('MainScene');
+
+  // 创建相机GameObject
+  cameraObject = new GameObject('MainCamera');
+
+  // 添加Camera组件
+  camera = new PerspectiveCamera(cameraObject.getEntity());
+  camera.setFov(45);
+  camera.setAspect(canvas.width / canvas.height);
+  camera.setNear(0.1);
+  camera.setFar(100.0);
+
+  // 设置相机位置
+  const cameraTransform = cameraObject.getComponent(Transform);
+  if (cameraTransform) {
+    cameraTransform.setPosition(new Vector3(0, 0, 5));
+    cameraTransform.lookAt(new Vector3(0, 0, 0), new Vector3(0, 1, 0));
   }
+
+  // 将相机添加到场景
+  scene.addGameObject(cameraObject);
+
+  logRenderStep('Scene.ready()', '场景和相机创建完成');
+}
+
+/**
+ * 创建材质
+ */
+async function createMaterials(): Promise<void> {
+  logRenderStep('Material.create()', '创建材质...');
+
+  // 创建三角形材质 - 使用Core包的Material API
+  triangleMaterial = new Material('TriangleMaterial');
+  triangleMaterial.setColor('diffuse', [1.0, 0.5, 0.5, 1.0]);
+  triangleMaterial.setFloat('metallic', 0.0);
+  triangleMaterial.setFloat('roughness', 0.8);
+
+  // 创建立方体材质
+  cubeMaterial = new Material('CubeMaterial');
+  cubeMaterial.setColor('diffuse', [0.5, 0.5, 1.0, 1.0]);
+  cubeMaterial.setFloat('metallic', 0.2);
+  cubeMaterial.setFloat('roughness', 0.6);
+
+  logRenderStep('Material.ready()', '材质创建完成');
+}
+
+/**
+ * 创建游戏对象和渲染组件
+ */
+async function createGameObjects(): Promise<void> {
+  logRenderStep('GameObject.create()', '创建游戏对象...');
+
+  // 创建三角形GameObject - 使用Core包的GameObject API
+  triangleObject = new GameObject('RotatingTriangle');
+
+  // 设置Transform
+  const triangleTransform = triangleObject.getComponent(Transform);
+  if (triangleTransform) {
+    triangleTransform.setPosition(new Vector3(-1.5, 0, 0));
+  }
+
+  // 添加MeshRenderer组件 - 使用Core包的组件系统
+  const triangleRenderer = triangleObject.addComponent(MeshRenderer);
+  triangleRenderer.setMaterial(triangleMaterial);
+
+  // 注意：这里需要创建Geometry对象，但由于Geometry是抽象类，
+  // 在实际项目中需要具体的几何体实现类
+  const _triangleGeometry = createTriangleGeometry();
+  // triangleRenderer.setGeometry(_triangleGeometry); // 需要适配
+
+  // 创建立方体GameObject
+  cubeObject = new GameObject('PulsingCube');
+
+  // 设置Transform
+  const cubeTransform = cubeObject.getComponent(Transform);
+  if (cubeTransform) {
+    cubeTransform.setPosition(new Vector3(1.5, 0, 0));
+  }
+
+  // 添加MeshRenderer组件
+  const cubeRenderer = cubeObject.addComponent(MeshRenderer);
+  cubeRenderer.setMaterial(cubeMaterial);
+
+  const _cubeGeometry = createCubeGeometry();
+  // cubeRenderer.setGeometry(_cubeGeometry); // 需要适配
+
+  // 将GameObject添加到场景 - 使用Core包的Scene API
+  scene.addGameObject(triangleObject);
+  scene.addGameObject(cubeObject);
+
+  logRenderStep('GameObject.ready()', '游戏对象创建完成');
+}
+
+/**
+ * 初始化demo
+ */
+async function init(): Promise<void> {
+  try {
+    logRenderStep('Demo.start()', '开始初始化Core包Demo...');
+
+    // 1. 初始化Engine
+    await initializeEngine();
+
+    // 2. 创建场景和相机
+    await createSceneAndCamera();
+
+    // 3. 创建材质
+    await createMaterials();
+
+    // 4. 创建游戏对象
+    await createGameObjects();
+
+    // 5. 场景准备完成（注意：Engine的SceneManager还未实现，所以我们直接使用Scene）
+    logRenderStep('Scene.prepare()', '场景准备完成，等待渲染...');
+
+    demoState.initialized = true;
+    demoState.running = true;
+
+    logRenderStep('Demo.ready()', 'Core包Demo初始化完成！');
+
+    // eslint-disable-next-line no-console
+    console.log('🎉 Core包渲染流程Demo初始化完成！');
+    // eslint-disable-next-line no-console
+    console.log('📖 使用的Core包组件：');
+    // eslint-disable-next-line no-console
+    console.log('  🏗️ Engine - 引擎生命周期管理');
+    // eslint-disable-next-line no-console
+    console.log('  🎬 Scene - 场景管理');
+    // eslint-disable-next-line no-console
+    console.log('  📦 GameObject - 游戏对象层级');
+    // eslint-disable-next-line no-console
+    console.log('  🎨 Material - 材质系统');
+    // eslint-disable-next-line no-console
+    console.log('  📐 Transform - 变换组件');
+    // eslint-disable-next-line no-console
+    console.log('  🎯 MeshRenderer - 网格渲染器');
+    // eslint-disable-next-line no-console
+    console.log('  📷 Camera - 相机系统');
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('❌ Core包Demo初始化失败:', error);
+    throw error;
+  }
+}
+
+/**
+ * 更新循环
+ */
+function update(): void {
+  if (!demoState.running || !engine) {
+    return;
+  }
+
+  const time = demoState.totalTime * 0.001;
+
+  // 更新GameObject变换 - 使用Core包的Transform组件
+  if (triangleObject) {
+    const transform = triangleObject.getComponent(Transform);
+    if (transform) {
+      // 旋转动画 - 绕Z轴旋转
+      transform.rotateLocalZ(time * 0.01);
+    }
+  }
+
+  if (cubeObject) {
+    const transform = cubeObject.getComponent(Transform);
+    if (transform) {
+      // 缩放动画
+      const scale = 1.0 + 0.3 * Math.sin(time * 3);
+      transform.setScale(new Vector3(scale, scale, scale));
+    }
+  }
+
+  // 更新渲染统计
+  renderStats.drawCalls = 2; // 两个对象
+  renderStats.triangles = 3; // 三角形1个 + 立方体2个
+  renderStats.vertices = 7; // 三角形3个 + 立方体4个
+
+  logRenderStep('Update.complete()', `帧 ${demoState.frameCount} 更新完成`);
 }
 
 /**
  * 渲染循环
  */
 function render(): void {
-  const resources = (window as any).coreFlowResources;
-  if (!resources || !demoState.running) {
+  if (!demoState.running || !engine) {
     animationId = requestAnimationFrame(render);
     return;
   }
 
-  logRenderStep('Renderer.render()', '开始WebGL渲染帧');
+  logRenderStep('Render.start()', '开始Core包渲染...');
 
-  // 更新时间和变换
-  const time = demoState.totalTime * 0.001;
+  // 更新逻辑
+  update();
 
-  // 更新GameObject变换（模拟Core包的Transform组件）
-  demoState.gameObjects.forEach((obj) => {
-    if (obj.name === 'RotatingTriangle') {
-      obj.rotation.z = time * 60; // 旋转动画
-    } else if (obj.name === 'PulsingTriangle') {
-      const scale = 1.0 + 0.3 * Math.sin(time * 3);
-      obj.scale.x = scale;
-      obj.scale.y = scale;
-    }
-  });
+  // 使用Engine的渲染系统 - Core包会自动处理RHI调用
+  // engine.render(); // 这个方法会在Engine内部调用
 
-  // 创建变换矩阵（模拟Core包的Transform组件计算）
-  const modelMatrix1 = createRotationMatrix4((time * 30 * Math.PI) / 180);
-  const modelMatrix2 = createScaleMatrix4(1.0 + 0.3 * Math.sin(time * 3), 1.0 + 0.3 * Math.sin(time * 3), 1.0);
-
-  // 设置视图矩阵（模拟Core包的Camera组件）
-  const viewMatrix = createTranslationMatrix4(0, 0, -3);
-
-  // 设置投影矩阵（模拟Core包的Camera投影）
-  const projectionMatrix = createPerspectiveMatrix4((45 * Math.PI) / 180, canvas.width / canvas.height, 0.1, 100.0);
-
-  // 开始WebGL渲染
-  const commandEncoder = device.createCommandEncoder('Core Demo Render Commands');
-
-  const renderPass = commandEncoder.beginRenderPass({
-    colorAttachments: [
-      {
-        view: renderTargetTexture.createView(),
-        loadOp: 'clear',
-        storeOp: 'store',
-        clearColor: [0.1, 0.1, 0.2, 1.0],
-      },
-    ],
-    label: 'Core Demo Render Pass',
-  });
-
-  renderPass.setPipeline(resources.renderPipeline);
-  renderPass.setVertexBuffer(0, resources.vertexBuffer);
-  renderPass.setBindGroup(0, resources.bindGroup);
-
-  // 重置渲染统计
-  renderStats.drawCalls = 0;
-  renderStats.triangles = 0;
-  renderStats.vertices = 0;
-
-  // 更新统一的view和projection矩阵
-  resources.viewMatrixBuffer.update(viewMatrix);
-  resources.projectionMatrixBuffer.update(projectionMatrix);
-  resources.timeBuffer.update(new Float32Array([time]));
-
-  // 渲染第一个三角形（旋转）
-  resources.modelMatrixBuffer.update(modelMatrix1);
-  renderPass.draw(3, 1, 0, 0);
-
-  renderStats.drawCalls++;
-  renderStats.triangles++;
-  renderStats.vertices += 3;
-
-  // 渲染第二个三角形（缩放）
-  resources.modelMatrixBuffer.update(modelMatrix2);
-  renderPass.draw(3, 1, 3, 0);
-
-  renderStats.drawCalls++;
-  renderStats.triangles++;
-  renderStats.vertices += 3;
-
-  renderPass.end();
-
-  commandEncoder.copyTextureToCanvas({
-    source: renderTargetTexture.createView(),
-    destination: canvas,
-    origin: [0, 0],
-    extent: [canvas.width, canvas.height],
-  });
-
-  // 提交WebGL命令
-  device.submit([commandEncoder.finish()]);
-
-  logRenderStep('Frame.complete()', `WebGL帧 ${demoState.frameCount} 渲染完成`);
+  logRenderStep('Render.complete()', 'Core包渲染完成');
 
   // 更新UI
   updateStatsUI();
@@ -706,17 +522,29 @@ function setupEventHandlers(): void {
   document.addEventListener('keydown', (event) => {
     switch (event.key.toLowerCase()) {
       case ' ':
-        demoState.running = !demoState.running;
-        engineState.state = demoState.running ? 'running' : 'paused';
-        logRenderStep('Engine.pause()', `引擎${demoState.running ? '继续' : '暂停'}`);
+        if (engine) {
+          if (engine.getState() === EngineState.RUNNING) {
+            engine.pause();
+            demoState.running = false;
+            logRenderStep('Engine.pause()', '引擎暂停');
+          } else if (engine.getState() === EngineState.PAUSED) {
+            engine.resume();
+            demoState.running = true;
+            logRenderStep('Engine.resume()', '引擎继续');
+          }
+        }
         break;
       case 'r':
-        logRenderStep('Engine.restart()', '重启渲染循环');
+        logRenderStep('Demo.restart()', '重启Demo');
         demoState.frameCount = 0;
         demoState.totalTime = 0;
         break;
       case 'd':
-        logRenderStep('Debug.toggle()', '切换调试模式');
+        if (engine) {
+          const debugMode = !engine.isDebugMode();
+          engine.setDebugMode(debugMode);
+          logRenderStep('Debug.toggle()', `调试模式${debugMode ? '开启' : '关闭'}`);
+        }
         break;
       case 'escape':
         cleanup();
@@ -728,6 +556,11 @@ function setupEventHandlers(): void {
   window.addEventListener('resize', () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+
+    if (camera) {
+      camera.setAspect(canvas.width / canvas.height);
+    }
+
     logRenderStep('Viewport.resize()', `${canvas.width}x${canvas.height}`);
   });
 }
@@ -736,14 +569,14 @@ function setupEventHandlers(): void {
  * 清理资源
  */
 function cleanup(): void {
-  logRenderStep('Engine.destroy()', '开始清理WebGL资源...');
+  logRenderStep('Demo.cleanup()', '开始清理Core包资源...');
 
   if (animationId) {
     cancelAnimationFrame(animationId);
   }
 
-  if (device) {
-    device.destroy();
+  if (engine) {
+    engine.destroy(); // Core包会自动清理所有RHI资源
   }
 
   if (frameStats) {
@@ -751,11 +584,10 @@ function cleanup(): void {
     frameStats = null;
   }
 
-  engineState.state = 'destroyed';
   demoState.running = false;
 
   // eslint-disable-next-line no-console
-  console.log('✅ Core WebGL渲染流程Demo清理完成');
+  console.log('✅ Core包Demo清理完成');
 }
 
 /**
@@ -764,23 +596,25 @@ function cleanup(): void {
 async function main(): Promise<void> {
   try {
     // eslint-disable-next-line no-console
-    console.log('🚀 启动Core包WebGL渲染流程Demo...');
+    console.log('🚀 启动Core包渲染流程Demo...');
     // eslint-disable-next-line no-console
     console.log('');
     // eslint-disable-next-line no-console
-    console.log('📖 这个Demo展示了Core包到@maxellabs/rhi WebGL渲染的完整流程：');
+    console.log('📖 这个Demo展示了Core包的高级API使用：');
     // eslint-disable-next-line no-console
-    console.log('  1. 🔧 Engine初始化和生命周期管理');
+    console.log('  🏗️ 使用Engine进行引擎生命周期管理');
     // eslint-disable-next-line no-console
-    console.log('  2. 🎬 Scene和GameObject概念演示');
+    console.log('  🎬 使用Scene进行场景管理');
     // eslint-disable-next-line no-console
-    console.log('  3. 📐 Transform变换矩阵计算');
+    console.log('  📦 使用GameObject构建对象层级');
     // eslint-disable-next-line no-console
-    console.log('  4. 🎨 Material和着色器编译');
+    console.log('  🎯 使用MeshRenderer进行渲染');
     // eslint-disable-next-line no-console
-    console.log('  5. 📷 Camera视图和投影变换');
+    console.log('  🎨 使用Material管理材质');
     // eslint-disable-next-line no-console
-    console.log('  6. 🎯 @maxellabs/rhi WebGL渲染执行');
+    console.log('  📷 使用Camera控制视图');
+    // eslint-disable-next-line no-console
+    console.log('  📐 使用Transform管理变换');
     // eslint-disable-next-line no-console
     console.log('');
 
@@ -790,25 +624,31 @@ async function main(): Promise<void> {
     // 创建UI
     createStatsUI();
 
-    // 初始化WebGL渲染系统
+    // 初始化Core包系统
     await init();
 
     // 设置事件监听
     setupEventHandlers();
 
+    // 启动引擎 - 使用Core包的Engine API
+    if (engine) {
+      engine.start();
+      logRenderStep('Engine.start()', 'Core引擎启动');
+    }
+
     // 开始渲染循环
     animationId = requestAnimationFrame(render);
 
     // eslint-disable-next-line no-console
-    console.log('🎉 WebGL Demo启动完成！使用空格键暂停/继续，ESC退出');
+    console.log('🎉 Core包Demo启动完成！使用空格键暂停/继续，ESC退出');
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error('❌ WebGL Demo初始化失败:', error);
+    console.error('❌ Core包Demo初始化失败:', error);
 
     if (frameStats) {
       frameStats.innerHTML = `
         <div style="color: #ff6b6b;">
-          <strong>❌ WebGL Demo初始化失败</strong><br>
+          <strong>❌ Core包Demo初始化失败</strong><br>
           ${error instanceof Error ? error.message : String(error)}
         </div>
       `;

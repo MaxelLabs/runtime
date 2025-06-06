@@ -45,6 +45,9 @@ export class Entity extends ReferResource {
     this.name = name;
     this.scene = scene;
 
+    // 设置唯一的tag，避免Scene中的key冲突
+    this.tag = this.id;
+
     // 创建并初始化Transform组件
     this.transform = new Transform(this);
     this.components.set(Transform.name, this.transform);
