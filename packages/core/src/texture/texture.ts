@@ -5,8 +5,8 @@
  */
 
 import type { CommonTexture, CommonTextureConfig, PixelFormat, TextureData } from '@maxellabs/math';
-import type { IRHIDevice, IRHITexture, RHITextureFormat, RHITextureUsage } from '../interface/rhi';
-import { RHITextureType } from '../interface/rhi';
+import type { IRHIDevice, IRHITexture, RHITextureFormat, RHITextureUsage } from '../../../specification/src/common/rhi';
+import { RHITextureType } from '../../../specification/src/common/rhi';
 import type { ResourceLoadOptions } from '../resource/resource';
 import { Resource, ResourceType } from '../resource/resource';
 import { EventDispatcher } from '../base/event-dispatcher';

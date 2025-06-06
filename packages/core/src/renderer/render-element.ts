@@ -7,7 +7,7 @@
 import type { Matrix4, BoundingBox, Vector3 } from '@maxellabs/math';
 import type { Material } from '../material/material';
 import type { GameObject } from '../scene/game-object';
-import type { IRHIRenderPipeline, IRHIBindGroup } from '../interface/rhi';
+import type { IRHIRenderPipeline, IRHIBindGroup } from '../../../specification/src/common/rhi';
 import type { MeshRenderer } from '../components';
 
 /**

@@ -4,7 +4,12 @@
  * 管理顶点着色器和片段着色器的组合程序
  */
 
-import type { IRHIDevice, IRHIRenderPipeline, IRHIBindGroup, IRHIShaderModule } from '../interface/rhi';
+import type {
+  IRHIDevice,
+  IRHIRenderPipeline,
+  IRHIBindGroup,
+  IRHIShaderModule,
+} from '../../../specification/src/common/rhi';
 import type { Shader } from './shader';
 import { type UniformDescriptor } from './shader';
 import { ShaderData } from './shader-data';

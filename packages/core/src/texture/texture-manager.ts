@@ -5,7 +5,7 @@
  */
 
 import type { CommonTexture, CommonTextureConfig, TextureData } from '@maxellabs/specification';
-import type { IRHIDevice } from '../interface/rhi';
+import type { IRHIDevice } from '../../../specification/src/common/rhi';
 import type { Texture2DOptions } from './texture2d';
 import { Texture2D } from './texture2d';
 import type { TextureCubeOptions } from './texture-cube';

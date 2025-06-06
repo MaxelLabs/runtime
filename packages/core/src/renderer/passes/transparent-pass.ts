@@ -13,7 +13,7 @@ import {
   type IRHIBindGroupLayout,
   type IRHIPipelineLayout,
   RHITextureFormat,
-} from '../../interface/rhi';
+} from '../../../../specification/src/common/rhi';
 import { RHIPrimitiveTopology, RHICullMode, RHIFrontFace, RHICompareFunction } from '@maxellabs/math';
 import type { Camera } from '../../camera/camera';
 import type { RenderElement } from '../render-element';

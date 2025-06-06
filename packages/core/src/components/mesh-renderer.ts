@@ -12,7 +12,7 @@ import type { BoundingBox } from '@maxellabs/math';
 import { AlphaMode } from '@maxellabs/math';
 import type { Geometry } from '../geometry';
 import type { RHIVertexBufferLayout } from '../interface';
-import { RHIIndexFormat } from '../interface/rhi/types/enums';
+import { RHIIndexFormat } from '../../../specification/src/common/rhi/types/enums';
 
 /**
  * 网格渲染器组件

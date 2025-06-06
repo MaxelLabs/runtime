@@ -3,9 +3,10 @@
  * 定义跨模块共享的基础渲染类型
  */
 
-import type { BlendMode, RenderMode } from '../core';
-import type { CommonElement } from './elements';
-import type { CommonMaterial } from './material';
+import type { RenderMode } from '../../core';
+import type { CommonElement } from '../elements';
+import type { CommonMaterial } from '../material';
+import type { BlendMode } from './renderState';
 
 /**
  * 深度测试模式

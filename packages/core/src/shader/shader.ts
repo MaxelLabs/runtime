@@ -4,7 +4,7 @@
  * 提供着色器的编译、管理和uniform数据绑定功能
  */
 
-import type { IRHIDevice, IRHIShaderModule, IRHIRenderPipeline } from '../interface/rhi';
+import type { IRHIDevice, IRHIShaderModule, IRHIRenderPipeline } from '../../../specification/src/common/rhi';
 import { ShaderData } from './shader-data';
 import { EventDispatcher } from '../base/event-dispatcher';
 

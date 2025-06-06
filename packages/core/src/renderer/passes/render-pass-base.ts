@@ -11,7 +11,7 @@ import type {
   IRHITextureView,
   IRHIRenderPipeline,
   IRHIBindGroup,
-} from '../../interface/rhi';
+} from '../../../../specification/src/common/rhi';
 import type { Camera } from '../../camera/camera';
 import type { RenderElement } from '../render-element';
 import { EventDispatcher } from '../../base/event-dispatcher';

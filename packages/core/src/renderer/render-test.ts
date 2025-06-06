@@ -12,8 +12,8 @@ import { Geometry } from '../geometry/geometry';
 import { MeshRenderer } from '../components/mesh-renderer';
 import { Transform } from '../base/transform';
 import { VertexAttribute, Vector3 } from '@maxellabs/math';
-import { RHIIndexFormat } from '../interface/rhi/types/enums';
-import type { IRHIDevice } from '../interface/rhi';
+import { RHIIndexFormat } from '../../../specification/src/common/rhi/types/enums';
+import type { IRHIDevice } from '../../../specification/src/common/rhi';
 
 /**
  * 简单的立方体几何体类

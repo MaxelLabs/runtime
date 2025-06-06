@@ -6,7 +6,7 @@
 
 import type { Scene } from '../scene/scene';
 import type { Camera } from '../camera/camera';
-import type { IRHIDevice, IRHICommandEncoder } from '../interface/rhi';
+import type { IRHIDevice, IRHICommandEncoder } from '../../../specification/src/common/rhi';
 import { EventDispatcher } from '../base/event-dispatcher';
 
 /**

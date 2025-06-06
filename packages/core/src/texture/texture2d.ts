@@ -5,7 +5,7 @@
  */
 
 import type { CommonTexture, CommonTextureConfig, TextureData } from '@maxellabs/specification';
-import type { IRHIDevice, IRHITexture } from '../interface/rhi';
+import type { IRHIDevice, IRHITexture } from '../../../specification/src/common/rhi';
 import { EventDispatcher } from '../base/event-dispatcher';
 
 /**

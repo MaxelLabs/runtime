@@ -1,1 +1,1 @@
-export * from './rhi';
+export * from '../../../specification/src/common/rhi';
