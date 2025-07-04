@@ -17,10 +17,13 @@ export type DepthTestMode =
   | 'always';
 
 /**
- * 面剔除模式
+ * 剔除模式
  */
-export type CullMode = 'none' | 'front' | 'back';
-
+export enum CullMode {
+  None = 'none',
+  Front = 'front',
+  Back = 'back',
+}
 /**
  * 混合模式
  */

@@ -4,8 +4,8 @@
  */
 
 import type { TextureFilterMode } from '../common';
+import type { CullMode } from '../common/renderer/renderState';
 import type {
-  CullMode,
   FillMode,
   InterpolationMode,
   MaterialProperties,
@@ -67,7 +67,7 @@ export interface IMaterial extends MaterialPrim {
   /**
    * 渲染状态
    */
-  renderState?: RenderState;
+  renderState?: MaterialRenderState;
 }
 
 /**
@@ -317,7 +317,7 @@ export interface TextureReference {
   /**
    * 采样器
    */
-  sampler?: TextureSampler;
+  sampler?: MaterialTextureSampler;
 }
 
 /**
@@ -343,9 +343,10 @@ export enum TextureType {
 }
 
 /**
- * 纹理采样器
+ * 材质纹理采样器
+ * 用于材质系统中的纹理采样配置
  */
-export interface TextureSampler {
+export interface MaterialTextureSampler {
   /**
    * 过滤模式
    */
@@ -383,9 +384,9 @@ export interface TextureTransform {
 }
 
 /**
- * 渲染状态
+ * 材质渲染状态
  */
-export interface RenderState {
+export interface MaterialRenderState {
   /**
    * 混合状态
    */

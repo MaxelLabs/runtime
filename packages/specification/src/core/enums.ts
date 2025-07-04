@@ -505,15 +505,6 @@ export enum VisualEffectType {
 }
 
 /**
- * 剔除模式
- */
-export enum CullMode {
-  None = 'none',
-  Front = 'front',
-  Back = 'back',
-}
-
-/**
  * 面向模式
  */
 export enum SideMode {
