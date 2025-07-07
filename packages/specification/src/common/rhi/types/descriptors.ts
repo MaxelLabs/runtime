@@ -3,18 +3,16 @@
  * 包含所有RHI资源描述符的类型定义
  */
 
-import type { IRHIShaderModule, IRHIBindGroupLayout, IRHIPipelineLayout } from '../index';
-import type { RHIVertexLayout, RHIColorBlendState, RHIDepthStencilState, RHIRasterizationState } from './states';
+import type { Color } from '@maxellabs/math';
+import type { RHIAddressMode, RHIFilterMode, RHITextureUsage } from '../../texture';
 import type {
+  IRHIShaderModule,
+  IRHIBindGroupLayout,
+  IRHIPipelineLayout,
   RHIBufferUsage,
-  RHIPrimitiveTopology,
   RHITextureFormat,
-  RHITextureUsage,
-  RHIAddressMode,
-  RHIFilterMode,
-  Color,
-  RHICompareFunction,
-} from '@maxellabs/math';
+} from '../index';
+import type { RHIVertexLayout, RHIColorBlendState, RHIDepthStencilState, RHIRasterizationState } from './states';
 
 /**
  * 缓冲区描述符
