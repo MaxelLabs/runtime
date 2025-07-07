@@ -18,7 +18,8 @@ import type {
   RHIShaderModuleDescriptor,
   RHISamplerDescriptor,
 } from './types/descriptors';
-import type { RHIBackend, RHIFeatureFlags } from './types/enums';
+import type { RHIFeatureFlags } from './types/enums';
+import type { RHIBackend } from '../texture';
 
 /**
  * 渲染设备信息

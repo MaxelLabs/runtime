@@ -280,10 +280,30 @@ export enum RHIAddressMode {
  * 过滤模式
  */
 export enum RHIFilterMode {
-  /** 最近邻过滤 */
-  NEAREST = 0,
-  /** 线性过滤 */
-  LINEAR = 1,
+  /**
+   * 最近邻
+   */
+  Nearest = 'nearest',
+  /**
+   * 线性
+   */
+  Linear = 'linear',
+  /**
+   * 最近邻Mipmap最近邻
+   */
+  NearestMipmapNearest = 'nearest-mipmap-nearest',
+  /**
+   * 线性Mipmap最近邻
+   */
+  LinearMipmapNearest = 'linear-mipmap-nearest',
+  /**
+   * 最近邻Mipmap线性
+   */
+  NearestMipmapLinear = 'nearest-mipmap-linear',
+  /**
+   * 线性Mipmap线性
+   */
+  LinearMipmapLinear = 'linear-mipmap-linear',
 }
 
 /**
@@ -356,11 +376,11 @@ export interface CommonTextureConfig {
   /**
    * 最小过滤模式
    */
-  minFilter: TextureFilterMode;
+  minFilter: RHIFilterMode;
   /**
    * 最大过滤模式
    */
-  magFilter: TextureFilterMode;
+  magFilter: RHIFilterMode;
   /**
    * 水平包装模式
    */
@@ -390,37 +410,6 @@ export interface CommonTextureConfig {
    */
   colorSpace: string;
 }
-
-/**
- * 纹理过滤模式
- */
-export enum TextureFilterMode {
-  /**
-   * 最近邻
-   */
-  Nearest = 'nearest',
-  /**
-   * 线性
-   */
-  Linear = 'linear',
-  /**
-   * 最近邻Mipmap最近邻
-   */
-  NearestMipmapNearest = 'nearest-mipmap-nearest',
-  /**
-   * 线性Mipmap最近邻
-   */
-  LinearMipmapNearest = 'linear-mipmap-nearest',
-  /**
-   * 最近邻Mipmap线性
-   */
-  NearestMipmapLinear = 'nearest-mipmap-linear',
-  /**
-   * 线性Mipmap线性
-   */
-  LinearMipmapLinear = 'linear-mipmap-linear',
-}
-
 /**
  * 纹理包装模式
  */

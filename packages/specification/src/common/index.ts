@@ -3,6 +3,8 @@
  * 导出所有系统共通的元素类型定义
  */
 
+export * from './rhi';
+
 // 基础元素类型
 export * from './elements';
 
@@ -21,12 +23,10 @@ export * from './frame';
 // 变换相关
 export * from './transform';
 
-// 动画相关 - 重命名导出以避免冲突
+// 动画相关
 export * from './animation';
 
-// 渲染相关
-export * from './rendering';
-
+// 材质相关
 export * from './material';
 
 // 交互相关

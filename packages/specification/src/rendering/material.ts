@@ -3,7 +3,7 @@
  * 材质和着色器渲染相关类型定义
  */
 
-import type { TextureFilterMode } from '../common';
+import type { RHIFilterMode } from '../common';
 import type { CullMode } from '../common/renderer/renderState';
 import type {
   FillMode,
@@ -350,7 +350,7 @@ export interface MaterialTextureSampler {
   /**
    * 过滤模式
    */
-  filter: TextureFilterMode;
+  filter: RHIFilterMode;
   /**
    * 包装模式
    */

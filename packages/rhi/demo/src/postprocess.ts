@@ -4,17 +4,8 @@
  * 展示各种后处理效果，如泛光、景深、色调映射和抗锯齿技术
  */
 
-import type { IRHITexture, RHIVertexLayout, IRHIBuffer, IRHIRenderPipeline, IRHIBindGroup } from '@maxellabs/core';
-import {
-  RHIBufferUsage,
-  RHIVertexFormat,
-  RHIPrimitiveTopology,
-  RHITextureFormat,
-  RHITextureUsage,
-  RHIIndexFormat,
-  RHIShaderStage,
-  RHICompareFunction,
-} from '@maxellabs/core';
+import type { RHIVertexLayout } from '@maxellabs/core';
+import { RHIBufferUsage, RHIVertexFormat, RHITextureFormat, RHITextureUsage } from '@maxellabs/core';
 import { WebGLDevice } from '../../src/webgl/GLDevice';
 import { Matrix4, Vector3 } from '@maxellabs/math';
 

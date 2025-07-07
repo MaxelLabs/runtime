@@ -9,6 +9,7 @@ import {
   RHIVertexFormat,
   RHIBlendFactor,
   RHIBlendOperation,
+  RHITextureType,
 } from '@maxellabs/core';
 import { WebGLDevice } from '@maxellabs/rhi';
 import { Matrix4, Vector3 } from '@maxellabs/math';
@@ -143,7 +144,7 @@ const texture = device.createTexture({
   height: textureSize,
   format: RHITextureFormat.RGBA8_UNORM,
   usage: RHITextureUsage.SAMPLED | RHITextureUsage.COPY_DST,
-  dimension: '2d',
+  dimension: RHITextureType.TEXTURE_2D,
   label: 'Checkerboard Texture',
 });
 
@@ -159,7 +160,7 @@ let renderTargetTexture = device.createTexture({
   height: canvas.height,
   format: RHITextureFormat.RGBA8_UNORM,
   usage: RHITextureUsage.RENDER_TARGET | RHITextureUsage.SAMPLED,
-  dimension: '2d',
+  dimension: RHITextureType.TEXTURE_2D,
   label: 'Render Target Texture',
 });
 
@@ -395,7 +396,7 @@ window.addEventListener('resize', () => {
     height: canvas.height,
     format: RHITextureFormat.RGBA8_UNORM,
     usage: RHITextureUsage.RENDER_TARGET | RHITextureUsage.SAMPLED,
-    dimension: '2d',
+    dimension: RHITextureType.TEXTURE_2D,
     label: 'Render Target Texture',
   });
 

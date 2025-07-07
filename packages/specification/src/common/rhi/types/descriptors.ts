@@ -5,7 +5,16 @@
 
 import type { IRHIShaderModule, IRHIBindGroupLayout, IRHIPipelineLayout } from '../index';
 import type { RHIVertexLayout, RHIColorBlendState, RHIDepthStencilState, RHIRasterizationState } from './states';
-import type { RHIBufferUsage, RHIPrimitiveTopology, RHITextureFormat, RHITextureUsage } from '@maxellabs/math';
+import type {
+  RHIBufferUsage,
+  RHIPrimitiveTopology,
+  RHITextureFormat,
+  RHITextureUsage,
+  RHIAddressMode,
+  RHIFilterMode,
+  Color,
+  RHICompareFunction,
+} from '@maxellabs/math';
 
 /**
  * 缓冲区描述符
@@ -123,37 +132,37 @@ export interface RHISamplerDescriptor {
   /**
    * 缩小过滤器
    */
-  minFilter?: 'nearest' | 'linear';
+  minFilter?: RHIFilterMode;
 
   /**
    * 放大过滤器
    */
-  magFilter?: 'nearest' | 'linear';
+  magFilter?: RHIFilterMode;
 
   /**
    * Mipmap过滤器
    */
-  mipmapFilter?: 'nearest' | 'linear';
+  mipmapFilter?: RHIFilterMode;
 
   /**
    * 寻址模式U
    */
-  addressModeU?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border';
+  addressModeU?: RHIAddressMode;
 
   /**
    * 寻址模式V
    */
-  addressModeV?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border';
+  addressModeV?: RHIAddressMode;
 
   /**
    * 寻址模式W
    */
-  addressModeW?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border';
+  addressModeW?: RHIAddressMode;
 
   /**
    * 边框颜色
    */
-  borderColor?: [number, number, number, number];
+  borderColor?: Color;
 
   /**
    * 各向异性过滤级别
@@ -163,7 +172,7 @@ export interface RHISamplerDescriptor {
   /**
    * 比较函数
    */
-  compareFunction?: 'never' | 'less' | 'equal' | 'less-equal' | 'greater' | 'not-equal' | 'greater-equal' | 'always';
+  compareFunction?: RHICompareFunction;
 
   /**
    * LOD最小值
