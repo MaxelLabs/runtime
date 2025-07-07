@@ -4,7 +4,6 @@
  */
 
 import type { RHIFilterMode } from '../common';
-import type { CullMode } from '../common/renderer/renderState';
 import type {
   FillMode,
   InterpolationMode,
@@ -16,6 +15,7 @@ import type {
   IColor,
   RHICompareFunction,
   RHIFrontFace,
+  RHICullMode,
 } from '../core';
 import type { UsdPrim, UsdValue } from '../core/usd';
 
@@ -183,7 +183,7 @@ export interface ShaderInput {
   /**
    * 输入类型
    */
-  type: ShaderDataType;
+  type: RHIShaderDataType;
   /**
    * 默认值
    */
@@ -209,13 +209,13 @@ export interface ShaderOutput {
   /**
    * 输出类型
    */
-  type: ShaderDataType;
+  type: RHIShaderDataType;
 }
 
 /**
- * 着色器数据类型
+ * RHI着色器数据类型
  */
-export enum ShaderDataType {
+export enum RHIShaderDataType {
   /**
    * 浮点数
    */
@@ -444,9 +444,9 @@ export interface BlendState {
 }
 
 /**
- * 混合操作
+ * 材质混合操作
  */
-export enum BlendOperation {
+export enum MaterialBlendOperation {
   /**
    * 加法
    */
@@ -610,7 +610,7 @@ export interface RasterState {
   /**
    * 剔除模式
    */
-  cullMode: CullMode;
+  cullMode: RHICullMode;
   /**
    * 正面方向
    */

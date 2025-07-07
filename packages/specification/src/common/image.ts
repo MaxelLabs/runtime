@@ -3,7 +3,8 @@
  * 定义所有系统共通的图像相关类型
  */
 
-import type { CommonElement, CommonElementType } from './elements';
+import type { CommonElement } from './elements';
+import type { ElementType } from '../core/enums';
 
 /**
  * 图像格式
@@ -299,7 +300,7 @@ export interface ImageMetadata {
  * 通用图像元素
  */
 export interface CommonImageElement extends CommonElement {
-  type: CommonElementType.Image;
+  type: ElementType.Image;
   /**
    * 图像源路径
    */

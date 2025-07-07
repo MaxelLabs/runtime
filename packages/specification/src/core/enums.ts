@@ -799,21 +799,43 @@ export enum ElementType {
   // 基础几何
   Rectangle = 'rectangle',
   Ellipse = 'ellipse',
+  Circle = 'circle',
   Polygon = 'polygon',
   Star = 'star',
   Vector = 'vector',
   Line = 'line',
   Arrow = 'arrow',
+  Path = 'path',
 
   // 容器
   Frame = 'frame',
   Group = 'group',
+  Canvas = 'canvas',
+  Layer = 'layer',
+  Scene = 'scene',
 
   // 内容
   Text = 'text',
   Image = 'image',
   Sprite = 'sprite',
   Icon = 'icon',
+
+  // 媒体元素
+  Video = 'video',
+  Audio = 'audio',
+
+  // 3D元素
+  Mesh = 'mesh',
+  Model = 'model',
+
+  // 特效元素
+  Particle = 'particle',
+  Trail = 'trail',
+
+  // UI元素
+  Button = 'button',
+  Slider = 'slider',
+  ProgressBar = 'progressBar',
 
   // 组件
   Component = 'component',

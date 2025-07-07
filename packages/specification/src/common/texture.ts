@@ -3,107 +3,12 @@
  * 定义所有系统共通的纹理相关类型
  */
 
-/**
- * 纹理格式
- */
-export enum RHITextureFormat {
-  // 8位格式
-  R8_UNORM = 0,
-  R8_SNORM = 1,
-  R8_UINT = 2,
-  R8_SINT = 3,
-
-  // 16位格式
-  R16_UINT = 4,
-  R16_SINT = 5,
-  R16_FLOAT = 6,
-  RG8_UNORM = 7,
-  RG8_SNORM = 8,
-  RG8_UINT = 9,
-  RG8_SINT = 10,
-
-  // 32位格式
-  R32_UINT = 11,
-  R32_SINT = 12,
-  R32_FLOAT = 13,
-  RG16_UINT = 14,
-  RG16_SINT = 15,
-  RG16_FLOAT = 16,
-  RGBA8_UNORM = 17,
-  RGBA8_UNORM_SRGB = 18,
-  RGBA8_SNORM = 19,
-  RGBA8_UINT = 20,
-  RGBA8_SINT = 21,
-  BGRA8_UNORM = 22,
-  BGRA8_UNORM_SRGB = 23,
-
-  // 64位格式
-  RG32_UINT = 24,
-  RG32_SINT = 25,
-  RG32_FLOAT = 26,
-  RGBA16_UINT = 27,
-  RGBA16_SINT = 28,
-  RGBA16_FLOAT = 29,
-
-  // 128位格式
-  RGBA32_UINT = 30,
-  RGBA32_SINT = 31,
-  RGBA32_FLOAT = 32,
-
-  // 深度/模板格式
-  DEPTH16_UNORM = 33,
-  DEPTH24_UNORM = 34,
-  DEPTH32_FLOAT = 35,
-  DEPTH24_UNORM_STENCIL8 = 36,
-  DEPTH32_FLOAT_STENCIL8 = 37,
-
-  // 压缩纹理格式
-  BC1_RGBA_UNORM = 38,
-  BC1_RGBA_UNORM_SRGB = 39,
-  BC2_RGBA_UNORM = 40,
-  BC2_RGBA_UNORM_SRGB = 41,
-  BC3_RGBA_UNORM = 42,
-  BC3_RGBA_UNORM_SRGB = 43,
-  BC4_R_UNORM = 44,
-  BC4_R_SNORM = 45,
-  BC5_RG_UNORM = 46,
-  BC5_RG_SNORM = 47,
-  BC6H_RGB_UFLOAT = 48,
-  BC6H_RGB_SFLOAT = 49,
-  BC7_RGBA_UNORM = 50,
-  BC7_RGBA_UNORM_SRGB = 51,
-
-  // ASTC压缩格式
-  ASTC_4x4_UNORM = 52,
-  ASTC_4x4_UNORM_SRGB = 53,
-  ASTC_5x5_UNORM = 54,
-  ASTC_5x5_UNORM_SRGB = 55,
-  ASTC_6x6_UNORM = 56,
-  ASTC_6x6_UNORM_SRGB = 57,
-  ASTC_8x8_UNORM = 58,
-  ASTC_8x8_UNORM_SRGB = 59,
-  ASTC_10x10_UNORM = 60,
-  ASTC_10x10_UNORM_SRGB = 61,
-  ASTC_12x12_UNORM = 62,
-  ASTC_12x12_UNORM_SRGB = 63,
-
-  // ETC2/EAC压缩格式
-  ETC2_RGB8_UNORM = 64,
-  ETC2_RGB8_UNORM_SRGB = 65,
-  ETC2_RGB8A1_UNORM = 66,
-  ETC2_RGB8A1_UNORM_SRGB = 67,
-  ETC2_RGBA8_UNORM = 68,
-  ETC2_RGBA8_UNORM_SRGB = 69,
-  EAC_R11_UNORM = 70,
-  EAC_R11_SNORM = 71,
-  EAC_RG11_UNORM = 72,
-  EAC_RG11_SNORM = 73,
-}
+import type { RHITextureFormat } from './rhi/types/enums';
 
 /**
- * 纹理数据类型
+ * RHI纹理数据类型
  */
-export enum TextureDataType {
+export enum RHITextureDataType {
   /**
    * 无符号字节
    */
@@ -356,7 +261,7 @@ export interface CommonTextureConfig {
   /**
    * 数据类型
    */
-  dataType: TextureDataType;
+  dataType: RHITextureDataType;
   /**
    * 纹理目标
    */

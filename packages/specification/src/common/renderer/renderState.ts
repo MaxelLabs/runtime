@@ -3,6 +3,8 @@
  * 渲染状态接口定义
  */
 
+import type { BlendMode, RHICullMode } from '../../core/enums';
+
 /**
  * 深度测试模式
  */
@@ -17,22 +19,9 @@ export type DepthTestMode =
   | 'always';
 
 /**
- * 剔除模式
+ * 通用渲染状态接口
  */
-export enum CullMode {
-  None = 'none',
-  Front = 'front',
-  Back = 'back',
-}
-/**
- * 混合模式
- */
-export type BlendMode = 'none' | 'alpha' | 'additive' | 'multiply' | 'screen' | 'overlay' | 'custom';
-
-/**
- * 渲染状态接口
- */
-export interface RenderState {
+export interface CommonRenderState {
   /**
    * 深度测试模式
    */
@@ -46,7 +35,7 @@ export interface RenderState {
   /**
    * 面剔除模式
    */
-  cullMode?: CullMode;
+  cullMode?: RHICullMode;
 
   /**
    * 混合模式

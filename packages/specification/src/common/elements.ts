@@ -12,47 +12,7 @@ import type {
   MaterialProperties,
   RenderingProperties,
 } from '../core/interfaces';
-import type { BlendMode } from '../core/enums';
-
-/**
- * 通用元素类型枚举
- */
-export enum CommonElementType {
-  // 基础元素
-  Text = 'text',
-  Image = 'image',
-  Sprite = 'sprite',
-  Frame = 'frame',
-  Group = 'group',
-
-  // 形状元素
-  Rectangle = 'rectangle',
-  Circle = 'circle',
-  Polygon = 'polygon',
-  Path = 'path',
-
-  // 媒体元素
-  Video = 'video',
-  Audio = 'audio',
-
-  // 3D元素
-  Mesh = 'mesh',
-  Model = 'model',
-
-  // 特效元素
-  Particle = 'particle',
-  Trail = 'trail',
-
-  // UI元素
-  Button = 'button',
-  Slider = 'slider',
-  ProgressBar = 'progressBar',
-
-  // 容器元素
-  Canvas = 'canvas',
-  Layer = 'layer',
-  Scene = 'scene',
-}
+import type { BlendMode, ElementType } from '../core/enums';
 
 /**
  * 通用边界框
@@ -185,7 +145,7 @@ export interface CommonElement extends Omit<UsdPrim, 'metadata' | 'children'> {
   /**
    * 元素类型
    */
-  type: CommonElementType;
+  type: ElementType;
   /**
    * 边界框
    */

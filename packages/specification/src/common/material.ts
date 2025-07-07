@@ -3,37 +3,7 @@
  * 定义跨模块共享的基础材质类型
  */
 
-import type { IColor, BlendMode, CommonMetadata } from '../core';
-
-/**
- * 通用材质类型枚举
- */
-export enum CommonMaterialType {
-  /**
-   * 标准材质
-   */
-  Standard = 'standard',
-  /**
-   * 无光材质
-   */
-  Unlit = 'unlit',
-  /**
-   * 透明材质
-   */
-  Transparent = 'transparent',
-  /**
-   * 自发光材质
-   */
-  Emissive = 'emissive',
-  /**
-   * 粒子材质
-   */
-  Particle = 'particle',
-  /**
-   * UI材质
-   */
-  UI = 'ui',
-}
+import type { IColor, BlendMode, CommonMetadata, MaterialType } from '../core';
 
 /**
  * 通用纹理槽
@@ -102,7 +72,7 @@ export interface CommonMaterialBase {
   /**
    * 材质类型
    */
-  type: CommonMaterialType;
+  type: MaterialType;
   /**
    * 是否启用
    */
