@@ -2,10 +2,6 @@
  * Maxellabs 动画缓动模块
  * 动画系统特有的扩展缓动函数定义
  */
-
-// 重新导出核心类型
-export { PlaybackDirection, FillModeType, TransformType } from '../core/enums';
-
 /**
  * 扩展的缓动函数类型（动画特有的详细缓动类型）
  */

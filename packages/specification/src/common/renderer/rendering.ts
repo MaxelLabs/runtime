@@ -53,19 +53,19 @@ export enum RenderQueue {
   /**
    * 背景
    */
-  Background = 1000,
+  Background = 'background',
   /**
    * 几何体
    */
-  Geometry = 2000,
+  Geometry = 'geometry',
   /**
    * 透明几何体
    */
-  TransparentGeometry = 3000,
+  TransparentGeometry = 'transparent-geometry',
   /**
    * 覆盖层
    */
-  Overlay = 4000,
+  Overlay = 'overlay',
 }
 
 /**

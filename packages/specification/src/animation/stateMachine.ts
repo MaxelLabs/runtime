@@ -32,7 +32,7 @@ export interface AnimationStateMachine {
 }
 
 /**
- * 中断源（保留，因为common中没有定义）
+ * 中断源
  */
 export enum InterruptionSource {
   None = 'none',
