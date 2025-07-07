@@ -3,7 +3,8 @@
  * 定义所有系统共通的精灵相关类型
  */
 
-import type { CommonElement, CommonElementType } from './elements';
+import type { CommonElement } from './elements';
+import type { ElementType } from '../core/enums';
 import type { AnimationProperties } from '../core/interfaces';
 
 /**
@@ -360,7 +361,7 @@ export interface SpriteTransitionCondition {
  * 通用精灵元素
  */
 export interface CommonSpriteElement extends CommonElement {
-  type: CommonElementType.Sprite;
+  type: ElementType.Sprite;
   /**
    * 精灵类型
    */

@@ -4,3 +4,4 @@
  */
 
 export * from './renderState';
+export * from './rendering';

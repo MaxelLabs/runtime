@@ -3,9 +3,9 @@
  * 定义跨模块共享的基础渲染类型
  */
 
-import type { BlendMode, RenderMode } from '../core';
-import type { CommonElement } from './elements';
-import type { CommonMaterial } from './material';
+import type { RenderMode, BlendMode } from '../../core';
+import type { CommonElement } from '../elements';
+import type { CommonMaterial } from '../material';
 
 /**
  * 深度测试模式
@@ -52,19 +52,19 @@ export enum RenderQueue {
   /**
    * 背景
    */
-  Background = 1000,
+  Background = 'background',
   /**
    * 几何体
    */
-  Geometry = 2000,
+  Geometry = 'geometry',
   /**
    * 透明几何体
    */
-  TransparentGeometry = 3000,
+  TransparentGeometry = 'transparent-geometry',
   /**
    * 覆盖层
    */
-  Overlay = 4000,
+  Overlay = 'overlay',
 }
 
 /**

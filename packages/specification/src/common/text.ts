@@ -3,7 +3,8 @@
  * 定义所有系统共通的文本相关类型
  */
 
-import type { CommonElement, CommonElementType } from './elements';
+import type { CommonElement } from './elements';
+import type { ElementType } from '../core/enums';
 import type { IColor, VerticalAlign } from '../core';
 
 /**
@@ -308,7 +309,7 @@ export interface TextStroke {
  * 通用文本元素
  */
 export interface CommonTextElement extends CommonElement {
-  type: CommonElementType.Text;
+  type: ElementType.Text;
   /**
    * 文本内容
    */
@@ -373,7 +374,7 @@ export interface RichTextSegment {
  * 富文本元素
  */
 export interface RichTextElement extends CommonElement {
-  type: CommonElementType.Text;
+  type: ElementType.Text;
   /**
    * 富文本片段
    */

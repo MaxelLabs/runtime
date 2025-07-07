@@ -4,7 +4,7 @@
  * 展示实时阴影映射技术，支持硬阴影、软阴影和PCF滤波
  */
 
-import type { IRHITexture, RHIVertexLayout, IRHIBuffer, IRHIRenderPipeline, IRHIBindGroup } from '@maxellabs/core';
+import type { RHIVertexLayout } from '@maxellabs/core';
 import {
   RHIBufferUsage,
   RHIVertexFormat,
@@ -118,10 +118,10 @@ void main() {
   vec4 worldPosition = uModelMatrix * vec4(aPosition, 1.0);
   vWorldPosition = worldPosition.xyz;
   vNormal = normalize(mat3(uModelMatrix) * aNormal);
-  
+
   // 计算在光源空间中的位置
   vLightSpacePosition = uLightProjectionMatrix * uLightViewMatrix * worldPosition;
-  
+
   gl_Position = uProjectionMatrix * uViewMatrix * worldPosition;
 }
 `;
@@ -148,7 +148,7 @@ out vec4 fragColor;
 float calculateHardShadow(vec3 projCoords) {
   float closestDepth = texture(uShadowMap, projCoords.xy).r;
   float currentDepth = projCoords.z;
-  
+
   float shadow = currentDepth - uShadowBias > closestDepth ? 1.0 : 0.0;
   return shadow;
 }
@@ -158,7 +158,7 @@ float calculatePCFShadow(vec3 projCoords) {
   vec2 texelSize = 1.0 / vec2(textureSize(uShadowMap, 0));
   float shadow = 0.0;
   int samples = 0;
-  
+
   for(int x = -2; x <= 2; ++x) {
     for(int y = -2; y <= 2; ++y) {
       float pcfDepth = texture(uShadowMap, projCoords.xy + vec2(x, y) * texelSize * uPCFRadius).r;
@@ -166,7 +166,7 @@ float calculatePCFShadow(vec3 projCoords) {
       samples++;
     }
   }
-  
+
   return shadow / float(samples);
 }
 
@@ -176,7 +176,7 @@ float calculateSoftShadow(vec3 projCoords) {
   float shadow = 0.0;
   float radius = 3.0;
   int samples = 0;
-  
+
   for(float x = -radius; x <= radius; x += 1.0) {
     for(float y = -radius; y <= radius; y += 1.0) {
       vec2 offset = vec2(x, y) * texelSize;
@@ -185,39 +185,39 @@ float calculateSoftShadow(vec3 projCoords) {
       samples++;
     }
   }
-  
+
   return shadow / float(samples);
 }
 
 void main() {
   // 基础材质颜色
   vec3 albedo = vec3(0.8, 0.6, 0.4);
-  
+
   // 计算光照方向
   vec3 lightDir = normalize(uLightPosition - vWorldPosition);
   vec3 normal = normalize(vNormal);
   vec3 viewDir = normalize(uViewPosition - vWorldPosition);
-  
+
   // 环境光
   vec3 ambient = 0.3 * albedo;
-  
+
   // 漫反射
   float diff = max(dot(normal, lightDir), 0.0);
   vec3 diffuse = diff * albedo;
-  
+
   // 镜面反射
   vec3 reflectDir = reflect(-lightDir, normal);
   float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
   vec3 specular = spec * vec3(0.3);
-  
+
   // 阴影计算
   vec3 projCoords = vLightSpacePosition.xyz / vLightSpacePosition.w;
   projCoords = projCoords * 0.5 + 0.5; // 转换到[0,1]范围
-  
+
   float shadow = 0.0;
-  if(projCoords.z <= 1.0 && projCoords.x >= 0.0 && projCoords.x <= 1.0 && 
+  if(projCoords.z <= 1.0 && projCoords.x >= 0.0 && projCoords.x <= 1.0 &&
      projCoords.y >= 0.0 && projCoords.y <= 1.0) {
-    
+
     if(uShadowType == 0) {
       shadow = calculateHardShadow(projCoords);
     } else if(uShadowType == 1) {
@@ -226,10 +226,10 @@ void main() {
       shadow = calculatePCFShadow(projCoords);
     }
   }
-  
+
   // 应用阴影
   vec3 lighting = ambient + (1.0 - shadow * uShadowIntensity) * (diffuse + specular);
-  
+
   fragColor = vec4(lighting, 1.0);
 }
 `;

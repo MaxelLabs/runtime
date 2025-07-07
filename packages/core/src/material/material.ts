@@ -26,9 +26,9 @@ import type {
   MaterialProperty,
   TextureReference,
 } from '@maxellabs/math';
-import type { IRHIDevice } from '../interface/rhi/device';
-import type { IRHITexture } from '../interface/rhi/resources/texture';
-import type { IRHIBindGroup } from '../interface/rhi/bindings';
+import type { IRHIDevice } from '../../../specification/src/common/rhi/device';
+import type { IRHITexture } from '../../../specification/src/common/rhi/resources/texture';
+import type { IRHIBindGroup } from '../../../specification/src/common/rhi/bindings';
 import type { EventListener } from '../base';
 import { EventDispatcher } from '../base';
 

@@ -2,9 +2,9 @@ import type { GeometryPrim, BoundingBox, VertexAttributeDescriptor } from '@maxe
 import { VertexAttribute } from '@maxellabs/math';
 import { Resource, ResourceType } from '../resource/resource';
 import type { ResourceLoadOptions } from '../resource/resource';
-import type { IRHIBuffer, IRHIDevice } from '../interface/rhi';
-import type { RHIVertexBufferLayout } from '../interface/rhi/types/states';
-import { RHIBufferUsage, RHIIndexFormat, RHIVertexFormat } from '../interface/rhi/types/enums';
+import type { IRHIBuffer, IRHIDevice } from '../../../specification/src/common/rhi';
+import type { RHIVertexBufferLayout } from '../../../specification/src/common/rhi/types/states';
+import { RHIBufferUsage, RHIIndexFormat, RHIVertexFormat } from '../../../specification/src/common/rhi/types/enums';
 
 /**
  * 几何体缓冲区数据

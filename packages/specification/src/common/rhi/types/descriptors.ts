@@ -4,9 +4,17 @@
  */
 
 import type { IRHIShaderModule, IRHIBindGroupLayout, IRHIPipelineLayout } from '../index';
-import type { RHIBufferUsage, RHITextureFormat, RHITextureUsage } from './enums';
 import type { RHIVertexLayout, RHIColorBlendState, RHIDepthStencilState, RHIRasterizationState } from './states';
-import type { RHIPrimitiveTopology } from '@maxellabs/math';
+import type {
+  RHIBufferUsage,
+  RHIPrimitiveTopology,
+  RHITextureFormat,
+  RHITextureUsage,
+  RHIAddressMode,
+  RHIFilterMode,
+  Color,
+  RHICompareFunction,
+} from '@maxellabs/math';
 
 /**
  * 缓冲区描述符
@@ -42,6 +50,19 @@ export interface RHIBufferDescriptor {
    * 扩展信息，用于存储平台或实现特定的额外信息
    */
   extension?: Record<string, any>;
+}
+
+export enum RHITextureType {
+  /** 2D纹理 */
+  TEXTURE_2D = '2d',
+  /** 3D纹理 */
+  TEXTURE_3D = '3d',
+  /** 立方体纹理 */
+  TEXTURE_CUBE = 'cube',
+  /** 1D纹理 */
+  TEXTURE_1D = '1d',
+  /** 2D数组纹理 */
+  TEXTURE_2D_ARRAY = '2d-array',
 }
 
 /**
@@ -87,7 +108,7 @@ export interface RHITextureDescriptor {
    * WebGL兼容性选项：纹理类型
    * 在WebGPU中根据其他属性推断
    */
-  dimension?: '1d' | '2d' | '3d' | 'cube';
+  dimension?: RHITextureType;
 
   /**
    * 硬件API兼容性选项
@@ -111,37 +132,37 @@ export interface RHISamplerDescriptor {
   /**
    * 缩小过滤器
    */
-  minFilter?: 'nearest' | 'linear';
+  minFilter?: RHIFilterMode;
 
   /**
    * 放大过滤器
    */
-  magFilter?: 'nearest' | 'linear';
+  magFilter?: RHIFilterMode;
 
   /**
    * Mipmap过滤器
    */
-  mipmapFilter?: 'nearest' | 'linear';
+  mipmapFilter?: RHIFilterMode;
 
   /**
    * 寻址模式U
    */
-  addressModeU?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border';
+  addressModeU?: RHIAddressMode;
 
   /**
    * 寻址模式V
    */
-  addressModeV?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border';
+  addressModeV?: RHIAddressMode;
 
   /**
    * 寻址模式W
    */
-  addressModeW?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border';
+  addressModeW?: RHIAddressMode;
 
   /**
    * 边框颜色
    */
-  borderColor?: [number, number, number, number];
+  borderColor?: Color;
 
   /**
    * 各向异性过滤级别
@@ -151,7 +172,7 @@ export interface RHISamplerDescriptor {
   /**
    * 比较函数
    */
-  compareFunction?: 'never' | 'less' | 'equal' | 'less-equal' | 'greater' | 'not-equal' | 'greater-equal' | 'always';
+  compareFunction?: RHICompareFunction;
 
   /**
    * LOD最小值

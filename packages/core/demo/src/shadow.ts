@@ -4,7 +4,7 @@
  * 展示实时阴影映射技术，支持硬阴影、软阴影和PCF滤波
  */
 
-import type { IRHITexture, RHIVertexLayout, IRHIBuffer, IRHIRenderPipeline, IRHIBindGroup } from '@maxellabs/core';
+import type { RHIVertexLayout } from '@maxellabs/core';
 import {
   RHIBufferUsage,
   RHIVertexFormat,
@@ -14,9 +14,11 @@ import {
   RHIIndexFormat,
   RHIShaderStage,
   RHICompareFunction,
+  RHITextureType,
+  Matrix4,
+  Vector3,
 } from '@maxellabs/core';
-import { WebGLDevice } from '../../src/webgl/GLDevice';
-import { Matrix4, Vector3 } from '@maxellabs/math';
+import { WebGLDevice } from '@maxellabs/rhi';
 
 // 常量定义
 const CANVAS_ID = 'J-canvas';
@@ -636,7 +638,7 @@ async function init(): Promise<void> {
     height: SHADOW_MAP_SIZE,
     format: RHITextureFormat.DEPTH16_UNORM,
     usage: RHITextureUsage.RENDER_TARGET | RHITextureUsage.SAMPLED,
-    dimension: '2d',
+    dimension: RHITextureType.TEXTURE_2D,
     label: 'Shadow Map',
   });
 

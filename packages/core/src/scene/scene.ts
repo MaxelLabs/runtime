@@ -41,6 +41,7 @@ export class Scene extends EventDispatcher {
   override name: string;
   /** 场景中的实体列表 */
   private entities: Map<string, Entity> = new Map();
+
   /** 场景着色器数据 */
   shaderData: ShaderData = new ShaderData();
   /** 根实体 */
@@ -81,13 +82,13 @@ export class Scene extends EventDispatcher {
    * @returns 当前场景实例，用于链式调用
    */
   addEntity(entity: Entity): this {
-    if (this.entities.has(entity.tag)) {
-      console.warn(`实体 ${entity.tag} 已存在于场景中`);
+    if (this.entities.has(entity.id)) {
+      console.warn(`实体 ${entity.id} 已存在于场景中`);
 
       return this;
     }
 
-    this.entities.set(entity.tag, entity);
+    this.entities.set(entity.id, entity);
     entity.setScene(this);
 
     // 派发实体添加事件
@@ -102,7 +103,7 @@ export class Scene extends EventDispatcher {
    * @returns 当前场景实例，用于链式调用
    */
   removeEntity(entity: Entity | string): this {
-    const entityId = typeof entity === 'string' ? entity : entity.tag;
+    const entityId = typeof entity === 'string' ? entity : entity.id;
     const targetEntity = this.entities.get(entityId);
 
     if (!targetEntity) {

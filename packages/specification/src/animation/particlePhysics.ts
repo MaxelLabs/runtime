@@ -3,6 +3,8 @@
  * 粒子物理、碰撞和力场的定义
  */
 
+import type { Vector3 } from '@maxellabs/math';
+
 /**
  * 粒子物理
  */
@@ -10,7 +12,7 @@ export interface ParticlePhysics {
   /**
    * 重力 [x, y, z]
    */
-  gravity: [number, number, number];
+  gravity: Vector3;
   /**
    * 阻尼
    */

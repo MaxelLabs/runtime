@@ -28,6 +28,29 @@ export * from './material';
 // 光照系统
 export * from './light';
 
+// 纹理系统
+export * from './texture';
+
+// 着色器系统
+export * from './shader';
+
+// 渲染系统 - 明确导出以避免与math包的RenderQueue枚举冲突
+export { Renderer } from './renderer/renderer';
+export { ForwardRenderer } from './renderer/forward-renderer';
+export {
+  type RenderElement,
+  RenderElementImpl,
+  RenderElementComparator,
+  RenderPriority,
+} from './renderer/render-element';
+export {
+  RenderQueue as CoreRenderQueue,
+  type RenderQueueConfig,
+  type RenderQueueStatistics,
+} from './renderer/render-queue';
+export * from './renderer/passes';
+export * from './renderer/render-test';
+
 // 接口定义
 export * from './interface';
 

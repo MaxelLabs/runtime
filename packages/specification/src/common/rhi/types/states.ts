@@ -3,7 +3,13 @@
  * 包含所有RHI渲染状态的类型定义
  */
 
-import type { RHIBlendFactor, RHIBlendOperation, RHICompareFunction, RHICullMode, RHIFrontFace } from '@maxellabs/math';
+import type {
+  RHIBlendFactor,
+  RHIBlendOperation,
+  RHICompareFunction,
+  RHICullMode,
+  RHIFrontFace,
+} from '../../../core/enums';
 import type { RHIStencilOperation, RHIVertexFormat, RHITextureFormat } from './enums';
 
 /**

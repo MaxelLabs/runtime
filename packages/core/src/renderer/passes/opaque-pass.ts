@@ -13,7 +13,7 @@ import {
   type IRHIBindGroupLayout,
   type IRHIPipelineLayout,
   RHITextureFormat,
-} from '../../interface/rhi';
+} from '../../../../specification/src/common/rhi';
 import {
   RHIPrimitiveTopology,
   RHICullMode,

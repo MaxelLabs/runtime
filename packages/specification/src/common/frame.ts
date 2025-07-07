@@ -3,7 +3,8 @@
  * 定义所有系统共通的帧动画相关类型
  */
 
-import type { CommonElement, CommonElementType } from './elements';
+import type { CommonElement } from './elements';
+import type { ElementType } from '../core/enums';
 import type { AnimationProperties } from '../core/interfaces';
 import type { AnimationMask } from './animation';
 
@@ -56,9 +57,9 @@ export enum FrameInterpolationType {
 }
 
 /**
- * 帧数据类型
+ * 动画帧数据类型
  */
-export enum FrameDataType {
+export enum AnimationFrameDataType {
   /**
    * 位置
    */
@@ -141,7 +142,7 @@ export interface AnimationTrack {
   /**
    * 数据类型
    */
-  dataType: FrameDataType;
+  dataType: AnimationFrameDataType;
   /**
    * 关键帧列表
    */
@@ -288,7 +289,7 @@ export interface AnimationLayer {
  * 通用帧元素
  */
 export interface CommonFrameElement extends CommonElement {
-  type: CommonElementType.Frame;
+  type: ElementType.Frame;
   /**
    * 帧动画类型
    */

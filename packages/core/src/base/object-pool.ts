@@ -1,7 +1,7 @@
 /**
- * 对象池性能统计
+ * Core包对象池性能统计
  */
-export interface ObjectPoolStats {
+export interface CoreObjectPoolStats {
   /** 对象池ID */
   poolId: string;
   /** 池中可用对象数量 */
@@ -255,7 +255,7 @@ export class ObjectPool<T> {
    * 获取对象池当前状态统计
    * @returns 对象池性能统计
    */
-  getStatus(): ObjectPoolStats {
+  getStatus(): CoreObjectPoolStats {
     const available = this.pool.length;
     const inUse = this.activeCount;
     const total = available + inUse;

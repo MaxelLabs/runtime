@@ -3,9 +3,8 @@
  * 材质和着色器渲染相关类型定义
  */
 
-import type { TextureFilterMode } from '../common';
+import type { RHIFilterMode } from '../common';
 import type {
-  CullMode,
   FillMode,
   InterpolationMode,
   MaterialProperties,
@@ -16,6 +15,7 @@ import type {
   IColor,
   RHICompareFunction,
   RHIFrontFace,
+  RHICullMode,
 } from '../core';
 import type { UsdPrim, UsdValue } from '../core/usd';
 
@@ -67,7 +67,7 @@ export interface IMaterial extends MaterialPrim {
   /**
    * 渲染状态
    */
-  renderState?: RenderState;
+  renderState?: MaterialRenderState;
 }
 
 /**
@@ -183,7 +183,7 @@ export interface ShaderInput {
   /**
    * 输入类型
    */
-  type: ShaderDataType;
+  type: RHIShaderDataType;
   /**
    * 默认值
    */
@@ -209,13 +209,13 @@ export interface ShaderOutput {
   /**
    * 输出类型
    */
-  type: ShaderDataType;
+  type: RHIShaderDataType;
 }
 
 /**
- * 着色器数据类型
+ * RHI着色器数据类型
  */
-export enum ShaderDataType {
+export enum RHIShaderDataType {
   /**
    * 浮点数
    */
@@ -317,7 +317,7 @@ export interface TextureReference {
   /**
    * 采样器
    */
-  sampler?: TextureSampler;
+  sampler?: MaterialTextureSampler;
 }
 
 /**
@@ -343,13 +343,14 @@ export enum TextureType {
 }
 
 /**
- * 纹理采样器
+ * 材质纹理采样器
+ * 用于材质系统中的纹理采样配置
  */
-export interface TextureSampler {
+export interface MaterialTextureSampler {
   /**
    * 过滤模式
    */
-  filter: TextureFilterMode;
+  filter: RHIFilterMode;
   /**
    * 包装模式
    */
@@ -383,9 +384,9 @@ export interface TextureTransform {
 }
 
 /**
- * 渲染状态
+ * 材质渲染状态
  */
-export interface RenderState {
+export interface MaterialRenderState {
   /**
    * 混合状态
    */
@@ -443,9 +444,9 @@ export interface BlendState {
 }
 
 /**
- * 混合操作
+ * 材质混合操作
  */
-export enum BlendOperation {
+export enum MaterialBlendOperation {
   /**
    * 加法
    */
@@ -609,7 +610,7 @@ export interface RasterState {
   /**
    * 剔除模式
    */
-  cullMode: CullMode;
+  cullMode: RHICullMode;
   /**
    * 正面方向
    */

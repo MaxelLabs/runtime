@@ -3,68 +3,12 @@
  * 定义所有系统共通的纹理相关类型
  */
 
-/**
- * 纹理格式
- */
-export enum TextureFormat {
-  /**
-   * RGB格式
-   */
-  RGB = 'rgb',
-  /**
-   * RGBA格式
-   */
-  RGBA = 'rgba',
-  /**
-   * 灰度格式
-   */
-  Grayscale = 'grayscale',
-  /**
-   * 灰度+Alpha格式
-   */
-  GrayscaleAlpha = 'grayscale-alpha',
-  /**
-   * 深度格式
-   */
-  Depth = 'depth',
-  /**
-   * 深度+模板格式
-   */
-  DepthStencil = 'depth-stencil',
-  /**
-   * 压缩DXT1格式
-   */
-  DXT1 = 'dxt1',
-  /**
-   * 压缩DXT3格式
-   */
-  DXT3 = 'dxt3',
-  /**
-   * 压缩DXT5格式
-   */
-  DXT5 = 'dxt5',
-  /**
-   * 压缩ETC1格式
-   */
-  ETC1 = 'etc1',
-  /**
-   * 压缩ETC2格式
-   */
-  ETC2 = 'etc2',
-  /**
-   * 压缩ASTC格式
-   */
-  ASTC = 'astc',
-  /**
-   * 压缩PVRTC格式
-   */
-  PVRTC = 'pvrtc',
-}
+import type { RHITextureFormat } from './rhi/types/enums';
 
 /**
- * 纹理数据类型
+ * RHI纹理数据类型
  */
-export enum TextureDataType {
+export enum RHITextureDataType {
   /**
    * 无符号字节
    */
@@ -148,6 +92,149 @@ export enum TextureUsage {
 }
 
 /**
+ * RHI后端类型
+ */
+export enum RHIBackend {
+  /** 未知或不支持的后端 */
+  UNKNOWN = 0,
+  /** WebGL 1.0 */
+  WebGL = 1,
+  /** WebGL 2.0 */
+  WebGL2 = 2,
+  /** WebGPU */
+  WebGPU = 3,
+}
+
+/**
+ * 缓冲区用途标志
+ * 这些标志值可以按位组合
+ */
+export enum RHIBufferUsage {
+  /** 用作顶点缓冲区 */
+  VERTEX = 0x1,
+  /** 用作索引缓冲区 */
+  INDEX = 0x2,
+  /** 用作统一缓冲区 */
+  UNIFORM = 0x4,
+  /** 用作存储缓冲区 */
+  STORAGE = 0x8,
+  /** 用作间接命令缓冲区 */
+  INDIRECT = 0x10,
+  /** 缓冲区可以被映射以供CPU读取 */
+  MAP_READ = 0x20,
+  /** 缓冲区可以被映射以供CPU写入 */
+  MAP_WRITE = 0x40,
+  /** 缓冲区可以作为复制操作的源 */
+  COPY_SRC = 0x80,
+  /** 缓冲区可以作为复制操作的目标 */
+  COPY_DST = 0x100,
+}
+
+/**
+ * 纹理用途标志
+ * 这些标志值可以按位组合
+ */
+export enum RHITextureUsage {
+  /** 纹理可以被采样 */
+  SAMPLED = 0x1,
+  /** 纹理可以作为存储纹理使用 */
+  STORAGE = 0x2,
+  /** 纹理可以作为渲染目标使用 */
+  RENDER_TARGET = 0x4,
+  /** 纹理可以作为复制操作的源 */
+  COPY_SRC = 0x8,
+  /** 纹理可以作为复制操作的目标 */
+  COPY_DST = 0x10,
+}
+
+/**
+ * 纹理维度
+ */
+export enum RHITextureDimension {
+  /** 1D纹理 */
+  TEX_1D = 0,
+  /** 2D纹理 */
+  TEX_2D = 1,
+  /** 3D纹理 */
+  TEX_3D = 2,
+  /** 立方体贴图 */
+  TEX_CUBE = 3,
+  /** 2D纹理数组 */
+  TEX_2D_ARRAY = 4,
+  /** 立方体贴图数组 */
+  TEX_CUBE_ARRAY = 5,
+}
+
+/**
+ * 寻址模式
+ */
+export enum RHIAddressMode {
+  /** 重复纹理 */
+  REPEAT = 0,
+  /** 镜像重复纹理 */
+  MIRROR_REPEAT = 1,
+  /** 纹理坐标范围外使用边缘像素 */
+  CLAMP_TO_EDGE = 2,
+  /** 纹理坐标范围外设置为0 */
+  CLAMP_TO_ZERO = 3,
+  /** 纹理坐标范围外设置为边框颜色 */
+  CLAMP_TO_BORDER = 4,
+}
+
+/**
+ * 过滤模式
+ */
+export enum RHIFilterMode {
+  /**
+   * 最近邻
+   */
+  Nearest = 'nearest',
+  /**
+   * 线性
+   */
+  Linear = 'linear',
+  /**
+   * 最近邻Mipmap最近邻
+   */
+  NearestMipmapNearest = 'nearest-mipmap-nearest',
+  /**
+   * 线性Mipmap最近邻
+   */
+  LinearMipmapNearest = 'linear-mipmap-nearest',
+  /**
+   * 最近邻Mipmap线性
+   */
+  NearestMipmapLinear = 'nearest-mipmap-linear',
+  /**
+   * 线性Mipmap线性
+   */
+  LinearMipmapLinear = 'linear-mipmap-linear',
+}
+
+/**
+ * 着色器阶段标志
+ * 这些标志值可以按位组合
+ */
+export enum RHIShaderStage {
+  /** 顶点着色器 */
+  VERTEX = 0x1,
+  /** 片段着色器 */
+  FRAGMENT = 0x2,
+  /** 计算着色器 */
+  COMPUTE = 0x4,
+  /** 几何着色器(仅限WebGL) */
+  GEOMETRY = 0x8,
+  /** 曲面细分控制着色器 */
+  TESS_CONTROL = 0x10,
+  /** 曲面细分评估着色器 */
+  TESS_EVALUATION = 0x20,
+  /** 网格着色器 */
+  MESH = 0x40,
+  /** 任务着色器 */
+  TASK = 0x80,
+}
+
+/**
  * 通用纹理配置
  */
 export interface CommonTextureConfig {
@@ -170,11 +257,11 @@ export interface CommonTextureConfig {
   /**
    * 纹理格式
    */
-  format: TextureFormat;
+  format: RHITextureFormat;
   /**
    * 数据类型
    */
-  dataType: TextureDataType;
+  dataType: RHITextureDataType;
   /**
    * 纹理目标
    */
@@ -194,11 +281,11 @@ export interface CommonTextureConfig {
   /**
    * 最小过滤模式
    */
-  minFilter: TextureFilterMode;
+  minFilter: RHIFilterMode;
   /**
    * 最大过滤模式
    */
-  magFilter: TextureFilterMode;
+  magFilter: RHIFilterMode;
   /**
    * 水平包装模式
    */
@@ -228,37 +315,6 @@ export interface CommonTextureConfig {
    */
   colorSpace: string;
 }
-
-/**
- * 纹理过滤模式
- */
-export enum TextureFilterMode {
-  /**
-   * 最近邻
-   */
-  Nearest = 'nearest',
-  /**
-   * 线性
-   */
-  Linear = 'linear',
-  /**
-   * 最近邻Mipmap最近邻
-   */
-  NearestMipmapNearest = 'nearest-mipmap-nearest',
-  /**
-   * 线性Mipmap最近邻
-   */
-  LinearMipmapNearest = 'linear-mipmap-nearest',
-  /**
-   * 最近邻Mipmap线性
-   */
-  NearestMipmapLinear = 'nearest-mipmap-linear',
-  /**
-   * 线性Mipmap线性
-   */
-  LinearMipmapLinear = 'linear-mipmap-linear',
-}
-
 /**
  * 纹理包装模式
  */
@@ -592,7 +648,7 @@ export interface TextureCompressionConfig {
   /**
    * 压缩格式
    */
-  format: TextureFormat;
+  format: RHITextureFormat;
   /**
    * 压缩质量 (0-1)
    */
