@@ -221,23 +221,14 @@ export enum MaterialPurpose {
   Render = 'render',
 }
 
+// LODConfiguration 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+import type { PerformanceConfiguration } from '../package/format';
+
 /**
- * LOD 配置
+ * @deprecated 使用 PerformanceConfiguration 替代
  */
-export interface LODConfiguration {
-  /**
-   * LOD 级别
-   */
-  levels: LODLevel[];
-  /**
-   * 距离计算方式
-   */
-  distanceMode: DistanceMode;
-  /**
-   * 淡入淡出
-   */
-  fadeTransition?: FadeTransition;
-}
+export type LODConfiguration = PerformanceConfiguration;
 
 /**
  * LOD 级别
@@ -719,35 +710,13 @@ export enum DeformationType {
   Procedural = 'procedural',
 }
 
+// SimplificationConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+
 /**
- * 简化配置
+ * @deprecated 使用 PerformanceConfiguration 替代
  */
-export interface SimplificationConfig {
-  /**
-   * 简化算法
-   */
-  algorithm: SimplificationAlgorithm;
-  /**
-   * 目标三角形数
-   */
-  targetTriangles?: number;
-  /**
-   * 简化比例
-   */
-  simplificationRatio?: number;
-  /**
-   * 保持边界
-   */
-  preserveBoundaries: boolean;
-  /**
-   * 保持UV接缝
-   */
-  preserveUVSeams: boolean;
-  /**
-   * 保持法线
-   */
-  preserveNormals: boolean;
-}
+export type SimplificationConfig = PerformanceConfiguration;
 
 /**
  * 简化算法
@@ -771,23 +740,13 @@ export enum SimplificationAlgorithm {
   ProgressiveMesh = 'progressive-mesh',
 }
 
+// CompressionConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+
 /**
- * 压缩配置
+ * @deprecated 使用 PerformanceConfiguration 替代
  */
-export interface CompressionConfig {
-  /**
-   * 顶点压缩
-   */
-  vertexCompression?: VertexCompression;
-  /**
-   * 索引压缩
-   */
-  indexCompression?: IndexCompression;
-  /**
-   * 属性压缩
-   */
-  attributeCompression?: AttributeCompression;
-}
+export type CompressionConfig = PerformanceConfiguration;
 
 /**
  * 顶点压缩
@@ -879,46 +838,18 @@ export enum AttributeFormat {
   Int = 'int',
 }
 
-/**
- * 缓存配置
- */
-export interface CachingConfig {
-  /**
-   * 启用缓存
-   */
-  enabled: boolean;
-  /**
-   * 缓存策略
-   */
-  strategy: GeoCacheStrategy;
-  /**
-   * 缓存大小限制
-   */
-  maxSize: number;
-  /**
-   * 缓存过期时间
-   */
-  ttl: number;
-}
+// CachingConfig 已废弃 - 使用 CacheConfiguration（来自 package/format.ts）
+// GeoCacheStrategy 已废弃 - 使用 CacheStrategy（来自 core/base.ts）
+
+import type { CacheConfiguration } from '../package/format';
+import type { CacheStrategy } from '../core/base';
 
 /**
- * 缓存策略
+ * @deprecated 使用 CacheConfiguration 替代
  */
-export enum GeoCacheStrategy {
-  /**
-   * 最近最少使用
-   */
-  LRU = 'lru',
-  /**
-   * 最近最常使用
-   */
-  LFU = 'lfu',
-  /**
-   * 先进先出
-   */
-  FIFO = 'fifo',
-  /**
-   * 时间到期
-   */
-  TTL = 'ttl',
-}
+export type CachingConfig = CacheConfiguration;
+
+/**
+ * @deprecated 使用 CacheStrategy 替代
+ */
+export type GeoCacheStrategy = CacheStrategy;

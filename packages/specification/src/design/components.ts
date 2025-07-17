@@ -132,19 +132,13 @@ export interface ComponentTransition {
   condition?: string;
 }
 
+// ComponentTrigger 已废弃 - 使用 EventType（来自 core/enums.ts）替代
+import type { EventType } from '../core/enums';
+
 /**
- * 组件触发器
+ * @deprecated 使用 EventType 替代
  */
-export enum ComponentTrigger {
-  Click = 'click',
-  Hover = 'hover',
-  Focus = 'focus',
-  Blur = 'blur',
-  KeyPress = 'keypress',
-  Load = 'load',
-  Change = 'change',
-  Custom = 'custom',
-}
+export type ComponentTrigger = EventType;
 
 /**
  * 设计组件库
@@ -206,31 +200,14 @@ export interface ComponentCategory {
   order?: number;
 }
 
+// ComponentLibraryConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+import type { PerformanceConfiguration } from '../package/format';
+
 /**
- * 组件库配置
+ * @deprecated 使用 PerformanceConfiguration 替代
  */
-export interface ComponentLibraryConfig {
-  /**
-   * 默认主题
-   */
-  defaultTheme?: string;
-  /**
-   * 支持的主题
-   */
-  themes?: string[];
-  /**
-   * 组件前缀
-   */
-  prefix?: string;
-  /**
-   * 命名约定
-   */
-  namingConvention?: NamingConvention;
-  /**
-   * 构建配置
-   */
-  buildConfig?: BuildConfig;
-}
+export type ComponentLibraryConfig = PerformanceConfiguration;
 
 /**
  * 命名约定
@@ -242,27 +219,14 @@ export enum NamingConvention {
   SnakeCase = 'snake_case',
 }
 
+// BuildConfig 已废弃 - 使用 BuildConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+import type { BuildConfiguration } from '../package/format';
+
 /**
- * 构建配置
+ * @deprecated 使用 BuildConfiguration 替代
  */
-export interface BuildConfig {
-  /**
-   * 输出格式
-   */
-  outputFormat?: OutputFormat[];
-  /**
-   * 是否压缩
-   */
-  minify?: boolean;
-  /**
-   * 是否生成类型
-   */
-  generateTypes?: boolean;
-  /**
-   * 自定义构建脚本
-   */
-  customScript?: string;
-}
+export type BuildConfig = BuildConfiguration;
 
 /**
  * 输出格式

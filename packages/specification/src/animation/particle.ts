@@ -4,7 +4,6 @@
  */
 
 import type { BlendMode, RenderMode, SortMode } from '../core/enums';
-import type { ValueRange, ColorRange, AnimationCurve, ColorCurve, VelocityCurve } from './curve';
 import type { ParticlePhysics } from './particlePhysics';
 
 /**
@@ -94,47 +93,14 @@ export interface ParticleBurst {
   interval: number;
 }
 
+// ParticleConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+import type { PerformanceConfiguration } from '../package/format';
+
 /**
- * 粒子配置
+ * @deprecated 使用 PerformanceConfiguration 替代
  */
-export interface ParticleConfig {
-  /**
-   * 生命周期
-   */
-  lifetime: ValueRange;
-  /**
-   * 初始速度
-   */
-  startVelocity: ValueRange;
-  /**
-   * 初始大小
-   */
-  startSize: ValueRange;
-  /**
-   * 初始颜色
-   */
-  startColor: ColorRange;
-  /**
-   * 初始旋转
-   */
-  startRotation: ValueRange;
-  /**
-   * 大小变化
-   */
-  sizeOverLifetime?: AnimationCurve;
-  /**
-   * 颜色变化
-   */
-  colorOverLifetime?: ColorCurve;
-  /**
-   * 速度变化
-   */
-  velocityOverLifetime?: VelocityCurve;
-  /**
-   * 旋转变化
-   */
-  rotationOverLifetime?: AnimationCurve;
-}
+export type ParticleConfig = PerformanceConfiguration;
 
 /**
  * 粒子渲染器

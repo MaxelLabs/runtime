@@ -111,35 +111,14 @@ export enum DevicePreset {
   Custom = 'custom',
 }
 
+// PageConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+import type { PerformanceConfiguration } from '../package/format';
+
 /**
- * 页面配置
+ * @deprecated 使用 PerformanceConfiguration 替代
  */
-export interface PageConfig {
-  /**
-   * 缩放级别
-   */
-  zoom?: number;
-  /**
-   * 视口位置
-   */
-  viewport?: ViewportPosition;
-  /**
-   * 是否显示网格
-   */
-  showGrid?: boolean;
-  /**
-   * 是否显示标尺
-   */
-  showRulers?: boolean;
-  /**
-   * 是否显示指南
-   */
-  showGuides?: boolean;
-  /**
-   * 捕捉设置
-   */
-  snap?: SnapSettings;
-}
+export type PageConfig = PerformanceConfiguration;
 
 /**
  * 视口位置

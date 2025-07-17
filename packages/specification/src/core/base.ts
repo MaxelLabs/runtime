@@ -314,15 +314,7 @@ export enum DeviceType {
   AR = 'ar',
 }
 
-/**
- * 资源状态
- */
-export enum ResourceState {
-  Unloaded = 0,
-  Loading = 1,
-  Loaded = 2,
-  Failed = 3,
-}
+// ResourceState 已废弃 - 使用 ResourceLoadState（来自 packages/core/src/resource/resource.ts）替代
 
 /**
  * 坐标系类型
@@ -363,26 +355,4 @@ export enum CompressionFormat {
   ASTC = 'astc',
 }
 
-/**
- * 元素类型
- */
-export enum ItemType {
-  Scene = 'scene',
-  Prefab = 'prefab',
-  Material = 'material',
-  Texture = 'texture',
-  Mesh = 'mesh',
-  Animation = 'animation',
-  Audio = 'audio',
-  Script = 'script',
-  Font = 'font',
-  Shader = 'shader',
-  Sprite = 'sprite',
-  Particle = 'particle',
-  Tree = 'tree',
-  Camera = 'camera',
-  Text = 'text',
-  Skybox = 'skybox',
-  Light = 'light',
-  Spine = 'spine',
-}
+// ItemType 已废弃 - 使用 ElementType（来自 core/enums.ts）替代

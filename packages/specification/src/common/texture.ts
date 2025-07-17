@@ -3,7 +3,7 @@
  * 定义所有系统共通的纹理相关类型
  */
 
-import type { RHITextureFormat } from './rhi/types/enums';
+import type { RHITextureFormat, RHIFilterMode } from './rhi/types/enums';
 
 /**
  * RHI纹理数据类型
@@ -106,23 +106,6 @@ export enum RHIBackend {
 }
 
 /**
- * 纹理用途标志
- * 这些标志值可以按位组合
- */
-export enum RHITextureUsage {
-  /** 纹理可以被采样 */
-  SAMPLED = 0x1,
-  /** 纹理可以作为存储纹理使用 */
-  STORAGE = 0x2,
-  /** 纹理可以作为渲染目标使用 */
-  RENDER_TARGET = 0x4,
-  /** 纹理可以作为复制操作的源 */
-  COPY_SRC = 0x8,
-  /** 纹理可以作为复制操作的目标 */
-  COPY_DST = 0x10,
-}
-
-/**
  * 纹理维度
  */
 export enum RHITextureDimension {
@@ -143,48 +126,12 @@ export enum RHITextureDimension {
 /**
  * 寻址模式
  */
-export enum RHIAddressMode {
-  /** 重复纹理 */
-  REPEAT = 0,
-  /** 镜像重复纹理 */
-  MIRROR_REPEAT = 1,
-  /** 纹理坐标范围外使用边缘像素 */
-  CLAMP_TO_EDGE = 2,
-  /** 纹理坐标范围外设置为0 */
-  CLAMP_TO_ZERO = 3,
-  /** 纹理坐标范围外设置为边框颜色 */
-  CLAMP_TO_BORDER = 4,
-}
+// RHIAddressMode 已迁移到 common/rhi/types/enums.ts
 
 /**
  * 过滤模式
  */
-export enum RHIFilterMode {
-  /**
-   * 最近邻
-   */
-  Nearest = 'nearest',
-  /**
-   * 线性
-   */
-  Linear = 'linear',
-  /**
-   * 最近邻Mipmap最近邻
-   */
-  NearestMipmapNearest = 'nearest-mipmap-nearest',
-  /**
-   * 线性Mipmap最近邻
-   */
-  LinearMipmapNearest = 'linear-mipmap-nearest',
-  /**
-   * 最近邻Mipmap线性
-   */
-  NearestMipmapLinear = 'nearest-mipmap-linear',
-  /**
-   * 线性Mipmap线性
-   */
-  LinearMipmapLinear = 'linear-mipmap-linear',
-}
+// RHIFilterMode 已迁移到 common/rhi/types/enums.ts
 
 /**
  * 通用纹理配置
@@ -267,27 +214,13 @@ export interface CommonTextureConfig {
    */
   colorSpace: string;
 }
+// TextureWrapMode 已废弃 - 使用 RHIAddressMode（来自 rhi/types/enums）替代
+import type { RHIAddressMode } from './rhi/types/enums';
+
 /**
- * 纹理包装模式
+ * @deprecated 使用 RHIAddressMode 替代
  */
-export enum TextureWrapMode {
-  /**
-   * 重复
-   */
-  Repeat = 'repeat',
-  /**
-   * 夹紧到边缘
-   */
-  ClampToEdge = 'clamp-to-edge',
-  /**
-   * 夹紧到边界
-   */
-  ClampToBorder = 'clamp-to-border',
-  /**
-   * 镜像重复
-   */
-  MirroredRepeat = 'mirrored-repeat',
-}
+export type TextureWrapMode = RHIAddressMode;
 
 /**
  * 纹理数据
@@ -508,7 +441,7 @@ export interface TextureStream {
   /**
    * 加载状态
    */
-  loadingState: TextureLoadingState;
+  loadingState: LoadState;
   /**
    * 优先级
    */
@@ -567,31 +500,13 @@ export enum TextureStreamStrategy {
   Hybrid = 'hybrid',
 }
 
+// LoadState 已废弃 - 使用 ResourceLoadState（来自 @maxellabs/core/resource）替代
+// ResourceLoadState 提供了更完整的状态定义，包括 RELEASED 状态
+
 /**
- * 纹理加载状态
+ * @deprecated 使用 ResourceLoadState 替代
  */
-export enum TextureLoadingState {
-  /**
-   * 未加载
-   */
-  NotLoaded = 'not-loaded',
-  /**
-   * 加载中
-   */
-  Loading = 'loading',
-  /**
-   * 已加载
-   */
-  Loaded = 'loaded',
-  /**
-   * 加载失败
-   */
-  Failed = 'failed',
-  /**
-   * 已卸载
-   */
-  Unloaded = 'unloaded',
-}
+export type LoadState = 'unloaded' | 'loading' | 'loaded' | 'failed';
 
 /**
  * 纹理压缩配置
@@ -615,30 +530,21 @@ export interface TextureCompressionConfig {
   platformSettings?: Record<string, any>;
 }
 
+// TextureCache 简化为使用统一的缓存配置加特定扩展
+import type { CacheConfiguration } from '../package/format';
+
 /**
- * 纹理缓存
+ * 纹理缓存（扩展统一缓存配置）
  */
-export interface TextureCache {
-  /**
-   * 缓存大小（MB）
-   */
-  maxSize: number;
+export interface TextureCache extends CacheConfiguration {
   /**
    * 当前使用量（MB）
    */
   currentUsage: number;
   /**
-   * 缓存策略
-   */
-  strategy: 'lru' | 'lfu' | 'fifo';
-  /**
    * 缓存项
    */
   items: TextureCacheItem[];
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
 }
 
 /**

@@ -3,9 +3,11 @@
  * 定义所有系统共通的精灵相关类型
  */
 
+import type { ElementType } from '../core';
 import type { CommonElement } from './elements';
-import type { ElementType } from '../core/enums';
+import type { NineSliceConfig } from './image';
 import type { AnimationProperties } from '../core/interfaces';
+import type { AnimationState, AnimationStateMachine, AnimationStateBehavior, AnimationTransition } from '../animation';
 
 /**
  * 精灵类型
@@ -247,115 +249,23 @@ export interface SpriteAnimationEvent {
   parameters?: Record<string, any>;
 }
 
-/**
- * 精灵状态机
- */
-export interface SpriteStateMachine {
-  /**
-   * 当前状态
-   */
-  currentState: string;
-  /**
-   * 状态列表
-   */
-  states: SpriteState[];
-  /**
-   * 状态转换
-   */
-  transitions: SpriteTransition[];
-  /**
-   * 默认状态
-   */
-  defaultState?: string;
-}
+// 精灵状态使用统一的AnimationState定义
+export type SpriteState = AnimationState;
 
 /**
- * 精灵状态
+ * 状态机类型别名（统一使用通用动画状态机）
  */
-export interface SpriteState {
-  /**
-   * 状态名称
-   */
-  name: string;
-  /**
-   * 动画名称
-   */
-  animation: string;
-  /**
-   * 播放速度
-   */
-  speed?: number;
-  /**
-   * 是否循环
-   */
-  loop?: boolean;
-  /**
-   * 状态行为
-   */
-  behaviors?: SpriteStateBehavior[];
-}
+export type SpriteStateMachine = AnimationStateMachine;
 
 /**
- * 精灵状态行为
+ * 状态行为类型别名（统一使用通用动画状态行为）
  */
-export interface SpriteStateBehavior {
-  /**
-   * 行为类型
-   */
-  type: string;
-  /**
-   * 行为参数
-   */
-  parameters?: Record<string, any>;
-}
+export type SpriteStateBehavior = AnimationStateBehavior;
 
 /**
- * 精灵状态转换
+ * 状态转换类型别名（统一使用通用动画转换）
  */
-export interface SpriteTransition {
-  /**
-   * 源状态
-   */
-  from: string;
-  /**
-   * 目标状态
-   */
-  to: string;
-  /**
-   * 转换条件
-   */
-  conditions?: SpriteTransitionCondition[];
-  /**
-   * 转换持续时间
-   */
-  duration?: number;
-  /**
-   * 是否有退出时间
-   */
-  hasExitTime?: boolean;
-  /**
-   * 退出时间
-   */
-  exitTime?: number;
-}
-
-/**
- * 精灵状态转换条件
- */
-export interface SpriteTransitionCondition {
-  /**
-   * 参数名称
-   */
-  parameter: string;
-  /**
-   * 比较类型
-   */
-  comparison: 'equals' | 'not-equals' | 'greater' | 'less' | 'greater-equal' | 'less-equal';
-  /**
-   * 比较值
-   */
-  value: any;
-}
+export type SpriteTransition = AnimationTransition;
 
 /**
  * 通用精灵元素
@@ -421,25 +331,9 @@ export interface CommonSpriteElement extends CommonElement {
 }
 
 /**
- * 精灵九宫格配置
+ * 精灵九宫格配置（扩展通用NineSliceConfig）
  */
-export interface SpriteNineSliceConfig {
-  /**
-   * 左边距
-   */
-  left: number;
-  /**
-   * 右边距
-   */
-  right: number;
-  /**
-   * 顶部边距
-   */
-  top: number;
-  /**
-   * 底部边距
-   */
-  bottom: number;
+export interface SpriteNineSliceConfig extends NineSliceConfig {
   /**
    * 目标尺寸
    */
@@ -447,10 +341,6 @@ export interface SpriteNineSliceConfig {
     width: number;
     height: number;
   };
-  /**
-   * 是否填充中心
-   */
-  fillCenter?: boolean;
 }
 
 /**

@@ -3,20 +3,17 @@
  * 材质和着色器渲染相关类型定义
  */
 
-import type { RHIFilterMode } from '../common';
 import type {
-  FillMode,
-  InterpolationMode,
-  MaterialProperties,
-  IVector2,
-  WrapMode,
+  RHIFilterMode,
   RHIBlendFactor,
   RHIBlendOperation,
-  IColor,
   RHICompareFunction,
   RHIFrontFace,
   RHICullMode,
-} from '../core';
+  RHITextureType,
+} from '../common';
+import type { TextureWrapMode } from '../common/texture';
+import type { FillMode, InterpolationMode, MaterialProperties, IVector2, IColor, DataType, LoopMode } from '../core';
 import type { UsdPrim, UsdValue } from '../core/usd';
 
 /**
@@ -313,34 +310,14 @@ export interface TextureReference {
   /**
    * 纹理类型
    */
-  type: TextureType;
+  type: RHITextureType;
   /**
    * 采样器
    */
   sampler?: MaterialTextureSampler;
 }
 
-/**
- * 纹理类型
- */
-export enum TextureType {
-  /**
-   * 2D纹理
-   */
-  Texture2D = 'texture2d',
-  /**
-   * 立方体纹理
-   */
-  TextureCube = 'texture-cube',
-  /**
-   * 3D纹理
-   */
-  Texture3D = 'texture3d',
-  /**
-   * 纹理数组
-   */
-  TextureArray = 'texture-array',
-}
+// TextureType 已废弃 - 使用 RHITextureType 替代
 
 /**
  * 材质纹理采样器
@@ -354,7 +331,7 @@ export interface MaterialTextureSampler {
   /**
    * 包装模式
    */
-  wrap: WrapMode;
+  wrap: TextureWrapMode;
   /**
    * 各向异性过滤
    */
@@ -443,31 +420,7 @@ export interface BlendState {
   blendColor?: IColor;
 }
 
-/**
- * 材质混合操作
- */
-export enum MaterialBlendOperation {
-  /**
-   * 加法
-   */
-  Add = 'add',
-  /**
-   * 减法
-   */
-  Subtract = 'subtract',
-  /**
-   * 反向减法
-   */
-  ReverseSubtract = 'reverse-subtract',
-  /**
-   * 最小值
-   */
-  Min = 'min',
-  /**
-   * 最大值
-   */
-  Max = 'max',
-}
+// MaterialBlendOperation 已废弃 - 使用 RHIBlendOperation 替代
 
 /**
  * 深度状态
@@ -776,7 +729,7 @@ export interface ProceduralParameter {
   /**
    * 参数类型
    */
-  type: ParameterType;
+  type: DataType;
   /**
    * 默认值
    */
@@ -799,39 +752,7 @@ export interface ProceduralParameter {
   description?: string;
 }
 
-/**
- * 参数类型
- */
-export enum ParameterType {
-  /**
-   * 浮点数
-   */
-  Float = 'float',
-  /**
-   * 整数
-   */
-  Integer = 'integer',
-  /**
-   * 布尔值
-   */
-  Boolean = 'boolean',
-  /**
-   * 颜色
-   */
-  Color = 'color',
-  /**
-   * 向量
-   */
-  Vector = 'vector',
-  /**
-   * 枚举
-   */
-  Enum = 'enum',
-  /**
-   * 字符串
-   */
-  String = 'string',
-}
+// ParameterType 已废弃 - 使用 DataType（来自 core/enums.ts）替代
 
 /**
  * 生成器类型
@@ -882,7 +803,7 @@ export interface MaterialAnimation {
   /**
    * 循环模式
    */
-  loopMode: AnimationLoopMode;
+  loopMode: LoopMode;
 }
 
 /**
@@ -925,24 +846,4 @@ export interface MaterialKeyframe {
   outTangent?: IVector2;
 }
 
-/**
- * 动画循环模式
- */
-export enum AnimationLoopMode {
-  /**
-   * 不循环
-   */
-  None = 'none',
-  /**
-   * 循环
-   */
-  Loop = 'loop',
-  /**
-   * 乒乓
-   */
-  PingPong = 'ping-pong',
-  /**
-   * 夹紧
-   */
-  Clamp = 'clamp',
-}
+// AnimationLoopMode 已废弃 - 使用 LoopMode（来自 core/enums.ts）替代

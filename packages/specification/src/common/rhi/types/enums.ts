@@ -1,178 +1,10 @@
 /**
- * rhiEnums.ts
- * 包含所有RHI相关的枚举定义。
+ * RHI渲染硬件接口枚举定义 - 权威来源
+ * 所有RHI相关的枚举类型定义
  */
 
-//---------------------------------------------------------------------------------------------------------------------
-// 枚举 (Enums)
-//---------------------------------------------------------------------------------------------------------------------
-
 /**
- * 索引格式
- */
-export enum RHIIndexFormat {
-  /** 16位无符号整数 */
-  UINT16 = 'uint16',
-  /** 32位无符号整数 */
-  UINT32 = 'uint32',
-}
-
-/**
- * 顶点格式
- */
-export enum RHIVertexFormat {
-  // 8位格式
-  UINT8X2 = 'uint8x2',
-  UINT8X4 = 'uint8x4',
-  SINT8X2 = 'sint8x2',
-  SINT8X4 = 'sint8x4',
-  UNORM8X2 = 'unorm8x2',
-  UNORM8X4 = 'unorm8x4',
-  SNORM8X2 = 'snorm8x2',
-  SNORM8X4 = 'snorm8x4',
-
-  // 16位格式
-  UINT16X2 = 'uint16x2',
-  UINT16X4 = 'uint16x4',
-  SINT16X2 = 'sint16x2',
-  SINT16X4 = 'sint16x4',
-  UNORM16X2 = 'unorm16x2',
-  UNORM16X4 = 'unorm16x4',
-  SNORM16X2 = 'snorm16x2',
-  SNORM16X4 = 'snorm16x4',
-  FLOAT16X2 = 'float16x2',
-  FLOAT16X4 = 'float16x4',
-
-  // 32位格式
-  FLOAT32 = 'float32',
-  FLOAT32X2 = 'float32x2',
-  FLOAT32X3 = 'float32x3',
-  FLOAT32X4 = 'float32x4',
-  UINT32 = 'uint32',
-  UINT32X2 = 'uint32x2',
-  UINT32X3 = 'uint32x3',
-  UINT32X4 = 'uint32x4',
-  SINT32 = 'sint32',
-  SINT32X2 = 'sint32x2',
-  SINT32X3 = 'sint32x3',
-  SINT32X4 = 'sint32x4',
-}
-
-/**
- * 顶点步进模式
- */
-export enum RHIVertexStepMode {
-  /** 每个顶点 */
-  VERTEX = 'vertex',
-  /** 每个实例 */
-  INSTANCE = 'instance',
-}
-
-/**
- * 查询类型
- */
-export enum RHIQueryType {
-  /** 遮挡查询 */
-  OCCLUSION = 'occlusion',
-  /** 时间戳查询 */
-  TIMESTAMP = 'timestamp',
-  /** 管线统计查询 */
-  PIPELINE_STATISTICS = 'pipeline-statistics',
-}
-
-/**
- * RHI错误类型
- */
-export enum RHIErrorType {
-  /** 内部错误 */
-  INTERNAL = 'internal',
-  /** 验证错误 */
-  VALIDATION = 'validation',
-  /** 内存不足 */
-  OUT_OF_MEMORY = 'out-of-memory',
-  /** 设备丢失 */
-  DEVICE_LOST = 'device-lost',
-}
-
-/**
- * RHI设备特性标志
- * 这些标志值可以按位组合
- */
-export enum RHIFeatureFlags {
-  /** 支持深度纹理 */
-  DEPTH_TEXTURE = 'depth-texture',
-  /** 支持浮点纹理 */
-  FLOAT_TEXTURE = 'float-texture',
-  /** 支持半浮点纹理 */
-  HALF_FLOAT_TEXTURE = 'half-float-texture',
-  /** 支持多重渲染目标 */
-  MULTIPLE_RENDER_TARGETS = 'multiple-render-targets',
-  /** 支持实例化绘制 */
-  INSTANCED_DRAWING = 'instanced-drawing',
-  /** 支持各向异性过滤 */
-  ANISOTROPIC_FILTERING = 'anisotropic-filtering',
-  /** 支持BC格式压缩纹理 */
-  BC_TEXTURE_COMPRESSION = 'bc-texture-compression',
-  /** 支持ETC2/EAC格式压缩纹理 */
-  ETC2_TEXTURE_COMPRESSION = 'etc2-texture-compression',
-  /** 支持ASTC格式压缩纹理 */
-  ASTC_TEXTURE_COMPRESSION = 'astc-texture-compression',
-  /** 支持计算着色器 */
-  COMPUTE_SHADER = 'compute-shader',
-  /** 支持存储纹理 */
-  STORAGE_TEXTURE = 'storage-texture',
-  /** 支持顶点数组对象 */
-  VERTEX_ARRAY_OBJECT = 'vertex-array-object',
-  /** 支持混合操作 */
-  BLEND_OPERATION = 'blend-operation',
-  /** 支持间接绘制 */
-  INDIRECT_DRAWING = 'indirect-drawing',
-  /** 支持光线追踪 */
-  RAY_TRACING = 'ray-tracing',
-  /** 支持网格着色器 */
-  MESH_SHADER = 'mesh-shader',
-}
-
-/**
- * 模板操作
- */
-export enum RHIStencilOperation {
-  /** 保持当前值 */
-  KEEP = 'keep',
-  /** 设置为零 */
-  ZERO = 'zero',
-  /** 设置为参考值 */
-  REPLACE = 'replace',
-  /** 增加并限制在范围内 */
-  INCR_CLAMP = 'incr-clamp',
-  /** 减少并限制在范围内 */
-  DECR_CLAMP = 'decr-clamp',
-  /** 按位反转 */
-  INVERT = 'invert',
-  /** 增加并环绕 */
-  INCR_WRAP = 'incr-wrap',
-  /** 减少并环绕 */
-  DECR_WRAP = 'decr-wrap',
-}
-
-// /**
-//  * 图元类型
-//  */
-// export enum RHIPrimitiveType {
-//   /** 点列表 */
-//   POINT_LIST = 0,
-//   /** 线列表 */
-//   LINE_LIST = 1,
-//   /** 线条带 */
-//   LINE_STRIP = 2,
-//   /** 三角形列表 */
-//   TRIANGLE_LIST = 3,
-//   /** 三角形条带 */
-//   TRIANGLE_STRIP = 4,
-// }
-
-/**
- * 纹理格式
+ * 纹理格式统一定义
  */
 export enum RHITextureFormat {
   // 8位格式
@@ -237,23 +69,9 @@ export enum RHITextureFormat {
   BC5_RG_UNORM = 'bc5-rg-unorm',
   BC5_RG_SNORM = 'bc5-rg-snorm',
   BC6H_RGB_UFLOAT = 'bc6h-rgb-ufloat',
-  BC6H_RGB_SFLOAT = 'bc6h-rgb-sfloat',
+  BC6H_RGB_FLOAT = 'bc6h-rgb-float',
   BC7_RGBA_UNORM = 'bc7-rgba-unorm',
   BC7_RGBA_UNORM_SRGB = 'bc7-rgba-unorm-srgb',
-
-  // ASTC压缩格式
-  ASTC_4x4_UNORM = 'astc-4x4-unorm',
-  ASTC_4x4_UNORM_SRGB = 'astc-4x4-unorm-srgb',
-  ASTC_5x5_UNORM = 'astc-5x5-unorm',
-  ASTC_5x5_UNORM_SRGB = 'astc-5x5-unorm-srgb',
-  ASTC_6x6_UNORM = 'astc-6x6-unorm',
-  ASTC_6x6_UNORM_SRGB = 'astc-6x6-unorm-srgb',
-  ASTC_8x8_UNORM = 'astc-8x8-unorm',
-  ASTC_8x8_UNORM_SRGB = 'astc-8x8-unorm-srgb',
-  ASTC_10x10_UNORM = 'astc-10x10-unorm',
-  ASTC_10x10_UNORM_SRGB = 'astc-10x10-unorm-srgb',
-  ASTC_12x12_UNORM = 'astc-12x12-unorm',
-  ASTC_12x12_UNORM_SRGB = 'astc-12x12-unorm-srgb',
 
   // ETC2/EAC压缩格式
   ETC2_RGB8_UNORM = 'etc2-rgb8-unorm',
@@ -266,54 +84,312 @@ export enum RHITextureFormat {
   EAC_R11_SNORM = 'eac-r11-snorm',
   EAC_RG11_UNORM = 'eac-rg11-unorm',
   EAC_RG11_SNORM = 'eac-rg11-snorm',
+
+  // ASTC压缩格式
+  ASTC_4X4_UNORM = 'astc-4x4-unorm',
+  ASTC_4X4_UNORM_SRGB = 'astc-4x4-unorm-srgb',
+  ASTC_5X4_UNORM = 'astc-5x4-unorm',
+  ASTC_5X4_UNORM_SRGB = 'astc-5x4-unorm-srgb',
+  ASTC_5X5_UNORM = 'astc-5x5-unorm',
+  ASTC_5X5_UNORM_SRGB = 'astc-5x5-unorm-srgb',
+  ASTC_6X5_UNORM = 'astc-6x5-unorm',
+  ASTC_6X5_UNORM_SRGB = 'astc-6x5-unorm-srgb',
+  ASTC_6X6_UNORM = 'astc-6x6-unorm',
+  ASTC_6X6_UNORM_SRGB = 'astc-6x6-unorm-srgb',
+  ASTC_8X5_UNORM = 'astc-8x5-unorm',
+  ASTC_8X5_UNORM_SRGB = 'astc-8x5-unorm-srgb',
+  ASTC_8X6_UNORM = 'astc-8x6-unorm',
+  ASTC_8X6_UNORM_SRGB = 'astc-8x6-unorm-srgb',
+  ASTC_8X8_UNORM = 'astc-8x8-unorm',
+  ASTC_8X8_UNORM_SRGB = 'astc-8x8-unorm-srgb',
+  ASTC_10X5_UNORM = 'astc-10x5-unorm',
+  ASTC_10X5_UNORM_SRGB = 'astc-10x5-unorm-srgb',
+  ASTC_10X6_UNORM = 'astc-10x6-unorm',
+  ASTC_10X6_UNORM_SRGB = 'astc-10x6-unorm-srgb',
+  ASTC_10X8_UNORM = 'astc-10x8-unorm',
+  ASTC_10X8_UNORM_SRGB = 'astc-10x8-unorm-srgb',
+  ASTC_10X10_UNORM = 'astc-10x10-unorm',
+  ASTC_10X10_UNORM_SRGB = 'astc-10x10-unorm-srgb',
+  ASTC_12X10_UNORM = 'astc-12x10-unorm',
+  ASTC_12X10_UNORM_SRGB = 'astc-12x10-unorm-srgb',
+  ASTC_12X12_UNORM = 'astc-12x12-unorm',
+  ASTC_12X12_UNORM_SRGB = 'astc-12x12-unorm-srgb',
 }
 
 /**
- * 缓冲区用途标志
- * 这些标志值可以按位组合
+ * 缓冲区用途统一定义
  */
 export enum RHIBufferUsage {
-  /** 用作顶点缓冲区 */
   VERTEX = 'vertex',
-  /** 用作索引缓冲区 */
   INDEX = 'index',
-  /** 用作统一缓冲区 */
   UNIFORM = 'uniform',
-  /** 用作存储缓冲区 */
   STORAGE = 'storage',
-  /** 用作间接命令缓冲区 */
   INDIRECT = 'indirect',
-  /** 缓冲区可以被映射以供CPU读取 */
   MAP_READ = 'map-read',
-  /** 缓冲区可以被映射以供CPU写入 */
   MAP_WRITE = 'map-write',
-  /** 缓冲区可以作为复制操作的源 */
   COPY_SRC = 'copy-src',
-  /** 缓冲区可以作为复制操作的目标 */
   COPY_DST = 'copy-dst',
 }
 
 /**
- * 着色器阶段标志
- * 这些标志值可以按位组合
+ * 纹理用途统一定义
+ */
+export enum RHITextureUsage {
+  TEXTURE_BINDING = 'texture-binding',
+  STORAGE_BINDING = 'storage-binding',
+  RENDER_ATTACHMENT = 'render-attachment',
+  COPY_SRC = 'copy-src',
+  COPY_DST = 'copy-dst',
+}
+
+/**
+ * 过滤模式统一定义
+ */
+export enum RHIFilterMode {
+  Nearest = 'nearest',
+  Linear = 'linear',
+  NearestMipmapNearest = 'nearest-mipmap-nearest',
+  LinearMipmapNearest = 'linear-mipmap-nearest',
+  NearestMipmapLinear = 'nearest-mipmap-linear',
+  LinearMipmapLinear = 'linear-mipmap-linear',
+}
+
+/**
+ * 寻址模式统一定义
+ */
+export enum RHIAddressMode {
+  Repeat = 'repeat',
+  MirrorRepeat = 'mirror-repeat',
+  ClampToEdge = 'clamp-to-edge',
+  ClampToBorder = 'clamp-to-border',
+}
+
+/**
+ * 混合操作统一定义
+ */
+export enum RHIBlendOperation {
+  ADD = 0,
+  SUBTRACT = 1,
+  REVERSE_SUBTRACT = 2,
+  MIN = 3,
+  MAX = 4,
+}
+
+/**
+ * 混合因子统一定义
+ */
+export enum RHIBlendFactor {
+  Zero = 'zero',
+  One = 'one',
+  SrcColor = 'src-color',
+  OneMinusSrcColor = 'one-minus-src-color',
+  DstColor = 'dst-color',
+  OneMinusDstColor = 'one-minus-dst-color',
+  SrcAlpha = 'src-alpha',
+  OneMinusSrcAlpha = 'one-minus-src-alpha',
+  DstAlpha = 'dst-alpha',
+  OneMinusDstAlpha = 'one-minus-dst-alpha',
+  ConstantColor = 'constant-color',
+  OneMinusConstantColor = 'one-minus-constant-color',
+  ConstantAlpha = 'constant-alpha',
+  OneMinusConstantAlpha = 'one-minus-constant-alpha',
+  SrcAlphaSaturate = 'src-alpha-saturate',
+}
+
+/**
+ * 比较函数统一定义
+ */
+export enum RHICompareFunction {
+  NEVER = 0,
+  LESS = 1,
+  EQUAL = 2,
+  LESS_EQUAL = 3,
+  GREATER = 4,
+  NOT_EQUAL = 5,
+  GREATER_EQUAL = 6,
+  ALWAYS = 7,
+}
+
+/**
+ * 图元拓扑统一定义
+ */
+export enum RHIPrimitiveTopology {
+  POINT_LIST = 0,
+  LINE_LIST = 1,
+  LINE_STRIP = 2,
+  TRIANGLE_LIST = 3,
+  TRIANGLE_STRIP = 4,
+}
+
+/**
+ * 正面方向统一定义
+ */
+export enum RHIFrontFace {
+  CW = 0,
+  CCW = 1,
+}
+
+/**
+ * 面剔除模式统一定义
+ */
+export enum RHICullMode {
+  None = 'none',
+  Front = 'front',
+  Back = 'back',
+  FrontAndBack = 'front-and-back',
+}
+
+/**
+ * 索引格式统一定义
+ */
+export enum RHIIndexFormat {
+  UINT16 = 'uint16',
+  UINT32 = 'uint32',
+}
+
+/**
+ * 顶点格式统一定义
+ */
+export enum RHIVertexFormat {
+  Uint8x2 = 'uint8x2',
+  Uint8x4 = 'uint8x4',
+  Sint8x2 = 'sint8x2',
+  Sint8x4 = 'sint8x4',
+  Unorm8x2 = 'unorm8x2',
+  Unorm8x4 = 'unorm8x4',
+  Snorm8x2 = 'snorm8x2',
+  Snorm8x4 = 'snorm8x4',
+  Uint16x2 = 'uint16x2',
+  Uint16x4 = 'uint16x4',
+  Sint16x2 = 'sint16x2',
+  Sint16x4 = 'sint16x4',
+  Unorm16x2 = 'unorm16x2',
+  Unorm16x4 = 'unorm16x4',
+  Snorm16x2 = 'snorm16x2',
+  Snorm16x4 = 'snorm16x4',
+  Float16x2 = 'float16x2',
+  Float16x4 = 'float16x4',
+  Float32 = 'float32',
+  Float32x2 = 'float32x2',
+  Float32x3 = 'float32x3',
+  Float32x4 = 'float32x4',
+  Uint32 = 'uint32',
+  Uint32x2 = 'uint32x2',
+  Uint32x3 = 'uint32x3',
+  Uint32x4 = 'uint32x4',
+  Sint32 = 'sint32',
+  Sint32x2 = 'sint32x2',
+  Sint32x3 = 'sint32x3',
+  Sint32x4 = 'sint32x4',
+}
+
+/**
+ * 着色器阶段统一定义
  */
 export enum RHIShaderStage {
-  /** 顶点着色器 */
   VERTEX = 'vertex',
-  /** 片段着色器 */
   FRAGMENT = 'fragment',
-  /** 计算着色器 */
   COMPUTE = 'compute',
-  /** 几何着色器(仅限WebGL) */
   GEOMETRY = 'geometry',
-  /** 曲面细分控制着色器 */
   TESS_CONTROL = 'tess-control',
-  /** 曲面细分评估着色器 */
   TESS_EVALUATION = 'tess-evaluation',
-  /** 网格着色器 */
   MESH = 'mesh',
-  /** 任务着色器 */
   TASK = 'task',
+}
+
+/**
+ * RHI特性标志统一定义
+ */
+export enum RHIFeatureFlags {
+  DEPTH_TEXTURE = 'depth-texture',
+  FLOAT_TEXTURE = 'float-texture',
+  HALF_FLOAT_TEXTURE = 'half-float-texture',
+  MULTIPLE_RENDER_TARGETS = 'multiple-render-targets',
+  INSTANCED_DRAWING = 'instanced-drawing',
+  ANISOTROPIC_FILTERING = 'anisotropic-filtering',
+  BC_TEXTURE_COMPRESSION = 'bc-texture-compression',
+  ETC2_TEXTURE_COMPRESSION = 'etc2-texture-compression',
+  ASTC_TEXTURE_COMPRESSION = 'astc-texture-compression',
+  COMPUTE_SHADER = 'compute-shader',
+  STORAGE_TEXTURE = 'storage-texture',
+  VERTEX_ARRAY_OBJECT = 'vertex-array-object',
+  BLEND_OPERATION = 'blend-operation',
+  INDIRECT_DRAWING = 'indirect-drawing',
+  RAY_TRACING = 'ray-tracing',
+  MESH_SHADER = 'mesh-shader',
+}
+
+/**
+ * 顶点步进模式（RHI特有）
+ */
+export enum RHIVertexStepMode {
+  VERTEX = 'vertex',
+  INSTANCE = 'instance',
+}
+
+/**
+ * 查询类型（RHI特有）
+ */
+export enum RHIQueryType {
+  OCCLUSION = 'occlusion',
+  TIMESTAMP = 'timestamp',
+  PIPELINE_STATISTICS = 'pipeline-statistics',
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+// RHI特有的枚举（不与core重复的）
+//---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * 错误类型
+ */
+export enum RHIErrorType {
+  /** 内部错误 */
+  INTERNAL = 'internal',
+  /** 验证错误 */
+  VALIDATION = 'validation',
+  /** 内存不足 */
+  OUT_OF_MEMORY = 'out-of-memory',
+  /** 设备丢失 */
+  DEVICE_LOST = 'device-lost',
+}
+
+/**
+ * 模板操作
+ */
+export enum RHIStencilOperation {
+  /** 保持当前值 */
+  KEEP = 'keep',
+  /** 设置为零 */
+  ZERO = 'zero',
+  /** 设置为参考值 */
+  REPLACE = 'replace',
+  /** 增加并限制在范围内 */
+  INCR_CLAMP = 'incr-clamp',
+  /** 减少并限制在范围内 */
+  DECR_CLAMP = 'decr-clamp',
+  /** 按位反转 */
+  INVERT = 'invert',
+  /** 增加并环绕 */
+  INCR_WRAP = 'incr-wrap',
+  /** 减少并环绕 */
+  DECR_WRAP = 'decr-wrap',
+}
+
+/**
+ * 纹理类型
+ */
+export enum RHITextureType {
+  /** 2D纹理 */
+  TEXTURE_2D = '2d',
+  /** 3D纹理 */
+  TEXTURE_3D = '3d',
+  /** 立方体纹理 */
+  TEXTURE_CUBE = 'cube',
+  /** 1D纹理 */
+  TEXTURE_1D = '1d',
+  /** 2D数组纹理 */
+  TEXTURE_2D_ARRAY = '2d-array',
 }
 
 /**

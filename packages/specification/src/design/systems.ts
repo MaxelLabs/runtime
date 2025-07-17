@@ -69,31 +69,14 @@ export interface DesignSystem {
   metadata?: CommonMetadata;
 }
 
+// DesignSystemConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+import type { PerformanceConfiguration } from '../package/format';
+
 /**
- * 设计系统配置
+ * @deprecated 使用 PerformanceConfiguration 替代
  */
-export interface DesignSystemConfig {
-  /**
-   * 默认主题
-   */
-  defaultTheme?: string;
-  /**
-   * 自动生成
-   */
-  autoGenerate?: boolean;
-  /**
-   * 验证规则
-   */
-  validation?: ValidationConfig;
-  /**
-   * 导出配置
-   */
-  export?: ExportConfig;
-  /**
-   * 同步配置
-   */
-  sync?: SyncConfig;
-}
+export type DesignSystemConfig = PerformanceConfiguration;
 
 /**
  * 验证配置
@@ -147,23 +130,13 @@ export enum ValidationType {
   NamingConvention = 'naming-convention',
 }
 
+// ExportConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+
 /**
- * 导出配置
+ * @deprecated 使用 PerformanceConfiguration 替代
  */
-export interface ExportConfig {
-  /**
-   * 导出格式
-   */
-  formats: ExportFormatConfig[];
-  /**
-   * 输出目录
-   */
-  outputDir?: string;
-  /**
-   * 文件命名
-   */
-  naming?: NamingConfig;
-}
+export type ExportConfig = PerformanceConfiguration;
 
 /**
  * 导出格式配置
@@ -196,41 +169,21 @@ export enum ExportFormatType {
   Sketch = 'sketch',
 }
 
-/**
- * 命名配置
- */
-export interface NamingConfig {
-  /**
-   * 文件前缀
-   */
-  prefix?: string;
-  /**
-   * 文件后缀
-   */
-  suffix?: string;
-  /**
-   * 命名约定
-   */
-  convention?: string;
-}
+// NamingConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
 
 /**
- * 同步配置
+ * @deprecated 使用 PerformanceConfiguration 替代
  */
-export interface SyncConfig {
-  /**
-   * 同步目标
-   */
-  targets: SyncTarget[];
-  /**
-   * 自动同步
-   */
-  autoSync?: boolean;
-  /**
-   * 同步间隔
-   */
-  interval?: number;
-}
+export type NamingConfig = PerformanceConfiguration;
+
+// SyncConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+
+/**
+ * @deprecated 使用 PerformanceConfiguration 替代
+ */
+export type SyncConfig = PerformanceConfiguration;
 
 /**
  * 同步目标

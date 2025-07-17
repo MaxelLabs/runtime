@@ -4,14 +4,7 @@
  */
 
 import type { UsdValue } from './usd';
-import type {
-  QualityLevel,
-  EasingFunction,
-  MaterialType,
-  BorderStyle,
-  ClickFeedbackType,
-  VisualEffectType,
-} from './enums';
+import type { EasingFunction, MaterialType, BorderStyle, ClickFeedbackType, VisualEffectType } from './enums';
 import type { IColor, IVector3, VersionInfo } from './base';
 
 /**
@@ -420,31 +413,14 @@ export interface SelectionEffect {
   animation?: AnimationProperties;
 }
 
+// PerformanceConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+import type { PerformanceConfiguration } from '../package/format';
+
 /**
- * 性能配置接口
+ * @deprecated 使用 PerformanceConfiguration 替代
  */
-export interface PerformanceConfig {
-  /**
-   * 质量级别
-   */
-  qualityLevel?: QualityLevel;
-  /**
-   * LOD偏移
-   */
-  lodBias?: UsdValue; // float
-  /**
-   * 最大纹理尺寸
-   */
-  maxTextureSize?: UsdValue; // int
-  /**
-   * 是否启用压缩
-   */
-  enableCompression?: UsdValue; // bool
-  /**
-   * 是否启用缓存
-   */
-  enableCaching?: UsdValue; // bool
-}
+export type PerformanceConfig = PerformanceConfiguration;
 
 /**
  * 通用元数据接口
@@ -511,35 +487,14 @@ export enum TransformSpace {
   View = 'view',
 }
 
+// RotationOrder 已废弃 - 使用 EulerOrder（来自 packages/math/src/core/euler.ts）替代
+// 为保持兼容性，创建类型别名
+import type { EulerOrder } from '../../../math/src/core/euler';
+
 /**
- * 旋转顺序
+ * @deprecated 使用 EulerOrder 替代
  */
-export enum RotationOrder {
-  /**
-   * XYZ顺序
-   */
-  XYZ = 'xyz',
-  /**
-   * XZY顺序
-   */
-  XZY = 'xzy',
-  /**
-   * YXZ顺序
-   */
-  YXZ = 'yxz',
-  /**
-   * YZX顺序
-   */
-  YZX = 'yzx',
-  /**
-   * ZXY顺序
-   */
-  ZXY = 'zxy',
-  /**
-   * ZYX顺序
-   */
-  ZYX = 'zyx',
-}
+export type RotationOrder = EulerOrder;
 
 /**
  * 通用变换函数

@@ -6,28 +6,13 @@
 import type { CommonElement } from './elements';
 import type { ElementType } from '../core/enums';
 import type { IColor, VerticalAlign } from '../core';
+import type { PerformanceConfiguration } from '../package/format';
 
 /**
  * 文本对齐方式
+ * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export enum TextAlign {
-  /**
-   * 左对齐
-   */
-  Left = 'left',
-  /**
-   * 居中对齐
-   */
-  Center = 'center',
-  /**
-   * 右对齐
-   */
-  Right = 'right',
-  /**
-   * 两端对齐
-   */
-  Justify = 'justify',
-}
+export type TextAlign = PerformanceConfiguration;
 
 /**
  * 文本方向
@@ -67,45 +52,9 @@ export enum FontStyle {
 
 /**
  * 字体粗细
+ * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export enum FontWeight {
-  /**
-   * 细体
-   */
-  Thin = 100,
-  /**
-   * 超细体
-   */
-  ExtraLight = 200,
-  /**
-   * 细体
-   */
-  Light = 300,
-  /**
-   * 正常
-   */
-  Normal = 400,
-  /**
-   * 中等
-   */
-  Medium = 500,
-  /**
-   * 半粗体
-   */
-  SemiBold = 600,
-  /**
-   * 粗体
-   */
-  Bold = 700,
-  /**
-   * 超粗体
-   */
-  ExtraBold = 800,
-  /**
-   * 黑体
-   */
-  Black = 900,
-}
+export type FontWeight = PerformanceConfiguration;
 
 /**
  * 文本装饰

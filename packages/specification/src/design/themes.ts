@@ -126,31 +126,14 @@ export enum ThemeVariableType {
   Array = 'array',
 }
 
+// ThemeConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+import type { PerformanceConfiguration } from '../package/format';
+
 /**
- * 主题配置
+ * @deprecated 使用 PerformanceConfiguration 替代
  */
-export interface ThemeConfig {
-  /**
-   * 默认主题
-   */
-  defaultTheme: string;
-  /**
-   * 可用主题
-   */
-  availableThemes: string[];
-  /**
-   * 主题切换模式
-   */
-  switchMode?: ThemeSwitchMode;
-  /**
-   * 自动主题
-   */
-  autoTheme?: boolean;
-  /**
-   * 系统主题跟随
-   */
-  followSystem?: boolean;
-}
+export type ThemeConfig = PerformanceConfiguration;
 
 /**
  * 主题切换模式

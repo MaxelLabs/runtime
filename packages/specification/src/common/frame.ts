@@ -4,57 +4,19 @@
  */
 
 import type { CommonElement } from './elements';
-import type { ElementType } from '../core/enums';
+import type { ElementType, InterpolationMode } from '../core/enums';
 import type { AnimationProperties } from '../core/interfaces';
-import type { AnimationMask } from './animation';
+import type { AnimationMask, AnimationEvent } from './animation';
+import type { PerformanceConfiguration } from '../package/format';
 
 /**
  * 帧动画类型
+ * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export enum FrameAnimationType {
-  /**
-   * 序列帧动画
-   */
-  Sequence = 'sequence',
-  /**
-   * 关键帧动画
-   */
-  Keyframe = 'keyframe',
-  /**
-   * 骨骼动画
-   */
-  Skeletal = 'skeletal',
-  /**
-   * 变形动画
-   */
-  Morph = 'morph',
-  /**
-   * 粒子动画
-   */
-  Particle = 'particle',
-}
+export type FrameAnimationType = PerformanceConfiguration;
 
-/**
- * 帧插值类型
- */
-export enum FrameInterpolationType {
-  /**
-   * 线性插值
-   */
-  Linear = 'linear',
-  /**
-   * 阶梯插值
-   */
-  Step = 'step',
-  /**
-   * 三次贝塞尔插值
-   */
-  Bezier = 'bezier',
-  /**
-   * 样条插值
-   */
-  Spline = 'spline',
-}
+// FrameInterpolationType 已废弃 - 使用 InterpolationMode（来自 core/enums.ts）替代
+// 注意：Spline 暂时不在通用 InterpolationMode 中，需要时可添加到 core
 
 /**
  * 动画帧数据类型
@@ -109,7 +71,7 @@ export interface AnimationKeyframe {
   /**
    * 插值类型
    */
-  interpolation: FrameInterpolationType;
+  interpolation: InterpolationMode;
   /**
    * 贝塞尔控制点（仅贝塞尔插值使用）
    */
@@ -192,34 +154,14 @@ export interface FrameAnimationClip {
   /**
    * 动画事件
    */
-  events?: FrameAnimationEvent[];
+  events?: AnimationEvent[];
   /**
    * 动画属性
    */
   properties?: AnimationProperties;
 }
 
-/**
- * 帧动画事件
- */
-export interface FrameAnimationEvent {
-  /**
-   * 事件名称
-   */
-  name: string;
-  /**
-   * 触发时间（秒）
-   */
-  time: number;
-  /**
-   * 事件参数
-   */
-  parameters?: Record<string, any>;
-  /**
-   * 事件回调
-   */
-  callback?: string;
-}
+// FrameAnimationEvent 已废弃 - 使用 AnimationEvent（来自 common/animation.ts）替代
 
 /**
  * 帧动画控制器
@@ -293,7 +235,7 @@ export interface CommonFrameElement extends CommonElement {
   /**
    * 帧动画类型
    */
-  animationType: FrameAnimationType;
+  animationType: PerformanceConfiguration;
   /**
    * 动画控制器
    */
@@ -328,22 +270,13 @@ export interface CommonFrameElement extends CommonElement {
   preload?: FramePreloadSettings;
 }
 
+// FrameCache 扩展统一的缓存配置
+import type { CacheConfiguration } from '../package/format';
+
 /**
- * 帧缓存
+ * 帧缓存（扩展统一缓存配置）
  */
-export interface FrameCache {
-  /**
-   * 是否启用缓存
-   */
-  enabled: boolean;
-  /**
-   * 缓存大小（MB）
-   */
-  maxSize: number;
-  /**
-   * 缓存策略
-   */
-  strategy: 'lru' | 'fifo' | 'lfu';
+export interface FrameCache extends CacheConfiguration {
   /**
    * 预缓存帧数
    */
@@ -376,7 +309,7 @@ export interface FramePreloadSettings {
  * 序列帧元素
  */
 export interface SequenceFrameElement extends CommonFrameElement {
-  animationType: FrameAnimationType.Sequence;
+  animationType: PerformanceConfiguration;
   /**
    * 帧序列
    */
@@ -428,5 +361,5 @@ export interface SequenceFrame {
   /**
    * 帧事件
    */
-  events?: FrameAnimationEvent[];
+  events?: AnimationEvent[];
 }

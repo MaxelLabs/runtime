@@ -5,6 +5,7 @@
 
 import type { AssetType, Permission } from '../core';
 import type { UsdPrim, UsdValue } from '../core/usd';
+import type { PerformanceConfiguration } from '../package/format';
 
 /**
  * 工作流程基础接口
@@ -71,16 +72,9 @@ export interface Workflow extends WorkflowPrim {
 
 /**
  * 工作流程状态
+ * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export enum WorkflowStatus {
-  Draft = 'draft',
-  InProgress = 'in-progress',
-  Review = 'review',
-  Testing = 'testing',
-  Staging = 'staging',
-  Production = 'production',
-  Archived = 'archived',
-}
+export type WorkflowStatus = PerformanceConfiguration;
 
 /**
  * 工作流程阶段
@@ -134,16 +128,9 @@ export interface WorkflowStage {
 
 /**
  * 工作流程阶段类型
+ * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export enum WorkflowStageType {
-  Design = 'design',
-  Development = 'development',
-  Review = 'review',
-  Testing = 'testing',
-  Build = 'build',
-  Deploy = 'deploy',
-  Monitor = 'monitor',
-}
+export type WorkflowStageType = PerformanceConfiguration;
 
 /**
  * 工作流程阶段状态
@@ -220,20 +207,9 @@ export interface WorkflowTask {
 
 /**
  * 工作流程任务类型
+ * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export enum WorkflowTaskType {
-  DesignCreation = 'design-creation',
-  DesignReview = 'design-review',
-  AssetExport = 'asset-export',
-  CodeGeneration = 'code-generation',
-  ComponentDevelopment = 'component-development',
-  Integration = 'integration',
-  Testing = 'testing',
-  Build = 'build',
-  Deploy = 'deploy',
-  QualityAssurance = 'quality-assurance',
-  Documentation = 'documentation',
-}
+export type WorkflowTaskType = PerformanceConfiguration;
 
 /**
  * 工作流程任务状态
@@ -1020,14 +996,9 @@ export interface DeploymentTarget {
 
 /**
  * 部署目标类型
+ * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export enum DeploymentTargetType {
-  Server = 'server',
-  Container = 'container',
-  Serverless = 'serverless',
-  CDN = 'cdn',
-  StaticSite = 'static-site',
-}
+export type DeploymentTargetType = PerformanceConfiguration;
 
 /**
  * 部署策略

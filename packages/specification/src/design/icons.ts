@@ -144,39 +144,14 @@ export interface DesignIconLibrary {
   metadata?: CommonMetadata;
 }
 
+// IconLibraryConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+import type { PerformanceConfiguration } from '../package/format';
+
 /**
- * 图标库配置
+ * @deprecated 使用 PerformanceConfiguration 替代
  */
-export interface IconLibraryConfig {
-  /**
-   * 默认尺寸
-   */
-  defaultSize: number;
-  /**
-   * 支持的尺寸
-   */
-  supportedSizes: number[];
-  /**
-   * 默认样式
-   */
-  defaultStyle: IconStyle;
-  /**
-   * 支持的样式
-   */
-  supportedStyles: IconStyle[];
-  /**
-   * 颜色模式
-   */
-  colorMode?: IconColorMode;
-  /**
-   * 导出格式
-   */
-  exportFormats?: IconExportFormat[];
-  /**
-   * 优化设置
-   */
-  optimization?: IconOptimization;
-}
+export type IconLibraryConfig = PerformanceConfiguration;
 
 /**
  * 图标颜色模式
