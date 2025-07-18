@@ -1,8 +1,7 @@
-import { UsdDataType, type IMatrix3x3 } from '@maxellabs/specification';
-import type { UsdValue } from '@maxellabs/specification';
+import { UsdDataType } from '@maxellabs/specification';
+import type { mat3, Matrix3DataType, Matrix3Like, UsdValue } from '@maxellabs/specification';
 import type { Matrix4 } from './matrix4';
 import type { Quaternion } from './quaternion';
-import type { Matrix3DataType, mat3 } from './type';
 import { isEqual } from './utils';
 import type { Vector3 } from './vector3';
 import { MathConfig } from '../config/mathConfig';
@@ -15,7 +14,7 @@ const matrix3Pool = new ObjectPool<Matrix3>(() => new Matrix3(), MathConfig.getP
  * 三维矩阵（列优先矩阵）
  * 实现 @specification 包的 IMatrix3x3 接口，提供高性能的3x3矩阵运算
  */
-export class Matrix3 implements IMatrix3x3, Poolable {
+export class Matrix3 implements Matrix3Like, Poolable {
   static readonly IDENTITY = Object.freeze(new Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1));
   static readonly ZERO = Object.freeze(new Matrix3(0, 0, 0, 0, 0, 0, 0, 0, 0));
 
@@ -39,6 +38,11 @@ export class Matrix3 implements IMatrix3x3, Poolable {
   constructor(m11 = 1, m21 = 0, m31 = 0, m12 = 0, m22 = 1, m32 = 0, m13 = 0, m23 = 0, m33 = 1) {
     this.elements = new Float32Array([m11, m21, m31, m12, m22, m32, m13, m23, m33]);
   }
+  m13: number;
+  m23: number;
+  m31: number;
+  m32: number;
+  m33: number;
 
   /**
    * 重置对象状态（对象池接口）
@@ -125,7 +129,7 @@ export class Matrix3 implements IMatrix3x3, Poolable {
    * 转换为IMatrix3x3接口格式
    * @returns IMatrix3x3接口对象
    */
-  toIMatrix3x3(): IMatrix3x3 {
+  toIMatrix3x3(): Matrix3Like {
     return {
       m00: this.m00,
       m01: this.m01,
@@ -144,7 +148,7 @@ export class Matrix3 implements IMatrix3x3, Poolable {
    * @param m - IMatrix3x3接口对象
    * @returns Matrix3实例
    */
-  static fromIMatrix3x3(m: IMatrix3x3): Matrix3 {
+  static fromIMatrix3x3(m: Matrix3Like): Matrix3 {
     return new Matrix3(m.m00, m.m10, m.m20, m.m01, m.m11, m.m21, m.m02, m.m12, m.m22);
   }
 
@@ -153,7 +157,7 @@ export class Matrix3 implements IMatrix3x3, Poolable {
    * @param m - IMatrix3x3接口对象
    * @returns 返回自身，用于链式调用
    */
-  fromIMatrix3x3(m: IMatrix3x3): this {
+  fromIMatrix3x3(m: Matrix3Like): this {
     return this.set(m.m00, m.m10, m.m20, m.m01, m.m11, m.m21, m.m02, m.m12, m.m22);
   }
 
@@ -749,7 +753,7 @@ export class Matrix3 implements IMatrix3x3, Poolable {
    * @param array 目标数组
    * @param offset 偏移值
    */
-  fill(array: number[] | Float32Array, offset = 0) {
+  fillArray(array: number[] | Float32Array, offset = 0) {
     const e = this.elements;
 
     if (array instanceof Float32Array && offset === 0 && array.length >= 9) {

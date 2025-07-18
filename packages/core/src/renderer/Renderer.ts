@@ -6,43 +6,77 @@
 
 import type { Scene } from '../scene/scene';
 import type { Camera } from '../camera/camera';
-import type { IRHIDevice, IRHICommandEncoder } from '../../../specification/src/common/rhi';
 import { EventDispatcher } from '../base/event-dispatcher';
 
+// 暂时使用any类型，后续需要正确导入RHI类型
+export interface IRHIDevice {
+  createCommandEncoder(label?: string): IRHICommandEncoder;
+  submit(commandBuffers: any[]): void;
+  checkDeviceLost(): Promise<boolean>;
+}
+
+export interface IRHICommandEncoder {
+  finish(descriptor?: { label?: string }): any;
+}
+
 /**
- * 渲染配置接口
+ * 渲染器配置（统一定义，扩展RendererConfiguration）
  */
 export interface RendererConfig {
+  /**
+   * 渲染器类型
+   */
+  type?: 'webgl' | 'webgl2' | 'webgpu' | 'canvas2d' | 'svg';
+  /**
+   * 抗锯齿
+   */
+  antialias?: boolean;
+  /**
+   * 透明度
+   */
+  alpha?: boolean;
+  /**
+   * 深度缓冲
+   */
+  depth?: boolean;
+  /**
+   * 模板缓冲
+   */
+  stencil?: boolean;
+  /**
+   * 保留绘图缓冲
+   */
+  preserveDrawingBuffer?: boolean;
+  /**
+   * 功率偏好
+   */
+  powerPreference?: 'default' | 'high-performance' | 'low-power';
+
+  // 渲染器特定配置
   /**
    * 是否启用深度测试
    */
   enableDepthTest?: boolean;
-
   /**
    * 是否启用面剔除
    */
   enableFaceCulling?: boolean;
-
   /**
    * 是否启用多重采样抗锯齿
    */
   enableMSAA?: boolean;
-
   /**
    * MSAA采样数量
    */
   msaaSamples?: number;
-
   /**
    * 清除颜色
    */
   clearColor?: [number, number, number, number];
-
   /**
    * 清除深度值
    */
   clearDepth?: number;
-
   /**
    * 清除模板值
    */
@@ -116,7 +150,15 @@ export abstract class Renderer extends EventDispatcher {
     super();
 
     this.device = device;
+    // 默认配置
     this.config = {
+      type: 'webgl',
+      antialias: false,
+      alpha: false,
+      depth: true,
+      stencil: false,
+      preserveDrawingBuffer: false,
+      powerPreference: 'default',
       enableDepthTest: true,
       enableFaceCulling: true,
       enableMSAA: false,
@@ -125,7 +167,7 @@ export abstract class Renderer extends EventDispatcher {
       clearDepth: 1.0,
       clearStencil: 0,
       ...config,
-    };
+    } as Required<RendererConfig>;
 
     this.statistics = {
       drawCalls: 0,

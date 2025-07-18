@@ -1,6 +1,5 @@
-import { UsdDataType, type IVector2 } from '@maxellabs/specification';
-import type { UsdValue } from '@maxellabs/specification';
-import type { Vector2DataType, Vector2Like, vec2 } from './type';
+import { UsdDataType } from '@maxellabs/specification';
+import type { UsdValue, vec2, Vector2DataType, Vector2Like } from '@maxellabs/specification';
 import { NumberEpsilon } from './utils';
 import { MathConfig } from '../config/mathConfig';
 import { ObjectPool, type Poolable } from '../pool/objectPool';
@@ -12,7 +11,7 @@ const vector2Pool = new ObjectPool<Vector2>(() => new Vector2(), MathConfig.getP
  * 二维向量
  * 实现 @specification 包的 IVector2 接口，提供高性能的2D向量运算
  */
-export class Vector2 implements IVector2, Poolable {
+export class Vector2 implements Vector2Like, Poolable {
   /**
    * 二维向量的常量
    */
@@ -85,7 +84,7 @@ export class Vector2 implements IVector2, Poolable {
    * 转换为IVector2接口格式
    * @returns IVector2接口对象
    */
-  toIVector2(): IVector2 {
+  toIVector2(): Vector2Like {
     return {
       x: this.x,
       y: this.y,
@@ -97,7 +96,7 @@ export class Vector2 implements IVector2, Poolable {
    * @param v - IVector2接口对象
    * @returns Vector2实例
    */
-  static fromIVector2(v: IVector2): Vector2 {
+  static fromIVector2(v: Vector2Like): Vector2 {
     return new Vector2(v.x, v.y);
   }
 
@@ -106,7 +105,7 @@ export class Vector2 implements IVector2, Poolable {
    * @param v - IVector2接口对象
    * @returns 返回自身，用于链式调用
    */
-  fromIVector2(v: IVector2): this {
+  fromIVector2(v: Vector2Like): this {
     this.elements[0] = v.x;
     this.elements[1] = v.y;
     return this;

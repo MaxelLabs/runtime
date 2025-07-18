@@ -192,35 +192,14 @@ export interface DesignTypographySystem {
   metadata?: CommonMetadata;
 }
 
+// TypographyBaseConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+import type { PerformanceConfiguration } from '../package/format';
+
 /**
- * 排版基础配置
+ * @deprecated 使用 PerformanceConfiguration 替代
  */
-export interface TypographyBaseConfig {
-  /**
-   * 基础字体族
-   */
-  baseFontFamily: string;
-  /**
-   * 基础字体大小
-   */
-  baseFontSize: number;
-  /**
-   * 基础行高
-   */
-  baseLineHeight: number;
-  /**
-   * 基础字重
-   */
-  baseFontWeight: number;
-  /**
-   * 基础字符间距
-   */
-  baseLetterSpacing?: number;
-  /**
-   * 段落间距
-   */
-  paragraphSpacing?: number;
-}
+export type TypographyBaseConfig = PerformanceConfiguration;
 
 /**
  * 文本度量

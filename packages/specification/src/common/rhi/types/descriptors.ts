@@ -3,18 +3,17 @@
  * 包含所有RHI资源描述符的类型定义
  */
 
-import type { IRHIShaderModule, IRHIBindGroupLayout, IRHIPipelineLayout } from '../index';
-import type { RHIVertexLayout, RHIColorBlendState, RHIDepthStencilState, RHIRasterizationState } from './states';
+import type { Color } from '@maxellabs/math';
+import type { RHITextureUsage } from '../../texture';
 import type {
+  IRHIShaderModule,
+  IRHIBindGroupLayout,
+  IRHIPipelineLayout,
   RHIBufferUsage,
-  RHIPrimitiveTopology,
   RHITextureFormat,
-  RHITextureUsage,
-  RHIAddressMode,
-  RHIFilterMode,
-  Color,
-  RHICompareFunction,
-} from '@maxellabs/math';
+} from '../index';
+import type { RHIVertexLayout, RHIColorBlendState, RHIDepthStencilState, RHIRasterizationState } from './states';
+import type { RHITextureType, RHIFilterMode, RHIAddressMode, RHICompareFunction, RHIPrimitiveTopology } from './enums';
 
 /**
  * 缓冲区描述符
@@ -52,18 +51,7 @@ export interface RHIBufferDescriptor {
   extension?: Record<string, any>;
 }
 
-export enum RHITextureType {
-  /** 2D纹理 */
-  TEXTURE_2D = '2d',
-  /** 3D纹理 */
-  TEXTURE_3D = '3d',
-  /** 立方体纹理 */
-  TEXTURE_CUBE = 'cube',
-  /** 1D纹理 */
-  TEXTURE_1D = '1d',
-  /** 2D数组纹理 */
-  TEXTURE_2D_ARRAY = '2d-array',
-}
+// RHITextureType 已移至 ./enums.ts 避免重复定义
 
 /**
  * 纹理描述符

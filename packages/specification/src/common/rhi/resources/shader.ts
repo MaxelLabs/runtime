@@ -3,7 +3,7 @@
  * 定义着色器资源接口
  */
 
-import type { RHIShaderStage } from '../types/enums';
+import type { RHIShaderStage } from '../enums';
 
 /**
  * 着色器模块接口

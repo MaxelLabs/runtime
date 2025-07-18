@@ -3,7 +3,7 @@
  * 定义跨模块共享的基础材质类型
  */
 
-import type { IColor, BlendMode, CommonMetadata, MaterialType } from '../core';
+import type { IColor, BlendMode, CommonMetadata, MaterialType, LoopMode } from '../core';
 
 /**
  * 通用纹理槽
@@ -144,26 +144,10 @@ export interface UVAnimation {
   /**
    * 播放模式
    */
-  playMode: UVAnimationMode;
+  playMode: LoopMode;
 }
 
-/**
- * UV动画模式
- */
-export enum UVAnimationMode {
-  /**
-   * 循环
-   */
-  Loop = 'loop',
-  /**
-   * 来回
-   */
-  PingPong = 'ping-pong',
-  /**
-   * 一次
-   */
-  Once = 'once',
-}
+// UVAnimationMode 已废弃 - 使用 LoopMode（来自 core/enums.ts）替代
 
 /**
  * 通用材质实例
@@ -227,30 +211,16 @@ export interface MaterialCondition {
   operator: ComparisonOperator;
 }
 
-/**
- * 材质条件类型
- */
-export enum MaterialConditionType {
-  /**
-   * 距离
-   */
-  Distance = 'distance',
-  /**
-   * 时间
-   */
-  Time = 'time',
-  /**
-   * 用户数据
-   */
-  UserData = 'user-data',
-  /**
-   * 渲染质量
-   */
-  Quality = 'quality',
-}
+// 从 rendering 导入通用条件类型
+import type { ConditionType } from '../rendering/material';
 
 /**
- * 比较操作符
+ * 材质条件类型（使用通用ConditionType）
+ */
+export type MaterialConditionType = ConditionType;
+
+/**
+ * @deprecated 使用 animation/index.ts 中的 ComparisonOperator 替代
  */
 export enum ComparisonOperator {
   /**

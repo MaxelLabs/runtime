@@ -4,15 +4,9 @@
  */
 
 import type { UsdValue } from './usd';
-import type {
-  QualityLevel,
-  EasingFunction,
-  MaterialType,
-  BorderStyle,
-  ClickFeedbackType,
-  VisualEffectType,
-} from './enums';
-import type { IColor, IVector3, VersionInfo } from './base';
+import type { EasingFunction, MaterialType, BorderStyle, ClickFeedbackType, VisualEffectType } from './enums';
+import type { VersionInfo } from './base';
+import type { ColorLike, Vector3Like } from './math';
 
 /**
  * 视觉效果
@@ -139,7 +133,7 @@ export interface MaterialProperties {
   /**
    * 基础颜色
    */
-  baseColor: IColor;
+  baseColor: ColorLike;
   /**
    * 透明度
    */
@@ -155,7 +149,7 @@ export interface MaterialProperties {
   /**
    * 自发光颜色
    */
-  emissiveColor?: IColor;
+  emissiveColor?: ColorLike;
   /**
    * 自发光强度
    */
@@ -183,7 +177,7 @@ export interface MaterialProperties {
   /**
    * 衰减颜色
    */
-  attenuationColor?: IColor;
+  attenuationColor?: ColorLike;
   /**
    * 衰减距离
    */
@@ -215,7 +209,7 @@ export interface MaterialProperties {
   /**
    * 光泽颜色
    */
-  sheenColor?: IColor;
+  sheenColor?: ColorLike;
   /**
    * 光泽粗糙度
    */
@@ -227,7 +221,7 @@ export interface MaterialProperties {
   /**
    * 次表面颜色
    */
-  subsurfaceColor?: IColor;
+  subsurfaceColor?: ColorLike;
   /**
    * 次表面半径
    */
@@ -287,29 +281,29 @@ export interface RenderingProperties {
   /**
    * 3D边界框
    */
-  boundingBox?: BoundingBox;
+  boundingBox?: CoreBoundingBox;
 }
 
 /**
  * 3D边界框（核心版本）
  */
-export interface BoundingBox {
+export interface CoreBoundingBox {
   /**
    * 最小点
    */
-  min: IVector3;
+  min: Vector3Like;
   /**
    * 最大点
    */
-  max: IVector3;
+  max: Vector3Like;
   /**
    * 中心点
    */
-  center: IVector3;
+  center: Vector3Like;
   /**
    * 尺寸
    */
-  size: IVector3;
+  size: Vector3Like;
 }
 
 /**
@@ -349,7 +343,7 @@ export interface HoverEffect {
   /**
    * 高亮颜色
    */
-  highlightColor?: IColor;
+  highlightColor?: ColorLike;
   /**
    * 缩放因子
    */
@@ -383,7 +377,7 @@ export interface SelectionBorder {
   /**
    * 边框颜色
    */
-  color: IColor;
+  color: ColorLike;
   /**
    * 边框样式
    */
@@ -409,7 +403,7 @@ export interface SelectionEffect {
   /**
    * 选择颜色
    */
-  selectionColor?: IColor;
+  selectionColor?: ColorLike;
   /**
    * 选择边框
    */
@@ -418,32 +412,6 @@ export interface SelectionEffect {
    * 选择动画
    */
   animation?: AnimationProperties;
-}
-
-/**
- * 性能配置接口
- */
-export interface PerformanceConfig {
-  /**
-   * 质量级别
-   */
-  qualityLevel?: QualityLevel;
-  /**
-   * LOD偏移
-   */
-  lodBias?: UsdValue; // float
-  /**
-   * 最大纹理尺寸
-   */
-  maxTextureSize?: UsdValue; // int
-  /**
-   * 是否启用压缩
-   */
-  enableCompression?: UsdValue; // bool
-  /**
-   * 是否启用缓存
-   */
-  enableCaching?: UsdValue; // bool
 }
 
 /**
@@ -509,36 +477,6 @@ export enum TransformSpace {
    * 视图空间
    */
   View = 'view',
-}
-
-/**
- * 旋转顺序
- */
-export enum RotationOrder {
-  /**
-   * XYZ顺序
-   */
-  XYZ = 'xyz',
-  /**
-   * XZY顺序
-   */
-  XZY = 'xzy',
-  /**
-   * YXZ顺序
-   */
-  YXZ = 'yxz',
-  /**
-   * YZX顺序
-   */
-  YZX = 'yzx',
-  /**
-   * ZXY顺序
-   */
-  ZXY = 'zxy',
-  /**
-   * ZYX顺序
-   */
-  ZYX = 'zyx',
 }
 
 /**

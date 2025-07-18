@@ -4,7 +4,7 @@
  */
 
 import type { CommonMetadata } from '../core/interfaces';
-import type { DesignPage, SizeUnit, PageGrid } from './page';
+import type { DesignPage } from './page';
 import type { DesignSystem } from './systems';
 import type { AssetLibrary } from './assets';
 import type { CollaborationInfo } from './collaboration';
@@ -67,39 +67,14 @@ export enum DocumentType {
   Component = 'component',
 }
 
+// DocumentConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+import type { PerformanceConfiguration } from '../package/format';
+
 /**
- * 文档配置
+ * @deprecated 使用 PerformanceConfiguration 替代
  */
-export interface DocumentConfig {
-  /**
-   * 单位设置
-   */
-  units?: SizeUnit;
-  /**
-   * 颜色配置文件
-   */
-  colorProfile?: string;
-  /**
-   * 网格设置
-   */
-  gridSettings?: PageGrid;
-  /**
-   * 自动保存
-   */
-  autoSave?: boolean;
-  /**
-   * 版本控制
-   */
-  versionControl?: boolean;
-  /**
-   * 导出设置
-   */
-  exportSettings?: DocumentExportSettings;
-  /**
-   * 插件配置
-   */
-  plugins?: DocumentPluginConfig[];
-}
+export type DocumentConfig = PerformanceConfiguration;
 
 /**
  * 文档导出设置

@@ -3,47 +3,15 @@
  * 定义跨模块共享的基础渲染类型
  */
 
-import type { RenderMode, BlendMode } from '../../core';
 import type { CommonElement } from '../elements';
 import type { CommonMaterial } from '../material';
+import type { PerformanceConfiguration } from '../../package/format';
 
 /**
  * 深度测试模式
+ * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export enum DepthTest {
-  /**
-   * 禁用
-   */
-  Disabled = 'disabled',
-  /**
-   * 小于
-   */
-  Less = 'less',
-  /**
-   * 小于等于
-   */
-  LessEqual = 'less-equal',
-  /**
-   * 等于
-   */
-  Equal = 'equal',
-  /**
-   * 大于等于
-   */
-  GreaterEqual = 'greater-equal',
-  /**
-   * 大于
-   */
-  Greater = 'greater',
-  /**
-   * 不等于
-   */
-  NotEqual = 'not-equal',
-  /**
-   * 总是通过
-   */
-  Always = 'always',
-}
+export type DepthTest = PerformanceConfiguration;
 
 /**
  * 渲染队列
@@ -111,31 +79,8 @@ export enum ShadowType {
   Cascaded = 'cascaded',
 }
 
-/**
- * 通用渲染状态（简化版本）
- */
-export interface CommonRenderState {
-  /**
-   * 是否可见
-   */
-  visible: boolean;
-  /**
-   * 透明度
-   */
-  opacity: number;
-  /**
-   * 混合模式（使用 core 类型）
-   */
-  blendMode: BlendMode;
-  /**
-   * 渲染模式（使用 core 类型）
-   */
-  renderMode?: RenderMode;
-  /**
-   * Z索引
-   */
-  zIndex?: number;
-}
+// CommonRenderState 已移至 ./renderState.ts 避免重复定义
+import type { CommonRenderState } from './renderState';
 
 /**
  * 通用可渲染元素
@@ -177,27 +122,14 @@ export interface RenderBatch {
   priority: number;
 }
 
+// CommonRenderConfig 已废弃 - 使用 RendererConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+import type { RendererConfiguration } from '../../package/format';
+
 /**
- * 基础渲染配置
+ * @deprecated 使用 RendererConfiguration 替代
  */
-export interface CommonRenderConfig {
-  /**
-   * 启用深度测试
-   */
-  enableDepthTest?: boolean;
-  /**
-   * 启用深度写入
-   */
-  enableDepthWrite?: boolean;
-  /**
-   * 启用面剔除
-   */
-  enableCulling?: boolean;
-  /**
-   * 启用混合
-   */
-  enableBlending?: boolean;
-}
+export type CommonRenderConfig = RendererConfiguration;
 
 /**
  * 通用渲染统计

@@ -172,13 +172,9 @@ export interface PackageDependency {
 
 /**
  * 依赖类型
+ * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export enum DependencyType {
-  Runtime = 'runtime',
-  Development = 'development',
-  Peer = 'peer',
-  Optional = 'optional',
-}
+export type DependencyType = PerformanceConfiguration;
 
 /**
  * 兼容性信息
@@ -208,15 +204,9 @@ export interface CompatibilityInfo {
 
 /**
  * 平台类型
+ * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export enum Platform {
-  Web = 'web',
-  iOS = 'ios',
-  Android = 'android',
-  Desktop = 'desktop',
-  VR = 'vr',
-  AR = 'ar',
-}
+export type Platform = PerformanceConfiguration;
 
 /**
  * 浏览器支持
@@ -305,26 +295,31 @@ export interface AssetEntry {
 }
 
 /**
- * 资产类型
+ * 包资产条目类型（扩展基础AssetType）
  */
 export enum AssetEntryType {
-  USD = 'usd',
-  USDA = 'usda',
-  USDC = 'usdc',
+  // 基础类型（来自 AssetType）
+  Design = 'design',
   Image = 'image',
   Video = 'video',
   Audio = 'audio',
   Font = 'font',
-  Shader = 'shader',
-  Script = 'script',
-  Configuration = 'configuration',
-  Documentation = 'documentation',
-  Design = 'design',
   Icon = 'icon',
   Component = 'component',
+  Code = 'code',
+  Documentation = 'documentation',
+  Configuration = 'configuration',
+
+  // USD 特定格式
+  USD = 'usd',
+  USDA = 'usda',
+  USDC = 'usdc',
+
+  // 3D 相关
+  Model = 'model',
   Material = 'material',
   Texture = 'texture',
-  Model = 'model',
+  Shader = 'shader',
   Animation = 'animation',
 }
 
@@ -549,18 +544,9 @@ export interface BuildConfiguration {
 
 /**
  * 构建目标
+ * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export enum BuildTarget {
-  ES5 = 'es5',
-  ES2015 = 'es2015',
-  ES2017 = 'es2017',
-  ES2018 = 'es2018',
-  ES2019 = 'es2019',
-  ES2020 = 'es2020',
-  ES2021 = 'es2021',
-  ES2022 = 'es2022',
-  ESNext = 'esnext',
-}
+export type BuildTarget = PerformanceConfiguration;
 
 /**
  * 构建模式

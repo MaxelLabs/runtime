@@ -3,9 +3,6 @@
  * 所有模块共用的基础数据类型、枚举和常量
  */
 
-import type { ColorSpace } from './enums';
-import type { UsdValue } from './usd';
-
 /**
  * 资产类型
  */
@@ -161,136 +158,6 @@ export interface Timestamp {
 }
 
 /**
- * 核心颜色接口
- */
-export interface IColor {
-  /**
-   * 红色分量
-   */
-  r: number;
-  /**
-   * 绿色分量
-   */
-  g: number;
-  /**
-   * 蓝色分量
-   */
-  b: number;
-  /**
-   * 透明度分量
-   */
-  a: number;
-  /**
-   * 颜色空间
-   */
-  colorSpace?: ColorSpace;
-  /**
-   * 是否线性
-   */
-  linear?: boolean;
-}
-
-// ========== 数学基础类型 ==========
-
-/**
- * 2D向量
- */
-export interface IVector2 {
-  x: number;
-  y: number;
-}
-
-/**
- * 3D向量
- */
-export interface IVector3 {
-  x: number;
-  y: number;
-  z: number;
-}
-
-/**
- * 4D向量
- */
-export interface IVector4 {
-  x: number;
-  y: number;
-  z: number;
-  w: number;
-}
-
-/**
- * 四元数
- */
-export interface IQuaternion {
-  x: number;
-  y: number;
-  z: number;
-  w: number;
-}
-
-/**
- * 2x2矩阵
- */
-export interface IMatrix2x2 {
-  m00: number;
-  m01: number;
-  m10: number;
-  m11: number;
-}
-
-/**
- * 3x3矩阵
- */
-export interface IMatrix3x3 {
-  m00: number;
-  m01: number;
-  m02: number;
-  m10: number;
-  m11: number;
-  m12: number;
-  m20: number;
-  m21: number;
-  m22: number;
-}
-
-/**
- * 4x4矩阵
- */
-export interface IMatrix4x4 {
-  m00: number;
-  m01: number;
-  m02: number;
-  m03: number;
-  m10: number;
-  m11: number;
-  m12: number;
-  m13: number;
-  m20: number;
-  m21: number;
-  m22: number;
-  m23: number;
-  m30: number;
-  m31: number;
-  m32: number;
-  m33: number;
-}
-
-/**
- * 边界球
- */
-export interface BoundingSphere {
-  /**
-   * 中心点
-   */
-  center: IVector3;
-  /**
-   * 半径
-   */
-  radius: UsdValue; // float
-}
-
-/**
  * 平台类型
  */
 export enum PlatformType {
@@ -314,15 +181,7 @@ export enum DeviceType {
   AR = 'ar',
 }
 
-/**
- * 资源状态
- */
-export enum ResourceState {
-  Unloaded = 0,
-  Loading = 1,
-  Loaded = 2,
-  Failed = 3,
-}
+// ResourceState 已废弃 - 使用 ResourceLoadState（来自 packages/core/src/resource/resource.ts）替代
 
 /**
  * 坐标系类型
@@ -361,28 +220,4 @@ export enum CompressionFormat {
   ETC2 = 'etc2',
   PVRTC = 'pvrtc',
   ASTC = 'astc',
-}
-
-/**
- * 元素类型
- */
-export enum ItemType {
-  Scene = 'scene',
-  Prefab = 'prefab',
-  Material = 'material',
-  Texture = 'texture',
-  Mesh = 'mesh',
-  Animation = 'animation',
-  Audio = 'audio',
-  Script = 'script',
-  Font = 'font',
-  Shader = 'shader',
-  Sprite = 'sprite',
-  Particle = 'particle',
-  Tree = 'tree',
-  Camera = 'camera',
-  Text = 'text',
-  Skybox = 'skybox',
-  Light = 'light',
-  Spine = 'spine',
 }

@@ -18,6 +18,7 @@ www
 *.d.ts
 *.d.ts.map
 
+.claude
 .cursor
 .cursorrules
 packages/core/DEVELOPMENT_PLAN.md

@@ -3,7 +3,8 @@
  * 动画控制器、图层和遮罩的定义
  */
 
-import type { AnimationController, AnimationMixerLayer, AnimationMask } from '../common';
+import type { AnimationMixerLayer, AnimationMask } from '../common';
+import type { AnimationController } from '../common';
 import type { AnimationStateMachine } from './stateMachine';
 
 /**

@@ -7,109 +7,9 @@ import type { CommonElement } from './elements';
 
 /**
  * 交互事件类型
+ * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export enum InteractionEventType {
-  /**
-   * 鼠标进入
-   */
-  MouseEnter = 'mouse-enter',
-  /**
-   * 鼠标离开
-   */
-  MouseLeave = 'mouse-leave',
-  /**
-   * 鼠标按下
-   */
-  MouseDown = 'mouse-down',
-  /**
-   * 鼠标抬起
-   */
-  MouseUp = 'mouse-up',
-  /**
-   * 鼠标点击
-   */
-  Click = 'click',
-  /**
-   * 鼠标双击
-   */
-  DoubleClick = 'double-click',
-  /**
-   * 鼠标右键
-   */
-  RightClick = 'right-click',
-  /**
-   * 鼠标移动
-   */
-  MouseMove = 'mouse-move',
-  /**
-   * 鼠标滚轮
-   */
-  MouseWheel = 'mouse-wheel',
-  /**
-   * 触摸开始
-   */
-  TouchStart = 'touch-start',
-  /**
-   * 触摸结束
-   */
-  TouchEnd = 'touch-end',
-  /**
-   * 触摸移动
-   */
-  TouchMove = 'touch-move',
-  /**
-   * 触摸取消
-   */
-  TouchCancel = 'touch-cancel',
-  /**
-   * 拖拽开始
-   */
-  DragStart = 'drag-start',
-  /**
-   * 拖拽中
-   */
-  Drag = 'drag',
-  /**
-   * 拖拽结束
-   */
-  DragEnd = 'drag-end',
-  /**
-   * 拖拽进入
-   */
-  DragEnter = 'drag-enter',
-  /**
-   * 拖拽离开
-   */
-  DragLeave = 'drag-leave',
-  /**
-   * 拖拽悬停
-   */
-  DragOver = 'drag-over',
-  /**
-   * 放置
-   */
-  Drop = 'drop',
-  /**
-   * 键盘按下
-   */
-  KeyDown = 'key-down',
-  /**
-   * 键盘抬起
-   */
-  KeyUp = 'key-up',
-  /**
-   * 键盘按键
-   */
-  KeyPress = 'key-press',
-  /**
-   * 获得焦点
-   */
-  Focus = 'focus',
-  /**
-   * 失去焦点
-   */
-  Blur = 'blur',
-}
+export type InteractionEventType = PerformanceConfiguration;
 
 /**
  * 交互状态
@@ -361,39 +261,14 @@ export interface DragInfo {
   };
 }
 
+// InteractionConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
+// 为保持兼容性，创建类型别名
+import type { PerformanceConfiguration } from '../package/format';
+
 /**
- * 交互配置
+ * @deprecated 使用 PerformanceConfiguration 替代
  */
-export interface InteractionConfig {
-  /**
-   * 是否启用交互
-   */
-  enabled: boolean;
-  /**
-   * 交互类型
-   */
-  types: InteractionEventType[];
-  /**
-   * 是否阻止冒泡
-   */
-  stopPropagation: boolean;
-  /**
-   * 是否阻止默认行为
-   */
-  preventDefault: boolean;
-  /**
-   * 交互区域
-   */
-  hitArea?: HitArea;
-  /**
-   * 交互优先级
-   */
-  priority: number;
-  /**
-   * 是否穿透
-   */
-  passThrough: boolean;
-}
+export type InteractionConfig = PerformanceConfiguration;
 
 /**
  * 碰撞区域

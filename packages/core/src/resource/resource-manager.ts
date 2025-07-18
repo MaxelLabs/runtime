@@ -1,7 +1,29 @@
+import type { Resource, ResourceType } from './resource';
 import { EventDispatcher } from '../base/event-dispatcher';
 import { Container, ServiceKeys } from '../base/IOC';
 import { ObjectPool } from '../base/object-pool';
-import type { Resource, ResourceType, IResourceLoader, ResourceLoadOptions } from './resource';
+
+// 删除重复的IResourceLoader定义，统一使用resource.ts中的版本
+// 导入完整的IResourceLoader和ResourceLoadOptions
+import type { IResourceLoader, ResourceLoadOptions } from './resource';
+
+/**
+ * 资源缓存配置（统一定义）
+ */
+export interface ResourceCacheConfig {
+  /** 是否启用缓存 */
+  enabled?: boolean;
+  /** 最大缓存大小（MB） */
+  maxSize: number;
+  /** 最大缓存项数 */
+  maxItems?: number;
+  /** 缓存过期时间（秒） */
+  ttl: number;
+  /** 缓存策略 */
+  strategy?: 'LRU' | 'FIFO' | 'LFU';
+  /** 缓存键前缀 */
+  keyPrefix?: string;
+}
 
 /**
  * 资源管理器事件类型
@@ -21,20 +43,6 @@ export enum ResourceManagerEvent {
   RESOURCE_DESTROYED = 'resourceDestroyed',
   /** 缓存清理 */
   CACHE_CLEARED = 'cacheCleared',
-}
-
-/**
- * 资源缓存配置
- */
-export interface ResourceCacheConfig {
-  /** 最大缓存大小（字节） */
-  maxSize: number;
-  /** 最大缓存项数 */
-  maxItems: number;
-  /** 缓存过期时间（毫秒） */
-  maxAge: number;
-  /** 是否启用LRU策略 */
-  enableLRU: boolean;
 }
 
 /**
@@ -95,10 +103,12 @@ export class ResourceManager extends EventDispatcher {
 
     // 默认缓存配置
     this.cacheConfig = {
-      maxSize: 100 * 1024 * 1024, // 100MB
+      enabled: true,
+      maxSize: 100, // 100MB
       maxItems: 1000,
-      maxAge: 30 * 60 * 1000, // 30分钟
-      enableLRU: true,
+      ttl: 30 * 60, // 30分钟
+      strategy: 'LRU',
+      keyPrefix: 'resource_',
       ...cacheConfig,
     };
 
@@ -273,24 +283,28 @@ export class ResourceManager extends EventDispatcher {
    * @private
    */
   private shouldEvictCache(): boolean {
-    if (this.resources.size >= this.cacheConfig.maxItems) {
+    const maxItems = this.cacheConfig.maxItems || 1000;
+    if (this.resources.size >= maxItems) {
       return true;
     }
 
-    let totalSize = 0;
-    for (const resource of this.resources.values()) {
-      totalSize += resource.getSize();
-    }
+    // 检查总内存使用量（简化计算）
+    const totalSize = Array.from(this.resources.values()).reduce((total, resource) => {
+      // 使用Resource的getSize方法或默认值
+      const resourceSize = typeof resource.getSize === 'function' ? resource.getSize() : 0;
+      return total + resourceSize;
+    }, 0);
 
-    return totalSize >= this.cacheConfig.maxSize;
+    const maxSizeBytes = (this.cacheConfig.maxSize || 100) * 1024 * 1024; // MB to bytes
+    return totalSize >= maxSizeBytes;
   }
 
   /**
-   * LRU缓存清理
+   * 执行LRU缓存清理
    * @private
    */
   private evictLRU(): void {
-    if (!this.cacheConfig.enableLRU) {
+    if (!this.cacheConfig.enabled || this.cacheConfig.strategy !== 'LRU') {
       return;
     }
 
@@ -390,11 +404,12 @@ export class ResourceManager extends EventDispatcher {
     }
 
     return {
-      itemCount: this.resources.size,
-      totalSize,
+      totalResources: this.resources.size,
+      totalSize: totalSize,
       totalReferences: totalRefs,
-      maxSize: this.cacheConfig.maxSize,
-      maxItems: this.cacheConfig.maxItems,
+      maxSizeBytes: (this.cacheConfig.maxSize || 100) * 1024 * 1024,
+      maxItems: this.cacheConfig.maxItems || 1000,
+      strategy: this.cacheConfig.strategy || 'LRU',
     };
   }
 

@@ -5,74 +5,19 @@
 
 import type { CommonElement } from './elements';
 import type { ElementType } from '../core/enums';
+import type { PerformanceConfiguration } from '../package/format';
 
 /**
  * 图像格式
+ * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export enum ImageFormat {
-  /**
-   * JPEG 格式
-   */
-  JPEG = 'jpeg',
-  /**
-   * PNG 格式
-   */
-  PNG = 'png',
-  /**
-   * WebP 格式
-   */
-  WebP = 'webp',
-  /**
-   * AVIF 格式
-   */
-  AVIF = 'avif',
-  /**
-   * GIF 格式
-   */
-  GIF = 'gif',
-  /**
-   * BMP 格式
-   */
-  BMP = 'bmp',
-  /**
-   * TIFF 格式
-   */
-  TIFF = 'tiff',
-  /**
-   * SVG 格式
-   */
-  SVG = 'svg',
-}
+export type ImageFormat = PerformanceConfiguration;
 
 /**
- * 图像缩放模式
+ * 图像缩放模式（扩展通用ScaleMode）
+ * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export enum ImageScaleMode {
-  /**
-   * 拉伸填充
-   */
-  Stretch = 'stretch',
-  /**
-   * 等比缩放适应
-   */
-  Fit = 'fit',
-  /**
-   * 等比缩放填充
-   */
-  Fill = 'fill',
-  /**
-   * 居中
-   */
-  Center = 'center',
-  /**
-   * 平铺
-   */
-  Tile = 'tile',
-  /**
-   * 九宫格
-   */
-  NineSlice = 'nine-slice',
-}
+export type ImageScaleMode = PerformanceConfiguration;
 
 /**
  * 图像变换类型
@@ -389,27 +334,13 @@ export interface ResponsiveImageSource {
   mediaQuery?: string;
 }
 
+// 从 texture 导入通用加载状态
+import type { LoadState } from './texture';
+
 /**
- * 图像加载状态
+ * 图像加载状态（使用通用LoadState）
  */
-export enum ImageLoadState {
-  /**
-   * 未开始
-   */
-  Idle = 'idle',
-  /**
-   * 加载中
-   */
-  Loading = 'loading',
-  /**
-   * 加载成功
-   */
-  Loaded = 'loaded',
-  /**
-   * 加载失败
-   */
-  Error = 'error',
-}
+export type ImageLoadState = LoadState;
 
 /**
  * 图像加载事件

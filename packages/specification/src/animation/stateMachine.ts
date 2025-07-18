@@ -3,7 +3,8 @@
  * 动画状态机、状态和转换的定义
  */
 
-import type { AnimationState, AnimationTransition, AnimationParameter } from '../common';
+import type { AnimationParameter } from '../common';
+import type { AnimationState, AnimationTransition, InterruptionSource } from '.';
 
 /**
  * 动画状态机（使用通用类型）
@@ -31,16 +32,7 @@ export interface AnimationStateMachine {
   parameters: AnimationParameter[];
 }
 
-/**
- * 中断源
- */
-export enum InterruptionSource {
-  None = 'none',
-  Source = 'source',
-  Destination = 'destination',
-  SourceThenDestination = 'source-then-destination',
-  DestinationThenSource = 'destination-then-source',
-}
+// InterruptionSource 已在 animation/index.ts 中定义作为权威来源
 
 /**
  * 扩展的动画转换（添加中断源）

@@ -1,8 +1,7 @@
-import { UsdDataType, type IVector3 } from '@maxellabs/specification';
-import type { UsdValue } from '@maxellabs/specification';
+import { UsdDataType } from '@maxellabs/specification';
+import type { UsdValue, vec3, Vector3DataType, Vector3Like } from '@maxellabs/specification';
 import type { Matrix4 } from './matrix4';
 import type { Quaternion } from './quaternion';
-import type { Vector3DataType, Vector3Like, vec3 } from './type';
 import { NumberEpsilon, fastInvSqrt } from './utils';
 import { Vector2 } from './vector2';
 import { MathConfig } from '../config/mathConfig';
@@ -15,7 +14,7 @@ const vector3Pool = new ObjectPool<Vector3>(() => new Vector3(), MathConfig.getP
  * 三维向量
  * 实现 @specification 包的 IVector3 接口，提供高性能的3D向量运算
  */
-export class Vector3 implements IVector3, Poolable {
+export class Vector3 implements Vector3Like, Poolable {
   /**
    * 三维向量的常量
    */
@@ -799,7 +798,7 @@ export class Vector3 implements IVector3, Poolable {
    * 转换为IVector3接口格式
    * @returns IVector3接口对象
    */
-  toIVector3(): IVector3 {
+  toIVector3(): Vector3Like {
     return {
       x: this.x,
       y: this.y,
@@ -812,7 +811,7 @@ export class Vector3 implements IVector3, Poolable {
    * @param v - IVector3接口对象
    * @returns Vector3实例
    */
-  static fromIVector3(v: IVector3): Vector3 {
+  static fromIVector3(v: Vector3Like): Vector3 {
     return new Vector3(v.x, v.y, v.z);
   }
 
@@ -821,7 +820,7 @@ export class Vector3 implements IVector3, Poolable {
    * @param v - IVector3接口对象
    * @returns 返回自身，用于链式调用
    */
-  fromIVector3(v: IVector3): this {
+  fromIVector3(v: Vector3Like): this {
     this.elements[0] = v.x;
     this.elements[1] = v.y;
     this.elements[2] = v.z;

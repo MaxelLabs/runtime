@@ -4,29 +4,16 @@
  * 负责纹理的创建、缓存、加载和生命周期管理
  */
 
-import type { CommonTexture, CommonTextureConfig, TextureData } from '@maxellabs/specification';
 import type { IRHIDevice } from '../../../specification/src/common/rhi';
-import type { Texture2DOptions } from './texture2d';
-import { Texture2D } from './texture2d';
-import type { TextureCubeOptions } from './texture-cube';
-import { TextureCube } from './texture-cube';
 import { EventDispatcher } from '../base/event-dispatcher';
+import { Texture2D, type Texture2DOptions } from './texture2d';
+import { TextureCube, type TextureCubeOptions } from './texture-cube';
+import type { CommonTexture, CommonTextureConfig, TextureData } from '@maxellabs/math';
+import { ResourceManagerEvent } from '../resource/resource-manager';
 
-/**
- * 纹理管理器事件类型
- */
-export enum TextureManagerEventType {
-  /** 纹理创建 */
-  TEXTURE_CREATED = 'texture-created',
-  /** 纹理加载完成 */
-  TEXTURE_LOADED = 'texture-loaded',
-  /** 纹理销毁 */
-  TEXTURE_DESTROYED = 'texture-destroyed',
-  /** 缓存清理 */
-  CACHE_CLEARED = 'cache-cleared',
-  /** 内存警告 */
-  MEMORY_WARNING = 'memory-warning',
-}
+// 删除重复的TextureManagerEventType，统一使用ResourceManagerEvent
+// 为纹理管理器创建类型别名以保持语义清晰
+export type TextureManagerEventType = ResourceManagerEvent;
 
 /**
  * 纹理缓存项
@@ -154,7 +141,7 @@ export class TextureManager {
     this.addToCache(id, texture);
 
     // 分发创建事件
-    this.eventDispatcher.emit(TextureManagerEventType.TEXTURE_CREATED, {
+    this.eventDispatcher.emit(ResourceManagerEvent.LOAD_COMPLETE, {
       textureId: id,
       texture,
     });
@@ -197,7 +184,7 @@ export class TextureManager {
     this.addToCache(id, texture);
 
     // 分发创建事件
-    this.eventDispatcher.emit(TextureManagerEventType.TEXTURE_CREATED, {
+    this.eventDispatcher.emit(ResourceManagerEvent.LOAD_COMPLETE, {
       textureId: id,
       texture,
     });
@@ -250,10 +237,9 @@ export class TextureManager {
       await texture.loadFromURL(url);
 
       // 分发加载完成事件
-      this.eventDispatcher.emit(TextureManagerEventType.TEXTURE_LOADED, {
+      this.eventDispatcher.emit(ResourceManagerEvent.LOAD_COMPLETE, {
         textureId: id,
         texture,
-        url,
       });
 
       return texture;
@@ -317,10 +303,9 @@ export class TextureManager {
       await texture.loadFromURLs(urls);
 
       // 分发加载完成事件
-      this.eventDispatcher.emit(TextureManagerEventType.TEXTURE_LOADED, {
+      this.eventDispatcher.emit(ResourceManagerEvent.LOAD_COMPLETE, {
         textureId: id,
         texture,
-        urls,
       });
 
       return texture;
@@ -384,9 +369,8 @@ export class TextureManager {
     }
 
     // 分发缓存清理事件
-    this.eventDispatcher.emit(TextureManagerEventType.CACHE_CLEARED, {
-      removedCount: toRemove.length,
-      force,
+    this.eventDispatcher.emit(ResourceManagerEvent.CACHE_CLEARED, {
+      clearedCount: this.textureCache.size,
     });
   }
 
@@ -490,9 +474,8 @@ export class TextureManager {
       this.textureCache.delete(id);
 
       // 分发销毁事件
-      this.eventDispatcher.emit(TextureManagerEventType.TEXTURE_DESTROYED, {
+      this.eventDispatcher.emit(ResourceManagerEvent.RESOURCE_DESTROYED, {
         textureId: id,
-        texture: cacheItem.texture,
       });
     }
   }
@@ -504,10 +487,9 @@ export class TextureManager {
     const memoryUsageMB = this.currentMemoryUsage / (1024 * 1024);
 
     if (memoryUsageMB > this.config.memoryWarningThreshold) {
-      this.eventDispatcher.emit(TextureManagerEventType.MEMORY_WARNING, {
-        currentUsage: memoryUsageMB,
+      this.eventDispatcher.emit('memory-warning', {
+        currentUsage: this.currentMemoryUsage,
         threshold: this.config.memoryWarningThreshold,
-        maxSize: this.config.maxCacheSize,
       });
     }
   }

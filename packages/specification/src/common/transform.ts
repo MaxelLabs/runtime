@@ -115,7 +115,7 @@ export interface CommonTransform {
 /**
  * 变换约束类型
  */
-export enum TransfromConstraintType {
+export enum TransformConstraintType {
   /**
    * 位置约束
    */
@@ -148,7 +148,7 @@ export interface TransformConstraint {
   /**
    * 约束类型
    */
-  type: TransfromConstraintType;
+  type: TransformConstraintType;
   /**
    * 目标对象ID
    */

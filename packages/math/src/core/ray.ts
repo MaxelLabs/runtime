@@ -1,5 +1,5 @@
+import type { Box3Like, PlaneLike, SphereLike, TriangleLike } from '@maxellabs/specification';
 import type { Matrix4 } from './matrix4';
-import type { Box3Like, PlaneLike, SphereLike, TriangleLike } from './type';
 import { Vector3 } from './vector3';
 
 /**
