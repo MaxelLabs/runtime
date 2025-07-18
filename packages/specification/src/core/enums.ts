@@ -3,13 +3,8 @@
  * 所有模块共用的核心枚举类型（非RHI相关）
  */
 
-//---------------------------------------------------------------------------------------------------------------------
-// 核心元素和类型定义 - 权威来源
-//---------------------------------------------------------------------------------------------------------------------
-
 /**
- * 元素类型统一定义（权威来源）
- * 解决3处重复：core/enums.ts, common/elements.ts, design/enums.ts
+ * 元素类型统一定义
  */
 export enum ElementType {
   // 基础几何
@@ -60,8 +55,7 @@ export enum ElementType {
 }
 
 /**
- * 混合模式统一定义（权威来源）
- * 解决4处重复：core/enums.ts, design/styles.ts, common/renderer/renderState.ts, package/format.ts
+ * 混合模式统一定义
  */
 export enum BlendMode {
   // 基础混合模式
@@ -99,8 +93,7 @@ export enum BlendMode {
 }
 
 /**
- * 缓动函数统一定义（权威来源）
- * 解决3处重复：core/enums.ts, animation/easing.ts, common/animation.ts
+ * 缓动函数统一定义
  */
 export enum EasingFunction {
   // 基础缓动
@@ -164,8 +157,7 @@ export enum EasingFunction {
 }
 
 /**
- * 对齐类型统一定义（权威来源）
- * 解决3处重复：core/enums.ts, common/text.ts, design/styles.ts
+ * 对齐类型统一定义
  */
 export enum AlignmentType {
   // 水平对齐

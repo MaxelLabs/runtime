@@ -1,11 +1,10 @@
-import { UsdDataType, type IQuaternion } from '@maxellabs/specification';
-import type { UsdValue } from '@maxellabs/specification';
+import { UsdDataType } from '@maxellabs/specification';
+import type { QuaternionLike, UsdValue, Vector4Like } from '@maxellabs/specification';
 import type { Euler } from './euler';
 import { Matrix4 } from './matrix4';
 import { clamp } from './utils';
 import { Vector3 } from './vector3';
 import type { Vector4 } from './vector4';
-import type { Vector4Like } from './type';
 import { MathConfig } from '../config/mathConfig';
 import { ObjectPool, type Poolable } from '../pool/objectPool';
 
@@ -16,7 +15,7 @@ const quaternionPool = new ObjectPool<Quaternion>(() => new Quaternion(), MathCo
  * 四元数
  * 实现 @specification 包的 IQuaternion 接口，提供高性能的四元数运算
  */
-export class Quaternion implements IQuaternion, Poolable {
+export class Quaternion implements QuaternionLike, Poolable {
   /**
    * 四元数常量
    */
@@ -156,7 +155,7 @@ export class Quaternion implements IQuaternion, Poolable {
    * 转换为IQuaternion接口格式
    * @returns IQuaternion接口对象
    */
-  toIQuaternion(): IQuaternion {
+  toIQuaternion(): QuaternionLike {
     return {
       x: this.x,
       y: this.y,
@@ -170,7 +169,7 @@ export class Quaternion implements IQuaternion, Poolable {
    * @param q - IQuaternion接口对象
    * @returns Quaternion实例
    */
-  static fromIQuaternion(q: IQuaternion): Quaternion {
+  static fromIQuaternion(q: QuaternionLike): Quaternion {
     return new Quaternion(q.x, q.y, q.z, q.w);
   }
 
@@ -179,7 +178,7 @@ export class Quaternion implements IQuaternion, Poolable {
    * @param q - IQuaternion接口对象
    * @returns 返回自身，用于链式调用
    */
-  fromIQuaternion(q: IQuaternion): this {
+  fromIQuaternion(q: QuaternionLike): this {
     this.elements[0] = q.x;
     this.elements[1] = q.y;
     this.elements[2] = q.z;

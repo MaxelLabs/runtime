@@ -7,3 +7,4 @@ export * from './base';
 export * from './enums';
 export * from './interfaces';
 export * from './usd';
+export * from './math';

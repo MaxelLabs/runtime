@@ -1,7 +1,6 @@
-import { UsdDataType, type IVector4 } from '@maxellabs/specification';
-import type { UsdValue } from '@maxellabs/specification';
+import { UsdDataType } from '@maxellabs/specification';
+import type { UsdValue, vec4, Vector4DataType, Vector4Like } from '@maxellabs/specification';
 import type { Matrix4 } from './matrix4';
-import type { Vector4DataType, Vector4Like, vec4 } from './type';
 import { NumberEpsilon } from './utils';
 import { Vector3 } from './vector3';
 import { MathConfig } from '../config/mathConfig';
@@ -14,7 +13,7 @@ const vector4Pool = new ObjectPool<Vector4>(() => new Vector4(), MathConfig.getP
  * 四维向量
  * 实现 @specification 包的 IVector4 接口，提供高性能的4D向量运算
  */
-export class Vector4 implements IVector4, Poolable {
+export class Vector4 implements Vector4Like, Poolable {
   /**
    * 四维向量的常量
    */
@@ -111,7 +110,7 @@ export class Vector4 implements IVector4, Poolable {
    * 转换为IVector4接口格式
    * @returns IVector4接口对象
    */
-  toIVector4(): IVector4 {
+  toIVector4(): Vector4Like {
     return {
       x: this.x,
       y: this.y,
@@ -125,7 +124,7 @@ export class Vector4 implements IVector4, Poolable {
    * @param v - IVector4接口对象
    * @returns Vector4实例
    */
-  static fromIVector4(v: IVector4): Vector4 {
+  static fromIVector4(v: Vector4Like): Vector4 {
     return new Vector4(v.x, v.y, v.z, v.w);
   }
 
@@ -134,7 +133,7 @@ export class Vector4 implements IVector4, Poolable {
    * @param v - IVector4接口对象
    * @returns 返回自身，用于链式调用
    */
-  fromIVector4(v: IVector4): this {
+  fromIVector4(v: Vector4Like): this {
     this.elements[0] = v.x;
     this.elements[1] = v.y;
     this.elements[2] = v.z;

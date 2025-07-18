@@ -1,6 +1,5 @@
-import { UsdDataType, type IColor } from '@maxellabs/specification';
-import type { UsdValue } from '@maxellabs/specification';
-import type { ColorDataType, ColorLike, Vector4Like, vec4 } from './type';
+import { UsdDataType } from '@maxellabs/specification';
+import type { ColorDataType, ColorLike, UsdValue, vec4, Vector4Like } from '@maxellabs/specification';
 import { Vector4 } from './vector4';
 import { MathConfig } from '../config/mathConfig';
 import { ObjectPool, type Poolable } from '../pool/objectPool';
@@ -12,7 +11,7 @@ const colorPool = new ObjectPool<Color>(() => new Color(), MathConfig.getPoolCon
  * 颜色类
  * 实现 @specification 包的 IColor 接口，提供高性能的颜色运算
  */
-export class Color implements IColor, Poolable {
+export class Color implements ColorLike, Poolable {
   /**
    * 颜色的常量
    */
@@ -115,7 +114,7 @@ export class Color implements IColor, Poolable {
    * 转换为IColor接口格式
    * @returns IColor接口对象
    */
-  toIColor(): IColor {
+  toIColor(): ColorLike {
     return {
       r: this.r,
       g: this.g,
@@ -129,7 +128,7 @@ export class Color implements IColor, Poolable {
    * @param c - IColor接口对象
    * @returns Color实例
    */
-  static fromIColor(c: IColor): Color {
+  static fromIColor(c: ColorLike): Color {
     return new Color(c.r, c.g, c.b, c.a);
   }
 
@@ -138,7 +137,7 @@ export class Color implements IColor, Poolable {
    * @param c - IColor接口对象
    * @returns 返回自身，用于链式调用
    */
-  fromIColor(c: IColor): this {
+  fromIColor(c: ColorLike): this {
     this.elements[0] = c.r;
     this.elements[1] = c.g;
     this.elements[2] = c.b;

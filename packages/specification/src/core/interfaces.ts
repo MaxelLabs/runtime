@@ -5,7 +5,8 @@
 
 import type { UsdValue } from './usd';
 import type { EasingFunction, MaterialType, BorderStyle, ClickFeedbackType, VisualEffectType } from './enums';
-import type { IColor, IVector3, VersionInfo } from './base';
+import type { VersionInfo } from './base';
+import type { ColorLike, Vector3Like } from './math';
 
 /**
  * 视觉效果
@@ -132,7 +133,7 @@ export interface MaterialProperties {
   /**
    * 基础颜色
    */
-  baseColor: IColor;
+  baseColor: ColorLike;
   /**
    * 透明度
    */
@@ -148,7 +149,7 @@ export interface MaterialProperties {
   /**
    * 自发光颜色
    */
-  emissiveColor?: IColor;
+  emissiveColor?: ColorLike;
   /**
    * 自发光强度
    */
@@ -176,7 +177,7 @@ export interface MaterialProperties {
   /**
    * 衰减颜色
    */
-  attenuationColor?: IColor;
+  attenuationColor?: ColorLike;
   /**
    * 衰减距离
    */
@@ -208,7 +209,7 @@ export interface MaterialProperties {
   /**
    * 光泽颜色
    */
-  sheenColor?: IColor;
+  sheenColor?: ColorLike;
   /**
    * 光泽粗糙度
    */
@@ -220,7 +221,7 @@ export interface MaterialProperties {
   /**
    * 次表面颜色
    */
-  subsurfaceColor?: IColor;
+  subsurfaceColor?: ColorLike;
   /**
    * 次表面半径
    */
@@ -280,29 +281,29 @@ export interface RenderingProperties {
   /**
    * 3D边界框
    */
-  boundingBox?: BoundingBox;
+  boundingBox?: CoreBoundingBox;
 }
 
 /**
  * 3D边界框（核心版本）
  */
-export interface BoundingBox {
+export interface CoreBoundingBox {
   /**
    * 最小点
    */
-  min: IVector3;
+  min: Vector3Like;
   /**
    * 最大点
    */
-  max: IVector3;
+  max: Vector3Like;
   /**
    * 中心点
    */
-  center: IVector3;
+  center: Vector3Like;
   /**
    * 尺寸
    */
-  size: IVector3;
+  size: Vector3Like;
 }
 
 /**
@@ -342,7 +343,7 @@ export interface HoverEffect {
   /**
    * 高亮颜色
    */
-  highlightColor?: IColor;
+  highlightColor?: ColorLike;
   /**
    * 缩放因子
    */
@@ -376,7 +377,7 @@ export interface SelectionBorder {
   /**
    * 边框颜色
    */
-  color: IColor;
+  color: ColorLike;
   /**
    * 边框样式
    */
@@ -402,7 +403,7 @@ export interface SelectionEffect {
   /**
    * 选择颜色
    */
-  selectionColor?: IColor;
+  selectionColor?: ColorLike;
   /**
    * 选择边框
    */
@@ -412,15 +413,6 @@ export interface SelectionEffect {
    */
   animation?: AnimationProperties;
 }
-
-// PerformanceConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
-// 为保持兼容性，创建类型别名
-import type { PerformanceConfiguration } from '../package/format';
-
-/**
- * @deprecated 使用 PerformanceConfiguration 替代
- */
-export type PerformanceConfig = PerformanceConfiguration;
 
 /**
  * 通用元数据接口
@@ -486,15 +478,6 @@ export enum TransformSpace {
    */
   View = 'view',
 }
-
-// RotationOrder 已废弃 - 使用 EulerOrder（来自 packages/math/src/core/euler.ts）替代
-// 为保持兼容性，创建类型别名
-import type { EulerOrder } from '../../../math/src/core/euler';
-
-/**
- * @deprecated 使用 EulerOrder 替代
- */
-export type RotationOrder = EulerOrder;
 
 /**
  * 通用变换函数

@@ -1,9 +1,8 @@
-import { UsdDataType, type IMatrix4x4 } from '@maxellabs/specification';
-import type { UsdValue } from '@maxellabs/specification';
+import { UsdDataType } from '@maxellabs/specification';
+import type { mat4, Matrix4Like, UsdValue } from '@maxellabs/specification';
 import { Vector3 } from './vector3';
 import type { Vector4 } from './vector4';
 import type { Quaternion } from './quaternion';
-import type { mat4 } from './type';
 import { MathConfig } from '../config/mathConfig';
 import { ObjectPool, type Poolable } from '../pool/objectPool';
 
@@ -14,7 +13,7 @@ const matrix4Pool = new ObjectPool<Matrix4>(() => new Matrix4(), MathConfig.getP
  * 四阶矩阵（列优先矩阵）
  * 实现 @specification 包的 IMatrix4x4 接口，提供高性能的4x4矩阵运算
  */
-export class Matrix4 implements IMatrix4x4, Poolable {
+export class Matrix4 implements Matrix4Like, Poolable {
   static readonly IDENTITY = Object.freeze(new Matrix4().identity());
   static readonly ZERO = Object.freeze(new Matrix4().setZero());
 
@@ -32,6 +31,13 @@ export class Matrix4 implements IMatrix4x4, Poolable {
     this.elements = new Float32Array(16);
     this.identity();
   }
+  m14: number;
+  m24: number;
+  m34: number;
+  m41: number;
+  m42: number;
+  m43: number;
+  m44: number;
 
   /**
    * 重置对象状态（对象池接口）
@@ -167,7 +173,7 @@ export class Matrix4 implements IMatrix4x4, Poolable {
    * 转换为IMatrix4x4接口格式
    * @returns IMatrix4x4接口对象
    */
-  toIMatrix4x4(): IMatrix4x4 {
+  toIMatrix4x4(): Matrix4Like {
     return {
       m00: this.m00,
       m01: this.m01,
@@ -193,7 +199,7 @@ export class Matrix4 implements IMatrix4x4, Poolable {
    * @param m - IMatrix4x4接口对象
    * @returns Matrix4实例
    */
-  static fromIMatrix4x4(m: IMatrix4x4): Matrix4 {
+  static fromIMatrix4x4(m: Matrix4Like): Matrix4 {
     const matrix = new Matrix4();
     return matrix.set(
       m.m00,
@@ -220,7 +226,7 @@ export class Matrix4 implements IMatrix4x4, Poolable {
    * @param m - IMatrix4x4接口对象
    * @returns 返回自身，用于链式调用
    */
-  fromIMatrix4x4(m: IMatrix4x4): this {
+  fromIMatrix4x4(m: Matrix4Like): this {
     return this.set(
       m.m00,
       m.m10,

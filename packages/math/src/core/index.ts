@@ -1,4 +1,3 @@
-export * from './type';
 export * from './euler';
 export * from './quaternion';
 export * from './vector2';

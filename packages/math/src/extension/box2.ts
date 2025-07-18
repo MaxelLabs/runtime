@@ -1,6 +1,6 @@
 import { Line2 } from './line2';
 import { Vector2 } from '../core/vector2';
-import type { Box2Like } from '../core/type';
+import type { Box2Like } from '@maxellabs/specification';
 
 // 对象池配置
 const POOL_SIZE = 100;

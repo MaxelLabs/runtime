@@ -1,4 +1,4 @@
-import type { VertexAttribute } from '@maxellabs/specification';
+import type { VertexAttribute } from './enums';
 
 /**
  * 二维向量内部数据类型
@@ -16,6 +16,7 @@ export interface Vector2Like {
 
 /**
  * 三维向量内部数据类型
+ *
  */
 export type vec3 = [x: number, y: number, z: number];
 export type Vector3DataType = number[] | vec3 | Float32Array;
@@ -58,6 +59,63 @@ export interface ColorLike {
   g: number;
   b: number;
   a: number;
+}
+
+/**
+ * 类二维矩阵
+ */
+export interface Matrix2Like {
+  m11: number;
+  m12: number;
+  m21: number;
+  m22: number;
+}
+
+/**
+ * 类三维矩阵
+ */
+export interface Matrix3Like {
+  m00: number;
+  m01: number;
+  m02: number;
+  m10: number;
+  m11: number;
+  m12: number;
+  m20: number;
+  m21: number;
+  m22: number;
+}
+
+/**
+ * 类四阶矩阵
+ */
+export interface Matrix4Like {
+  m00: number;
+  m01: number;
+  m02: number;
+  m03: number;
+  m10: number;
+  m11: number;
+  m12: number;
+  m13: number;
+  m20: number;
+  m21: number;
+  m22: number;
+  m23: number;
+  m30: number;
+  m31: number;
+  m32: number;
+  m33: number;
+}
+
+/**
+ * 四元数内部数据类型
+ */
+export interface QuaternionLike {
+  x: number;
+  y: number;
+  z: number;
+  w: number;
 }
 
 /**
