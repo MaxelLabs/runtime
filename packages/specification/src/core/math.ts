@@ -65,10 +65,10 @@ export interface ColorLike {
  * 类二维矩阵
  */
 export interface Matrix2Like {
+  m00: number;
+  m01: number;
+  m10: number;
   m11: number;
-  m12: number;
-  m21: number;
-  m22: number;
 }
 
 /**
@@ -127,15 +127,15 @@ export type Matrix2DataType = number[] | [number, number, number, number] | Floa
  * 三维矩阵内部数据类型
  */
 export type mat3 = [
+  m00: number,
+  m01: number,
+  m02: number,
+  m10: number,
   m11: number,
   m12: number,
-  m13: number,
+  m20: number,
   m21: number,
   m22: number,
-  m23: number,
-  m31: number,
-  m32: number,
-  m33: number,
 ];
 export type Matrix3DataType = number[] | mat3 | Float32Array;
 
@@ -143,22 +143,22 @@ export type Matrix3DataType = number[] | mat3 | Float32Array;
  * 四阶矩阵内部数据类型
  */
 export type mat4 = [
+  m00: number,
+  m01: number,
+  m02: number,
+  m03: number,
+  m10: number,
   m11: number,
   m12: number,
   m13: number,
-  m14: number,
+  m20: number,
   m21: number,
   m22: number,
   m23: number,
-  m24: number,
+  m30: number,
   m31: number,
   m32: number,
   m33: number,
-  m34: number,
-  m41: number,
-  m42: number,
-  m43: number,
-  m44: number,
 ];
 export type Matrix4DataType = number[] | mat4 | Float32Array;
 
