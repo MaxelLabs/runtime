@@ -9,14 +9,7 @@ import type { AnimationProperties } from '../core/interfaces';
 import type { AnimationMask, AnimationEvent } from './animation';
 import type { PerformanceConfiguration } from '../package/format';
 
-/**
- * 帧动画类型
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
- */
-export type FrameAnimationType = PerformanceConfiguration;
-
-// FrameInterpolationType 已废弃 - 使用 InterpolationMode（来自 core/enums.ts）替代
-// 注意：Spline 暂时不在通用 InterpolationMode 中，需要时可添加到 core
+// 帧动画类型使用 PerformanceConfiguration 作为权威定义
 
 /**
  * 动画帧数据类型
