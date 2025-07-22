@@ -171,10 +171,14 @@ export interface PackageDependency {
 }
 
 /**
- * 依赖类型
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
+ * 依赖类型枚举
  */
-export type DependencyType = PerformanceConfiguration;
+export enum DependencyType {
+  Runtime = 'runtime',
+  Development = 'development',
+  Peer = 'peer',
+  Optional = 'optional',
+}
 
 /**
  * 兼容性信息
@@ -203,10 +207,17 @@ export interface CompatibilityInfo {
 }
 
 /**
- * 平台类型
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
+ * 平台类型枚举
  */
-export type Platform = PerformanceConfiguration;
+export enum Platform {
+  Web = 'web',
+  Desktop = 'desktop',
+  Mobile = 'mobile',
+  Tablet = 'tablet',
+  TV = 'tv',
+  VR = 'vr',
+  AR = 'ar',
+}
 
 /**
  * 浏览器支持
@@ -541,12 +552,17 @@ export interface BuildConfiguration {
    */
   env: Record<string, string>;
 }
-
 /**
- * 构建目标
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
+ * 构建目标枚举
  */
-export type BuildTarget = PerformanceConfiguration;
+export enum BuildTarget {
+  Web = 'web',
+  Node = 'node',
+  Electron = 'electron',
+  ReactNative = 'react-native',
+  Unity = 'unity',
+  Unreal = 'unreal',
+}
 
 /**
  * 构建模式
