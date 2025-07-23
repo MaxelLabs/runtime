@@ -211,6 +211,9 @@ export interface MaterialCondition {
   operator: ComparisonOperator;
 }
 
+// 从 animation 导入 ComparisonOperator
+import type { ComparisonOperator } from '../animation';
+
 // 从 rendering 导入通用条件类型
 import type { ConditionType } from '../rendering/material';
 
@@ -219,32 +222,4 @@ import type { ConditionType } from '../rendering/material';
  */
 export type MaterialConditionType = ConditionType;
 
-/**
- * @deprecated 使用 animation/index.ts 中的 ComparisonOperator 替代
- */
-export enum ComparisonOperator {
-  /**
-   * 等于
-   */
-  Equal = 'equal',
-  /**
-   * 不等于
-   */
-  NotEqual = 'not-equal',
-  /**
-   * 大于
-   */
-  Greater = 'greater',
-  /**
-   * 小于
-   */
-  Less = 'less',
-  /**
-   * 大于等于
-   */
-  GreaterEqual = 'greater-equal',
-  /**
-   * 小于等于
-   */
-  LessEqual = 'less-equal',
-}
+// ComparisonOperator 已从 animation 模块导入，不再重复定义

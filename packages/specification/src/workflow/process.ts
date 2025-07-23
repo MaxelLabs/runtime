@@ -3,8 +3,7 @@
  * 从设计到上线的全流程数据描述
  */
 
-import type { AssetType, Permission } from '../core';
-import type { UsdPrim, UsdValue } from '../core/usd';
+import type { AssetType, Permission, UsdPrim, UsdValue } from '../core';
 import type { PerformanceConfiguration } from '../package/format';
 
 /**

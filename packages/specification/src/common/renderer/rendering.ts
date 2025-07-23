@@ -5,14 +5,6 @@
 
 import type { CommonElement } from '../elements';
 import type { CommonMaterial } from '../material';
-import type { PerformanceConfiguration } from '../../package/format';
-
-/**
- * 深度测试模式
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
- */
-export type DepthTest = PerformanceConfiguration;
-
 /**
  * 渲染队列
  */

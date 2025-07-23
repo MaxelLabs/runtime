@@ -3,8 +3,7 @@
  * 几何体和网格渲染相关类型定义
  */
 
-import type { BoundingBox, BoundingSphere } from '../core';
-import type { UsdPrim, UsdValue } from '../core/usd';
+import type { CoreBoundingBox, UsdPrim, UsdValue } from '../core';
 
 /**
  * 几何体基础接口
@@ -72,11 +71,11 @@ export interface GeometryProperties {
   /**
    * 边界框
    */
-  boundingBox: BoundingBox;
+  boundingBox: CoreBoundingBox;
   /**
    * 边界球
    */
-  boundingSphere: BoundingSphere;
+  boundingSphere: CommonBounds;
   /**
    * 顶点数量
    */
@@ -843,6 +842,7 @@ export enum AttributeFormat {
 
 import type { CacheConfiguration } from '../package/format';
 import type { CacheStrategy } from '../core/base';
+import type { CommonBounds } from '../common';
 
 /**
  * @deprecated 使用 CacheConfiguration 替代

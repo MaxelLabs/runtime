@@ -3,7 +3,7 @@
  * 定义所有系统共通的纹理相关类型
  */
 
-import type { RHITextureFormat, RHIFilterMode } from './rhi/types/enums';
+import type { RHITextureFormat, RHIFilterMode, RHIAddressMode } from './rhi';
 
 /**
  * RHI纹理数据类型
@@ -188,15 +188,15 @@ export interface CommonTextureConfig {
   /**
    * 水平包装模式
    */
-  wrapS: TextureWrapMode;
+  wrapS: RHIAddressMode;
   /**
    * 垂直包装模式
    */
-  wrapT: TextureWrapMode;
+  wrapT: RHIAddressMode;
   /**
    * 深度包装模式（3D纹理）
    */
-  wrapR?: TextureWrapMode;
+  wrapR?: RHIAddressMode;
   /**
    * 各向异性过滤级别
    */
@@ -214,13 +214,6 @@ export interface CommonTextureConfig {
    */
   colorSpace: string;
 }
-// TextureWrapMode 已废弃 - 使用 RHIAddressMode（来自 rhi/types/enums）替代
-import type { RHIAddressMode } from './rhi/types/enums';
-
-/**
- * @deprecated 使用 RHIAddressMode 替代
- */
-export type TextureWrapMode = RHIAddressMode;
 
 /**
  * 纹理数据

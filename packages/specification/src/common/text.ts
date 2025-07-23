@@ -5,14 +5,8 @@
 
 import type { CommonElement } from './elements';
 import type { ElementType } from '../core/enums';
-import type { IColor, VerticalAlign } from '../core';
+import type { ColorLike, VerticalAlign } from '../core';
 import type { PerformanceConfiguration } from '../package/format';
-
-/**
- * 文本对齐方式
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
- */
-export type TextAlign = PerformanceConfiguration;
 
 /**
  * 文本方向
@@ -179,7 +173,7 @@ export interface CommonTextStyle {
   /**
    * 文本颜色
    */
-  color?: IColor;
+  color?: ColorLike;
   /**
    * 文本对齐
    */

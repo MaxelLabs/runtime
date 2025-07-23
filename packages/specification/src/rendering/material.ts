@@ -13,7 +13,7 @@ import type {
   RHITextureType,
 } from '../common';
 import type { TextureWrapMode } from '../common/texture';
-import type { FillMode, InterpolationMode, MaterialProperties, IVector2, IColor, DataType, LoopMode } from '../core';
+import type { FillMode, InterpolationMode, MaterialProperties, DataType, LoopMode } from '../core';
 import type { UsdPrim, UsdValue } from '../core/usd';
 
 /**
