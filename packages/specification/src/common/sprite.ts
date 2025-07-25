@@ -3,10 +3,9 @@
  * 定义所有系统共通的精灵相关类型
  */
 
-import type { ElementType } from '../core';
+import type { ElementType, AnimationProperties } from '../core';
 import type { CommonElement } from './elements';
 import type { NineSliceConfig } from './image';
-import type { AnimationProperties } from '../core/interfaces';
 import type { AnimationState, AnimationStateMachine, AnimationStateBehavior, AnimationTransition } from '../animation';
 
 /**

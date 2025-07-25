@@ -3,16 +3,17 @@
  * 定义所有系统共通的元素基础类型
  */
 
-import type { UsdPrim } from '../core/usd';
 import type {
+  BlendMode,
+  ElementType,
+  UsdPrim,
   CommonMetadata,
   ITransform,
   AnimationProperties,
   InteractionProperties,
   MaterialProperties,
   RenderingProperties,
-} from '../core/interfaces';
-import type { BlendMode, ElementType } from '../core/enums';
+} from '../core/';
 
 /**
  * 通用边界框

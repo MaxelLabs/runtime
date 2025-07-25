@@ -4,20 +4,79 @@
  */
 
 import type { CommonElement } from './elements';
-import type { ElementType } from '../core/enums';
-import type { PerformanceConfiguration } from '../package/format';
+import type { ElementType } from '../core';
 
 /**
  * 图像格式
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export type ImageFormat = PerformanceConfiguration;
+export enum ImageFormat {
+  /**
+   * JPEG 格式
+   */
+  JPEG = 'image/jpeg',
+  /**
+   * PNG 格式
+   */
+  PNG = 'image/png',
+  /**
+   * WebP 格式
+   */
+  WEBP = 'image/webp',
+  /**
+   * GIF 格式
+   */
+  GIF = 'image/gif',
+  /**
+   * SVG 格式
+   */
+  SVG = 'image/svg+xml',
+  /**
+   * BMP 格式
+   */
+  BMP = 'image/bmp',
+  /**
+   * AVIF 格式
+   */
+  AVIF = 'image/avif',
+  /**
+   * TIFF 格式
+   */
+  TIFF = 'image/tiff',
+}
 
 /**
- * 图像缩放模式（扩展通用ScaleMode）
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
+ * 图像缩放模式
  */
-export type ImageScaleMode = PerformanceConfiguration;
+export enum ImageScaleMode {
+  /**
+   * 拉伸填充
+   */
+  Stretch = 'stretch',
+  /**
+   * 保持宽高比适应
+   */
+  Contain = 'contain',
+  /**
+   * 保持宽高比覆盖
+   */
+  Cover = 'cover',
+  /**
+   * 不缩放
+   */
+  None = 'none',
+  /**
+   * 缩小适应
+   */
+  ScaleDown = 'scale-down',
+  /**
+   * 九宫格缩放
+   */
+  NineSlice = 'nine-slice',
+  /**
+   * 平铺
+   */
+  Tile = 'tile',
+}
 
 /**
  * 图像变换类型

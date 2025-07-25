@@ -3,6 +3,7 @@
  * 定义所有系统共通的纹理相关类型
  */
 
+import type { CacheConfiguration } from '../package';
 import type { RHITextureFormat, RHIFilterMode, RHIAddressMode } from './rhi';
 
 /**
@@ -522,9 +523,6 @@ export interface TextureCompressionConfig {
    */
   platformSettings?: Record<string, any>;
 }
-
-// TextureCache 简化为使用统一的缓存配置加特定扩展
-import type { CacheConfiguration } from '../package/format';
 
 /**
  * 纹理缓存（扩展统一缓存配置）

@@ -3,18 +3,8 @@ import { Vector3 } from './vector3';
 import { Matrix4 } from './matrix4';
 import { RAD2DEG, clamp } from './utils';
 import { DEG2RAD } from './utils';
-
-/**
- * 欧拉角顺序
- */
-export enum EulerOrder {
-  XYZ = 0,
-  XZY = 1,
-  YXZ = 2,
-  YZX = 3,
-  ZXY = 4,
-  ZYX = 5,
-}
+import type { EulerLike } from '@maxellabs/specification';
+import { EulerOrder } from '@maxellabs/specification';
 
 /**
  * 欧拉角
@@ -190,11 +180,11 @@ export class Euler {
    * @param [order] - 欧拉角顺序
    * @returns
    */
-  setFromArray(array: number[], offset = 0, order = this.order): this {
-    this.x = array[offset] ?? 0;
-    this.y = array[offset + 1] ?? 0;
-    this.z = array[offset + 2] ?? 0;
-    this.order = array[offset + 3] ?? order;
+  setFromArray(array: EulerLike, offset = 0, order = this.order): this {
+    this.x = array.x ?? 0;
+    this.y = array.y ?? 0;
+    this.z = array.z ?? 0;
+    this.order = array.order ?? order;
 
     return this;
   }
@@ -555,12 +545,12 @@ export class Euler {
 
   /**
    * 通过数组创建欧拉角
-   * @param array - 数组
+   * @param array - 类欧拉角
    * @param [offset=0] - 偏移
    * @param [order=Euler.DEFAULT_ORDER] - 欧拉角顺序
    * @returns 创建结果
    */
-  static fromArray(array: number[], offset = 0, order = Euler.DEFAULT_ORDER): Euler {
+  static fromArray(array: EulerLike, offset = 0, order = Euler.DEFAULT_ORDER): Euler {
     return new Euler().setFromArray(array, offset, order);
   }
 }

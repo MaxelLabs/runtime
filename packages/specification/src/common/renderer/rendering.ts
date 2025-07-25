@@ -114,15 +114,6 @@ export interface RenderBatch {
   priority: number;
 }
 
-// CommonRenderConfig 已废弃 - 使用 RendererConfiguration（来自 package/format.ts）替代
-// 为保持兼容性，创建类型别名
-import type { RendererConfiguration } from '../../package/format';
-
-/**
- * @deprecated 使用 RendererConfiguration 替代
- */
-export type CommonRenderConfig = RendererConfiguration;
-
 /**
  * 通用渲染统计
  */

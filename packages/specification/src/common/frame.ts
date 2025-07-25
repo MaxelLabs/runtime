@@ -4,13 +4,38 @@
  */
 
 import type { CommonElement } from './elements';
-import type { ElementType, InterpolationMode } from '../core/enums';
-import type { AnimationProperties } from '../core/interfaces';
+import type { ElementType, InterpolationMode, AnimationProperties } from '../core';
 import type { AnimationMask, AnimationEvent } from './animation';
-import type { PerformanceConfiguration } from '../package/format';
 
-// 帧动画类型使用 PerformanceConfiguration 作为权威定义
-
+/**
+ * 帧动画类型
+ */
+export enum FrameAnimationType {
+  /**
+   * 序列帧动画
+   */
+  Sequence = 'sequence',
+  /**
+   * 关键帧动画
+   */
+  Keyframe = 'keyframe',
+  /**
+   * 骨骼动画
+   */
+  Skeletal = 'skeletal',
+  /**
+   * 变形动画
+   */
+  Morph = 'morph',
+  /**
+   * 程序化动画
+   */
+  Procedural = 'procedural',
+  /**
+   * 物理模拟动画
+   */
+  Physics = 'physics',
+}
 /**
  * 动画帧数据类型
  */
@@ -228,7 +253,7 @@ export interface CommonFrameElement extends CommonElement {
   /**
    * 帧动画类型
    */
-  animationType: PerformanceConfiguration;
+  animationType: FrameAnimationType;
   /**
    * 动画控制器
    */
@@ -302,7 +327,7 @@ export interface FramePreloadSettings {
  * 序列帧元素
  */
 export interface SequenceFrameElement extends CommonFrameElement {
-  animationType: PerformanceConfiguration;
+  animationType: FrameAnimationType;
   /**
    * 帧序列
    */

@@ -3,8 +3,16 @@
  * 定义所有系统共通的变换相关类型
  */
 
-import type { IMatrix3x3, IMatrix4x4, IQuaternion, RotationOrder, TransformSpace, IVector2, IVector3 } from '../core';
-import type { UsdValue } from '../core/usd';
+import type {
+  UsdValue,
+  Vector2Like,
+  Vector3Like,
+  Matrix3Like,
+  Matrix4Like,
+  QuaternionLike,
+  TransformSpace,
+  EulerLike,
+} from '../core';
 
 /**
  * 通用2D变换
@@ -13,7 +21,7 @@ export interface CommonTransform2D {
   /**
    * 位置
    */
-  position: IVector2;
+  position: Vector2Like;
   /**
    * 旋转角度（弧度）
    */
@@ -21,19 +29,19 @@ export interface CommonTransform2D {
   /**
    * 缩放
    */
-  scale: IVector2;
+  scale: Vector2Like;
   /**
    * 锚点
    */
-  anchor?: IVector2;
+  anchor?: Vector2Like;
   /**
    * 倾斜
    */
-  skew?: IVector2;
+  skew?: Vector2Like;
   /**
    * 变换矩阵（可选，优先级高于其他属性）
    */
-  matrix?: IMatrix3x3;
+  matrix?: Matrix3Like;
   /**
    * 变换空间
    */
@@ -47,31 +55,27 @@ export interface CommonTransform3D {
   /**
    * 位置
    */
-  position: IVector3;
+  position: Vector3Like;
   /**
    * 旋转（四元数）
    */
-  rotation: IQuaternion;
+  rotation: QuaternionLike;
   /**
    * 欧拉角旋转（可选，与四元数互斥）
    */
-  eulerRotation?: IVector3;
-  /**
-   * 旋转顺序
-   */
-  rotationOrder?: RotationOrder;
+  eulerRotation?: EulerLike;
   /**
    * 缩放
    */
-  scale: IVector3;
+  scale: Vector3Like;
   /**
    * 锚点
    */
-  anchor?: IVector3;
+  anchor?: Vector3Like;
   /**
    * 变换矩阵（可选，优先级高于其他属性）
    */
-  matrix?: IMatrix4x4;
+  matrix?: Matrix4Like;
   /**
    * 变换空间
    */
@@ -94,6 +98,7 @@ export interface CommonTransform {
    * 缩放
    */
   scale: UsdValue; // Vector3f
+
   /**
    * 锚点
    */
@@ -178,19 +183,19 @@ export interface BoundingBox2D {
   /**
    * 最小点
    */
-  min: IVector2;
+  min: Vector2Like;
   /**
    * 最大点
    */
-  max: IVector2;
+  max: Vector2Like;
   /**
    * 中心点
    */
-  center?: IVector2;
+  center?: Vector2Like;
   /**
    * 尺寸
    */
-  size?: IVector2;
+  size?: Vector2Like;
 }
 
 /**
@@ -216,11 +221,11 @@ export interface TransformHierarchy {
   /**
    * 世界变换矩阵
    */
-  worldMatrix?: IMatrix4x4;
+  worldMatrix?: Matrix4Like;
   /**
    * 本地变换矩阵
    */
-  localMatrix?: IMatrix4x4;
+  localMatrix?: Matrix4Like;
 }
 
 /**

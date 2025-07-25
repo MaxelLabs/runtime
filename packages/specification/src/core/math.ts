@@ -1,10 +1,20 @@
-import type { VertexAttribute } from './enums';
+import type { EulerOrder, VertexAttribute } from './enums';
 
 /**
  * 二维向量内部数据类型
  */
 export type vec2 = [x: number, y: number];
 export type Vector2DataType = number[] | vec2 | Float32Array;
+
+/**
+ * 类欧拉角
+ */
+export interface EulerLike {
+  x: number;
+  y: number;
+  z: number;
+  order?: EulerOrder;
+}
 
 /**
  * 类二维向量
@@ -165,7 +175,7 @@ export type Matrix4DataType = number[] | mat4 | Float32Array;
 /**
  * 欧拉角内部数据类型
  */
-export type EulerDataType = number[] | vec3 | vec4 | Float32Array;
+export type EulerDataType = EulerLike | number[] | vec3 | vec4 | Float32Array;
 
 /**
  * 四元数内部数据类型

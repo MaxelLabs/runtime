@@ -157,6 +157,18 @@ export enum EasingFunction {
 }
 
 /**
+ * 欧拉角顺序
+ */
+export enum EulerOrder {
+  XYZ = 'xyz',
+  XZY = 'xzy',
+  YXZ = 'yxz',
+  YZX = 'yzx',
+  ZXY = 'zxy',
+  ZYX = 'zyx',
+}
+
+/**
  * 对齐类型统一定义
  */
 export enum AlignmentType {
