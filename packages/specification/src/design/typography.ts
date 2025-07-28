@@ -192,14 +192,167 @@ export interface DesignTypographySystem {
   metadata?: CommonMetadata;
 }
 
-// TypographyBaseConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
-// 为保持兼容性，创建类型别名
-import type { PerformanceConfiguration } from '../package/format';
-
 /**
- * @deprecated 使用 PerformanceConfiguration 替代
+ * 排版基础配置
  */
-export type TypographyBaseConfig = PerformanceConfiguration;
+export interface TypographyBaseConfig {
+  /**
+   * 默认字体设置
+   */
+  defaultFont: {
+    /**
+     * 默认字体族
+     */
+    family: string;
+    /**
+     * 默认字体大小
+     */
+    size: number;
+    /**
+     * 默认行高
+     */
+    lineHeight: number;
+    /**
+     * 默认字重
+     */
+    weight: number;
+    /**
+     * 默认字体样式
+     */
+    style: FontStyle;
+  };
+  /**
+   * 字体加载配置
+   */
+  fontLoading: {
+    /**
+     * 字体显示策略
+     */
+    display: FontDisplay;
+    /**
+     * 预加载关键字体
+     */
+    preload: string[];
+    /**
+     * 字体加载超时（毫秒）
+     */
+    timeout: number;
+    /**
+     * 回退字体延迟（毫秒）
+     */
+    fallbackDelay: number;
+  };
+  /**
+   * 文本渲染配置
+   */
+  rendering: {
+    /**
+     * 文本抗锯齿
+     */
+    antialiasing: 'auto' | 'none' | 'grayscale' | 'subpixel';
+    /**
+     * 字体平滑
+     */
+    fontSmoothing: 'auto' | 'never' | 'always';
+    /**
+     * 文本优化
+     */
+    textOptimization: 'speed' | 'legibility' | 'geometricPrecision';
+  };
+  /**
+   * 响应式设置
+   */
+  responsive: {
+    /**
+     * 基础视口宽度
+     */
+    baseViewport: number;
+    /**
+     * 字体缩放因子
+     */
+    scaleFactor: number;
+    /**
+     * 最小字体大小
+     */
+    minFontSize: number;
+    /**
+     * 最大字体大小
+     */
+    maxFontSize: number;
+  };
+  /**
+   * 国际化设置
+   */
+  i18n: {
+    /**
+     * 默认语言
+     */
+    defaultLanguage: string;
+    /**
+     * 支持的语言列表
+     */
+    supportedLanguages: string[];
+    /**
+     * 语言特定字体映射
+     */
+    languageFontMap?: Record<string, string>;
+  };
+  /**
+   * 可访问性设置
+   */
+  accessibility: {
+    /**
+     * 高对比度支持
+     */
+    highContrast: boolean;
+    /**
+     * 大字体支持
+     */
+    largeFontSupport: boolean;
+    /**
+     * 屏幕阅读器优化
+     */
+    screenReaderOptimized: boolean;
+  };
+  /**
+   * 性能优化
+   */
+  performance: {
+    /**
+     * 字体子集化
+     */
+    fontSubsetting: boolean;
+    /**
+     * 字体压缩
+     */
+    fontCompression: boolean;
+    /**
+     * 缓存策略
+     */
+    cacheStrategy: 'none' | 'memory' | 'disk' | 'hybrid';
+    /**
+     * 懒加载字体
+     */
+    lazyLoadFonts: boolean;
+  };
+  /**
+   * 调试设置
+   */
+  debug: {
+    /**
+     * 显示字体加载状态
+     */
+    showFontLoadingStatus: boolean;
+    /**
+     * 显示文本边界
+     */
+    showTextBounds: boolean;
+    /**
+     * 字体替换警告
+     */
+    fontFallbackWarnings: boolean;
+  };
+}
 
 /**
  * 文本度量

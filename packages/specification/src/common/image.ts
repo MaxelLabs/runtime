@@ -394,11 +394,6 @@ export interface ResponsiveImageSource {
 }
 
 /**
- * 图像加载状态（使用通用LoadState）
- */
-export type ImageLoadState = LoadState;
-
-/**
  * 图像加载事件
  */
 export interface ImageLoadEvent {

@@ -50,7 +50,6 @@ export enum AnimationBehaviorType {
 
 /**
  * Maxellabs 动画模块统一导出
- * Animation层作为动画相关定义的权威来源
  */
 export interface AnimationState {
   /**
@@ -196,8 +195,6 @@ export interface AnimationStateMachine {
    */
   parameters: AnimationParameter[];
 }
-
-// InterruptionSource 已在 animation/index.ts 中定义作为权威来源
 
 /**
  * 扩展的动画转换（添加中断源）

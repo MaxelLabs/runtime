@@ -4,7 +4,6 @@
  */
 
 import type { AssetType, Permission, UsdPrim, UsdValue } from '../core';
-import type { PerformanceConfiguration } from '../package/format';
 
 /**
  * 工作流程基础接口
@@ -71,9 +70,41 @@ export interface Workflow extends WorkflowPrim {
 
 /**
  * 工作流程状态
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export type WorkflowStatus = PerformanceConfiguration;
+export enum WorkflowStatus {
+  /**
+   * 草稿状态
+   */
+  Draft = 'draft',
+  /**
+   * 等待中
+   */
+  Pending = 'pending',
+  /**
+   * 运行中
+   */
+  Running = 'running',
+  /**
+   * 已完成
+   */
+  Completed = 'completed',
+  /**
+   * 失败
+   */
+  Failed = 'failed',
+  /**
+   * 已取消
+   */
+  Cancelled = 'cancelled',
+  /**
+   * 已暂停
+   */
+  Paused = 'paused',
+  /**
+   * 已终止
+   */
+  Terminated = 'terminated',
+}
 
 /**
  * 工作流程阶段
@@ -127,9 +158,41 @@ export interface WorkflowStage {
 
 /**
  * 工作流程阶段类型
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export type WorkflowStageType = PerformanceConfiguration;
+export enum WorkflowStageType {
+  /**
+   * 设计阶段
+   */
+  Design = 'design',
+  /**
+   * 开发阶段
+   */
+  Development = 'development',
+  /**
+   * 测试阶段
+   */
+  Testing = 'testing',
+  /**
+   * 审查阶段
+   */
+  Review = 'review',
+  /**
+   * 构建阶段
+   */
+  Build = 'build',
+  /**
+   * 部署阶段
+   */
+  Deployment = 'deployment',
+  /**
+   * 发布阶段
+   */
+  Release = 'release',
+  /**
+   * 监控阶段
+   */
+  Monitoring = 'monitoring',
+}
 
 /**
  * 工作流程阶段状态
@@ -206,9 +269,45 @@ export interface WorkflowTask {
 
 /**
  * 工作流程任务类型
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export type WorkflowTaskType = PerformanceConfiguration;
+export enum WorkflowTaskType {
+  /**
+   * 设计任务
+   */
+  DesignTask = 'design-task',
+  /**
+   * 开发任务
+   */
+  DevelopmentTask = 'development-task',
+  /**
+   * 测试任务
+   */
+  TestingTask = 'testing-task',
+  /**
+   * 审查任务
+   */
+  ReviewTask = 'review-task',
+  /**
+   * 构建任务
+   */
+  BuildTask = 'build-task',
+  /**
+   * 部署任务
+   */
+  DeploymentTask = 'deployment-task',
+  /**
+   * 质量检查任务
+   */
+  QualityCheckTask = 'quality-check-task',
+  /**
+   * 自动化任务
+   */
+  AutomationTask = 'automation-task',
+  /**
+   * 手动任务
+   */
+  ManualTask = 'manual-task',
+}
 
 /**
  * 工作流程任务状态
@@ -995,9 +1094,45 @@ export interface DeploymentTarget {
 
 /**
  * 部署目标类型
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export type DeploymentTargetType = PerformanceConfiguration;
+export enum DeploymentTargetType {
+  /**
+   * Kubernetes
+   */
+  Kubernetes = 'kubernetes',
+  /**
+   * Docker
+   */
+  Docker = 'docker',
+  /**
+   * AWS
+   */
+  AWS = 'aws',
+  /**
+   * Azure
+   */
+  Azure = 'azure',
+  /**
+   * Google Cloud
+   */
+  GCP = 'gcp',
+  /**
+   * Vercel
+   */
+  Vercel = 'vercel',
+  /**
+   * Netlify
+   */
+  Netlify = 'netlify',
+  /**
+   * FTP服务器
+   */
+  FTP = 'ftp',
+  /**
+   * 自定义服务器
+   */
+  Custom = 'custom',
+}
 
 /**
  * 部署策略

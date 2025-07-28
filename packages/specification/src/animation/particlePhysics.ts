@@ -3,16 +3,17 @@
  * 粒子物理、碰撞和力场的定义
  */
 
-import type { Vector3 } from '@maxellabs/math';
+import type { Vector3Like } from '../core';
 
 /**
  * 粒子物理
  */
+
 export interface ParticlePhysics {
   /**
    * 重力 [x, y, z]
    */
-  gravity: Vector3;
+  gravity: Vector3Like;
   /**
    * 阻尼
    */
@@ -40,6 +41,7 @@ export interface ParticleCollision {
    */
   layers: string[];
   /**
+
    * 弹性系数
    */
   bounce: number;
@@ -61,6 +63,7 @@ export interface ForceField {
    * 强度
    */
   strength: number;
+
   /**
    * 位置 [x, y, z]
    */

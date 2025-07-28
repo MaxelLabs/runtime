@@ -1,3 +1,4 @@
+import { ResourceLoadState } from '@maxellabs/specification';
 import { ReferResource } from '../base';
 
 /**

@@ -496,11 +496,6 @@ export enum TextureStreamStrategy {
 }
 
 /**
- * @deprecated 使用 ResourceLoadState 替代
- */
-export type LoadState = 'unloaded' | 'loading' | 'loaded' | 'failed';
-
-/**
  * 纹理压缩配置
  */
 export interface TextureCompressionConfig {
