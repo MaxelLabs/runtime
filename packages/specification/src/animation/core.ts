@@ -3,10 +3,66 @@
  * 基于 USD 的动画基础类型和接口定义
  */
 
-import type { UsdPrim, UsdValue } from '../core/usd';
-import type { InterpolationMode } from '../core/enums';
-import type { CommonMetadata } from '../core/interfaces';
+import type { UsdPrim, UsdValue, InterpolationMode, CommonMetadata } from '../core';
 import type { AnimationEvent, AnimationKeyframe, AnimationTrack } from '../common';
+
+/**
+ * 动画条件统一定义
+ */
+export interface AnimationCondition {
+  /**
+   * 条件ID
+   */
+  id: string;
+  /**
+   * 参数名称
+   */
+  parameter: string;
+  /**
+   * 条件类型
+   */
+  type: AnimationConditionType;
+  /**
+   * 条件值
+   */
+  value?: any;
+  /**
+   * 比较运算符
+   */
+  operator?: ComparisonOperator;
+}
+
+/**
+ * 动画条件类型
+ */
+export enum AnimationConditionType {
+  /** 布尔值 */
+  Boolean = 'boolean',
+  /** 整数 */
+  Integer = 'integer',
+  /** 浮点数 */
+  Float = 'float',
+  /** 触发器 */
+  Trigger = 'trigger',
+}
+
+/**
+ * 比较运算符
+ */
+export enum ComparisonOperator {
+  /** 等于 */
+  Equal = 'equal',
+  /** 不等于 */
+  NotEqual = 'not-equal',
+  /** 大于 */
+  Greater = 'greater',
+  /** 小于 */
+  Less = 'less',
+  /** 大于等于 */
+  GreaterEqual = 'greater-equal',
+  /** 小于等于 */
+  LessEqual = 'less-equal',
+}
 
 /**
  * 动画基础接口
