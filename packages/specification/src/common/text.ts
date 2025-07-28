@@ -5,7 +5,6 @@
 
 import type { CommonElement } from './elements';
 import type { ElementType, ColorLike, VerticalAlign } from '../core';
-import type { PerformanceConfiguration } from '../package';
 
 /**
  * 文本方向
@@ -45,9 +44,21 @@ export enum FontStyle {
 
 /**
  * 字体粗细
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export type FontWeight = PerformanceConfiguration;
+export enum FontWeight {
+  /**
+   * 细体
+   */
+  Light = 'light',
+  /**
+   * 正常
+   */
+  Normal = 'normal',
+  /**
+   * 粗体
+   */
+  Bold = 'bold',
+}
 
 /**
  * 文本装饰

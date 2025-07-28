@@ -337,14 +337,59 @@ export interface DragInfo {
   };
 }
 
-// InteractionConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
-// 为保持兼容性，创建类型别名
-import type { PerformanceConfiguration } from '../package/format';
-
 /**
- * @deprecated 使用 PerformanceConfiguration 替代
+ * 交互配置
  */
-export type InteractionConfig = PerformanceConfiguration;
+export interface InteractionConfig {
+  /**
+   * 是否启用交互
+   */
+  enabled: boolean;
+  /**
+   * 事件冒泡
+   */
+  bubbling: boolean;
+  /**
+   * 拖拽阈值（像素）
+   */
+  dragThreshold: number;
+  /**
+   * 双击间隔（毫秒）
+   */
+  doubleClickInterval: number;
+  /**
+   * 长按时间（毫秒）
+   */
+  longPressTime: number;
+  /**
+   * 触摸灵敏度
+   */
+  touchSensitivity: number;
+  /**
+   * 鼠标滚轮速度
+   */
+  wheelSpeed: number;
+  /**
+   * 键盘重复延迟（毫秒）
+   */
+  keyRepeatDelay: number;
+  /**
+   * 键盘重复间隔（毫秒）
+   */
+  keyRepeatInterval: number;
+  /**
+   * 碰撞检测精度
+   */
+  hitTestPrecision: 'pixel' | 'bounds' | 'center';
+  /**
+   * 是否阻止默认行为
+   */
+  preventDefault: boolean;
+  /**
+   * 调试模式
+   */
+  debug: boolean;
+}
 
 /**
  * 碰撞区域

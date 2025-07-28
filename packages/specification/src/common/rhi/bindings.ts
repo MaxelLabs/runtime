@@ -3,9 +3,9 @@
  * 定义绑定组和绑定布局接口
  */
 
-import type { RHIFilterMode, RHIAddressMode, RHIShaderStage } from '@maxellabs/math';
 import type { IRHIBuffer } from './resources/buffer';
 import type { IRHITextureView } from './resources/texture';
+import type { RHIAddressMode, RHIFilterMode, RHIShaderStage } from './types';
 
 /**
  * 采样器接口

@@ -3,6 +3,7 @@
  * 定义所有系统共通的纹理相关类型
  */
 
+import type { ResourceLoadState } from '../core';
 import type { CacheConfiguration } from '../package';
 import type { RHITextureFormat, RHIFilterMode, RHIAddressMode } from './rhi';
 
@@ -435,7 +436,7 @@ export interface TextureStream {
   /**
    * 加载状态
    */
-  loadingState: LoadState;
+  loadingState: ResourceLoadState;
   /**
    * 优先级
    */

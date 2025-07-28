@@ -3,7 +3,7 @@
  * 定义缓冲区资源接口
  */
 
-import type { RHIBufferUsage } from '../enums';
+import type { RHIBufferUsage } from '../types';
 
 /**
  * 缓冲区资源接口

@@ -16,17 +16,8 @@ import type {
   EventType,
 } from '../core';
 
-// 动画状态定义从animation层导入作为权威来源
-import type {
-  AnimationState,
-  AnimationStateBehavior,
-  AnimationBehaviorType,
-  AnimationTransition,
-  AnimationCondition,
-  AnimationConditionType,
-  ComparisonOperator,
-  InterruptionSource,
-} from '../animation';
+// 动画状态定义
+import type { AnimationState, AnimationTransition } from '../animation';
 
 /**
  * 通用动画配置（扩展核心配置）
@@ -201,10 +192,6 @@ export interface AnimationMixerLayer {
    */
   mask?: AnimationMask;
 }
-
-// 动画状态相关类型已从animation层导入
-
-// AnimationTransition 和 AnimationCondition 已移至animation层作为权威来源
 
 /**
  * 动画遮罩

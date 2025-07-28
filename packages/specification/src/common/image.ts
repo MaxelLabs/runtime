@@ -318,7 +318,7 @@ export interface CommonImageElement extends CommonElement {
    */
   format?: ImageFormat;
   /**
-   * 图像变换（重命名避免与 CommonElement.transform 冲突）
+   * 图像变换
    */
   imageTransform?: ImageTransform;
   /**
@@ -392,9 +392,6 @@ export interface ResponsiveImageSource {
    */
   mediaQuery?: string;
 }
-
-// 从 texture 导入通用加载状态
-import type { LoadState } from './texture';
 
 /**
  * 图像加载状态（使用通用LoadState）

@@ -178,9 +178,6 @@ export interface FrameAnimationClip {
    */
   properties?: AnimationProperties;
 }
-
-// FrameAnimationEvent 已废弃 - 使用 AnimationEvent（来自 common/animation.ts）替代
-
 /**
  * 帧动画控制器
  */

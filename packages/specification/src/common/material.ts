@@ -3,7 +3,8 @@
  * 定义跨模块共享的基础材质类型
  */
 
-import type { IColor, BlendMode, CommonMetadata, MaterialType, LoopMode } from '../core';
+import type { ComparisonOperator } from '../animation';
+import type { ColorLike, BlendMode, CommonMetadata, MaterialType, LoopMode, Vector2Like } from '../core';
 
 /**
  * 通用纹理槽
@@ -46,11 +47,11 @@ export interface CommonTextureRef {
   /**
    * UV缩放
    */
-  scale?: [number, number];
+  scale?: Vector2Like;
   /**
    * UV偏移
    */
-  offset?: [number, number];
+  offset?: Vector2Like;
   /**
    * 旋转角度
    */
@@ -94,7 +95,7 @@ export interface CommonMaterialProperties {
   /**
    * 主颜色
    */
-  color: IColor;
+  color: ColorLike;
   /**
    * 透明度
    */
@@ -211,15 +212,56 @@ export interface MaterialCondition {
   operator: ComparisonOperator;
 }
 
-// 从 animation 导入 ComparisonOperator
-import type { ComparisonOperator } from '../animation';
-
-// 从 rendering 导入通用条件类型
-import type { ConditionType } from '../rendering/material';
-
 /**
- * 材质条件类型（使用通用ConditionType）
+ * 材质条件类型
  */
-export type MaterialConditionType = ConditionType;
-
-// ComparisonOperator 已从 animation 模块导入，不再重复定义
+export enum MaterialConditionType {
+  /**
+   * 设备类型（移动端/桌面端）
+   */
+  DeviceType = 'device-type',
+  /**
+   * 图形质量级别（低/中/高/超高）
+   */
+  QualityLevel = 'quality-level',
+  /**
+   * 平台类型（iOS/Android/Web/Windows等）
+   */
+  Platform = 'platform',
+  /**
+   * 图形API（OpenGL/Vulkan/Metal/DirectX等）
+   */
+  GraphicsAPI = 'graphics-api',
+  /**
+   * GPU性能等级
+   */
+  GPUTier = 'gpu-tier',
+  /**
+   * 内存容量限制
+   */
+  MemoryLimit = 'memory-limit',
+  /**
+   * 屏幕分辨率
+   */
+  ScreenResolution = 'screen-resolution',
+  /**
+   * 渲染特性支持（HDR/PBR/实时光照等）
+   */
+  FeatureSupport = 'feature-support',
+  /**
+   * 带宽限制（影响纹理质量）
+   */
+  BandwidthLimit = 'bandwidth-limit',
+  /**
+   * 电池状态（移动设备节能模式）
+   */
+  PowerMode = 'power-mode',
+  /**
+   * 用户偏好设置
+   */
+  UserPreference = 'user-preference',
+  /**
+   * 自定义条件
+   */
+  Custom = 'custom',
+}

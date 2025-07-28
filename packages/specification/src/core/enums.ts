@@ -575,6 +575,22 @@ export enum ConstraintType {
 }
 
 /**
+ * 资源加载状态枚举
+ */
+export enum ResourceLoadState {
+  /** 未加载 */
+  UNLOADED = 'unloaded',
+  /** 加载中 */
+  LOADING = 'loading',
+  /** 已加载 */
+  LOADED = 'loaded',
+  /** 加载失败 */
+  FAILED = 'failed',
+  /** 已释放 */
+  RELEASED = 'released',
+}
+
+/**
  * 数据类型
  */
 export enum DataType {

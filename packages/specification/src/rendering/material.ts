@@ -13,7 +13,15 @@ import type {
   RHITextureType,
 } from '../common';
 import type { TextureWrapMode } from '../common/texture';
-import type { FillMode, InterpolationMode, MaterialProperties, DataType, LoopMode } from '../core';
+import type {
+  FillMode,
+  InterpolationMode,
+  MaterialProperties,
+  DataType,
+  LoopMode,
+  Vector2Like,
+  ColorLike,
+} from '../core';
 import type { UsdPrim, UsdValue } from '../core/usd';
 
 /**
@@ -417,7 +425,7 @@ export interface BlendState {
   /**
    * 混合颜色
    */
-  blendColor?: IColor;
+  blendColor?: ColorLike;
 }
 
 // MaterialBlendOperation 已废弃 - 使用 RHIBlendOperation 替代
@@ -839,11 +847,12 @@ export interface MaterialKeyframe {
   /**
    * 切线输入
    */
-  inTangent?: IVector2;
+
+  inTangent?: Vector2Like;
   /**
+
+
    * 切线输出
    */
-  outTangent?: IVector2;
+  outTangent?: Vector2Like;
 }
-
-// AnimationLoopMode 已废弃 - 使用 LoopMode（来自 core/enums.ts）替代

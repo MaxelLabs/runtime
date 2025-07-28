@@ -13,7 +13,7 @@ import type {
   InteractionProperties,
   MaterialProperties,
   RenderingProperties,
-} from '../core/';
+} from '../core';
 
 /**
  * 通用边界框

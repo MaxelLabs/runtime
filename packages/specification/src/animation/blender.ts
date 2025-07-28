@@ -3,7 +3,7 @@
  * 动画混合器和混合输入的定义
  */
 
-import type { BlendMode } from '../core/enums';
+import type { BlendMode } from '../core';
 import type { AnimationMixer } from '../common';
 
 /**
