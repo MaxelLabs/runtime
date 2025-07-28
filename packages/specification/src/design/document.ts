@@ -67,14 +67,66 @@ export enum DocumentType {
   Component = 'component',
 }
 
-// DocumentConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
-// 为保持兼容性，创建类型别名
-import type { PerformanceConfiguration } from '../package/format';
-
 /**
- * @deprecated 使用 PerformanceConfiguration 替代
+ * 文档配置
  */
-export type DocumentConfig = PerformanceConfiguration;
+export interface DocumentConfig {
+  /**
+   * 画布设置
+   */
+  canvas: {
+    /**
+     * 默认尺寸
+     */
+    defaultSize: { width: number; height: number };
+    /**
+     * 背景色
+     */
+    backgroundColor?: string;
+    /**
+     * 网格设置
+     */
+    grid?: {
+      enabled: boolean;
+      size: number;
+      color?: string;
+    };
+  };
+  /**
+   * 自动保存设置
+   */
+  autoSave: {
+    /**
+     * 是否启用
+     */
+    enabled: boolean;
+    /**
+     * 保存间隔（秒）
+     */
+    interval: number;
+  };
+  /**
+   * 导出设置
+   */
+  export: DocumentExportSettings;
+  /**
+   * 插件配置
+   */
+  plugins?: DocumentPluginConfig[];
+  /**
+   * 协作设置
+   */
+  collaboration?: {
+    /**
+     * 是否允许评论
+     */
+    allowComments: boolean;
+    /**
+     * 是否允许编辑
+     */
+    allowEditing: boolean;
+  };
+}
 
 /**
  * 文档导出设置

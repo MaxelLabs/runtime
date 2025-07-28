@@ -3,6 +3,7 @@
  * 几何体和网格渲染相关类型定义
  */
 
+import type { CommonBounds } from '../common';
 import type { CoreBoundingBox, UsdPrim, UsdValue } from '../core';
 
 /**
@@ -836,20 +837,3 @@ export enum AttributeFormat {
    */
   Int = 'int',
 }
-
-// CachingConfig 已废弃 - 使用 CacheConfiguration（来自 package/format.ts）
-// GeoCacheStrategy 已废弃 - 使用 CacheStrategy（来自 core/base.ts）
-
-import type { CacheConfiguration } from '../package/format';
-import type { CacheStrategy } from '../core/base';
-import type { CommonBounds } from '../common';
-
-/**
- * @deprecated 使用 CacheConfiguration 替代
- */
-export type CachingConfig = CacheConfiguration;
-
-/**
- * @deprecated 使用 CacheStrategy 替代
- */
-export type GeoCacheStrategy = CacheStrategy;

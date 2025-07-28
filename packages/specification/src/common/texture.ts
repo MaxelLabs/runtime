@@ -495,9 +495,6 @@ export enum TextureStreamStrategy {
   Hybrid = 'hybrid',
 }
 
-// LoadState 已废弃 - 使用 ResourceLoadState（来自 @maxellabs/core/resource）替代
-// ResourceLoadState 提供了更完整的状态定义，包括 RELEASED 状态
-
 /**
  * @deprecated 使用 ResourceLoadState 替代
  */

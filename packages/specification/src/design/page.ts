@@ -5,6 +5,7 @@
 
 import type { CommonBounds } from '../common';
 import type { GradientStop, GradientType } from '../core';
+import type { ExportFormat } from './document';
 import type { DesignElement } from './elements';
 
 /**
@@ -111,14 +112,134 @@ export enum DevicePreset {
   Custom = 'custom',
 }
 
-// PageConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
-// 为保持兼容性，创建类型别名
-import type { PerformanceConfiguration } from '../package/format';
-
 /**
- * @deprecated 使用 PerformanceConfiguration 替代
+ * 页面配置
  */
-export type PageConfig = PerformanceConfiguration;
+export interface PageConfig {
+  /**
+   * 视口设置
+   */
+  viewport: {
+    /**
+     * 初始视口位置
+     */
+    initialPosition: ViewportPosition;
+    /**
+     * 最小缩放级别
+     */
+    minZoom: number;
+    /**
+     * 最大缩放级别
+     */
+    maxZoom: number;
+    /**
+     * 是否启用平滑缩放
+     */
+    smoothZoom: boolean;
+  };
+  /**
+   * 捕捉设置
+   */
+  snap: SnapSettings;
+  /**
+   * 网格设置
+   */
+  grid: {
+    /**
+     * 是否默认显示网格
+     */
+    showByDefault: boolean;
+    /**
+     * 默认网格配置
+     */
+    defaultGrid: PageGrid;
+  };
+  /**
+   * 指南设置
+   */
+  guides: {
+    /**
+     * 是否显示指南
+     */
+    visible: boolean;
+    /**
+     * 指南颜色
+     */
+    color: string;
+    /**
+     * 是否启用智能指南
+     */
+    smartGuides: boolean;
+  };
+  /**
+   * 选择设置
+   */
+  selection: {
+    /**
+     * 选择框颜色
+     */
+    color: string;
+    /**
+     * 选择框粗细
+     */
+    strokeWidth: number;
+    /**
+     * 是否显示控制点
+     */
+    showHandles: boolean;
+  };
+  /**
+   * 渲染设置
+   */
+  rendering: {
+    /**
+     * 渲染质量
+     */
+    quality: 'low' | 'medium' | 'high';
+    /**
+     * 是否启用抗锯齿
+     */
+    antialiasing: boolean;
+    /**
+     * 像素密度
+     */
+    pixelRatio: number;
+  };
+  /**
+   * 交互设置
+   */
+  interaction: {
+    /**
+     * 是否启用键盘快捷键
+     */
+    keyboardShortcuts: boolean;
+    /**
+     * 是否启用触摸手势
+     */
+    touchGestures: boolean;
+    /**
+     * 双击编辑
+     */
+    doubleClickEdit: boolean;
+  };
+  /**
+   * 导出设置
+   */
+  export: {
+    /**
+     * 默认导出格式
+     */
+    defaultFormat: ExportFormat;
+    /**
+     * 默认DPI
+     */
+    defaultDPI: number;
+    /**
+     * 是否包含标记
+     */
+    includeAnnotations: boolean;
+  };
+}
 
 /**
  * 视口位置

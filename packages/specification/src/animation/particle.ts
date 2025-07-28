@@ -93,14 +93,72 @@ export interface ParticleBurst {
   interval: number;
 }
 
-// ParticleConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
-// 为保持兼容性，创建类型别名
-import type { PerformanceConfiguration } from '../package/format';
-
 /**
- * @deprecated 使用 PerformanceConfiguration 替代
+ * 粒子配置
  */
-export type ParticleConfig = PerformanceConfiguration;
+export interface ParticleConfig {
+  /**
+   * 初始速度
+   */
+  startSpeed: {
+    min: number;
+    max: number;
+  };
+  /**
+   * 生命周期
+   */
+  startLifetime: {
+    min: number;
+    max: number;
+  };
+  /**
+   * 初始大小
+   */
+  startSize: {
+    min: number;
+    max: number;
+  };
+  /**
+   * 初始颜色
+   */
+  startColor: {
+    r: number;
+    g: number;
+    b: number;
+    a: number;
+  };
+  /**
+   * 初始旋转
+   */
+  startRotation: {
+    min: number;
+    max: number;
+  };
+  /**
+   * 重力影响
+   */
+  gravityModifier: number;
+  /**
+   * 最大粒子数
+   */
+  maxParticles: number;
+  /**
+   * 模拟空间
+   */
+  simulationSpace: 'local' | 'world';
+  /**
+   * 缩放模式
+   */
+  scalingMode: 'hierarchy' | 'local' | 'shape';
+  /**
+   * 预热
+   */
+  prewarm: boolean;
+  /**
+   * 随机种子
+   */
+  randomSeed?: number;
+}
 
 /**
  * 粒子渲染器

@@ -285,6 +285,20 @@ export interface RenderingProperties {
 }
 
 /**
+ * 边界球
+ */
+export interface BoundingSphere {
+  /**
+   * 球心坐标
+   */
+  center: Vector3Like;
+  /**
+   * 半径
+   */
+  radius: number;
+}
+
+/**
  * 3D边界框（核心版本）
  */
 export interface CoreBoundingBox {

@@ -148,8 +148,6 @@ export interface UVAnimation {
   playMode: LoopMode;
 }
 
-// UVAnimationMode 已废弃 - 使用 LoopMode（来自 core/enums.ts）替代
-
 /**
  * 通用材质实例
  */

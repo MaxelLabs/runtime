@@ -144,14 +144,126 @@ export interface DesignIconLibrary {
   metadata?: CommonMetadata;
 }
 
-// IconLibraryConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
-// 为保持兼容性，创建类型别名
-import type { PerformanceConfiguration } from '../package/format';
-
 /**
- * @deprecated 使用 PerformanceConfiguration 替代
+ * 图标库配置
  */
-export type IconLibraryConfig = PerformanceConfiguration;
+export interface IconLibraryConfig {
+  /**
+   * 库设置
+   */
+  library: {
+    /**
+     * 默认图标大小
+     */
+    defaultSize: number;
+    /**
+     * 支持的尺寸
+     */
+    supportedSizes: number[];
+    /**
+     * 默认颜色模式
+     */
+    defaultColorMode: IconColorMode;
+    /**
+     * 命名规范
+     */
+    namingConvention: 'kebab-case' | 'camelCase' | 'snake_case';
+  };
+  /**
+   * 导出配置
+   */
+  export: {
+    /**
+     * 默认导出格式
+     */
+    defaultFormats: IconExportFormat[];
+    /**
+     * 优化设置
+     */
+    optimization: IconOptimization;
+    /**
+     * 输出目录结构
+     */
+    outputStructure: 'flat' | 'categorized' | 'grouped';
+  };
+  /**
+   * 搜索配置
+   */
+  search: {
+    /**
+     * 是否启用模糊搜索
+     */
+    fuzzySearch: boolean;
+    /**
+     * 搜索权重配置
+     */
+    searchWeights: {
+      name: number;
+      tags: number;
+      category: number;
+      description: number;
+    };
+    /**
+     * 最大搜索结果数
+     */
+    maxResults: number;
+  };
+  /**
+   * 缓存配置
+   */
+  cache: {
+    /**
+     * 是否启用缓存
+     */
+    enabled: boolean;
+    /**
+     * 缓存过期时间（秒）
+     */
+    ttl: number;
+    /**
+     * 缓存策略
+     */
+    strategy: 'memory' | 'disk' | 'both';
+  };
+  /**
+   * 许可配置
+   */
+  licensing: {
+    /**
+     * 默认许可类型
+     */
+    defaultLicense: LicenseType;
+    /**
+     * 是否强制归属
+     */
+    enforceAttribution: boolean;
+    /**
+     * 许可检查
+     */
+    licenseValidation: boolean;
+  };
+  /**
+   * 质量控制
+   */
+  quality: {
+    /**
+     * SVG 验证
+     */
+    svgValidation: boolean;
+    /**
+     * 最小图标大小
+     */
+    minIconSize: number;
+    /**
+     * 最大文件大小 (bytes)
+     */
+    maxFileSize: number;
+    /**
+     * 颜色数量限制
+     */
+    maxColors?: number;
+  };
+}
 
 /**
  * 图标颜色模式
