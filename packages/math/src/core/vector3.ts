@@ -1,5 +1,4 @@
-import { UsdDataType } from '@maxellabs/specification';
-import type { UsdValue, vec3, Vector3DataType, Vector3Like } from '@maxellabs/specification';
+import type { UsdDataType, UsdValue, vec3, Vector3DataType, Vector3Like } from '@maxellabs/specification';
 import type { Matrix4 } from './matrix4';
 import type { Quaternion } from './quaternion';
 import { NumberEpsilon, fastInvSqrt } from './utils';
@@ -835,7 +834,7 @@ export class Vector3 implements Vector3Like, Poolable {
    */
   toUsdValue(): UsdValue {
     return {
-      type: UsdDataType.Vector3f,
+      type: 'float3' as UsdDataType,
       value: [this.x, this.y, this.z],
     };
   }

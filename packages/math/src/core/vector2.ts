@@ -1,5 +1,4 @@
-import { UsdDataType } from '@maxellabs/specification';
-import type { UsdValue, vec2, Vector2DataType, Vector2Like } from '@maxellabs/specification';
+import type { UsdDataType, UsdValue, vec2, Vector2DataType, Vector2Like } from '@maxellabs/specification';
 import { NumberEpsilon } from './utils';
 import { MathConfig } from '../config/mathConfig';
 import { ObjectPool, type Poolable } from '../pool/objectPool';
@@ -119,7 +118,7 @@ export class Vector2 implements Vector2Like, Poolable {
    */
   toUsdValue(): UsdValue {
     return {
-      type: UsdDataType.Vector2f,
+      type: 'float2' as UsdDataType, // 直接使用字符串，类型断言
       value: [this.x, this.y],
     };
   }

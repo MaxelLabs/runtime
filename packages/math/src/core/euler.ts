@@ -3,14 +3,13 @@ import { Vector3 } from './vector3';
 import { Matrix4 } from './matrix4';
 import { RAD2DEG, clamp } from './utils';
 import { DEG2RAD } from './utils';
-import type { EulerLike } from '@maxellabs/specification';
-import { EulerOrder } from '@maxellabs/specification';
+import type { EulerOrder, EulerLike } from '@maxellabs/specification';
 
 /**
  * 欧拉角
  */
 export class Euler {
-  static readonly DEFAULT_ORDER = EulerOrder.XYZ;
+  static readonly DEFAULT_ORDER = 'xyz' as EulerOrder;
 
   private static readonly tempQuat0 = new Quaternion();
   private static readonly tempMat0 = new Matrix4();
@@ -69,7 +68,7 @@ export class Euler {
     const m33 = te[10];
 
     switch (order) {
-      case EulerOrder.XYZ:
+      case 'xyz' as EulerOrder:
         this.y = Math.asin(clamp(m13, -1, 1));
         if (Math.abs(m13) < 0.9999999) {
           this.x = Math.atan2(-m23, m33);
@@ -80,7 +79,7 @@ export class Euler {
         }
 
         break;
-      case EulerOrder.YXZ:
+      case 'yxz' as EulerOrder:
         this.x = Math.asin(-clamp(m23, -1, 1));
         if (Math.abs(m23) < 0.9999999) {
           this.y = Math.atan2(m13, m33);
@@ -91,7 +90,7 @@ export class Euler {
         }
 
         break;
-      case EulerOrder.ZXY:
+      case 'zxy' as EulerOrder:
         this.x = Math.asin(clamp(m32, -1, 1));
         if (Math.abs(m32) < 0.9999999) {
           this.y = Math.atan2(-m31, m33);
@@ -102,7 +101,7 @@ export class Euler {
         }
 
         break;
-      case EulerOrder.ZYX:
+      case 'zyx' as EulerOrder:
         this.y = Math.asin(-clamp(m31, -1, 1));
         if (Math.abs(m31) < 0.9999999) {
           this.x = Math.atan2(m32, m33);
@@ -113,7 +112,7 @@ export class Euler {
         }
 
         break;
-      case EulerOrder.YZX:
+      case 'yzx' as EulerOrder:
         this.z = Math.asin(clamp(m21, -1, 1));
         if (Math.abs(m21) < 0.9999999) {
           this.x = Math.atan2(-m23, m22);
@@ -124,7 +123,7 @@ export class Euler {
         }
 
         break;
-      case EulerOrder.XZY:
+      case 'xzy' as EulerOrder:
         this.z = Math.asin(-clamp(m12, -1, 1));
         if (Math.abs(m12) < 0.9999999) {
           this.x = Math.atan2(m32, m22);
@@ -317,7 +316,7 @@ export class Euler {
     const s3 = Math.sin(z * DEG2RAD * 0.5);
 
     switch (order) {
-      case EulerOrder.XYZ:
+      case 'xyz' as EulerOrder:
         quat.set(
           s1 * c2 * c3 + c1 * s2 * s3,
           c1 * s2 * c3 - s1 * c2 * s3,
@@ -326,7 +325,7 @@ export class Euler {
         );
 
         break;
-      case EulerOrder.YXZ:
+      case 'yxz' as EulerOrder:
         quat.set(
           s1 * c2 * c3 + c1 * s2 * s3,
           c1 * s2 * c3 - s1 * c2 * s3,
@@ -335,7 +334,7 @@ export class Euler {
         );
 
         break;
-      case EulerOrder.ZXY:
+      case 'zxy' as EulerOrder:
         quat.set(
           s1 * c2 * c3 - c1 * s2 * s3,
           c1 * s2 * c3 + s1 * c2 * s3,
@@ -344,7 +343,7 @@ export class Euler {
         );
 
         break;
-      case EulerOrder.ZYX:
+      case 'zyx' as EulerOrder:
         quat.set(
           s1 * c2 * c3 - c1 * s2 * s3,
           c1 * s2 * c3 + s1 * c2 * s3,
@@ -353,7 +352,7 @@ export class Euler {
         );
 
         break;
-      case EulerOrder.YZX:
+      case 'yzx' as EulerOrder:
         quat.set(
           s1 * c2 * c3 + c1 * s2 * s3,
           c1 * s2 * c3 + s1 * c2 * s3,
@@ -362,7 +361,7 @@ export class Euler {
         );
 
         break;
-      case EulerOrder.XZY:
+      case 'xzy' as EulerOrder:
         quat.set(
           s1 * c2 * c3 - c1 * s2 * s3,
           c1 * s2 * c3 - s1 * c2 * s3,
@@ -393,7 +392,7 @@ export class Euler {
     const cosZ = Math.cos(z * DEG2RAD),
       sinZ = Math.sin(z * DEG2RAD);
 
-    if (order === EulerOrder.XYZ) {
+    if (order === ('xyz' as EulerOrder)) {
       const cosXcosZ = cosX * cosZ;
       const cosXsinZ = cosX * sinZ;
       const sinXcosZ = sinX * cosZ;
@@ -410,7 +409,7 @@ export class Euler {
       me[2] = sinXsinZ - cosXcosZ * sinY;
       me[6] = sinXcosZ + cosXsinZ * sinY;
       me[10] = cosX * cosY;
-    } else if (order === EulerOrder.YXZ) {
+    } else if (order === ('yxz' as EulerOrder)) {
       const cosYcosZ = cosY * cosZ;
       const cosYsinZ = cosY * sinZ;
       const sinYcosZ = sinY * cosZ;
@@ -427,7 +426,7 @@ export class Euler {
       me[2] = cosYsinZ * sinX - sinYcosZ;
       me[6] = sinYsinZ + cosYcosZ * sinX;
       me[10] = cosX * cosY;
-    } else if (order === EulerOrder.ZXY) {
+    } else if (order === ('zxy' as EulerOrder)) {
       const cosYcosZ = cosY * cosZ;
       const cosYsinZ = cosY * sinZ;
       const sinYcosZ = sinY * cosZ;
@@ -444,7 +443,7 @@ export class Euler {
       me[2] = -cosX * sinY;
       me[6] = sinX;
       me[10] = cosX * cosY;
-    } else if (order === EulerOrder.ZYX) {
+    } else if (order === ('zyx' as EulerOrder)) {
       const cosXcosZ = cosX * cosZ;
       const cosXsinZ = cosX * sinZ;
       const sinXcosZ = sinX * cosZ;
@@ -461,7 +460,7 @@ export class Euler {
       me[2] = -sinY;
       me[6] = sinX * cosY;
       me[10] = cosX * cosY;
-    } else if (order === EulerOrder.YZX) {
+    } else if (order === ('yzx' as EulerOrder)) {
       const cosXcosY = cosX * cosY;
       const cosXsinY = cosX * sinY;
       const sinXcosY = sinX * cosY;
@@ -478,7 +477,7 @@ export class Euler {
       me[2] = -sinY * cosZ;
       me[6] = cosXsinY * sinZ + sinXcosY;
       me[10] = cosXcosY - sinXsinY * sinZ;
-    } else if (order === EulerOrder.XZY) {
+    } else if (order === ('xzy' as EulerOrder)) {
       const cosXcosY = cosX * cosY;
       const cosXsinY = cosX * sinY;
       const sinXcosY = sinX * cosY;
