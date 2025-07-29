@@ -1,18 +1,17 @@
-import type {
-  IRHIComputePipeline,
-  IRHIPipelineLayout,
-  IRHIShaderModule,
-  RHIComputePipelineDescriptor,
-} from '@maxellabs/core';
+import type { MSpec } from '@maxellabs/core';
 
-export class WebGLComputePipeline implements IRHIComputePipeline {
-  computeShader: IRHIShaderModule;
+/**
+ * WebGL计算管线实现
+ * ⚠️ 注意：WebGL不直接支持计算管线，这里仅作为接口实现
+ */
+export class WebGLComputePipeline implements MSpec.IRHIComputePipeline {
+  computeShader: MSpec.IRHIShaderModule;
   entryPoint: string;
-  layout: IRHIPipelineLayout;
+  layout: MSpec.IRHIPipelineLayout;
   label?: string;
   constructor(
     private gl: WebGLRenderingContext,
-    private descriptor: RHIComputePipelineDescriptor
+    private descriptor: MSpec.RHIComputePipelineDescriptor
   ) {}
 
   destroy(): void {
@@ -20,8 +19,8 @@ export class WebGLComputePipeline implements IRHIComputePipeline {
     this.computeShader.destroy();
     this.layout.destroy();
 
-    this.computeShader = null as unknown as IRHIShaderModule;
-    this.layout = null as unknown as IRHIPipelineLayout;
+    this.computeShader = null as unknown as MSpec.IRHIShaderModule;
+    this.layout = null as unknown as MSpec.IRHIPipelineLayout;
     this.label = '';
     this.entryPoint = '';
   }

@@ -1,24 +1,23 @@
-import type { IRHISampler, RHISamplerDescriptor } from '@maxellabs/core';
-import { RHIAddressMode, RHICompareFunction, RHIFilterMode } from '@maxellabs/core';
 import { WebGLUtils } from '../utils/GLUtils';
+import { MSpec } from '@maxellabs/core';
 
 /**
  * WebGL采样器实现
  * 注意：WebGL1不支持采样器对象，这里使用参数封装模拟采样器行为
  */
-export class GLSampler implements IRHISampler {
+export class GLSampler implements MSpec.IRHISampler {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private isWebGL2: boolean;
   private sampler: WebGLSampler | null;
-  addressModeU: RHIAddressMode;
-  addressModeV: RHIAddressMode;
-  addressModeW: RHIAddressMode;
-  magFilter: RHIFilterMode;
-  minFilter: RHIFilterMode;
-  mipmapFilter: RHIFilterMode;
+  addressModeU: MSpec.RHIAddressMode;
+  addressModeV: MSpec.RHIAddressMode;
+  addressModeW: MSpec.RHIAddressMode;
+  magFilter: MSpec.RHIFilterMode;
+  minFilter: MSpec.RHIFilterMode;
+  mipmapFilter: MSpec.RHIFilterMode;
   private lodMinClamp: number;
   private lodMaxClamp: number;
-  private compareFunction?: RHICompareFunction;
+  private compareFunction?: MSpec.RHICompareFunction;
   private maxAnisotropy: number;
   private borderColor: [number, number, number, number];
   private useMipmap: boolean;
@@ -33,7 +32,7 @@ export class GLSampler implements IRHISampler {
    */
   constructor(
     gl: WebGLRenderingContext | WebGL2RenderingContext,
-    descriptor: RHISamplerDescriptor & {
+    descriptor: MSpec.RHISamplerDescriptor & {
       borderColor?: [number, number, number, number];
       useMipmap?: boolean;
     } = {}
@@ -72,67 +71,45 @@ export class GLSampler implements IRHISampler {
   /**
    * 将字符串或枚举寻址模式转换为枚举值
    */
-  private getAddressMode(
-    mode?: 'repeat' | 'mirror-repeat' | 'clamp-to-edge' | 'clamp-to-border' | RHIAddressMode
-  ): RHIAddressMode {
+  private getAddressMode(mode?: MSpec.RHIAddressMode): MSpec.RHIAddressMode {
     if (mode === undefined || mode === null) {
-      return RHIAddressMode.CLAMP_TO_EDGE;
+      return MSpec.RHIAddressMode.ClampToEdge;
     }
 
     // 如果已经是枚举类型，直接返回
     if (typeof mode === 'number') {
       // 验证枚举值合法性
-      if (Object.values(RHIAddressMode).includes(mode)) {
+      if (Object.values(MSpec.RHIAddressMode).includes(mode)) {
         return mode;
       }
       console.warn(`无效的寻址模式枚举值: ${mode}，使用默认值CLAMP_TO_EDGE`);
 
-      return RHIAddressMode.CLAMP_TO_EDGE;
+      return MSpec.RHIAddressMode.ClampToEdge;
     }
 
-    // 字符串转换到枚举
-    switch (mode) {
-      case 'repeat':
-        return RHIAddressMode.REPEAT;
-      case 'mirror-repeat':
-        return RHIAddressMode.MIRROR_REPEAT;
-      case 'clamp-to-edge':
-        return RHIAddressMode.CLAMP_TO_EDGE;
-      case 'clamp-to-border':
-        return RHIAddressMode.CLAMP_TO_BORDER;
-      default:
-        return RHIAddressMode.CLAMP_TO_EDGE;
-    }
+    return mode;
   }
 
   /**
    * 将字符串或枚举过滤模式转换为枚举值
    */
-  private getFilterMode(mode?: 'nearest' | 'linear' | RHIFilterMode): RHIFilterMode {
+  private getFilterMode(mode?: MSpec.RHIFilterMode): MSpec.RHIFilterMode {
     if (mode === undefined || mode === null) {
-      return RHIFilterMode.LINEAR;
+      return MSpec.RHIFilterMode.Linear;
     }
 
     // 如果已经是枚举类型，直接返回
     if (typeof mode === 'number') {
       // 验证枚举值合法性
-      if (Object.values(RHIFilterMode).includes(mode)) {
+      if (Object.values(MSpec.RHIFilterMode).includes(mode)) {
         return mode;
       }
       console.warn(`无效的过滤模式枚举值: ${mode}，使用默认值LINEAR`);
 
-      return RHIFilterMode.LINEAR;
+      return MSpec.RHIFilterMode.Linear;
     }
 
-    // 字符串转换到枚举
-    switch (mode) {
-      case 'nearest':
-        return RHIFilterMode.NEAREST;
-      case 'linear':
-        return RHIFilterMode.LINEAR;
-      default:
-        return RHIFilterMode.LINEAR;
-    }
+    return mode;
   }
 
   /**

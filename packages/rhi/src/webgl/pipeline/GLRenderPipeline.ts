@@ -1,23 +1,4 @@
-import type {
-  IRHIRenderPipeline,
-  IRHIShaderModule,
-  IRHIPipelineLayout,
-  RHIVertexLayout,
-  RHIPrimitiveTopology,
-  RHIRasterizationState,
-  RHIDepthStencilState,
-  RHIColorBlendState,
-  RHIRenderPipelineDescriptor,
-  IRHIBuffer,
-} from '@maxellabs/core';
-import {
-  RHICompareFunction,
-  RHICullMode,
-  RHIFrontFace,
-  RHIStencilOperation,
-  RHIBlendFactor,
-  RHIBlendOperation,
-} from '@maxellabs/core';
+import { MSpec } from '@maxellabs/core';
 import type { GLShader } from '../resources/GLShader';
 import { WebGLUtils } from '../utils/GLUtils';
 import type { GLBuffer } from '../resources';
@@ -25,19 +6,19 @@ import type { GLBuffer } from '../resources';
 /**
  * WebGL渲染管线实现
  */
-export class WebGLRenderPipeline implements IRHIRenderPipeline {
+export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private isWebGL2: boolean;
   private program: WebGLProgram | null;
   private vertexArrayObject: WebGLVertexArrayObject | null = null;
-  private _vertexShader: IRHIShaderModule;
-  private _fragmentShader: IRHIShaderModule;
-  private _vertexLayout: RHIVertexLayout;
-  private _primitiveTopology: RHIPrimitiveTopology;
-  private _rasterizationState: RHIRasterizationState;
-  private _depthStencilState?: RHIDepthStencilState;
-  private _colorBlendState?: RHIColorBlendState;
-  private _layout: IRHIPipelineLayout;
+  private _vertexShader: MSpec.IRHIShaderModule;
+  private _fragmentShader: MSpec.IRHIShaderModule;
+  private _vertexLayout: MSpec.RHIVertexLayout;
+  private _primitiveTopology: MSpec.RHIPrimitiveTopology;
+  private _rasterizationState: MSpec.RHIRasterizationState;
+  private _depthStencilState?: MSpec.RHIDepthStencilState;
+  private _colorBlendState?: MSpec.RHIColorBlendState;
+  private _layout: MSpec.IRHIPipelineLayout;
   private _label?: string;
   private attributeLocations: Map<string, number> = new Map();
   private attributeBufferLayouts: Map<
@@ -52,7 +33,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
    * @param gl WebGL上下文
    * @param descriptor 渲染管线描述符
    */
-  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHIRenderPipelineDescriptor) {
+  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: MSpec.RHIRenderPipelineDescriptor) {
     this.gl = gl;
     this.isWebGL2 = gl instanceof WebGL2RenderingContext;
     this.utils = new WebGLUtils(gl, { EXT_blend_minmax: this.gl.getExtension('EXT_blend_minmax') });
@@ -82,15 +63,15 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 获取默认的光栅化状态
    */
-  private getDefaultRasterizationState(): RHIRasterizationState {
+  private getDefaultRasterizationState(): MSpec.RHIRasterizationState {
     return {
-      cullMode: RHICullMode.BACK,
-      frontFace: RHIFrontFace.CCW,
+      cullMode: MSpec.RHICullMode.Back,
+      frontFace: MSpec.RHIFrontFace.CCW,
       lineWidth: 1,
       depthBias: 0,
       depthBiasClamp: 0,
       depthBiasSlopeScale: 0,
-    } as RHIRasterizationState;
+    } as MSpec.RHIRasterizationState;
   }
 
   /**
@@ -354,8 +335,8 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   private applyRasterizationState(): void {
     const gl = this.gl;
     const state = this._rasterizationState || {};
-    const cullMode = state.cullMode ?? RHICullMode.NONE;
-    const frontFace = state.frontFace ?? RHIFrontFace.CCW;
+    const cullMode = state.cullMode ?? MSpec.RHICullMode.None;
+    const frontFace = state.frontFace ?? MSpec.RHIFrontFace.CCW;
     const lineWidth = state.lineWidth ?? 1;
     const depthBias = state.depthBias ?? 0;
     const depthBiasSlopeScale = state.depthBiasSlopeScale ?? 0;
@@ -383,12 +364,12 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 应用深度模板状态
    */
-  private applyDepthStencilState(state: RHIDepthStencilState): void {
+  private applyDepthStencilState(state: MSpec.RHIDepthStencilState): void {
     const gl = this.gl;
 
     // Use optional chaining and defaults for potentially missing properties
-    const depthCompare = state.depthCompare ?? RHICompareFunction.ALWAYS;
-    const depthTestEnabled = state.depthTestEnabled ?? depthCompare !== RHICompareFunction.ALWAYS;
+    const depthCompare = state.depthCompare ?? MSpec.RHICompareFunction.ALWAYS;
+    const depthTestEnabled = state.depthTestEnabled ?? depthCompare !== MSpec.RHICompareFunction.ALWAYS;
     const depthWriteEnabled = state.depthWriteEnabled ?? true;
     const stencilTestEnabled = !!(state.stencilFront || state.stencilBack);
 
@@ -408,12 +389,12 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
       const back = state.stencilBack || front;
 
       if (front) {
-        const compare = front.compare ?? RHICompareFunction.ALWAYS;
+        const compare = front.compare ?? MSpec.RHICompareFunction.ALWAYS;
         const reference = front.reference ?? 0;
         const readMask = front.readMask ?? 0xff;
-        const failOp = front.failOp ?? RHIStencilOperation.KEEP;
-        const depthFailOp = front.depthFailOp ?? RHIStencilOperation.KEEP;
-        const passOp = front.passOp ?? RHIStencilOperation.KEEP;
+        const failOp = front.failOp ?? MSpec.RHIStencilOperation.KEEP;
+        const depthFailOp = front.depthFailOp ?? MSpec.RHIStencilOperation.KEEP;
+        const passOp = front.passOp ?? MSpec.RHIStencilOperation.KEEP;
         const writeMask = front.writeMask ?? 0xff;
 
         gl.stencilFuncSeparate(gl.FRONT, this.utils.compareFunctionToGL(compare), reference, readMask);
@@ -427,12 +408,12 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
       }
 
       if (back) {
-        const compare = back.compare ?? RHICompareFunction.ALWAYS;
+        const compare = back.compare ?? MSpec.RHICompareFunction.ALWAYS;
         const reference = back.reference ?? 0;
         const readMask = back.readMask ?? 0xff;
-        const failOp = back.failOp ?? RHIStencilOperation.KEEP;
-        const depthFailOp = back.depthFailOp ?? RHIStencilOperation.KEEP;
-        const passOp = back.passOp ?? RHIStencilOperation.KEEP;
+        const failOp = back.failOp ?? MSpec.RHIStencilOperation.KEEP;
+        const depthFailOp = back.depthFailOp ?? MSpec.RHIStencilOperation.KEEP;
+        const passOp = back.passOp ?? MSpec.RHIStencilOperation.KEEP;
         const writeMask = back.writeMask ?? 0xff;
 
         gl.stencilFuncSeparate(gl.BACK, this.utils.compareFunctionToGL(compare), reference, readMask);
@@ -452,15 +433,15 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 应用颜色混合状态
    */
-  private applyColorBlendState(state: RHIColorBlendState): void {
+  private applyColorBlendState(state: MSpec.RHIColorBlendState): void {
     const gl = this.gl;
     const blendEnabled = state.blendEnabled ?? false;
-    const colorOp = state.colorBlendOperation ?? RHIBlendOperation.ADD;
-    const alphaOp = state.alphaBlendOperation ?? RHIBlendOperation.ADD;
-    const srcColor = state.srcColorFactor ?? RHIBlendFactor.ONE;
-    const dstColor = state.dstColorFactor ?? RHIBlendFactor.ZERO;
-    const srcAlpha = state.srcAlphaFactor ?? RHIBlendFactor.ONE;
-    const dstAlpha = state.dstAlphaFactor ?? RHIBlendFactor.ZERO;
+    const colorOp = state.colorBlendOperation ?? MSpec.RHIBlendOperation.ADD;
+    const alphaOp = state.alphaBlendOperation ?? MSpec.RHIBlendOperation.ADD;
+    const srcColor = state.srcColorFactor ?? MSpec.RHIBlendFactor.One;
+    const dstColor = state.dstColorFactor ?? MSpec.RHIBlendFactor.Zero;
+    const srcAlpha = state.srcAlphaFactor ?? MSpec.RHIBlendFactor.One;
+    const dstAlpha = state.dstAlphaFactor ?? MSpec.RHIBlendFactor.Zero;
     const blendColor = state.blendColor;
     const writeMask = state.writeMask ?? 0xf;
 
@@ -530,7 +511,7 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
    * @param buffer WebGL缓冲区
    * @param offset 偏移量
    */
-  applyVertexBufferLayout(slot: number, buffer: IRHIBuffer, bufferOffsetInBytes: number = 0): void {
+  applyVertexBufferLayout(slot: number, buffer: MSpec.IRHIBuffer, bufferOffsetInBytes: number = 0): void {
     const gl = this.gl;
     const layoutsForSlot = this.attributeBufferLayouts.get(slot);
 
@@ -598,56 +579,56 @@ export class WebGLRenderPipeline implements IRHIRenderPipeline {
   /**
    * 获取顶点着色器
    */
-  get vertexShader(): IRHIShaderModule {
+  get vertexShader(): MSpec.IRHIShaderModule {
     return this._vertexShader;
   }
 
   /**
    * 获取片段着色器
    */
-  get fragmentShader(): IRHIShaderModule {
+  get fragmentShader(): MSpec.IRHIShaderModule {
     return this._fragmentShader;
   }
 
   /**
    * 获取顶点布局
    */
-  get vertexLayout(): RHIVertexLayout {
+  get vertexLayout(): MSpec.RHIVertexLayout {
     return this._vertexLayout;
   }
 
   /**
    * 获取图元类型
    */
-  get primitiveTopology(): RHIPrimitiveTopology {
+  get primitiveTopology(): MSpec.RHIPrimitiveTopology {
     return this._primitiveTopology;
   }
 
   /**
    * 获取光栅化状态
    */
-  get rasterizationState(): RHIRasterizationState {
+  get rasterizationState(): MSpec.RHIRasterizationState {
     return this._rasterizationState;
   }
 
   /**
    * 获取深度模板状态
    */
-  get depthStencilState(): RHIDepthStencilState | undefined {
+  get depthStencilState(): MSpec.RHIDepthStencilState | undefined {
     return this._depthStencilState;
   }
 
   /**
    * 获取颜色混合状态
    */
-  get colorBlendState(): RHIColorBlendState | undefined {
+  get colorBlendState(): MSpec.RHIColorBlendState | undefined {
     return this._colorBlendState;
   }
 
   /**
    * 获取管线布局
    */
-  get layout(): IRHIPipelineLayout {
+  get layout(): MSpec.IRHIPipelineLayout {
     return this._layout;
   }
 

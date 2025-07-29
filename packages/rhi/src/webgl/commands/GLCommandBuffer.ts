@@ -1,11 +1,11 @@
-import type { IRHICommandBuffer } from '@maxellabs/core';
 import type { GLBuffer } from '../resources/GLBuffer';
 import type { GLTexture } from '../resources/GLTexture';
+import type { MSpec } from '@maxellabs/core';
 
 /**
  * WebGL命令缓冲区实现
  */
-export class WebGLCommandBuffer implements IRHICommandBuffer {
+export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private commands: Array<{
     type: string;

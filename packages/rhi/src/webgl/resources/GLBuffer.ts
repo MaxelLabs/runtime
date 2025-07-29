@@ -1,5 +1,4 @@
-import type { IRHIBuffer, RHIBufferDescriptor } from '@maxellabs/core';
-import { RHIBufferUsage } from '@maxellabs/core';
+import { MSpec } from '@maxellabs/core';
 
 /**
  * Uniform类型定义，用于指定缓冲区中数据的类型和布局
@@ -60,13 +59,13 @@ export interface BufferTypeInfo {
 /**
  * WebGL缓冲区实现
  */
-export class GLBuffer implements IRHIBuffer {
+export class GLBuffer implements MSpec.IRHIBuffer {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private glBuffer: WebGLBuffer | null;
   protected bufferTarget: number;
   private bufferUsage: number;
   size: number;
-  usage: RHIBufferUsage;
+  usage: MSpec.RHIBufferUsage;
   label?: string;
   private isDestroyed = false;
 
@@ -85,7 +84,7 @@ export class GLBuffer implements IRHIBuffer {
    * @param gl WebGL上下文
    * @param descriptor 缓冲区描述符
    */
-  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHIBufferDescriptor) {
+  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: MSpec.RHIBufferDescriptor) {
     this.gl = gl;
     this.size = descriptor.size;
     this.usage = descriptor.usage;
@@ -136,31 +135,31 @@ export class GLBuffer implements IRHIBuffer {
   /**
    * 根据RHI缓冲区用途获取WebGL缓冲区目标
    */
-  private getGLBufferTarget(usage: RHIBufferUsage): number {
-    if (usage & RHIBufferUsage.VERTEX) {
+  private getGLBufferTarget(usage: MSpec.RHIBufferUsage | MSpec.RHIBufferUsage[]): number {
+    // 如果是数组，检查是否包含特定用途
+    const usageArray = Array.isArray(usage) ? usage : [usage];
+
+    if (usageArray.includes(MSpec.RHIBufferUsage.VERTEX)) {
       return this.gl.ARRAY_BUFFER;
     }
-    if (usage & RHIBufferUsage.INDEX) {
+    if (usageArray.includes(MSpec.RHIBufferUsage.INDEX)) {
       return this.gl.ELEMENT_ARRAY_BUFFER;
     }
-    if (usage & RHIBufferUsage.UNIFORM) {
-      return this.gl instanceof WebGL2RenderingContext ? this.gl.UNIFORM_BUFFER : this.gl.ARRAY_BUFFER; // WebGL1 回退
+    if (usageArray.includes(MSpec.RHIBufferUsage.UNIFORM)) {
+      return this.gl instanceof WebGL2RenderingContext ? this.gl.UNIFORM_BUFFER : this.gl.ARRAY_BUFFER;
     }
-    // WebGL2 特有支持
+
+    // // WebGL2 特有支持
     // if (this.gl instanceof WebGL2RenderingContext) {
-    //   if (usage & RHIBufferUsage.STORAGE) {
+    //   if (usageArray.includes(MSpec.RHIBufferUsage.STORAGE)) {
     //     return this.gl.SHADER_STORAGE_BUFFER;
     //   }
-    //   if (usage & RHIBufferUsage.INDIRECT) {
+    //   if (usageArray.includes(MSpec.RHIBufferUsage.INDIRECT)) {
     //     return this.gl.DRAW_INDIRECT_BUFFER;
-    //   }
-    //   // 添加对 TRANSFORM_FEEDBACK_BUFFER 和复制缓冲区的支持
-    //   if (usage & RHIBufferUsage.TRANSFORM_FEEDBACK) {
-    //     return this.gl.TRANSFORM_FEEDBACK_BUFFER;
     //   }
     // }
 
-    // 其他类型默认为ARRAY_BUFFER
+    // 默认返回
     return this.gl.ARRAY_BUFFER;
   }
 

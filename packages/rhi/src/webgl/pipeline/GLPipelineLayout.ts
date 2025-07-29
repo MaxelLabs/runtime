@@ -1,11 +1,11 @@
-import type { IRHIBindGroupLayout, IRHIPipelineLayout } from '@maxellabs/core';
+import type { MSpec } from '@maxellabs/core';
 
 /**
  * WebGL管线布局实现
  */
-export class WebGLPipelineLayout implements IRHIPipelineLayout {
+export class WebGLPipelineLayout implements MSpec.IRHIPipelineLayout {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
-  bindGroupLayouts: IRHIBindGroupLayout[];
+  bindGroupLayouts: MSpec.IRHIBindGroupLayout[];
   label?: string;
   private isDestroyed = false;
 
@@ -18,7 +18,7 @@ export class WebGLPipelineLayout implements IRHIPipelineLayout {
    */
   constructor(
     gl: WebGLRenderingContext | WebGL2RenderingContext,
-    bindGroupLayouts: IRHIBindGroupLayout[],
+    bindGroupLayouts: MSpec.IRHIBindGroupLayout[],
     label?: string
   ) {
     this.gl = gl;
@@ -61,7 +61,7 @@ export class WebGLPipelineLayout implements IRHIPipelineLayout {
   /**
    * 获取绑定组布局
    */
-  getBindGroupLayouts(): IRHIBindGroupLayout[] {
+  getBindGroupLayouts(): MSpec.IRHIBindGroupLayout[] {
     return this.bindGroupLayouts;
   }
 
@@ -77,7 +77,7 @@ export class WebGLPipelineLayout implements IRHIPipelineLayout {
    *
    * @param index 绑定组索引
    */
-  getBindGroupLayout(index: number): IRHIBindGroupLayout | undefined {
+  getBindGroupLayout(index: number): MSpec.IRHIBindGroupLayout | undefined {
     return this.bindGroupLayouts[index];
   }
 

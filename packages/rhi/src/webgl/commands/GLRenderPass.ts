@@ -1,29 +1,28 @@
-import type { IRHIBuffer, IRHIBindGroup, IRHIRenderPass, IRHIRenderPipeline, IRHITextureView } from '@maxellabs/core';
-import { RHIIndexFormat, RHITextureFormat } from '@maxellabs/core';
 import type { GLTexture } from '../resources/GLTexture';
 import type { WebGLTextureView } from '../resources/GLTextureView';
 import type { GLBuffer } from '../resources/GLBuffer';
 import type { WebGLRenderPipeline } from '../pipeline/GLRenderPipeline';
 import type { WebGLCommandEncoder } from './GLCommandEncoder';
 import { WebGLUtils } from '../utils/GLUtils';
+import { MSpec } from '@maxellabs/core';
 
 /**
  * WebGL渲染通道实现
  */
-export class WebGLRenderPass implements IRHIRenderPass {
+export class WebGLRenderPass implements MSpec.IRHIRenderPass {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private isWebGL2: boolean;
   private encoder: WebGLCommandEncoder;
   private framebuffer: WebGLFramebuffer | null;
   private colorAttachments: Array<{
-    view: IRHITextureView;
-    resolveTarget?: IRHITextureView;
+    view: MSpec.IRHITextureView;
+    resolveTarget?: MSpec.IRHITextureView;
     loadOp: 'load' | 'clear' | 'none';
     storeOp: 'store' | 'discard';
     clearColor?: [number, number, number, number];
   }>;
   private depthStencilAttachment?: {
-    view: IRHITextureView;
+    view: MSpec.IRHITextureView;
     depthLoadOp: 'load' | 'clear' | 'none';
     depthStoreOp: 'store' | 'discard';
     clearDepth?: number;
@@ -35,7 +34,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   private _label?: string;
   private currentPipeline: WebGLRenderPipeline | null = null;
   private currentIndexBuffer: GLBuffer | null = null;
-  private currentIndexFormat: RHIIndexFormat = RHIIndexFormat.UINT16;
+  private currentIndexFormat: MSpec.RHIIndexFormat = MSpec.RHIIndexFormat.UINT16;
   private currentIndexOffset: number = 0;
   private viewport: { x: number; y: number; width: number; height: number; minDepth: number; maxDepth: number };
   private scissorRect: { x: number; y: number; width: number; height: number };
@@ -55,14 +54,14 @@ export class WebGLRenderPass implements IRHIRenderPass {
     gl: WebGLRenderingContext | WebGL2RenderingContext,
     options: {
       colorAttachments: Array<{
-        view: IRHITextureView;
-        resolveTarget?: IRHITextureView;
+        view: MSpec.IRHITextureView;
+        resolveTarget?: MSpec.IRHITextureView;
         loadOp: 'load' | 'clear' | 'none';
         storeOp: 'store' | 'discard';
         clearColor?: [number, number, number, number];
       }>;
       depthStencilAttachment?: {
-        view: IRHITextureView;
+        view: MSpec.IRHITextureView;
         depthLoadOp: 'load' | 'clear' | 'none';
         depthStoreOp: 'store' | 'discard';
         clearDepth?: number;
@@ -219,25 +218,25 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 判断纹理格式是否包含模板部分
    */
-  private hasStencilComponent(format: number): boolean {
+  private hasStencilComponent(format: MSpec.RHITextureFormat): boolean {
     // 根据RHITextureFormat枚举检查是否是带有模板部分的格式
     return (
-      format === RHITextureFormat.DEPTH24_UNORM_STENCIL8 || // 36
-      format === RHITextureFormat.DEPTH32_FLOAT_STENCIL8
+      format === MSpec.RHITextureFormat.DEPTH24_UNORM_STENCIL8 || // 36
+      format === MSpec.RHITextureFormat.DEPTH32_FLOAT_STENCIL8
     ); // 37
   }
 
   /**
    * 判断纹理格式是否包含深度部分
    */
-  private hasDepthComponent(format: number): boolean {
+  private hasDepthComponent(format: MSpec.RHITextureFormat): boolean {
     // 根据RHITextureFormat枚举检查是否是深度格式
     return (
-      format === RHITextureFormat.DEPTH16_UNORM || // 33
-      format === RHITextureFormat.DEPTH24_UNORM || // 34
-      format === RHITextureFormat.DEPTH32_FLOAT || // 35
-      format === RHITextureFormat.DEPTH24_UNORM_STENCIL8 || // 36
-      format === RHITextureFormat.DEPTH32_FLOAT_STENCIL8
+      format === MSpec.RHITextureFormat.DEPTH16_UNORM || // 33
+      format === MSpec.RHITextureFormat.DEPTH24_UNORM || // 34
+      format === MSpec.RHITextureFormat.DEPTH32_FLOAT || // 35
+      format === MSpec.RHITextureFormat.DEPTH24_UNORM_STENCIL8 || // 36
+      format === MSpec.RHITextureFormat.DEPTH32_FLOAT_STENCIL8
     ); // 37
   }
 
@@ -295,7 +294,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 设置渲染管线
    */
-  setPipeline(pipeline: IRHIRenderPipeline): void {
+  setPipeline(pipeline: MSpec.IRHIRenderPipeline): void {
     if (this.isEnded) {
       throw new Error('渲染通道已结束，无法设置渲染管线');
     }
@@ -315,7 +314,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 设置索引缓冲区
    */
-  setIndexBuffer(buffer: IRHIBuffer, indexFormat: RHIIndexFormat, offset: number = 0): void {
+  setIndexBuffer(buffer: MSpec.IRHIBuffer, indexFormat: MSpec.RHIIndexFormat, offset: number = 0): void {
     if (!this.isActive) {
       throw new Error('渲染通道已结束，无法设置索引缓冲区');
     }
@@ -339,7 +338,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 设置顶点缓冲区
    */
-  setVertexBuffer(slot: number, buffer: IRHIBuffer, offset: number = 0): void {
+  setVertexBuffer(slot: number, buffer: MSpec.IRHIBuffer, offset: number = 0): void {
     if (!this.currentPipeline) {
       console.error('没有设置渲染管线，无法设置顶点缓冲区');
 
@@ -377,7 +376,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   setVertexBuffers(
     firstSlot: number,
     buffers: Array<{
-      buffer: IRHIBuffer;
+      buffer: MSpec.IRHIBuffer;
       offset?: number;
     }>
   ): void {
@@ -422,7 +421,7 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 设置绑定组
    */
-  setBindGroup(slot: number, bindGroup: IRHIBindGroup, dynamicOffsets?: number[]): void {
+  setBindGroup(slot: number, bindGroup: MSpec.IRHIBindGroup, dynamicOffsets?: number[]): void {
     if (!this.currentPipeline) {
       console.error('没有设置渲染管线，无法设置绑定组');
 
@@ -501,8 +500,8 @@ export class WebGLRenderPass implements IRHIRenderPass {
       }
 
       const primitiveType = this.utils.primitiveTopologyToGL(this.currentPipeline.primitiveTopology);
-      const indexType = this.currentIndexFormat === RHIIndexFormat.UINT16 ? gl.UNSIGNED_SHORT : gl.UNSIGNED_INT;
-      const bytesPerIndex = this.currentIndexFormat === RHIIndexFormat.UINT16 ? 2 : 4;
+      const indexType = this.currentIndexFormat === MSpec.RHIIndexFormat.UINT16 ? gl.UNSIGNED_SHORT : gl.UNSIGNED_INT;
+      const bytesPerIndex = this.currentIndexFormat === MSpec.RHIIndexFormat.UINT16 ? 2 : 4;
       const offset = this.currentIndexOffset + firstIndex * bytesPerIndex;
 
       // baseVertex不直接被WebGL支持，需要在顶点着色器中处理
@@ -614,14 +613,14 @@ export class WebGLRenderPass implements IRHIRenderPass {
   /**
    * 执行间接绘制
    */
-  drawIndirect(indirectBuffer: IRHIBuffer, indirectOffset: number): void {
+  drawIndirect(indirectBuffer: MSpec.IRHIBuffer, indirectOffset: number): void {
     throw new Error('WebGL不支持间接绘制');
   }
 
   /**
    * 执行间接索引绘制
    */
-  drawIndexedIndirect(indirectBuffer: IRHIBuffer, indirectOffset: number): void {
+  drawIndexedIndirect(indirectBuffer: MSpec.IRHIBuffer, indirectOffset: number): void {
     throw new Error('WebGL不支持间接索引绘制');
   }
 

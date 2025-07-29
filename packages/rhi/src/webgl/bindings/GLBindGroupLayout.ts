@@ -1,17 +1,16 @@
-import type { IRHIBindGroupLayout, IRHIBindGroupLayoutEntry } from '@maxellabs/core';
-
+import type { MSpec } from '@maxellabs/core';
 /**
  * WebGL绑定组布局实现
  */
 
 // Define a more detailed internal layout entry interface
-interface IWebGLDetailedBindGroupLayoutEntry extends IRHIBindGroupLayoutEntry {
+interface IWebGLDetailedBindGroupLayoutEntry extends MSpec.IRHIBindGroupLayoutEntry {
   name?: string; // Uniform/Sampler/Texture name in the shader, provided by the user
   // Example: if a sampler is associated with a texture, you might define it here
   // associatedTextureBinding?: number;
 }
 
-export class WebGLBindGroupLayout implements IRHIBindGroupLayout {
+export class WebGLBindGroupLayout implements MSpec.IRHIBindGroupLayout {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private detailedEntries: IWebGLDetailedBindGroupLayoutEntry[];
   private _label?: string; // Use a private backing field for the label
@@ -20,7 +19,7 @@ export class WebGLBindGroupLayout implements IRHIBindGroupLayout {
   // For managing texture unit allocation
   private textureBindingToUnitMap: Map<number, number>; // <texture_binding_point, texture_unit_index>
   private nextAvailableTextureUnit: number;
-  entries: IRHIBindGroupLayoutEntry[];
+  entries: MSpec.IRHIBindGroupLayoutEntry[];
 
   /**
    * 创建WebGL绑定组布局
@@ -111,12 +110,12 @@ export class WebGLBindGroupLayout implements IRHIBindGroupLayout {
   /**
    * 获取绑定组布局条目 (符合公共接口)
    */
-  getEntries(): IRHIBindGroupLayoutEntry[] {
+  getEntries(): MSpec.IRHIBindGroupLayoutEntry[] {
     return this.detailedEntries.map((de) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { name: _name, ...publicEntryFields } = de; // Ignore 'name' by prefixing with _
 
-      return publicEntryFields as IRHIBindGroupLayoutEntry;
+      return publicEntryFields as MSpec.IRHIBindGroupLayoutEntry;
     });
   }
 

@@ -1,5 +1,4 @@
-import type { IRHIShaderModule, RHIShaderModuleDescriptor } from '@maxellabs/core';
-import { RHIShaderStage } from '@maxellabs/core';
+import { MSpec } from '@maxellabs/core';
 
 /**
  * WebGL着色器实现
@@ -7,21 +6,21 @@ import { RHIShaderStage } from '@maxellabs/core';
  * 封装WebGL着色器功能，处理编译、反射分析和资源管理
  * 支持WebGL1和WebGL2上下文，自动处理相应的GLSL版本差异
  */
-export class GLShader implements IRHIShaderModule {
+export class GLShader implements MSpec.IRHIShaderModule {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private isWebGL2: boolean;
   private glShader: WebGLShader | null;
   private glProgram: WebGLProgram | null = null;
   code: string;
   language: 'glsl' | 'wgsl' | 'spirv';
-  stage: RHIShaderStage;
+  stage: MSpec.RHIShaderStage;
   label?: string;
   reflection: {
     bindings: Array<{
       name: string;
       binding: number;
       group: number;
-      type: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture';
+      type: MSpec.RHIBindGroupLayoutEntryType;
       arraySize?: number;
     }>;
     entryPoints: Array<{
@@ -47,7 +46,7 @@ export class GLShader implements IRHIShaderModule {
    * @param gl WebGL上下文
    * @param descriptor 着色器描述符
    */
-  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHIShaderModuleDescriptor) {
+  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: MSpec.RHIShaderModuleDescriptor) {
     this.gl = gl;
     this.isWebGL2 = gl instanceof WebGL2RenderingContext;
     this.code = descriptor.code;
@@ -61,7 +60,7 @@ export class GLShader implements IRHIShaderModule {
     }
 
     // 验证计算着色器支持
-    if (this.stage === RHIShaderStage.COMPUTE) {
+    if (this.stage === MSpec.RHIShaderStage.COMPUTE) {
       throw new Error('WebGL不支持计算着色器，请使用顶点或片元着色器');
     }
 
@@ -75,16 +74,16 @@ export class GLShader implements IRHIShaderModule {
   /**
    * 从描述符的阶段获取RHI着色器阶段
    */
-  private getShaderStage(stage: 'vertex' | 'fragment' | 'compute'): RHIShaderStage {
+  private getShaderStage(stage: MSpec.RHIShaderStage): MSpec.RHIShaderStage {
     switch (stage) {
-      case 'vertex':
-        return RHIShaderStage.VERTEX;
-      case 'fragment':
-        return RHIShaderStage.FRAGMENT;
-      case 'compute':
+      case MSpec.RHIShaderStage.VERTEX:
+        return MSpec.RHIShaderStage.VERTEX;
+      case MSpec.RHIShaderStage.FRAGMENT:
+        return MSpec.RHIShaderStage.FRAGMENT;
+      case MSpec.RHIShaderStage.COMPUTE:
         // 虽然我们在构造函数中对计算着色器进行了验证，
         // 但仍然返回正确的枚举值以保持API一致性
-        return RHIShaderStage.COMPUTE;
+        return MSpec.RHIShaderStage.COMPUTE;
       default:
         throw new Error(`不支持的着色器阶段: ${stage}`);
     }
@@ -95,7 +94,7 @@ export class GLShader implements IRHIShaderModule {
    */
   private compileShader(): WebGLShader | null {
     const gl = this.gl;
-    const glStage = this.stage === RHIShaderStage.VERTEX ? gl.VERTEX_SHADER : gl.FRAGMENT_SHADER;
+    const glStage = this.stage === MSpec.RHIShaderStage.VERTEX ? gl.VERTEX_SHADER : gl.FRAGMENT_SHADER;
 
     // 创建着色器对象
     const shader = gl.createShader(glStage);
@@ -156,7 +155,7 @@ export class GLShader implements IRHIShaderModule {
     // 例如：可以将texture2D调用替换为texture等
     let adapted = code;
 
-    if (this.stage === RHIShaderStage.FRAGMENT) {
+    if (this.stage === MSpec.RHIShaderStage.FRAGMENT) {
       // 添加输出变量声明（如果代码中没有）
       if (!adapted.includes('out vec4') && !adapted.includes('layout(location=0)')) {
         adapted = 'out vec4 fragColor;\n' + adapted;
@@ -182,13 +181,13 @@ export class GLShader implements IRHIShaderModule {
     let adapted = code;
 
     // 将in/out替换为attribute/varying（针对顶点着色器）
-    if (this.stage === RHIShaderStage.VERTEX) {
+    if (this.stage === MSpec.RHIShaderStage.VERTEX) {
       adapted = adapted.replace(/\bin\b/g, 'attribute');
       adapted = adapted.replace(/\bout\b/g, 'varying');
     }
 
     // 将in替换为varying（针对片元着色器）
-    if (this.stage === RHIShaderStage.FRAGMENT) {
+    if (this.stage === MSpec.RHIShaderStage.FRAGMENT) {
       adapted = adapted.replace(/\bin\b/g, 'varying');
     }
 
@@ -208,7 +207,7 @@ export class GLShader implements IRHIShaderModule {
   private formatShaderError(shader: WebGLShader, code: string): string {
     const gl = this.gl;
     const infoLog = gl.getShaderInfoLog(shader);
-    const shaderType = this.stage === RHIShaderStage.VERTEX ? 'Vertex' : 'Fragment';
+    const shaderType = this.stage === MSpec.RHIShaderStage.VERTEX ? 'Vertex' : 'Fragment';
 
     // 构建详细错误信息
     const errorMsg = `${shaderType}着色器编译失败:\n${infoLog}\n\n源码:\n`;

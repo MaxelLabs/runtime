@@ -1,8 +1,6 @@
-import type { IRHIBindGroup, IRHIBindGroupLayout, IRHIBindGroupEntry } from '@maxellabs/core';
-import { GLBuffer, UniformType } from '../resources/GLBuffer';
-import { GLSampler } from '../resources/GLSampler';
-import { WebGLTextureView } from '../resources/GLTextureView';
+import { WebGLTextureView, GLSampler, GLBuffer, UniformType } from '../resources';
 import { WebGLBindGroupLayout } from './GLBindGroupLayout';
+import type { MSpec } from '@maxellabs/core';
 
 // Helper function to apply uniform data based on name (temporary solution)
 function applyKnownUniformFromBufferData(
@@ -171,10 +169,11 @@ function applyKnownUniformFromBufferData(
 /**
  * WebGL绑定组实现
  */
-export class WebGLBindGroup implements IRHIBindGroup {
+export class WebGLBindGroup implements MSpec.IRHIBindGroup {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   layout: WebGLBindGroupLayout;
-  entries: IRHIBindGroupEntry[];
+
+  entries: MSpec.IRHIBindGroupEntry[];
   label?: string;
   private isDestroyed = false;
 
@@ -186,10 +185,12 @@ export class WebGLBindGroup implements IRHIBindGroup {
    * @param entries 绑定资源条目 (IRHIBindGroupEntry[])
    * @param label 可选标签
    */
+
   constructor(
     gl: WebGLRenderingContext | WebGL2RenderingContext,
-    layout: IRHIBindGroupLayout,
-    entries: IRHIBindGroupEntry[],
+    layout: MSpec.IRHIBindGroupLayout,
+    entries: MSpec.IRHIBindGroupEntry[],
+
     label?: string
   ) {
     this.gl = gl;
@@ -205,11 +206,11 @@ export class WebGLBindGroup implements IRHIBindGroup {
     this.validateResourcesAgainstLayout();
   }
 
-  getLayout(): IRHIBindGroupLayout {
+  getLayout(): MSpec.IRHIBindGroupLayout {
     return this.layout;
   }
 
-  getEntries(): IRHIBindGroupEntry[] {
+  getEntries(): MSpec.IRHIBindGroupEntry[] {
     return this.entries;
   }
 
