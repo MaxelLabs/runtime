@@ -1,4 +1,5 @@
 import { MSpec } from '@maxellabs/core';
+import { Vector3Like } from '@maxellabs/specification';
 
 /**
  * WebGL着色器实现
@@ -26,7 +27,7 @@ export class GLShader implements MSpec.IRHIShaderModule {
     entryPoints: Array<{
       name: string;
       stage: 'vertex' | 'fragment' | 'compute';
-      workgroupSize?: [number, number, number];
+      workgroupSize?: Vector3Like;
     }>;
     attributes?: Array<{
       name: string;

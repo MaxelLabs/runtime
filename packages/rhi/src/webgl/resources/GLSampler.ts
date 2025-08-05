@@ -116,48 +116,19 @@ export class GLSampler implements MSpec.IRHISampler {
    * 将字符串或枚举比较函数转换为枚举值
    */
   private getCompareFunction(
-    func:
-      | 'never'
-      | 'less'
-      | 'equal'
-      | 'less-equal'
-      | 'greater'
-      | 'not-equal'
-      | 'greater-equal'
-      | 'always'
-      | RHICompareFunction
-  ): RHICompareFunction {
+    func: MSpec.RHICompareFunction
+  ): MSpec.RHICompareFunction {
     if (typeof func === 'number') {
       // 验证枚举值合法性
-      if (Object.values(RHICompareFunction).includes(func)) {
+      if (Object.values(MSpec.RHICompareFunction).includes(func)) {
         return func;
       }
       console.warn(`无效的比较函数枚举值: ${func}，使用默认值ALWAYS`);
 
-      return RHICompareFunction.ALWAYS;
+      return MSpec.RHICompareFunction.ALWAYS;
     }
 
-    // 字符串转换到枚举
-    switch (func) {
-      case 'never':
-        return RHICompareFunction.NEVER;
-      case 'less':
-        return RHICompareFunction.LESS;
-      case 'equal':
-        return RHICompareFunction.EQUAL;
-      case 'less-equal':
-        return RHICompareFunction.LESS_EQUAL;
-      case 'greater':
-        return RHICompareFunction.GREATER;
-      case 'not-equal':
-        return RHICompareFunction.NOT_EQUAL;
-      case 'greater-equal':
-        return RHICompareFunction.GREATER_EQUAL;
-      case 'always':
-        return RHICompareFunction.ALWAYS;
-      default:
-        return RHICompareFunction.ALWAYS;
-    }
+    return func;
   }
 
   /**
@@ -196,9 +167,9 @@ export class GLSampler implements MSpec.IRHISampler {
 
       // 处理边界颜色（如果使用CLAMP_TO_BORDER模式）
       if (
-        this.addressModeU === RHIAddressMode.CLAMP_TO_BORDER ||
-        this.addressModeV === RHIAddressMode.CLAMP_TO_BORDER ||
-        this.addressModeW === RHIAddressMode.CLAMP_TO_BORDER
+        this.addressModeU === MSpec.RHIAddressMode.ClampToBorder ||
+        this.addressModeV === MSpec.RHIAddressMode.ClampToBorder ||
+        this.addressModeW === MSpec.RHIAddressMode.ClampToBorder
       ) {
         try {
           // 获取TEXTURE_BORDER_COLOR常量
@@ -221,16 +192,16 @@ export class GLSampler implements MSpec.IRHISampler {
           // 边界颜色设置失败，降级到 CLAMP_TO_EDGE
           console.warn('边界颜色设置失败，降级到 CLAMP_TO_EDGE 模式:', e);
 
-          if (this.addressModeU === RHIAddressMode.CLAMP_TO_BORDER) {
-            this.addressModeU = RHIAddressMode.CLAMP_TO_EDGE;
+          if (this.addressModeU === MSpec.RHIAddressMode.ClampToBorder) {
+            this.addressModeU = MSpec.RHIAddressMode.ClampToEdge;
             gl2.samplerParameteri(sampler, gl2.TEXTURE_WRAP_S, this.utils.addressModeToGL(this.addressModeU));
           }
-          if (this.addressModeV === RHIAddressMode.CLAMP_TO_BORDER) {
-            this.addressModeV = RHIAddressMode.CLAMP_TO_EDGE;
+          if (this.addressModeV === MSpec.RHIAddressMode.ClampToBorder) {
+            this.addressModeV = MSpec.RHIAddressMode.ClampToEdge;
             gl2.samplerParameteri(sampler, gl2.TEXTURE_WRAP_T, this.utils.addressModeToGL(this.addressModeV));
           }
-          if (this.addressModeW === RHIAddressMode.CLAMP_TO_BORDER) {
-            this.addressModeW = RHIAddressMode.CLAMP_TO_EDGE;
+          if (this.addressModeW ===  MSpec.RHIAddressMode.ClampToBorder) {
+            this.addressModeW = MSpec.RHIAddressMode.ClampToEdge
             gl2.samplerParameteri(sampler, gl2.TEXTURE_WRAP_R, this.utils.addressModeToGL(this.addressModeW));
           }
         }
@@ -307,13 +278,13 @@ export class GLSampler implements MSpec.IRHISampler {
     // 处理是否使用mipmap
     if (!this.useMipmap) {
       // 不使用mipmap时的简单过滤
-      return this.minFilter === RHIFilterMode.NEAREST ? gl.NEAREST : gl.LINEAR;
+      return this.minFilter === MSpec.RHIFilterMode.Nearest ? gl.NEAREST : gl.LINEAR;
     } else {
       // 使用mipmap时的组合过滤
-      if (this.minFilter === RHIFilterMode.NEAREST) {
-        return this.mipmapFilter === RHIFilterMode.NEAREST ? gl.NEAREST_MIPMAP_NEAREST : gl.NEAREST_MIPMAP_LINEAR;
+      if (this.minFilter === MSpec.RHIFilterMode.Nearest) {
+        return this.mipmapFilter === MSpec.RHIFilterMode.Nearest ? gl.NEAREST_MIPMAP_NEAREST : gl.NEAREST_MIPMAP_LINEAR;
       } else {
-        return this.mipmapFilter === RHIFilterMode.NEAREST ? gl.LINEAR_MIPMAP_NEAREST : gl.LINEAR_MIPMAP_LINEAR;
+        return this.mipmapFilter === MSpec.RHIFilterMode.Nearest ? gl.LINEAR_MIPMAP_NEAREST : gl.LINEAR_MIPMAP_LINEAR;
       }
     }
   }
@@ -360,7 +331,7 @@ export class GLSampler implements MSpec.IRHISampler {
   /**
    * 获取寻址模式U
    */
-  getAddressModeU(): RHIAddressMode {
+  getAddressModeU(): MSpec.RHIAddressMode {
     this.validateNotDestroyed();
 
     return this.addressModeU;
@@ -369,7 +340,7 @@ export class GLSampler implements MSpec.IRHISampler {
   /**
    * 获取寻址模式V
    */
-  getAddressModeV(): RHIAddressMode {
+  getAddressModeV(): MSpec.RHIAddressMode {
     this.validateNotDestroyed();
 
     return this.addressModeV;
@@ -378,7 +349,7 @@ export class GLSampler implements MSpec.IRHISampler {
   /**
    * 获取寻址模式W
    */
-  getAddressModeW(): RHIAddressMode {
+  getAddressModeW(): MSpec.RHIAddressMode {
     this.validateNotDestroyed();
 
     return this.addressModeW;
@@ -387,7 +358,7 @@ export class GLSampler implements MSpec.IRHISampler {
   /**
    * 获取放大过滤模式
    */
-  getMagFilter(): RHIFilterMode {
+  getMagFilter(): MSpec.RHIFilterMode {
     this.validateNotDestroyed();
 
     return this.magFilter;
@@ -396,7 +367,7 @@ export class GLSampler implements MSpec.IRHISampler {
   /**
    * 获取缩小过滤模式
    */
-  getMinFilter(): RHIFilterMode {
+  getMinFilter(): MSpec.RHIFilterMode {
     this.validateNotDestroyed();
 
     return this.minFilter;
@@ -405,7 +376,7 @@ export class GLSampler implements MSpec.IRHISampler {
   /**
    * 获取Mipmap过滤模式
    */
-  getMipmapFilter(): RHIFilterMode {
+  getMipmapFilter(): MSpec.RHIFilterMode {
     this.validateNotDestroyed();
 
     return this.mipmapFilter;
@@ -496,9 +467,9 @@ export class GLSampler implements MSpec.IRHISampler {
 
     // 处理边界颜色（如果使用CLAMP_TO_BORDER模式）
     if (
-      this.addressModeU === RHIAddressMode.CLAMP_TO_BORDER ||
-      this.addressModeV === RHIAddressMode.CLAMP_TO_BORDER ||
-      this.addressModeW === RHIAddressMode.CLAMP_TO_BORDER
+      this.addressModeU === MSpec.RHIAddressMode.ClampToBorder ||
+      this.addressModeV === MSpec.RHIAddressMode.ClampToBorder ||
+      this.addressModeW === MSpec.RHIAddressMode.ClampToBorder
     ) {
       if (this.isWebGL2) {
         // WebGL2
@@ -518,12 +489,12 @@ export class GLSampler implements MSpec.IRHISampler {
         } else {
           // 无法设置边界颜色，降级处理
           console.warn('WebGL1不支持边界颜色设置，使用CLAMP_TO_EDGE代替');
-          if (this.addressModeU === RHIAddressMode.CLAMP_TO_BORDER) {
-            this.addressModeU = RHIAddressMode.CLAMP_TO_EDGE;
+          if (this.addressModeU === MSpec.RHIAddressMode.ClampToBorder) {
+            this.addressModeU = MSpec.RHIAddressMode.ClampToEdge;
             gl.texParameteri(textureTarget, gl.TEXTURE_WRAP_S, this.utils.addressModeToGL(this.addressModeU));
           }
-          if (this.addressModeV === RHIAddressMode.CLAMP_TO_BORDER) {
-            this.addressModeV = RHIAddressMode.CLAMP_TO_EDGE;
+          if (this.addressModeV === MSpec.RHIAddressMode.ClampToBorder) {
+            this.addressModeV = MSpec.RHIAddressMode.ClampToEdge;
             gl.texParameteri(textureTarget, gl.TEXTURE_WRAP_T, this.utils.addressModeToGL(this.addressModeV));
           }
         }

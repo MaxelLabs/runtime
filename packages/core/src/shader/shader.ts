@@ -3,10 +3,11 @@
  * 着色器基类
  * 提供着色器的编译、管理和uniform数据绑定功能
  */
-
-import type { IRHIDevice, IRHIShaderModule, IRHIRenderPipeline } from '../../../specification/src/common/rhi';
 import { ShaderData } from './shader-data';
 import { EventDispatcher } from '../base/event-dispatcher';
+import { IRHIDevice } from '@max/specification';
+import { IRHIShaderModule } from '@max/specification';
+import { IRHIRenderPipeline } from '@max/specification';
 
 /**
  * 着色器类型枚举

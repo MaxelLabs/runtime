@@ -1,7 +1,5 @@
-import type { GLTexture } from '../resources/GLTexture';
-import type { WebGLTextureView } from '../resources/GLTextureView';
-import type { GLBuffer } from '../resources/GLBuffer';
-import type { WebGLRenderPipeline } from '../pipeline/GLRenderPipeline';
+import type { GLTexture,WebGLTextureView ,GLBuffer} from '../resources';
+import type { WebGLRenderPipeline } from '../pipeline';
 import type { WebGLCommandEncoder } from './GLCommandEncoder';
 import { WebGLUtils } from '../utils/GLUtils';
 import { MSpec } from '@maxellabs/core';
