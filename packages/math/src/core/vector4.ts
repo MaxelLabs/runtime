@@ -1,5 +1,4 @@
-import { UsdDataType } from '@maxellabs/specification';
-import type { UsdValue, vec4, Vector4DataType, Vector4Like } from '@maxellabs/specification';
+import type { UsdDataType, UsdValue, vec4, Vector4DataType, Vector4Like } from '@maxellabs/specification';
 import type { Matrix4 } from './matrix4';
 import { NumberEpsilon } from './utils';
 import { Vector3 } from './vector3';
@@ -149,7 +148,7 @@ export class Vector4 implements Vector4Like, Poolable {
    */
   toUsdValue(): UsdValue {
     return {
-      type: UsdDataType.Vector4f,
+      type: 'float4' as UsdDataType, // 直接使用字符串，类型断言
       value: [this.x, this.y, this.z, this.w],
     };
   }

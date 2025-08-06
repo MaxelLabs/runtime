@@ -4,13 +4,15 @@
  */
 
 import type {
+  RHIStencilOperation,
+  RHIVertexFormat,
+  RHITextureFormat,
   RHIBlendFactor,
   RHIBlendOperation,
   RHICompareFunction,
-  RHICullMode,
   RHIFrontFace,
-} from '../../../core/enums';
-import type { RHIStencilOperation, RHIVertexFormat, RHITextureFormat } from './enums';
+  RHICullMode,
+} from './enums';
 
 /**
  * 顶点布局描述符

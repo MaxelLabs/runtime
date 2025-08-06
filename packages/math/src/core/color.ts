@@ -1,5 +1,4 @@
-import { UsdDataType } from '@maxellabs/specification';
-import type { ColorDataType, ColorLike, UsdValue, vec4, Vector4Like } from '@maxellabs/specification';
+import type { UsdDataType, ColorDataType, ColorLike, UsdValue, vec4, Vector4Like } from '@maxellabs/specification';
 import { Vector4 } from './vector4';
 import { MathConfig } from '../config/mathConfig';
 import { ObjectPool, type Poolable } from '../pool/objectPool';
@@ -153,7 +152,7 @@ export class Color implements ColorLike, Poolable {
    */
   toUsdValue(): UsdValue {
     return {
-      type: UsdDataType.Color4f,
+      type: 'color4f' as UsdDataType,
       value: [this.r, this.g, this.b, this.a],
     };
   }

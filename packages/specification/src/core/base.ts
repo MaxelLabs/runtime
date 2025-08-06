@@ -180,9 +180,6 @@ export enum DeviceType {
   VR = 'vr',
   AR = 'ar',
 }
-
-// ResourceState 已废弃 - 使用 ResourceLoadState（来自 packages/core/src/resource/resource.ts）替代
-
 /**
  * 坐标系类型
  */

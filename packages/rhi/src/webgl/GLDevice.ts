@@ -1,25 +1,4 @@
-import type {
-  IRHIDevice,
-  IRHIDeviceInfo,
-  IRHICommandEncoder,
-  IRHICommandBuffer,
-  IRHIBuffer,
-  IRHITexture,
-  IRHISampler,
-  IRHIShaderModule,
-  IRHIBindGroupLayout,
-  IRHIPipelineLayout,
-  IRHIBindGroup,
-  IRHIRenderPipeline,
-  IRHIComputePipeline,
-  RHIBufferDescriptor,
-  RHITextureDescriptor,
-  RHISamplerDescriptor,
-  RHIShaderModuleDescriptor,
-  RHIRenderPipelineDescriptor,
-  RHIComputePipelineDescriptor,
-} from '@maxellabs/core';
-import { RHIBackend, RHIFeatureFlags } from '@maxellabs/core';
+import type { MSpec } from '@maxellabs/core';
 import { GLBuffer } from './resources/GLBuffer';
 import { GLTexture } from './resources/GLTexture';
 import { GLSampler } from './resources/GLSampler';
@@ -36,10 +15,10 @@ import { WebGLUtils } from './utils/GLUtils';
 /**
  * WebGL设备实现
  */
-export class WebGLDevice implements IRHIDevice {
+export class WebGLDevice implements MSpec.IRHIDevice {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private canvas: HTMLCanvasElement;
-  info: IRHIDeviceInfo;
+  info: MSpec.IRHIDeviceInfo;
   private extensions: Record<string, any> = {};
   private isWebGL2: boolean;
   private utils: WebGLUtils;

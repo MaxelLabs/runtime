@@ -3,7 +3,7 @@
  * 定义纹理资源接口
  */
 
-import type { RHITextureFormat, RHITextureUsage } from '../types/enums';
+import type { RHITextureFormat, RHITextureUsage } from '../types';
 
 /**
  * 纹理资源接口

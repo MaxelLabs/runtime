@@ -7,9 +7,85 @@ import type { CommonElement } from './elements';
 
 /**
  * 交互事件类型
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export type InteractionEventType = PerformanceConfiguration;
+export enum InteractionEventType {
+  /**
+   * 鼠标按下
+   */
+  MouseDown = 'mousedown',
+  /**
+   * 鼠标松开
+   */
+  MouseUp = 'mouseup',
+  /**
+   * 鼠标移动
+   */
+  MouseMove = 'mousemove',
+  /**
+   * 鼠标进入
+   */
+  MouseEnter = 'mouseenter',
+  /**
+   * 鼠标离开
+   */
+  MouseLeave = 'mouseleave',
+  /**
+   * 点击
+   */
+  Click = 'click',
+  /**
+   * 双击
+   */
+  DoubleClick = 'dblclick',
+  /**
+   * 触摸开始
+   */
+  TouchStart = 'touchstart',
+  /**
+   * 触摸结束
+   */
+  TouchEnd = 'touchend',
+  /**
+   * 触摸移动
+   */
+  TouchMove = 'touchmove',
+  /**
+   * 键盘按下
+   */
+  KeyDown = 'keydown',
+  /**
+   * 键盘松开
+   */
+  KeyUp = 'keyup',
+  /**
+   * 滚轮滚动
+   */
+  Wheel = 'wheel',
+  /**
+   * 拖拽开始
+   */
+  DragStart = 'dragstart',
+  /**
+   * 拖拽中
+   */
+  Drag = 'drag',
+  /**
+   * 拖拽结束
+   */
+  DragEnd = 'dragend',
+  /**
+   * 放置
+   */
+  Drop = 'drop',
+  /**
+   * 获得焦点
+   */
+  Focus = 'focus',
+  /**
+   * 失去焦点
+   */
+  Blur = 'blur',
+}
 
 /**
  * 交互状态
@@ -261,14 +337,59 @@ export interface DragInfo {
   };
 }
 
-// InteractionConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
-// 为保持兼容性，创建类型别名
-import type { PerformanceConfiguration } from '../package/format';
-
 /**
- * @deprecated 使用 PerformanceConfiguration 替代
+ * 交互配置
  */
-export type InteractionConfig = PerformanceConfiguration;
+export interface InteractionConfig {
+  /**
+   * 是否启用交互
+   */
+  enabled: boolean;
+  /**
+   * 事件冒泡
+   */
+  bubbling: boolean;
+  /**
+   * 拖拽阈值（像素）
+   */
+  dragThreshold: number;
+  /**
+   * 双击间隔（毫秒）
+   */
+  doubleClickInterval: number;
+  /**
+   * 长按时间（毫秒）
+   */
+  longPressTime: number;
+  /**
+   * 触摸灵敏度
+   */
+  touchSensitivity: number;
+  /**
+   * 鼠标滚轮速度
+   */
+  wheelSpeed: number;
+  /**
+   * 键盘重复延迟（毫秒）
+   */
+  keyRepeatDelay: number;
+  /**
+   * 键盘重复间隔（毫秒）
+   */
+  keyRepeatInterval: number;
+  /**
+   * 碰撞检测精度
+   */
+  hitTestPrecision: 'pixel' | 'bounds' | 'center';
+  /**
+   * 是否阻止默认行为
+   */
+  preventDefault: boolean;
+  /**
+   * 调试模式
+   */
+  debug: boolean;
+}
 
 /**
  * 碰撞区域

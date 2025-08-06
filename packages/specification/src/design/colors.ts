@@ -3,7 +3,7 @@
  * 包含调色板、颜色模式和可访问性相关类型
  */
 
-import type { IColor } from '../core';
+import type { ColorLike } from '../core';
 
 /**
  * 设计颜色系统
@@ -51,7 +51,7 @@ export interface DesignColorPalette {
   /**
    * 颜色变体（使用统一Color）
    */
-  variants: Record<string, IColor>;
+  variants: Record<string, ColorLike>;
   /**
    * 颜色用途
    */
@@ -161,7 +161,7 @@ export interface DesignColorMode {
   /**
    * 颜色映射
    */
-  colors: Record<string, IColor>;
+  colors: Record<string, ColorLike>;
   /**
    * 是否为默认模式
    */

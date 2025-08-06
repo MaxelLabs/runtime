@@ -1,5 +1,4 @@
-import { UsdDataType } from '@maxellabs/specification';
-import type { QuaternionLike, UsdValue, Vector4Like } from '@maxellabs/specification';
+import type { UsdDataType, QuaternionLike, UsdValue, Vector4Like } from '@maxellabs/specification';
 import type { Euler } from './euler';
 import { Matrix4 } from './matrix4';
 import { clamp } from './utils';
@@ -194,7 +193,7 @@ export class Quaternion implements QuaternionLike, Poolable {
    */
   toUsdValue(): UsdValue {
     return {
-      type: UsdDataType.Quatf,
+      type: 'quatf' as UsdDataType,
       value: [this.x, this.y, this.z, this.w],
     };
   }

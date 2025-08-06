@@ -3,11 +3,10 @@
  * 定义所有系统共通的精灵相关类型
  */
 
-import type { ElementType } from '../core';
+import type { ElementType, AnimationProperties } from '../core';
 import type { CommonElement } from './elements';
 import type { NineSliceConfig } from './image';
-import type { AnimationProperties } from '../core/interfaces';
-import type { AnimationState, AnimationStateMachine, AnimationStateBehavior, AnimationTransition } from '../animation';
+import type { AnimationStateMachine } from '../animation';
 
 /**
  * 精灵类型
@@ -249,24 +248,6 @@ export interface SpriteAnimationEvent {
   parameters?: Record<string, any>;
 }
 
-// 精灵状态使用统一的AnimationState定义
-export type SpriteState = AnimationState;
-
-/**
- * 状态机类型别名（统一使用通用动画状态机）
- */
-export type SpriteStateMachine = AnimationStateMachine;
-
-/**
- * 状态行为类型别名（统一使用通用动画状态行为）
- */
-export type SpriteStateBehavior = AnimationStateBehavior;
-
-/**
- * 状态转换类型别名（统一使用通用动画转换）
- */
-export type SpriteTransition = AnimationTransition;
-
 /**
  * 通用精灵元素
  */
@@ -295,7 +276,7 @@ export interface CommonSpriteElement extends CommonElement {
   /**
    * 状态机
    */
-  stateMachine?: SpriteStateMachine;
+  stateMachine?: AnimationStateMachine;
   /**
    * 精灵对齐方式
    */

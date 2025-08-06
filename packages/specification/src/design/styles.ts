@@ -5,7 +5,6 @@
 
 // 从 core 模块导入基础类型
 import type {
-  IColor,
   GradientStop,
   ITransform,
   CommonMetadata,
@@ -15,6 +14,7 @@ import type {
   LineJoin,
   StrokePosition,
   StyleType,
+  ColorLike,
 } from '../core';
 
 // 从 common 模块导入通用类型
@@ -55,6 +55,7 @@ export interface DesignStyle {
   /**
    * 文本样式
    */
+
   textStyle?: DesignTextStyle;
 }
 
@@ -69,7 +70,7 @@ export interface DesignFill {
   /**
    * 颜色（使用通用Color）
    */
-  color?: IColor;
+  color?: ColorLike;
   /**
    * 渐变
    */
@@ -103,7 +104,7 @@ export interface DesignStroke {
   /**
    * 颜色（使用通用Color）
    */
-  color?: IColor;
+  color?: ColorLike;
   /**
    * 渐变
    */
@@ -189,7 +190,7 @@ export interface DesignShadow {
   /**
    * 颜色（使用通用Color）
    */
-  color: IColor;
+  color: ColorLike;
   /**
    * X 偏移
    */

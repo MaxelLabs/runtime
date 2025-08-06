@@ -1,5 +1,4 @@
-import { UsdDataType } from '@maxellabs/specification';
-import type { mat4, Matrix4Like, UsdValue } from '@maxellabs/specification';
+import type { UsdDataType, mat4, Matrix4Like, UsdValue } from '@maxellabs/specification';
 import { Vector3 } from './vector3';
 import type { Vector4 } from './vector4';
 import type { Quaternion } from './quaternion';
@@ -255,7 +254,7 @@ export class Matrix4 implements Matrix4Like, Poolable {
    */
   toUsdValue(): UsdValue {
     return {
-      type: UsdDataType.Matrix4d,
+      type: 'matrix4d' as UsdDataType,
       value: Array.from(this.elements),
     };
   }

@@ -5,14 +5,6 @@
 
 import type { CommonElement } from '../elements';
 import type { CommonMaterial } from '../material';
-import type { PerformanceConfiguration } from '../../package/format';
-
-/**
- * 深度测试模式
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
- */
-export type DepthTest = PerformanceConfiguration;
-
 /**
  * 渲染队列
  */
@@ -121,15 +113,6 @@ export interface RenderBatch {
    */
   priority: number;
 }
-
-// CommonRenderConfig 已废弃 - 使用 RendererConfiguration（来自 package/format.ts）替代
-// 为保持兼容性，创建类型别名
-import type { RendererConfiguration } from '../../package/format';
-
-/**
- * @deprecated 使用 RendererConfiguration 替代
- */
-export type CommonRenderConfig = RendererConfiguration;
 
 /**
  * 通用渲染统计

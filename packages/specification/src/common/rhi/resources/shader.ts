@@ -3,7 +3,8 @@
  * 定义着色器资源接口
  */
 
-import type { RHIShaderStage } from '../enums';
+import { Vector3Like } from '../../../core';
+import type { RHIBindGroupLayoutEntryType, RHIShaderStage } from '../types';
 
 /**
  * 着色器模块接口
@@ -55,7 +56,7 @@ export interface IRHIShaderModule {
       /**
        * 绑定类型
        */
-      type: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture';
+      type: RHIBindGroupLayoutEntryType;
 
       /**
        * 数组大小 (如适用)
@@ -75,12 +76,12 @@ export interface IRHIShaderModule {
       /**
        * 入口点阶段
        */
-      stage: 'vertex' | 'fragment' | 'compute';
+      stage: RHIShaderStage;
 
       /**
        * 计算着色器工作组大小(如适用)
        */
-      workgroupSize?: [number, number, number];
+      workgroupSize?: Vector3Like;
     }>;
   };
 

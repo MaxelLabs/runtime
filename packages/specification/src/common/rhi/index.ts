@@ -4,17 +4,15 @@
  */
 
 // 类型定义
-export * from './types/enums';
-export * from './types/states';
-export * from './types/descriptors';
+export * from './types';
 
 // 资源接口
-export * from './resources/index';
+export * from './resources';
 export * from './bindings';
 export * from './pipeline';
 
 // 渲染和计算通道
-export * from './passes/index';
+export * from './passes';
 
 // 设备接口和命令
 export * from './device';

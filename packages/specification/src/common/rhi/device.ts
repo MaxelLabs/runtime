@@ -3,13 +3,10 @@
  * 定义RHI设备接口
  */
 
-import type { IRHIBuffer } from './resources/buffer';
-import type { IRHITexture, IRHITextureView } from './resources/texture';
-import type { IRHIShaderModule } from './resources/shader';
+import type { IRHIBuffer, IRHITexture, IRHITextureView, IRHIShaderModule } from './resources';
 import type { IRHISampler, IRHIBindGroup, IRHIBindGroupLayout } from './bindings';
 import type { IRHIPipelineLayout, IRHIRenderPipeline, IRHIComputePipeline } from './pipeline';
-import type { IRHIRenderPass } from './passes/renderPass';
-import type { IRHIComputePass } from './passes/computePass';
+import type { IRHIRenderPass, IRHIComputePass } from './passes';
 import type {
   RHIBufferDescriptor,
   RHITextureDescriptor,
@@ -17,8 +14,8 @@ import type {
   RHIComputePipelineDescriptor,
   RHIShaderModuleDescriptor,
   RHISamplerDescriptor,
-} from './types/descriptors';
-import type { RHIFeatureFlags } from './types/enums';
+  RHIFeatureFlags,
+} from './types';
 import type { RHIBackend } from '../texture';
 
 /**

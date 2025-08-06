@@ -157,6 +157,18 @@ export enum EasingFunction {
 }
 
 /**
+ * 欧拉角顺序
+ */
+export enum EulerOrder {
+  XYZ = 'xyz',
+  XZY = 'xzy',
+  YXZ = 'yxz',
+  YZX = 'yzx',
+  ZXY = 'zxy',
+  ZYX = 'zyx',
+}
+
+/**
  * 对齐类型统一定义
  */
 export enum AlignmentType {
@@ -560,6 +572,22 @@ export enum ConstraintType {
   Top = 'top',
   Bottom = 'bottom',
   TopBottom = 'top-bottom',
+}
+
+/**
+ * 资源加载状态枚举
+ */
+export enum ResourceLoadState {
+  /** 未加载 */
+  UNLOADED = 'unloaded',
+  /** 加载中 */
+  LOADING = 'loading',
+  /** 已加载 */
+  LOADED = 'loaded',
+  /** 加载失败 */
+  FAILED = 'failed',
+  /** 已释放 */
+  RELEASED = 'released',
 }
 
 /**

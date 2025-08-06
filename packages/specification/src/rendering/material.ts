@@ -5,16 +5,25 @@
 
 import type {
   RHIFilterMode,
-  RHIBlendFactor,
   RHIBlendOperation,
   RHICompareFunction,
   RHIFrontFace,
   RHICullMode,
   RHITextureType,
+  RHIAddressMode,
+  RHIBlendFactor,
 } from '../common';
-import type { TextureWrapMode } from '../common/texture';
-import type { FillMode, InterpolationMode, MaterialProperties, IVector2, IColor, DataType, LoopMode } from '../core';
-import type { UsdPrim, UsdValue } from '../core/usd';
+import type {
+  FillMode,
+  InterpolationMode,
+  MaterialProperties,
+  DataType,
+  LoopMode,
+  Vector2Like,
+  ColorLike,
+  UsdPrim,
+  UsdValue,
+} from '../core';
 
 /**
  * 材质基础接口
@@ -317,8 +326,6 @@ export interface TextureReference {
   sampler?: MaterialTextureSampler;
 }
 
-// TextureType 已废弃 - 使用 RHITextureType 替代
-
 /**
  * 材质纹理采样器
  * 用于材质系统中的纹理采样配置
@@ -330,8 +337,40 @@ export interface MaterialTextureSampler {
   filter: RHIFilterMode;
   /**
    * 包装模式
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
    */
-  wrap: TextureWrapMode;
+  wrap: RHIAddressMode;
+
   /**
    * 各向异性过滤
    */
@@ -417,10 +456,8 @@ export interface BlendState {
   /**
    * 混合颜色
    */
-  blendColor?: IColor;
+  blendColor?: ColorLike;
 }
-
-// MaterialBlendOperation 已废弃 - 使用 RHIBlendOperation 替代
 
 /**
  * 深度状态
@@ -752,8 +789,6 @@ export interface ProceduralParameter {
   description?: string;
 }
 
-// ParameterType 已废弃 - 使用 DataType（来自 core/enums.ts）替代
-
 /**
  * 生成器类型
  */
@@ -839,11 +874,12 @@ export interface MaterialKeyframe {
   /**
    * 切线输入
    */
-  inTangent?: IVector2;
+
+  inTangent?: Vector2Like;
   /**
+
+
    * 切线输出
    */
-  outTangent?: IVector2;
+  outTangent?: Vector2Like;
 }
-
-// AnimationLoopMode 已废弃 - 使用 LoopMode（来自 core/enums.ts）替代

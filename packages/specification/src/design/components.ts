@@ -3,7 +3,7 @@
  * 包含组件库管理、组件定义和实例化
  */
 
-import type { CommonMetadata, AnimationProperties, InteractionProperties } from '../core/interfaces';
+import type { CommonMetadata, AnimationProperties, InteractionProperties, EventType } from '../core';
 import type { DesignComponentProperty, DesignComponentVariant } from './base';
 import type { DesignElement } from './elements';
 
@@ -121,7 +121,7 @@ export interface ComponentTransition {
   /**
    * 触发条件
    */
-  trigger: ComponentTrigger;
+  trigger: EventType;
   /**
    * 转换动画
    */
@@ -131,14 +131,6 @@ export interface ComponentTransition {
    */
   condition?: string;
 }
-
-// ComponentTrigger 已废弃 - 使用 EventType（来自 core/enums.ts）替代
-import type { EventType } from '../core/enums';
-
-/**
- * @deprecated 使用 EventType 替代
- */
-export type ComponentTrigger = EventType;
 
 /**
  * 设计组件库
@@ -200,14 +192,100 @@ export interface ComponentCategory {
   order?: number;
 }
 
-// ComponentLibraryConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
-// 为保持兼容性，创建类型别名
-import type { PerformanceConfiguration } from '../package/format';
-
 /**
- * @deprecated 使用 PerformanceConfiguration 替代
+ * 组件库配置
  */
-export type ComponentLibraryConfig = PerformanceConfiguration;
+export interface ComponentLibraryConfig {
+  /**
+   * 库的基础设置
+   */
+  baseSettings: {
+    /**
+     * 默认主题
+     */
+    defaultTheme?: string;
+    /**
+     * 命名约定
+     */
+    namingConvention: NamingConvention;
+    /**
+     * 组件前缀
+     */
+    componentPrefix?: string;
+  };
+  /**
+   * 构建配置
+   */
+  build: {
+    /**
+     * 输出格式
+     */
+    outputFormats: OutputFormat[];
+    /**
+     * 是否压缩
+     */
+    minify: boolean;
+    /**
+     * 是否生成源码映射
+     */
+    sourceMap: boolean;
+    /**
+     * 目标环境
+     */
+    target: string[];
+  };
+  /**
+   * 开发配置
+   */
+  development: {
+    /**
+     * 热重载
+     */
+    hotReload: boolean;
+    /**
+     * 调试模式
+     */
+    debug: boolean;
+    /**
+     * 预览端口
+     */
+    previewPort?: number;
+  };
+  /**
+   * 文档配置
+   */
+  documentation: {
+    /**
+     * 自动生成文档
+     */
+    autoGenerate: boolean;
+    /**
+     * 文档模板
+     */
+    template?: string;
+    /**
+     * 包含示例代码
+     */
+    includeExamples: boolean;
+  };
+  /**
+   * 质量控制
+   */
+  quality: {
+    /**
+     * 代码检查
+     */
+    linting: boolean;
+    /**
+     * 类型检查
+     */
+    typeChecking: boolean;
+    /**
+     * 测试覆盖率要求
+     */
+    testCoverage?: number;
+  };
+}
 
 /**
  * 命名约定
@@ -219,14 +297,35 @@ export enum NamingConvention {
   SnakeCase = 'snake_case',
 }
 
-// BuildConfig 已废弃 - 使用 BuildConfiguration（来自 package/format.ts）替代
-// 为保持兼容性，创建类型别名
-import type { BuildConfiguration } from '../package/format';
-
 /**
- * @deprecated 使用 BuildConfiguration 替代
+ * 构建配置
  */
-export type BuildConfig = BuildConfiguration;
+export interface BuildConfig {
+  /**
+   * 输出目录
+   */
+  outputDir: string;
+  /**
+   * 输出格式
+   */
+  formats: OutputFormat[];
+  /**
+   * 是否压缩
+   */
+  minify: boolean;
+  /**
+   * 是否生成类型定义
+   */
+  generateTypes: boolean;
+  /**
+   * 外部依赖
+   */
+  externals?: string[];
+  /**
+   * 插件配置
+   */
+  plugins?: Record<string, any>;
+}
 
 /**
  * 输出格式

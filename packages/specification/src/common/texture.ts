@@ -3,7 +3,9 @@
  * 定义所有系统共通的纹理相关类型
  */
 
-import type { RHITextureFormat, RHIFilterMode } from './rhi/types/enums';
+import type { ResourceLoadState } from '../core';
+import type { CacheConfiguration } from '../package';
+import type { RHITextureFormat, RHIFilterMode, RHIAddressMode } from './rhi';
 
 /**
  * RHI纹理数据类型
@@ -188,15 +190,15 @@ export interface CommonTextureConfig {
   /**
    * 水平包装模式
    */
-  wrapS: TextureWrapMode;
+  wrapS: RHIAddressMode;
   /**
    * 垂直包装模式
    */
-  wrapT: TextureWrapMode;
+  wrapT: RHIAddressMode;
   /**
    * 深度包装模式（3D纹理）
    */
-  wrapR?: TextureWrapMode;
+  wrapR?: RHIAddressMode;
   /**
    * 各向异性过滤级别
    */
@@ -214,13 +216,6 @@ export interface CommonTextureConfig {
    */
   colorSpace: string;
 }
-// TextureWrapMode 已废弃 - 使用 RHIAddressMode（来自 rhi/types/enums）替代
-import type { RHIAddressMode } from './rhi/types/enums';
-
-/**
- * @deprecated 使用 RHIAddressMode 替代
- */
-export type TextureWrapMode = RHIAddressMode;
 
 /**
  * 纹理数据
@@ -441,7 +436,7 @@ export interface TextureStream {
   /**
    * 加载状态
    */
-  loadingState: LoadState;
+  loadingState: ResourceLoadState;
   /**
    * 优先级
    */
@@ -500,14 +495,6 @@ export enum TextureStreamStrategy {
   Hybrid = 'hybrid',
 }
 
-// LoadState 已废弃 - 使用 ResourceLoadState（来自 @maxellabs/core/resource）替代
-// ResourceLoadState 提供了更完整的状态定义，包括 RELEASED 状态
-
-/**
- * @deprecated 使用 ResourceLoadState 替代
- */
-export type LoadState = 'unloaded' | 'loading' | 'loaded' | 'failed';
-
 /**
  * 纹理压缩配置
  */
@@ -529,9 +516,6 @@ export interface TextureCompressionConfig {
    */
   platformSettings?: Record<string, any>;
 }
-
-// TextureCache 简化为使用统一的缓存配置加特定扩展
-import type { CacheConfiguration } from '../package/format';
 
 /**
  * 纹理缓存（扩展统一缓存配置）

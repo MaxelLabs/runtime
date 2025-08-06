@@ -1,21 +1,21 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
 
-  - package-ecosystem: "npm"
-    directory: "/packages/math"
+  - package-ecosystem: 'npm'
+    directory: '/packages/math'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
 
-  - package-ecosystem: "npm"
-    directory: "/packages/core"
+  - package-ecosystem: 'npm'
+    directory: '/packages/core'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
 
-  - package-ecosystem: "npm"
-    directory: "/packages/spec"
+  - package-ecosystem: 'npm'
+    directory: '/packages/specification'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'

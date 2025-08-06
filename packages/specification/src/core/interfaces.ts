@@ -6,7 +6,7 @@
 import type { UsdValue } from './usd';
 import type { EasingFunction, MaterialType, BorderStyle, ClickFeedbackType, VisualEffectType } from './enums';
 import type { VersionInfo } from './base';
-import type { ColorLike, Vector3Like } from './math';
+import type { ColorLike, Matrix4Like, QuaternionLike, Vector3Like } from './math';
 
 /**
  * 视觉效果
@@ -74,31 +74,35 @@ export interface ClickEffect {
   visualEffect?: VisualEffect;
 }
 
-// /**
-//  * 基础变换接口（核心3D变换）
-//  */
-// export interface ITransform {
-//   /**
-//    * 位置
-//    */
-//   position: IVector3; // Vector3f
-//   /**
-//    * 旋转（四元数）
-//    */
-//   rotation: IQuaternion; // Quatf
-//   /**
-//    * 缩放
-//    */
-//   scale: IVector3; // Vector3f
-//   /**
-//    * 变换矩阵（可选，优先级高于位置/旋转/缩放）
-//    */
-//   matrix?: IMatrix4x4; // Matrix4d
-// }
 /**
  * 基础变换接口（核心3D变换）
  */
-export type ITransform = object;
+export interface ITransform {
+  /**
+   * 位置
+   */
+  position: Vector3Like;
+  /**
+   * 旋转（四元数）
+   */
+  rotation: QuaternionLike;
+  /**
+   * 缩放
+   */
+  scale: Vector3Like;
+  /**
+   * 变换矩阵（可选，优先级高于位置/旋转/缩放）
+   */
+  matrix?: Matrix4Like;
+  /**
+   * 锚点（可选）
+   */
+  anchor?: Vector3Like;
+  /**
+   * 变换空间
+   */
+  space?: TransformSpace;
+}
 
 /**
  * 渐变停止点
@@ -282,6 +286,20 @@ export interface RenderingProperties {
    * 3D边界框
    */
   boundingBox?: CoreBoundingBox;
+}
+
+/**
+ * 边界球
+ */
+export interface BoundingSphere {
+  /**
+   * 球心坐标
+   */
+  center: Vector3Like;
+  /**
+   * 半径
+   */
+  radius: number;
 }
 
 /**

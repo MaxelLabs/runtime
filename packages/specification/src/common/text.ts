@@ -4,15 +4,7 @@
  */
 
 import type { CommonElement } from './elements';
-import type { ElementType } from '../core/enums';
-import type { IColor, VerticalAlign } from '../core';
-import type { PerformanceConfiguration } from '../package/format';
-
-/**
- * 文本对齐方式
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
- */
-export type TextAlign = PerformanceConfiguration;
+import type { ElementType, ColorLike, VerticalAlign } from '../core';
 
 /**
  * 文本方向
@@ -52,9 +44,21 @@ export enum FontStyle {
 
 /**
  * 字体粗细
- * @deprecated 使用 PerformanceConfiguration 作为权威定义
  */
-export type FontWeight = PerformanceConfiguration;
+export enum FontWeight {
+  /**
+   * 细体
+   */
+  Light = 'light',
+  /**
+   * 正常
+   */
+  Normal = 'normal',
+  /**
+   * 粗体
+   */
+  Bold = 'bold',
+}
 
 /**
  * 文本装饰
@@ -143,6 +147,35 @@ export enum WordWrap {
    */
   NoWrap = 'nowrap',
 }
+/**
+ * 文本对齐方式
+ */
+export enum TextAlign {
+  /**
+   * 左对齐
+   */
+  Left = 'left',
+  /**
+   * 居中对齐
+   */
+  Center = 'center',
+  /**
+   * 右对齐
+   */
+  Right = 'right',
+  /**
+   * 两端对齐
+   */
+  Justify = 'justify',
+  /**
+   * 起始对齐（根据文本方向）
+   */
+  Start = 'start',
+  /**
+   * 结束对齐（根据文本方向）
+   */
+  End = 'end',
+}
 
 /**
  * 通用文本样式
@@ -179,7 +212,7 @@ export interface CommonTextStyle {
   /**
    * 文本颜色
    */
-  color?: IColor;
+  color?: ColorLike;
   /**
    * 文本对齐
    */
@@ -237,7 +270,7 @@ export interface TextShadow {
   /**
    * 阴影颜色
    */
-  color: IColor;
+  color: ColorLike;
 }
 
 /**
@@ -251,7 +284,7 @@ export interface TextStroke {
   /**
    * 描边颜色
    */
-  color: IColor;
+  color: ColorLike;
 }
 
 /**

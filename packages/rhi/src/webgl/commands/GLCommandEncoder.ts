@@ -1,19 +1,11 @@
-import type {
-  IRHIBuffer,
-  IRHICommandBuffer,
-  IRHICommandEncoder,
-  IRHIComputePass,
-  IRHIRenderPass,
-  IRHITexture,
-  IRHITextureView,
-} from '@maxellabs/core';
 import { WebGLRenderPass } from './GLRenderPass';
 import { WebGLCommandBuffer } from './GLCommandBuffer';
+import type { MSpec } from '@maxellabs/core';
 
 /**
  * WebGL命令编码器实现
  */
-export class WebGLCommandEncoder implements IRHICommandEncoder {
+export class WebGLCommandEncoder implements MSpec.IRHICommandEncoder {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private isWebGL2: boolean;
   private commands: Array<{
@@ -66,17 +58,19 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
   /**
    * 开始渲染通道
    */
+
   beginRenderPass(options: {
     colorAttachments: Array<{
-      view: IRHITextureView;
-      resolveTarget?: IRHITextureView;
+      view: MSpec.IRHITextureView;
+      resolveTarget?: MSpec.IRHITextureView;
       loadOp: 'load' | 'clear' | 'none';
       storeOp: 'store' | 'discard';
       clearColor?: [number, number, number, number];
     }>;
     depthStencilAttachment?: {
-      view: IRHITextureView;
+      view: MSpec.IRHITextureView;
       depthLoadOp: 'load' | 'clear' | 'none';
+
       depthStoreOp: 'store' | 'discard';
       clearDepth?: number;
       depthWriteEnabled?: boolean;
@@ -85,7 +79,7 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
       clearStencil?: number;
     };
     label?: string;
-  }): IRHIRenderPass {
+  }): MSpec.IRHIRenderPass {
     // 创建渲染通道
     const renderPass = new WebGLRenderPass(this.gl, options, this);
 
@@ -102,7 +96,7 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
    * 开始计算通道
    * 注意：WebGL不原生支持计算着色器，此方法可能在WebGL环境中不可用
    */
-  beginComputePass(options?: { label?: string }): IRHIComputePass {
+  beginComputePass(options?: { label?: string }): MSpec.IRHIComputePass {
     throw new Error('WebGL不支持计算着色器');
   }
 
@@ -110,9 +104,9 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
    * 复制缓冲区到缓冲区
    */
   copyBufferToBuffer(
-    source: IRHIBuffer,
+    source: MSpec.IRHIBuffer,
     sourceOffset: number,
-    destination: IRHIBuffer,
+    destination: MSpec.IRHIBuffer,
     destinationOffset: number,
     size: number
   ): void {
@@ -134,13 +128,14 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
    */
   copyBufferToTexture(
     source: {
-      buffer: IRHIBuffer;
+      buffer: MSpec.IRHIBuffer;
+
       offset?: number;
       bytesPerRow: number;
       rowsPerImage?: number;
     },
     destination: {
-      texture: IRHITexture;
+      texture: MSpec.IRHITexture;
       mipLevel?: number;
       origin?: [number, number, number];
     },
@@ -162,12 +157,12 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
    */
   copyTextureToBuffer(
     source: {
-      texture: IRHITexture;
+      texture: MSpec.IRHITexture;
       mipLevel?: number;
       origin?: [number, number, number];
     },
     destination: {
-      buffer: IRHIBuffer;
+      buffer: MSpec.IRHIBuffer;
       offset?: number;
       bytesPerRow: number;
       rowsPerImage?: number;
@@ -190,12 +185,12 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
    */
   copyTextureToTexture(
     source: {
-      texture: IRHITexture;
+      texture: MSpec.IRHITexture;
       mipLevel?: number;
       origin?: [number, number, number];
     },
     destination: {
-      texture: IRHITexture;
+      texture: MSpec.IRHITexture;
       mipLevel?: number;
       origin?: [number, number, number];
     },
@@ -217,7 +212,7 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
    * 这是为了兼容WebGPU的渲染架构，在WebGL中提供类似功能
    */
   copyTextureToCanvas(options: {
-    source: IRHITextureView;
+    source: MSpec.IRHITextureView;
     destination: HTMLCanvasElement;
     origin?: [number, number];
     extent?: [number, number];
@@ -232,7 +227,7 @@ export class WebGLCommandEncoder implements IRHICommandEncoder {
   /**
    * 结束命令编码，返回命令缓冲区
    */
-  finish(options?: { label?: string }): IRHICommandBuffer {
+  finish(options?: { label?: string }): MSpec.IRHICommandBuffer {
     // 创建命令缓冲区
     const commandBuffer = new WebGLCommandBuffer(this.gl, this.commands, options?.label || this.label);
 

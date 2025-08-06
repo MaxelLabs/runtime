@@ -3,7 +3,8 @@
  * 定义跨模块共享的基础材质类型
  */
 
-import type { IColor, BlendMode, CommonMetadata, MaterialType, LoopMode } from '../core';
+import type { ComparisonOperator } from '../animation';
+import type { ColorLike, BlendMode, CommonMetadata, MaterialType, LoopMode, Vector2Like } from '../core';
 
 /**
  * 通用纹理槽
@@ -46,11 +47,11 @@ export interface CommonTextureRef {
   /**
    * UV缩放
    */
-  scale?: [number, number];
+  scale?: Vector2Like;
   /**
    * UV偏移
    */
-  offset?: [number, number];
+  offset?: Vector2Like;
   /**
    * 旋转角度
    */
@@ -94,7 +95,7 @@ export interface CommonMaterialProperties {
   /**
    * 主颜色
    */
-  color: IColor;
+  color: ColorLike;
   /**
    * 透明度
    */
@@ -146,8 +147,6 @@ export interface UVAnimation {
    */
   playMode: LoopMode;
 }
-
-// UVAnimationMode 已废弃 - 使用 LoopMode（来自 core/enums.ts）替代
 
 /**
  * 通用材质实例
@@ -211,40 +210,56 @@ export interface MaterialCondition {
   operator: ComparisonOperator;
 }
 
-// 从 rendering 导入通用条件类型
-import type { ConditionType } from '../rendering/material';
-
 /**
- * 材质条件类型（使用通用ConditionType）
+ * 材质条件类型
  */
-export type MaterialConditionType = ConditionType;
-
-/**
- * @deprecated 使用 animation/index.ts 中的 ComparisonOperator 替代
- */
-export enum ComparisonOperator {
+export enum MaterialConditionType {
   /**
-   * 等于
+   * 设备类型（移动端/桌面端）
    */
-  Equal = 'equal',
+  DeviceType = 'device-type',
   /**
-   * 不等于
+   * 图形质量级别（低/中/高/超高）
    */
-  NotEqual = 'not-equal',
+  QualityLevel = 'quality-level',
   /**
-   * 大于
+   * 平台类型（iOS/Android/Web/Windows等）
    */
-  Greater = 'greater',
+  Platform = 'platform',
   /**
-   * 小于
+   * 图形API（OpenGL/Vulkan/Metal/DirectX等）
    */
-  Less = 'less',
+  GraphicsAPI = 'graphics-api',
   /**
-   * 大于等于
+   * GPU性能等级
    */
-  GreaterEqual = 'greater-equal',
+  GPUTier = 'gpu-tier',
   /**
-   * 小于等于
+   * 内存容量限制
    */
-  LessEqual = 'less-equal',
+  MemoryLimit = 'memory-limit',
+  /**
+   * 屏幕分辨率
+   */
+  ScreenResolution = 'screen-resolution',
+  /**
+   * 渲染特性支持（HDR/PBR/实时光照等）
+   */
+  FeatureSupport = 'feature-support',
+  /**
+   * 带宽限制（影响纹理质量）
+   */
+  BandwidthLimit = 'bandwidth-limit',
+  /**
+   * 电池状态（移动设备节能模式）
+   */
+  PowerMode = 'power-mode',
+  /**
+   * 用户偏好设置
+   */
+  UserPreference = 'user-preference',
+  /**
+   * 自定义条件
+   */
+  Custom = 'custom',
 }

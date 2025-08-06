@@ -3,8 +3,8 @@
  * 几何体和网格渲染相关类型定义
  */
 
-import type { BoundingBox, BoundingSphere } from '../core';
-import type { UsdPrim, UsdValue } from '../core/usd';
+import type { CommonBounds } from '../common';
+import type { CoreBoundingBox, UsdPrim, UsdValue } from '../core';
 
 /**
  * 几何体基础接口
@@ -72,11 +72,11 @@ export interface GeometryProperties {
   /**
    * 边界框
    */
-  boundingBox: BoundingBox;
+  boundingBox: CoreBoundingBox;
   /**
    * 边界球
    */
-  boundingSphere: BoundingSphere;
+  boundingSphere: CommonBounds;
   /**
    * 顶点数量
    */
@@ -221,14 +221,64 @@ export enum MaterialPurpose {
   Render = 'render',
 }
 
-// LODConfiguration 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
-// 为保持兼容性，创建类型别名
-import type { PerformanceConfiguration } from '../package/format';
-
 /**
- * @deprecated 使用 PerformanceConfiguration 替代
+ * LOD配置
  */
-export type LODConfiguration = PerformanceConfiguration;
+export interface LODConfiguration {
+  /**
+   * LOD级别列表
+   */
+  levels: LODLevel[];
+  /**
+   * 距离计算模式
+   */
+  distanceMode: DistanceMode;
+  /**
+   * 淡入淡出过渡
+   */
+  fadeTransition?: FadeTransition;
+  /**
+   * 是否启用LOD
+   */
+  enabled: boolean;
+  /**
+   * LOD偏差
+   */
+  bias: number;
+  /**
+   * 最大可见距离
+   */
+  maxDistance?: number;
+  /**
+   * 最小屏幕比例
+   */
+  minScreenRatio?: number;
+  /**
+   * LOD切换延迟（帧）
+   */
+  switchDelay?: number;
+  /**
+   * 强制LOD级别（调试用）
+   */
+  forceLODLevel?: number;
+  /**
+   * 动态LOD调整
+   */
+  dynamicAdjustment?: {
+    /**
+     * 是否启用
+     */
+    enabled: boolean;
+    /**
+     * 性能目标FPS
+     */
+    targetFPS: number;
+    /**
+     * 调整灵敏度
+     */
+    sensitivity: number;
+  };
+}
 
 /**
  * LOD 级别
@@ -710,13 +760,43 @@ export enum DeformationType {
   Procedural = 'procedural',
 }
 
-// SimplificationConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
-// 为保持兼容性，创建类型别名
-
 /**
- * @deprecated 使用 PerformanceConfiguration 替代
+ * 简化配置
  */
-export type SimplificationConfig = PerformanceConfiguration;
+export interface SimplificationConfig {
+  /**
+   * 简化算法
+   */
+  algorithm: SimplificationAlgorithm;
+  /**
+   * 目标三角形比例 (0-1)
+   */
+  targetRatio: number;
+  /**
+   * 最大误差阈值
+   */
+  maxError: number;
+  /**
+   * 边界保护
+   */
+  preserveBoundaries: boolean;
+  /**
+   * UV缝隙保护
+   */
+  preserveUVSeams: boolean;
+  /**
+   * 法线保护
+   */
+  preserveNormals: boolean;
+  /**
+   * 颜色保护
+   */
+  preserveColors: boolean;
+  /**
+   * 渐进式简化
+   */
+  progressive: boolean;
+}
 
 /**
  * 简化算法
@@ -740,13 +820,35 @@ export enum SimplificationAlgorithm {
   ProgressiveMesh = 'progressive-mesh',
 }
 
-// CompressionConfig 已废弃 - 使用 PerformanceConfiguration（来自 package/format.ts）替代
-// 为保持兼容性，创建类型别名
-
 /**
- * @deprecated 使用 PerformanceConfiguration 替代
+ * 压缩配置
  */
-export type CompressionConfig = PerformanceConfiguration;
+export interface CompressionConfig {
+  /**
+   * 顶点压缩
+   */
+  vertexCompression: VertexCompression;
+  /**
+   * 索引压缩
+   */
+  indexCompression: IndexCompression;
+  /**
+   * 属性压缩
+   */
+  attributeCompression: Record<string, AttributeCompression>;
+  /**
+   * 整体压缩算法
+   */
+  overallCompression?: 'gzip' | 'lz4' | 'zstd';
+  /**
+   * 压缩级别 (1-9)
+   */
+  compressionLevel: number;
+  /**
+   * 是否启用增量压缩
+   */
+  deltaCompression: boolean;
+}
 
 /**
  * 顶点压缩
@@ -837,19 +939,3 @@ export enum AttributeFormat {
    */
   Int = 'int',
 }
-
-// CachingConfig 已废弃 - 使用 CacheConfiguration（来自 package/format.ts）
-// GeoCacheStrategy 已废弃 - 使用 CacheStrategy（来自 core/base.ts）
-
-import type { CacheConfiguration } from '../package/format';
-import type { CacheStrategy } from '../core/base';
-
-/**
- * @deprecated 使用 CacheConfiguration 替代
- */
-export type CachingConfig = CacheConfiguration;
-
-/**
- * @deprecated 使用 CacheStrategy 替代
- */
-export type GeoCacheStrategy = CacheStrategy;

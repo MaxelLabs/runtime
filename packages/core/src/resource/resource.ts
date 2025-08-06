@@ -1,20 +1,5 @@
-import { ReferResource } from '../base/refer-resource';
-
-/**
- * 资源加载状态枚举
- */
-export enum ResourceLoadState {
-  /** 未加载 */
-  UNLOADED = 'unloaded',
-  /** 加载中 */
-  LOADING = 'loading',
-  /** 已加载 */
-  LOADED = 'loaded',
-  /** 加载失败 */
-  FAILED = 'failed',
-  /** 已释放 */
-  RELEASED = 'released',
-}
+import { ResourceLoadState } from '@maxellabs/specification';
+import { ReferResource } from '../base';
 
 /**
  * 资源类型枚举

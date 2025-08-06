@@ -3,11 +3,8 @@
  * 渲染状态接口定义
  */
 
-import type { BlendMode, RenderMode } from '../../core/enums';
-import type { RHICullMode } from '../rhi/types/enums';
-import type { DepthTest } from './rendering';
-
-// DepthTestMode 已废弃 - 使用 DepthTest 枚举替代（来自 ./rendering）
+import type { BlendMode, RenderMode } from '../../core/';
+import type { RHICompareFunction, RHICullMode } from '../rhi';
 
 /**
  * 通用渲染状态接口（扩展版本）
@@ -27,7 +24,7 @@ export interface CommonRenderState {
   /**
    * 深度测试模式（使用枚举类型）
    */
-  depthTest?: DepthTest;
+  depthTest?: RHICompareFunction;
 
   /**
    * 是否写入深度

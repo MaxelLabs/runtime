@@ -2,18 +2,21 @@
  * descriptors.ts
  * 包含所有RHI资源描述符的类型定义
  */
-
-import type { Color } from '@maxellabs/math';
-import type { RHITextureUsage } from '../../texture';
+import type { RHIVertexLayout, RHIColorBlendState, RHIDepthStencilState, RHIRasterizationState } from './states';
 import type {
-  IRHIShaderModule,
-  IRHIBindGroupLayout,
-  IRHIPipelineLayout,
+  RHITextureType,
+  RHIFilterMode,
+  RHIAddressMode,
+  RHICompareFunction,
+  RHIPrimitiveTopology,
   RHIBufferUsage,
   RHITextureFormat,
-} from '../index';
-import type { RHIVertexLayout, RHIColorBlendState, RHIDepthStencilState, RHIRasterizationState } from './states';
-import type { RHITextureType, RHIFilterMode, RHIAddressMode, RHICompareFunction, RHIPrimitiveTopology } from './enums';
+  RHITextureUsage,
+} from './enums';
+import type { ColorLike } from '../../../core';
+import type { IRHIShaderModule } from '../resources';
+import type { IRHIPipelineLayout } from '../pipeline';
+import type { IRHIBindGroupLayout } from '../bindings';
 
 /**
  * 缓冲区描述符
@@ -150,7 +153,7 @@ export interface RHISamplerDescriptor {
   /**
    * 边框颜色
    */
-  borderColor?: Color;
+  borderColor?: ColorLike;
 
   /**
    * 各向异性过滤级别
