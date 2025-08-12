@@ -23,7 +23,7 @@
 
 3. **生态与工具**
 
-   * WebGL：raw API / Three.js / regl.js / luma.gl
+   * WebGL：raw API / Three.js / Galacean / regl.js / luma.gl
    * WebGPU：直接使用 API / wgpu-matrix / webgpu-utils
    * 调试：Spector.js、WebGPU DevTools、WebGL Inspector
    * 构建：Vite / Webpack，ESBuild（加速调试）
