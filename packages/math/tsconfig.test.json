@@ -2,19 +2,22 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": ".",
-    "outDir": "dist",
+    "noEmit": true,
     "esModuleInterop": true,
+    "skipLibCheck": true,
     "moduleResolution": "node",
-    "types": ["node", "jest"]
+    "types": ["jest", "node"]
   },
   "include": [
     "src",
     "test",
     "../../types"
   ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ],
   "references": [
-    {
-      "path": "../specification"
-    }
+    { "path": "../specification" }
   ]
 }
