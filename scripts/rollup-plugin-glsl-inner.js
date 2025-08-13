@@ -1,7 +1,7 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
-export default function glslInner() {
+export function glsl() {
   return {
     name: 'rollup-plugin-glsl-inner',
     transform(code, id) {

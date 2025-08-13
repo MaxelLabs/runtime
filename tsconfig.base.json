@@ -17,21 +17,17 @@
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
+    "stripInternal": true,
     "moduleResolution": "node",
     "module": "ESNext",
     "target": "ESNext",
-    "lib": [
-      "DOM",
-      "ES2015",
-      "ESNext"
-    ],
+    "lib": ["DOM", "DOM.Iterable", "ES2015", "ESNext"],
     "paths": {
-      "@sruim/core": [
-        "./packages/core/src"
-      ],
-      "@sruim/math": [
-        "./packages/math/src"
-      ]
+      "@maxellabs/specification": ["./packages/specification/src"],
+      "@maxellabs/core": ["./packages/core/src"],
+      "@maxellabs/math": ["./packages/math/src"],
+      "@maxellabs/rhi": ["./packages/rhi/src"],
+      "@maxellabs/engine": ["./packages/engine/src"]
     }
   }
 }

@@ -1,0 +1,64 @@
+{
+  "name": "@maxellabs/engine",
+  "version": "0.0.8",
+  "description": "Maxel Engine",
+  "keywords": [
+    "maxel",
+    "engine",
+    "game",
+    "game engine"
+  ],
+  "module": "./dist/index.mjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "prebuild": "pnpm clean",
+    "build": "pnpm build:declaration && pnpm build:module",
+    "build:module": "rollup -c",
+    "build:declaration": "tsc -d --emitDeclarationOnly",
+    "clean": "rimraf dist",
+    "prepublishOnly": "pnpm build",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "contributors": [
+    {
+      "name": "Sruimeng"
+    }
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "dependencies": {
+    "@maxellabs/core": "workspace:*",
+    "@maxellabs/rhi": "workspace:*"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^18.15.11",
+    "@vitejs/plugin-legacy": "^5.2.2",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.5.0",
+    "rimraf": "^5.0.0",
+    "rollup": "^3.20.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.0.4",
+    "vite": "^4.3.0",
+    "vite-tsconfig-paths": "^4.0.0"
+  }
+}

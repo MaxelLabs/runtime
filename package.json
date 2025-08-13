@@ -4,12 +4,17 @@
   "scripts": {
     "dev": "pnpm --filter @galacean/effects-demo dev",
     "preview": "pnpm --filter @galacean/effects-demo preview",
-    "build": "pnpm --filter \"./packages/**\" build",
+    "build": "pnpm build:core && pnpm build:others",
+    "build:core": "pnpm --filter \"@maxellabs/specification\" build && pnpm --filter \"@maxellabs/math\" build",
+    "build:others": "pnpm --filter \"!@maxellabs/specification\" --filter \"!@maxellabs/math\" --filter \"./packages/**\" build",
+    "build:pipeline": "node ./scripts/build-pipeline.js",
     "build:plugins": "pnpm build && pnpm --filter \"./plugin-packages/**\" build",
     "build:docs": "pnpm build && pnpm build:plugins && typedoc",
-    "lint": "eslint --ext .ts .",
+    "dev:core": "pnpm --parallel --filter \"@maxellabs/specification\" --filter \"@maxellabs/math\" dev",
+    "dev:all": "pnpm --parallel dev",
+    "lint": "eslint packages --fix",
     "lint:fix": "eslint --fix --ext .ts .",
-    "test": "pnpm --filter @galacean/effects-test test",
+    "test": "pnpm --filter @maxellabs/test test",
     "version": "node ./scripts/update-version",
     "changelog": "git fetch origin && node ./scripts/print-changelog",
     "check:ts": "tsc -b ./tsconfig.check.json",
@@ -20,28 +25,54 @@
     "clean:all": "pnpm clean:artifacts && pnpm clean:declaration && pnpm clean:dist && pnpm clean:nm",
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky install",
-    "publish": "pnpm -r publish --no-git-checks --filter \"./packages/**\" --filter \"./plugin-packages/**\""
+    "prepublish": "pnpm build",
+    "publish": "pnpm -r publish --no-git-checks --filter \"./packages/**\"",
+    "publish:dry": "pnpm -r publish --dry-run --no-git-checks --filter \"./packages/**\"",
+    "test:watch": "pnpm --filter \"./packages/**\" test:watch",
+    "test:coverage": "pnpm --filter \"./packages/**\" test:coverage"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
   },
   "browserslist": [
     "iOS 9"
   ],
+  "workspaces": [
+    "packages/*",
+    "web-packages/*",
+    "plugin-packages/*"
+  ],
   "dependencies": {
-    "string-hash": "^1.1.3"
+    "@eslint/js": "^9.27.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-prettier": "^5.4.0",
+    "string-hash": "^1.1.3",
+    "typescript-eslint": "^8.32.1"
   },
   "devDependencies": {
-    "@commitlint/cli": "^13.2.1",
-    "@commitlint/config-conventional": "^18.4.3",
+    "@babel/core": "7.24.0",
+    "@babel/preset-env": "7.24.0",
+    "@babel/preset-typescript": "7.23.3",
+    "@commitlint/cli": "^19.4.1",
+    "@commitlint/config-conventional": "^19.4.1",
     "@manypkg/get-packages": "^2.2.0",
-    "@rollup/plugin-commonjs": "^21.1.0",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-inject": "^5.0.5",
     "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^13.3.0",
-    "@rollup/plugin-replace": "^5.0.2",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "^5.0.5",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.6",
     "@swc/core": "^1.4.13",
     "@swc/helpers": "^0.5.8",
     "@types/chai": "4.3.14",
     "@types/chai-spies": "1.0.6",
     "@types/mocha": "10.0.1",
+    "@types/node": "^22.14.0",
     "@types/wicg-file-system-access": "^2023.10.4",
     "@typescript-eslint/eslint-plugin": "^7.10.0",
     "@typescript-eslint/parser": "^7.10.0",
@@ -49,6 +80,7 @@
     "ansi-colors": "^4.1.3",
     "chalk": "^4.1.2",
     "concurrently": "^8.2.2",
+    "download": "^8.0.0",
     "enquirer": "^2.4.1",
     "eslint": "^8.56.0",
     "eslint-plugin-compat": "^4.2.0",
@@ -57,17 +89,21 @@
     "husky": "^9.0.11",
     "ip": "^2.0.1",
     "jsdom": "^22.1.0",
-    "lint-staged": "^11.2.6",
+    "lint-staged": "^15.2.2",
+    "minimist": "^1.2.8",
     "pnpm": "^8.15.7",
-    "rimraf": "^3.0.2",
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.5",
     "rollup": "^2.79.1",
     "rollup-plugin-swc3": "^0.11.0",
-    "simple-git": "^3.19.1",
+    "simple-git": "^3.28.0",
+    "ts-node": "^10.9.2",
     "tslib": "^2.6.2",
     "typedoc": "^0.25.12",
-    "typescript": "^5.4.5",
-    "vite": "^4.5.3",
+    "typescript": "5.4.3",
+    "vite": "4.5.3",
     "vite-plugin-externals": "^0.6.2",
     "vite-tsconfig-paths": "^4.2.2"
-  }
+  },
+  "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39"
 }

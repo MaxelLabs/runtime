@@ -2,7 +2,9 @@
   "name": "Sruim Runtime API",
   "entryPoints": [
     "packages/core",
-    "packages/spec",
+    "packages/rhi",
+    "packages/specification",
+    "packages/math"
   ],
   "entryPointStrategy": "packages",
   "out": "api",

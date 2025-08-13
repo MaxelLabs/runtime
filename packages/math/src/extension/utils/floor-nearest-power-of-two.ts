@@ -3,7 +3,7 @@
  * @param value
  * @returns
  */
-export function floorNearestPowerOfTwo (value: number): number {
+export function floorNearestPowerOfTwo(value: number): number {
   const n = Math.log(value) / Math.LN2;
   const m = (Math.pow(2, Math.ceil(n)) + Math.pow(2, Math.floor(n))) / 2;
 

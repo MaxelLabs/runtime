@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "composite": true,
+    "declaration": true // 生成声明文件
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "test/**/*", "**/*.test.ts"],
+  "references": [
+    {
+      "path": "../math"
+    },
+    {
+      "path": "../core"
+    }
+  ]
+}

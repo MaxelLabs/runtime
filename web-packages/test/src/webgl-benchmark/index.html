@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebGL性能基准测试</title>
+  <style>
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #2196F3;
+      margin-top: 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .description {
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    #results {
+      height: 400px;
+      overflow-y: auto;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+      font-family: monospace;
+      margin-bottom: 20px;
+      white-space: pre-wrap;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+    #startButton {
+      background-color: #4CAF50;
+      color: white;
+      flex: 1;
+    }
+    #startButton:hover {
+      background-color: #3d8b40;
+    }
+    #clearButton {
+      background-color: #f44336;
+      color: white;
+    }
+    #clearButton:hover {
+      background-color: #d32f2f;
+    }
+    .summary {
+      margin-top: 20px;
+      padding-top: 10px;
+      border-top: 1px solid #eee;
+    }
+    #webgl-canvas {
+      display: none;
+    }
+    .test-progress {
+      height: 4px;
+      background: #e0e0e0;
+      margin-bottom: 20px;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #2196F3;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>WebGL性能基准测试</h1>
+    
+    <div class="description">
+      <p>此工具用于测试WebGL渲染接口(RHI)的性能，包括缓冲区、纹理、着色器和渲染器操作。测试结果将实时显示在下方区域。</p>
+    </div>
+    
+    <div class="test-progress">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <div class="controls">
+      <button id="startButton">开始测试</button>
+      <button id="clearButton">清空结果</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <div class="summary" id="summary"></div>
+    
+    <canvas id="webgl-canvas" width="800" height="600"></canvas>
+  </div>
+
+  <script type="module">
+    import { startBenchmark } from './browser.ts';
+    
+    const resultsElement = document.getElementById('results');
+    const startButton = document.getElementById('startButton');
+    const clearButton = document.getElementById('clearButton');
+    const progressBar = document.getElementById('progressBar');
+    const summaryElement = document.getElementById('summary');
+    
+    // 重写console.log以显示在结果区域
+    const originalConsoleLog = console.log;
+    console.log = function(...args) {
+      originalConsoleLog.apply(console, args);
+      
+      const message = args.join(' ');
+      const line = document.createElement('div');
+      
+      // 对不同类型的输出设置不同样式
+      if (message.includes('===')) {
+        line.style.fontWeight = 'bold';
+        line.style.marginTop = '10px';
+        line.style.marginBottom = '5px';
+        line.style.color = '#2196F3';
+      } else if (message.includes('开始执行')) {
+        line.style.color = '#4CAF50';
+        line.style.fontWeight = 'bold';
+      } else if (message.includes('完成')) {
+        line.style.color = '#FF9800';
+      } else if (message.startsWith('-')) {
+        line.style.color = '#9E9E9E';
+      }
+      
+      line.textContent = message;
+      resultsElement.appendChild(line);
+      resultsElement.scrollTop = resultsElement.scrollHeight;
+    };
+    
+    startButton.addEventListener('click', async () => {
+      // 清空结果区域
+      resultsElement.innerHTML = '';
+      summaryElement.innerHTML = '';
+      
+      // 禁用按钮并更改文本
+      startButton.disabled = true;
+      startButton.textContent = '测试运行中...';
+      
+      // 重置并显示进度条
+      progressBar.style.width = '0%';
+      
+      try {
+        // 启动性能测试
+        console.log('开始WebGL性能基准测试...');
+        
+        // 模拟进度更新
+        const progressInterval = setInterval(() => {
+          const currentWidth = parseFloat(progressBar.style.width) || 0;
+          if (currentWidth < 90) {
+            progressBar.style.width = (currentWidth + 1) + '%';
+          }
+        }, 100);
+        
+        const results = await startBenchmark();
+        
+        // 完成进度
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+        
+        // 显示结果汇总
+        const totalTime = results.endTime - results.startTime;
+        summaryElement.innerHTML = `
+          <h3>测试汇总</h3>
+          <p>总测试时间: ${(totalTime / 1000).toFixed(2)}秒</p>
+          <p>测试总数: ${results.tests.length}</p>
+          <p>最快的测试: ${results.tests[0].name} (${results.tests[0].opsPerSecond.toLocaleString()} 操作/秒)</p>
+        `;
+      } catch (error) {
+        console.error('测试出错:', error);
+        resultsElement.innerHTML += `<div style="color: red">测试出错: ${error.message}</div>`;
+      } finally {
+        // 恢复按钮状态
+        startButton.disabled = false;
+        startButton.textContent = '开始测试';
+      }
+    });
+    
+    clearButton.addEventListener('click', () => {
+      resultsElement.innerHTML = '';
+      summaryElement.innerHTML = '';
+      progressBar.style.width = '0%';
+    });
+  </script>
+</body>
+</html> 

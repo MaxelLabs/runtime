@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>纹理映射 - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .container {
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    #J-canvas {
+      display: block;
+      cursor: grab;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    #J-canvas:active {
+      cursor: grabbing;
+    }
+    
+    .controls {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      max-width: 320px;
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    
+    .controls h3 {
+      margin: 0 0 12px 0;
+      color: #FF6B6B;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .controls p {
+      margin: 6px 0;
+      line-height: 1.5;
+    }
+    
+    .controls .description {
+      color: #ddd;
+      font-size: 13px;
+      margin-bottom: 15px;
+      line-height: 1.6;
+    }
+    
+    .controls .shortcuts {
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      padding-top: 15px;
+      margin-top: 15px;
+    }
+    
+    .controls .shortcuts h4 {
+      margin: 0 0 8px 0;
+      color: #4ECDC4;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .controls .shortcuts p {
+      margin: 4px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    
+    .tech-info {
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      padding-top: 15px;
+      margin-top: 15px;
+      font-size: 12px;
+      color: #bbb;
+    }
+    
+    .tech-info h4 {
+      margin: 0 0 8px 0;
+      color: #FFD93D;
+      font-size: 14px;
+    }
+    
+    .tech-info ul {
+      margin: 0;
+      padding-left: 16px;
+    }
+    
+    .tech-info li {
+      margin: 3px 0;
+      line-height: 1.4;
+    }
+    
+    .fps-counter {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #00ff00;
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      border: 1px solid rgba(0, 255, 0, 0.3);
+    }
+    
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 20px;
+      z-index: 999;
+      text-align: center;
+    }
+    
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .error-message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 0, 0, 0.95);
+      color: white;
+      padding: 25px;
+      border-radius: 12px;
+      font-family: monospace;
+      z-index: 1000;
+      max-width: 80%;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(255, 0, 0, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+  </div>
+  
+  <div class="controls">
+    <h3>🎨 纹理映射Demo</h3>
+    <p class="description">
+      展示高级纹理映射技术，包括多纹理混合、动态纹理坐标变换和程序化纹理生成。
+      观察棋盘格纹理和彩虹渐变纹理的实时混合效果。
+    </p>
+    
+    <div class="shortcuts">
+      <h4>⌨️ 控制</h4>
+      <p><strong>ESC</strong> 退出demo</p>
+      <p><strong>F11</strong> 全屏模式</p>
+      <p><strong>Space</strong> 重置动画</p>
+    </div>
+    
+    <div class="tech-info">
+      <h4>💡 技术特性</h4>
+      <ul>
+        <li>多纹理采样和混合</li>
+        <li>动态纹理坐标变换</li>
+        <li>程序化纹理生成</li>
+        <li>实时uniform更新</li>
+        <li>3D变换矩阵</li>
+        <li>波浪效果着色器</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="fps-counter" id="fps-counter">
+    FPS: --
+  </div>
+  
+  <div class="loading" id="loading">
+    正在加载纹理demo
+  </div>
+  
+  <script type="module" src="../src/texture.ts"></script>
+  
+  <script>
+    // FPS计数器
+    let frameCount = 0;
+    let lastTime = performance.now();
+    
+    function updateFPS() {
+      frameCount++;
+      const currentTime = performance.now();
+      
+      if (currentTime - lastTime >= 1000) {
+        const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+        const fpsElement = document.getElementById('fps-counter');
+        if (fpsElement) {
+          fpsElement.textContent = `FPS: ${fps}`;
+          
+          // 根据FPS改变颜色
+          if (fps >= 50) {
+            fpsElement.style.color = '#00ff00';
+            fpsElement.style.borderColor = 'rgba(0, 255, 0, 0.3)';
+          } else if (fps >= 30) {
+            fpsElement.style.color = '#ffff00';
+            fpsElement.style.borderColor = 'rgba(255, 255, 0, 0.3)';
+          } else {
+            fpsElement.style.color = '#ff0000';
+            fpsElement.style.borderColor = 'rgba(255, 0, 0, 0.3)';
+          }
+        }
+        
+        frameCount = 0;
+        lastTime = currentTime;
+      }
+      
+      requestAnimationFrame(updateFPS);
+    }
+    
+    // 隐藏加载提示
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const loading = document.getElementById('loading');
+        if (loading) {
+          loading.style.display = 'none';
+        }
+        updateFPS(); // 开始FPS计数
+      }, 1500);
+    });
+    
+    // 添加交互提示
+    let interactionHints = [
+      '🌈 观察纹理混合的动态变化！',
+      '🔄 物体在3D空间中旋转',
+      '⚡ 实时计算波浪效果',
+      '🎯 两种纹理的无缝混合',
+      '🔍 查看控制台了解技术细节'
+    ];
+    
+    let hintIndex = 0;
+    document.addEventListener('click', () => {
+      if (hintIndex < interactionHints.length) {
+        console.log(interactionHints[hintIndex]);
+        hintIndex++;
+      }
+    });
+    
+    // 键盘提示
+    document.addEventListener('keydown', (event) => {
+      if (event.code === 'Space') {
+        console.log('🔄 动画已重置！');
+      }
+    });
+  </script>
+</body>
+</html>

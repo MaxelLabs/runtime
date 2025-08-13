@@ -14,3 +14,15 @@ lib
 temp
 api
 www
+.windsurfrules
+*.d.ts
+*.d.ts.map
+
+.claude
+.task
+.cursor
+.cursorrules
+coverage
+packages/core/DEVELOPMENT_PLAN.md
+packages/math/DEVELOPMENT_PLAN.md
+DEVELOPMENT_PLAN.md

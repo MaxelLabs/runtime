@@ -1,0 +1,242 @@
+import type { EulerOrder, VertexAttribute } from './enums';
+
+/**
+ * 二维向量内部数据类型
+ */
+export type vec2 = [x: number, y: number];
+export type Vector2DataType = number[] | vec2 | Float32Array;
+
+/**
+ * 类欧拉角
+ */
+export interface EulerLike {
+  x: number;
+  y: number;
+  z: number;
+  order?: EulerOrder;
+}
+
+/**
+ * 类二维向量
+ */
+export interface Vector2Like {
+  x: number;
+  y: number;
+}
+
+/**
+ * 三维向量内部数据类型
+ *
+ */
+export type vec3 = [x: number, y: number, z: number];
+export type Vector3DataType = number[] | vec3 | Float32Array;
+
+/**
+ * 类三维向量
+ */
+export interface Vector3Like {
+  x: number;
+  y: number;
+  z: number;
+}
+
+/**
+ * 四维向量内部数据类型
+ */
+export type vec4 = [x: number, y: number, z: number, w: number];
+export type Vector4DataType = number[] | vec4 | Float32Array;
+
+/**
+ * 类四维向量
+ */
+export interface Vector4Like {
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+}
+
+/**
+ * 颜色内部数据类型
+ */
+export type ColorDataType = number[] | vec4 | Float32Array;
+
+/**
+ * 类四维向量
+ */
+export interface ColorLike {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+}
+
+/**
+ * 类二维矩阵
+ */
+export interface Matrix2Like {
+  m00: number;
+  m01: number;
+  m10: number;
+  m11: number;
+}
+
+/**
+ * 类三维矩阵
+ */
+export interface Matrix3Like {
+  m00: number;
+  m01: number;
+  m02: number;
+  m10: number;
+  m11: number;
+  m12: number;
+  m20: number;
+  m21: number;
+  m22: number;
+}
+
+/**
+ * 类四阶矩阵
+ */
+export interface Matrix4Like {
+  m00: number;
+  m01: number;
+  m02: number;
+  m03: number;
+  m10: number;
+  m11: number;
+  m12: number;
+  m13: number;
+  m20: number;
+  m21: number;
+  m22: number;
+  m23: number;
+  m30: number;
+  m31: number;
+  m32: number;
+  m33: number;
+}
+
+/**
+ * 四元数内部数据类型
+ */
+export interface QuaternionLike {
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+}
+
+/**
+ * 二维矩阵内部数据类型
+ */
+export type Matrix2DataType = number[] | [number, number, number, number] | Float32Array;
+
+/**
+ * 三维矩阵内部数据类型
+ */
+export type mat3 = [
+  m00: number,
+  m01: number,
+  m02: number,
+  m10: number,
+  m11: number,
+  m12: number,
+  m20: number,
+  m21: number,
+  m22: number,
+];
+export type Matrix3DataType = number[] | mat3 | Float32Array;
+
+/**
+ * 四阶矩阵内部数据类型
+ */
+export type mat4 = [
+  m00: number,
+  m01: number,
+  m02: number,
+  m03: number,
+  m10: number,
+  m11: number,
+  m12: number,
+  m13: number,
+  m20: number,
+  m21: number,
+  m22: number,
+  m23: number,
+  m30: number,
+  m31: number,
+  m32: number,
+  m33: number,
+];
+export type Matrix4DataType = number[] | mat4 | Float32Array;
+
+/**
+ * 欧拉角内部数据类型
+ */
+export type EulerDataType = EulerLike | number[] | vec3 | vec4 | Float32Array;
+
+/**
+ * 四元数内部数据类型
+ */
+export type QuaternionDataType = number[] | vec4 | Float32Array;
+
+/**
+ * 类二维包围盒
+ */
+export interface Box2Like {
+  min: Vector2Like;
+  max: Vector2Like;
+}
+
+/**
+ * 类三维包围盒
+ */
+export interface Box3Like {
+  min: Vector3Like;
+  max: Vector3Like;
+}
+
+/**
+ * 类球体
+ */
+export interface SphereLike {
+  center: Vector3Like;
+  radius: number;
+}
+
+/**
+ * 类三角形
+ */
+export interface TriangleLike {
+  p0: Vector3Like;
+  p1: Vector3Like;
+  p2: Vector3Like;
+}
+
+/**
+ * 类平面
+ */
+export interface PlaneLike {
+  distance: number;
+  normal: Vector3Like;
+}
+
+/**
+ * 顶点属性描述符
+ */
+export interface VertexAttributeDescriptor {
+  /** 属性类型 */
+  type: VertexAttribute;
+  /** 数据 */
+  data: Float32Array;
+  /** 组件数量 */
+  componentCount: number;
+  /** 是否归一化 */
+  normalized: boolean;
+  /** 步长 */
+  stride: number;
+  /** 偏移 */
+  offset: number;
+}

@@ -1,10 +1,19 @@
 {
   "references": [
     {
+      "path": "./packages/specification"
+    },
+    {
+      "path": "./packages/math"
+    },
+    {
+      "path": "./packages/rhi"
+    },
+    {
       "path": "./packages/core"
     },
     {
-      "path": "./packages/spec"
+      "path": "./packages/engine"
     }
   ],
   "files": []

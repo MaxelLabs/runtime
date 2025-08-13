@@ -13,7 +13,7 @@ export class Circle {
    * @param [center=new Vector2()] - 圆心
    * @param [radius=0] - 半径
    */
-  constructor (center = Vector2.ZERO, radius = 0) {
+  constructor(center = Vector2.ZERO, radius = 0) {
     this.center = center.clone();
     this.radius = radius;
   }
@@ -24,7 +24,7 @@ export class Circle {
    * @param radius - 半径
    * @returns
    */
-  set (center: Vector2, radius: number): this {
+  set(center: Vector2, radius: number): this {
     this.center = center.clone();
     this.radius = radius;
 
@@ -35,7 +35,7 @@ export class Circle {
    * 克隆圆
    * @returns 克隆结果
    */
-  clone (): Circle {
+  clone(): Circle {
     return new Circle().copyFrom(this);
   }
 
@@ -44,7 +44,7 @@ export class Circle {
    * @param circle - 复制对象
    * @returns 复制结果
    */
-  copyFrom (circle: Circle): this {
+  copyFrom(circle: Circle): this {
     this.center.copyFrom(circle.center);
     this.radius = circle.radius;
 
@@ -55,7 +55,7 @@ export class Circle {
    * 圆置空
    * @returns 置空结果
    */
-  makeEmpty (): this {
+  makeEmpty(): this {
     this.center = new Vector2();
     this.radius = 0;
 
@@ -66,7 +66,7 @@ export class Circle {
    * 圆判空
    * @returns 判空结果
    */
-  isEmpty (): boolean {
+  isEmpty(): boolean {
     // this is a more robust check for empty than ( volume <= 0 ) because volume can get positive with two negative axes
     return this.radius === 0;
   }
@@ -76,7 +76,7 @@ export class Circle {
    * @param [target=new Vector2()] - 目标结果对象
    * @returns 圆心
    */
-  getCenter (target: Vector2 = new Vector2()): Vector2 {
+  getCenter(target: Vector2 = new Vector2()): Vector2 {
     target.copyFrom(this.center);
 
     return target;
@@ -86,7 +86,7 @@ export class Circle {
    * 获取半径
    * @returns 半径
    */
-  getRadius (): number {
+  getRadius(): number {
     return this.radius;
   }
 
@@ -95,7 +95,7 @@ export class Circle {
    * @param point - 二维空间点
    * @returns 扩展结果
    */
-  expandByPoint (point: Vector2): this {
+  expandByPoint(point: Vector2): this {
     this.radius = this.center.distance(point);
 
     return this;
@@ -106,7 +106,7 @@ export class Circle {
    * @param scalar - 扩展大小
    * @returns 扩展结果
    */
-  expandByScalar (scalar: number): this {
+  expandByScalar(scalar: number): this {
     this.radius += scalar;
 
     return this;
@@ -117,7 +117,7 @@ export class Circle {
    * @param point - 二维空间点
    * @returns 包含判断结果
    */
-  containsPoint (point: Vector2): boolean {
+  containsPoint(point: Vector2): boolean {
     return this.center.distance(point) < this.radius;
   }
 
@@ -126,14 +126,15 @@ export class Circle {
    * @param box - 二维包围盒
    * @returns 包含判断结果
    */
-  containsBox (box: Box2): boolean {
-    for (let i = 0; i < 4; i++) {
-      if (!this.containsPoint(box.corners[i])) {
-        return false;
-      }
-    }
+  containsBox(box: Box2): boolean {
+    // 计算包围盒到圆心的最大距离
+    const boxCenter = box.getCenter();
+    const boxSize = box.getSize();
+    const boxHalfDiagonal = Math.sqrt(boxSize.x * boxSize.x + boxSize.y * boxSize.y) / 2;
+    const distanceToCenter = this.center.distance(boxCenter);
 
-    return true;
+    // 如果(圆心到包围盒中心的距离 + 包围盒对角线的一半) <= 圆的半径，则圆包含包围盒
+    return distanceToCenter + boxHalfDiagonal <= this.radius;
   }
 
   /**
@@ -141,7 +142,7 @@ export class Circle {
    * @param box - 二维包围盒
    * @returns 相交判断结果
    */
-  intersectsBox (box: Box2): boolean {
+  intersectsBox(box: Box2): boolean {
     // using 4 splitting planes to rule out intersections
     for (let i = 0; i < 4; i++) {
       if (this.containsPoint(box.corners[i])) {
@@ -157,7 +158,7 @@ export class Circle {
    * @param point - 二维空间点
    * @returns 距离
    */
-  distanceToPoint (point: Vector2): number {
+  distanceToPoint(point: Vector2): number {
     return this.center.distance(point) - this.radius;
   }
 
@@ -166,7 +167,7 @@ export class Circle {
    * @param circle - 二维圆
    * @returns 求交结果
    */
-  intersect (circle: Circle): this {
+  intersect(circle: Circle): this {
     this.center = this.center.add(circle.center);
     this.radius = this.radius + circle.radius - this.center.distance(circle.center);
     this.radius = this.radius < 0 ? 0 : this.radius;
@@ -179,7 +180,7 @@ export class Circle {
    * @param circle - 二维圆
    * @returns 求并结果
    */
-  union (circle: Circle): this {
+  union(circle: Circle): this {
     this.center = this.center.add(circle.center);
     this.radius = (this.radius + circle.radius + this.center.distance(circle.center)) / 2;
 
@@ -191,7 +192,7 @@ export class Circle {
    * @param offset - 二维向量
    * @returns 位移结果
    */
-  translate (offset: Vector2): this {
+  translate(offset: Vector2): this {
     this.center.add(offset);
 
     return this;
@@ -202,7 +203,7 @@ export class Circle {
    * @param circle - 二维圆
    * @returns 判等结果
    */
-  equals (circle: Circle): boolean {
+  equals(circle: Circle): boolean {
     return this.center.equals(circle.center) && this.radius === circle.radius;
   }
 }

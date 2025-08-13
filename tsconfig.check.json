@@ -3,5 +3,18 @@
   "compilerOptions": {
     "noEmit": true
   },
-  "exclude": ["**/dist/**", "node_modules", "**/devtools/**"]
+  "exclude": [
+    "**/dist/**",
+    "node_modules",
+    "**/devtools/**",
+    "**/temp/**",
+    "**/test/**",
+    "**/tests/**",
+    "**/test-helpers/**",
+    "**/test-utils/**",
+    "**/test-helpers.ts",
+    "**/test-utils.ts",
+    "**/demo",
+    "**/vite.config.ts"
+  ]
 }

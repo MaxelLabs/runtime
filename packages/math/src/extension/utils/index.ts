@@ -8,19 +8,15 @@ export { IntervalType, isRangeIn } from './is-range-in';
 
 let seed = 1234567;
 
-export const fixed = (value: number, size: number): number => Math.round(value * Math.pow(10, size)) / Math.pow(10, size);
+export const fixed = (value: number, size: number): number =>
+  Math.round(value * Math.pow(10, size)) / Math.pow(10, size);
 
 // compute euclidian modulo of m % n
 // https://en.wikipedia.org/wiki/Modulo_operation
 export const euclideanModulo = (n: number, m: number): number => ((n % m) + m) % m;
 
-export const mapLinear = (
-  x: number,
-  a1: number,
-  a2: number,
-  b1: number,
-  b2: number,
-): number => b1 + ((x - a1) * (b2 - b1)) / (a2 - a1);
+export const mapLinear = (x: number, a1: number, a2: number, b1: number, b2: number): number =>
+  b1 + ((x - a1) * (b2 - b1)) / (a2 - a1);
 
 // https://www.gamedev.net/tutorials/programming/general-and-gameplay-programming/inverse-lerp-a-super-useful-yet-often-overlooked-function-r5230/
 export const inverseLerp = (x: number, y: number, value: number): number => {
@@ -36,8 +32,12 @@ export const pingpong = (x: number, length = 1): number => length - Math.abs(euc
 
 // http://en.wikipedia.org/wiki/Smoothstep
 export const smoothstep = (x: number, min: number, max: number): number => {
-  if (x <= min) { return 0; }
-  if (x >= max) { return 1; }
+  if (x <= min) {
+    return 0;
+  }
+  if (x >= max) {
+    return 1;
+  }
 
   x = (x - min) / (max - min);
 
@@ -45,8 +45,12 @@ export const smoothstep = (x: number, min: number, max: number): number => {
 };
 
 export const smootherstep = (x: number, min: number, max: number): number => {
-  if (x <= min) { return 0; }
-  if (x >= max) { return 1; }
+  if (x <= min) {
+    return 0;
+  }
+  if (x >= max) {
+    return 1;
+  }
 
   x = (x - min) / (max - min);
 
@@ -64,7 +68,9 @@ export const randFloatSpread = (range: number): number => range * (0.5 - Math.ra
 
 // Deterministic pseudo-random float in the interval [ 0, 1 ]
 export const seededRandom = (s: number): number => {
-  if (s !== undefined) { seed = s % 2147483647; }
+  if (s !== undefined) {
+    seed = s % 2147483647;
+  }
   // Park-Miller algorithm
   seed = (seed * 16807) % 2147483647;
 
@@ -77,7 +83,7 @@ export const ceilPowerOfTwo = (value: number): number => Math.pow(2, Math.ceil(M
 
 export const floorPowerOfTwo = (value: number): number => Math.pow(2, Math.floor(Math.log(value) / Math.LN2));
 
-export function modByFloat (number: number, mod: number): number {
+export function modByFloat(number: number, mod: number): number {
   const left = number % mod;
 
   number -= left;

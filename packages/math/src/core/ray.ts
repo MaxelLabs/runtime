@@ -1,5 +1,5 @@
+import type { Box3Like, PlaneLike, SphereLike, TriangleLike } from '@maxellabs/specification';
 import type { Matrix4 } from './matrix4';
-import type { Box3Like, PlaneLike, SphereLike, TriangleLike } from './type';
 import { Vector3 } from './vector3';
 
 /**
@@ -25,7 +25,7 @@ export class Ray {
    * @param [origin] - 原点，默认是 (0, 0, 0)
    * @param [direction] - 方向，默认是 (1, 0, 0)
    */
-  constructor (origin = Vector3.ZERO, direction = Vector3.X) {
+  constructor(origin = Vector3.ZERO, direction = Vector3.X) {
     // 注意这里必须拷贝
     this.origin.copyFrom(origin);
     this.direction.copyFrom(direction).normalize();
@@ -37,7 +37,7 @@ export class Ray {
    * @param direction - 方向
    * @returns
    */
-  set (origin: Vector3, direction: Vector3): this {
+  set(origin: Vector3, direction: Vector3): this {
     this.origin.copyFrom(origin);
     this.direction.copyFrom(direction).normalize();
 
@@ -48,7 +48,7 @@ export class Ray {
    * 光线克隆
    * @returns 克隆结果
    */
-  clone (): Ray {
+  clone(): Ray {
     return new Ray(this.origin, this.direction);
   }
 
@@ -57,7 +57,7 @@ export class Ray {
    * @param ray - 要拷贝对象
    * @returns 拷贝结果
    */
-  copyFrom (ray: Ray): this {
+  copyFrom(ray: Ray): this {
     return this.set(ray.origin, ray.direction);
   }
 
@@ -66,7 +66,7 @@ export class Ray {
    * @param t - 光线的系数 t
    * @returns
    */
-  recast (t: number): this {
+  recast(t: number): this {
     this.origin.copyFrom(this.at(t, Ray.tempVec0));
 
     return this;
@@ -78,7 +78,7 @@ export class Ray {
    * @param [out] - 计算的点
    * @returns
    */
-  at (t: number, out?: Vector3): Vector3 {
+  at(t: number, out?: Vector3): Vector3 {
     const ret = out ? out : new Vector3();
 
     ret.copyFrom(this.origin);
@@ -91,7 +91,7 @@ export class Ray {
    * @param other - 其他对象
    * @returns
    */
-  equals (other: Ray): boolean {
+  equals(other: Ray): boolean {
     return this.origin.equals(other.origin) && this.direction.equals(other.direction);
   }
 
@@ -100,7 +100,7 @@ export class Ray {
    * @param m - 变换矩阵
    * @returns
    */
-  applyMatrix (m: Matrix4): this {
+  applyMatrix(m: Matrix4): this {
     this.origin.applyProjectionMatrix(m);
     this.direction.applyNormalMatrix(m);
 
@@ -113,7 +113,7 @@ export class Ray {
    * @param [out] - 交点
    * @returns
    */
-  intersectBox (box: Box3Like, out?: Vector3): Vector3 | undefined {
+  intersectBox(box: Box3Like, out?: Vector3): Vector3 | undefined {
     const { x: ox, y: oy, z: oz } = this.origin;
     const { x: dx, y: dy, z: dz } = this.direction;
     const { x: bxmin, y: bymin, z: bzmin } = box.min;
@@ -130,6 +130,7 @@ export class Ray {
       tmin = (bxmax - ox) * invdirx;
       tmax = (bxmin - ox) * invdirx;
     }
+
     if (invdiry >= 0) {
       tymin = (bymin - oy) * invdiry;
       tymax = (bymax - oy) * invdiry;
@@ -137,21 +138,19 @@ export class Ray {
       tymin = (bymax - oy) * invdiry;
       tymax = (bymin - oy) * invdiry;
     }
-    if ((tmin > tymax) || (tymin > tmax)) {
+
+    if (tmin > tymax || tymin > tmax) {
       return;
     }
-    if (tymin > tmin || tmin !== tmin) {
+
+    if (tymin > tmin || Number.isNaN(tmin)) {
       tmin = tymin;
     }
-    if (tymax < tmax || tmax !== tmax) {
+
+    if (tymax < tmax || Number.isNaN(tmax)) {
       tmax = tymax;
     }
-    if (tymin > tmin || tmin !== tmin) {
-      tmin = tymin;
-    }
-    if (tymax < tmax || tmax !== tmax) {
-      tmax = tymax;
-    }
+
     if (invdirz >= 0) {
       tzmin = (bzmin - oz) * invdirz;
       tzmax = (bzmax - oz) * invdirz;
@@ -159,15 +158,19 @@ export class Ray {
       tzmin = (bzmax - oz) * invdirz;
       tzmax = (bzmin - oz) * invdirz;
     }
-    if ((tmin > tzmax) || (tzmin > tmax)) {
+
+    if (tmin > tzmax || tzmin > tmax) {
       return;
     }
-    if (tzmin > tmin || tmin !== tmin) {
+
+    if (tzmin > tmin || Number.isNaN(tmin)) {
       tmin = tzmin;
     }
-    if (tzmax < tmax || tmax !== tmax) {
+
+    if (tzmax < tmax || Number.isNaN(tmax)) {
       tmax = tzmax;
     }
+
     if (tmax < 0) {
       return;
     }
@@ -181,13 +184,12 @@ export class Ray {
    * @param [out] - 交点
    * @returns
    */
-  intersectPlane (plane: PlaneLike, out?: Vector3): Vector3 | undefined {
+  intersectPlane(plane: PlaneLike, out?: Vector3): Vector3 | undefined {
     const normal = plane.normal as Vector3;
     const distance = plane.distance;
     const denominator = normal.dot(this.direction);
 
     if (denominator === 0) {
-
       // line is coplanar, return origin
       const t = normal.dot(this.origin) + distance;
 
@@ -199,10 +201,9 @@ export class Ray {
 
       // Null is preferable to undefined since undefined means.... it is undefined
       return;
-
     }
 
-    const t = - (this.origin.dot(normal) + distance) / denominator;
+    const t = -(this.origin.dot(normal) + distance) / denominator;
 
     // Return if the ray never intersects the plane
 
@@ -215,7 +216,7 @@ export class Ray {
    * @param [out] - 交点
    * @returns
    */
-  intersectSphere (sphere: SphereLike, out?: Vector3): Vector3 | undefined {
+  intersectSphere(sphere: SphereLike, out?: Vector3): Vector3 | undefined {
     const center = sphere.center as Vector3;
     const vector = Ray.tempVec0.subtractVectors(center, this.origin);
     const tca = vector.dot(this.direction);
@@ -253,7 +254,7 @@ export class Ray {
    * @param [backfaceCulling] - 是否背面剔除
    * @returns
    */
-  intersectTriangle (triangle: TriangleLike, out?: Vector3, backfaceCulling?: boolean): Vector3 | undefined {
+  intersectTriangle(triangle: TriangleLike, out?: Vector3, backfaceCulling?: boolean): Vector3 | undefined {
     // FIXME: 交换out和backfaceCulling
     // Compute the offset origin, edges, and normal.
 
@@ -280,8 +281,8 @@ export class Ray {
       }
       sign = 1;
     } else if (DdN < 0) {
-      sign = - 1;
-      DdN = - DdN;
+      sign = -1;
+      DdN = -DdN;
     } else {
       return;
     }
@@ -307,7 +308,7 @@ export class Ray {
     }
 
     // Line intersects triangle, check if ray does.
-    const QdN = - sign * diff.dot(normal);
+    const QdN = -sign * diff.dot(normal);
 
     // t < 0, no intersection
     if (QdN < 0) {

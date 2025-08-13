@@ -1,4 +1,8 @@
 packages:
-   - packages/*
-   - plugin-packages/*
-   - web-packages/*
+  # 基础库优先构建
+  - 'packages/specification'
+  - 'packages/math'
+  # 其他依赖库
+  - 'packages/*'
+  - 'plugin-packages/*'
+  - 'web-packages/*'
