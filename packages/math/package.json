@@ -41,6 +41,9 @@
     "registry": "https://registry.npmjs.org"
   },
   "devDependencies": {
-    "@maxellabs/specification": "workspace:*"
+    "@maxellabs/specification": "workspace:*",
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.3.1"
   }
 }

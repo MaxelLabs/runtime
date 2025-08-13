@@ -21,6 +21,7 @@ www
 .claude
 .cursor
 .cursorrules
+coverage
 packages/core/DEVELOPMENT_PLAN.md
 packages/math/DEVELOPMENT_PLAN.md
 DEVELOPMENT_PLAN.md
