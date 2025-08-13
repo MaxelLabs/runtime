@@ -45,7 +45,7 @@
     "@types/node": "^18.15.11",
     "@vitejs/plugin-legacy": "^5.2.2",
     "jest": "^30.0.5",
-    "jest-environment-jsdom": "^29.5.0",
+    "jest-environment-jsdom": "^30.0.5",
     "rimraf": "^5.0.0",
     "rollup": "^3.20.0",
     "ts-jest": "^29.1.0",
