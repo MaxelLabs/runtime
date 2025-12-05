@@ -583,10 +583,13 @@ export interface BaseAnimationConfig {
 }
 
 /**
- * 通用事件配置
+ * 完整事件配置（包含时间和回调）
  * 适用于动画、交互等所有需要事件的模块
+ *
+ * @description 继承自 generics.ts 中的 TimedEvent，添加回调支持
+ * 注意: 基础的 BaseEvent 定义在 generics.ts 中
  */
-export interface BaseEvent {
+export interface FullEventConfig {
   /**
    * 事件类型
    */
@@ -610,10 +613,13 @@ export interface BaseEvent {
 }
 
 /**
- * 通用控制器接口
+ * 完整播放控制器状态
  * 适用于动画、媒体播放等所有需要控制的模块
+ *
+ * @description 继承自 generics.ts 中的 PlayableController，添加完整状态
+ * 注意: 基础的 BaseController 定义在 generics.ts 中
  */
-export interface BaseController {
+export interface FullControllerState {
   /**
    * 当前播放状态
    */

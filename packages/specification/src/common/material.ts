@@ -4,7 +4,15 @@
  */
 
 import type { ComparisonOperator } from '../animation';
-import type { ColorLike, BlendMode, CommonMetadata, MaterialType, LoopMode, Vector2Like } from '../core';
+import type {
+  ColorLike,
+  BlendMode,
+  CommonMetadata,
+  MaterialType,
+  LoopMode,
+  Vector2Like,
+  BaseTextureRef,
+} from '../core';
 
 /**
  * 通用纹理槽
@@ -34,14 +42,16 @@ export enum CommonTextureSlot {
 
 /**
  * 通用纹理引用
+ *
+ * @description 继承 BaseTextureRef，添加通用纹理槽和 UV 变换属性
  */
-export interface CommonTextureRef {
+export interface CommonTextureRef extends Omit<BaseTextureRef, 'slot'> {
   /**
-   * 纹理ID
+   * 纹理ID (映射到 BaseTextureRef.assetId)
    */
   textureId: string;
   /**
-   * 纹理槽
+   * 纹理槽（使用通用纹理槽枚举）
    */
   slot: CommonTextureSlot;
   /**

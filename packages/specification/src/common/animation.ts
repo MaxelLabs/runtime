@@ -1,23 +1,264 @@
 /**
  * Maxellabs 通用动画
  * 定义所有系统共通的动画相关类型
+ *
+ * 注意:
+ * 1. AnimationKeyframe, AnimationEvent, AnimationMask 等基础类型定义在 frame.ts
+ * 2. AnimationState, AnimationTransition 等状态机相关类型定义在此处
+ * 以避免 common <-> animation 的循环依赖
  */
 
-import type { AnimationKeyframe } from './frame';
+// 从 frame.ts 导入基础类型
+import type { AnimationKeyframe, AnimationEvent, AnimationMask } from './frame';
+
+// 重新导出基础类型（向后兼容）
+export type { AnimationEvent, AnimationMask } from './frame';
+
 import type {
   BlendMode,
   LoopMode,
   EasingFunction,
   PlayState,
   BaseAnimationConfig,
-  BaseEvent,
   BaseController,
   BaseParameter,
-  EventType,
 } from '../core';
 
-// 动画状态定义
-import type { AnimationState, AnimationTransition } from '../animation';
+// ============================================================================
+// 动画条件相关类型 (从 animation/core.ts 移动)
+// ============================================================================
+
+/**
+ * 动画条件类型
+ */
+export enum AnimationConditionType {
+  /** 布尔值 */
+  Boolean = 'boolean',
+  /** 整数 */
+  Integer = 'integer',
+  /** 浮点数 */
+  Float = 'float',
+  /** 触发器 */
+  Trigger = 'trigger',
+}
+
+/**
+ * 比较运算符
+ */
+export enum ComparisonOperator {
+  /** 等于 */
+  Equal = 'equal',
+  /** 不等于 */
+  NotEqual = 'not-equal',
+  /** 大于 */
+  Greater = 'greater',
+  /** 小于 */
+  Less = 'less',
+  /** 大于等于 */
+  GreaterEqual = 'greater-equal',
+  /** 小于等于 */
+  LessEqual = 'less-equal',
+}
+
+/**
+ * 动画条件统一定义
+ */
+export interface AnimationCondition {
+  /**
+   * 条件ID
+   */
+  id: string;
+  /**
+   * 参数名称
+   */
+  parameter: string;
+  /**
+   * 条件类型
+   */
+  type: AnimationConditionType;
+  /**
+   * 条件值
+   */
+  value?: any;
+  /**
+   * 比较运算符
+   */
+  operator?: ComparisonOperator;
+}
+
+// ============================================================================
+// 动画状态机相关类型 (从 animation/stateMachine.ts 移动)
+// ============================================================================
+
+/**
+ * 动画行为类型
+ */
+export enum AnimationBehaviorType {
+  /** 进入状态时触发 */
+  OnStateEnter = 'on-state-enter',
+  /** 离开状态时触发 */
+  OnStateExit = 'on-state-exit',
+  /** 状态更新时触发 */
+  OnStateUpdate = 'on-state-update',
+  /** 状态机更新时触发 */
+  OnStateMachineEnter = 'on-state-machine-enter',
+  /** 状态机退出时触发 */
+  OnStateMachineExit = 'on-state-machine-exit',
+}
+
+/**
+ * 动画状态行为统一定义
+ */
+export interface AnimationStateBehavior {
+  /**
+   * 行为ID
+   */
+  id: string;
+  /**
+   * 行为类型
+   */
+  type: AnimationBehaviorType;
+  /**
+   * 行为参数
+   */
+  parameters?: Record<string, any>;
+  /**
+   * 触发条件
+   */
+  conditions?: AnimationCondition[];
+  /**
+   * 是否启用
+   */
+  enabled?: boolean;
+}
+
+/**
+ * 中断源
+ */
+export enum InterruptionSource {
+  /** 无中断 */
+  None = 'none',
+  /** 当前状态 */
+  CurrentState = 'current-state',
+  /** 下一个状态 */
+  NextState = 'next-state',
+  /** 当前状态然后下一个状态 */
+  CurrentStateThenNextState = 'current-state-then-next-state',
+  /** 下一个状态然后当前状态 */
+  NextStateThenCurrentState = 'next-state-then-current-state',
+}
+
+/**
+ * 动画转换统一定义
+ */
+export interface AnimationTransition {
+  /**
+   * 转换ID
+   */
+  id: string;
+  /**
+   * 源状态
+   */
+  from: string;
+  /**
+   * 目标状态
+   */
+  to: string;
+  /**
+   * 转换条件
+   */
+  conditions: AnimationCondition[];
+  /**
+   * 转换持续时间
+   */
+  duration: number;
+  /**
+   * 是否有退出时间
+   */
+  hasExitTime: boolean;
+  /**
+   * 退出时间
+   */
+  exitTime?: number;
+  /**
+   * 转换偏移
+   */
+  offset?: number;
+  /**
+   * 是否可中断
+   */
+  canTransitionToSelf?: boolean;
+  /**
+   * 中断源
+   */
+  interruptionSource?: InterruptionSource;
+}
+
+/**
+ * 动画状态统一定义
+ */
+export interface AnimationState {
+  /**
+   * 状态ID
+   */
+  id: string;
+  /**
+   * 状态名称
+   */
+  name: string;
+  /**
+   * 动画剪辑
+   */
+  clip: string;
+  /**
+   * 播放速度
+   */
+  speed: number;
+  /**
+   * 是否循环
+   */
+  loop: boolean;
+  /**
+   * 权重
+   */
+  weight: number;
+  /**
+   * 开始时间
+   */
+  startTime?: number;
+  /**
+   * 结束时间
+   */
+  endTime?: number;
+  /**
+   * 淡入时间
+   */
+  fadeInTime?: number;
+  /**
+   * 淡出时间
+   */
+  fadeOutTime?: number;
+  /**
+   * 状态行为
+   */
+  behaviors?: AnimationStateBehavior[];
+  /**
+   * 状态转换
+   */
+  transitions?: AnimationTransition[];
+  /**
+   * 是否激活
+   */
+  active?: boolean;
+  /**
+   * 状态参数
+   */
+  parameters?: Record<string, any>;
+}
+
+// ============================================================================
+// 通用动画配置和控制器
+// ============================================================================
 
 /**
  * 通用动画配置（扩展核心配置）
@@ -73,31 +314,7 @@ export interface CommonAnimationConfig extends BaseAnimationConfig {
   blendMode?: BlendMode;
 }
 
-/**
- * 动画事件（扩展核心事件）
- */
-export interface AnimationEvent extends BaseEvent {
-  /**
-   * 事件类型
-   */
-  type: EventType;
-  /**
-   * 事件名称
-   */
-  name?: string;
-  /**
-   * 触发时间（秒）
-   */
-  time: number;
-  /**
-   * 事件参数
-   */
-  parameters?: Record<string, any>;
-  /**
-   * 事件回调
-   */
-  callback?: string;
-}
+// AnimationEvent 已移动到 frame.ts，从那里重新导出
 
 /**
  * 动画控制器（扩展核心控制器）
@@ -193,27 +410,7 @@ export interface AnimationMixerLayer {
   mask?: AnimationMask;
 }
 
-/**
- * 动画遮罩
- */
-export interface AnimationMask {
-  /**
-   * 遮罩名称
-   */
-  name: string;
-  /**
-   * 包含的路径
-   */
-  includePaths: string[];
-  /**
-   * 排除的路径
-   */
-  excludePaths?: string[];
-  /**
-   * 权重
-   */
-  weight: number;
-}
+// AnimationMask 已移动到 frame.ts，从那里重新导出
 
 /**
  * 动画参数（扩展核心参数）

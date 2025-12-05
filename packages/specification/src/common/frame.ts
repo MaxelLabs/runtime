@@ -1,11 +1,24 @@
 /**
  * Maxellabs 通用帧动画元素
  * 定义所有系统共通的帧动画相关类型
+ *
+ * 注意: 这是动画系统的基础模块，AnimationKeyframe、AnimationTrack、AnimationEvent
+ * 等基础类型定义在此处，其他动画模块从这里导入
+ *
+ * Phase 2 重构: AnimationKeyframe 和 AnimationTrack 现在基于 core/generics.ts 中的统一泛型
  */
 
 import type { CommonElement } from './elements';
-import type { ElementType, InterpolationMode, AnimationProperties } from '../core';
-import type { AnimationMask, AnimationEvent } from './animation';
+import type {
+  ElementType,
+  InterpolationMode,
+  AnimationProperties,
+  BaseEvent,
+  EventType,
+  UnifiedKeyframe,
+  UnifiedAnimationTrack,
+  BlendMode,
+} from '../core';
 
 /**
  * 帧动画类型
@@ -76,47 +89,69 @@ export enum AnimationFrameDataType {
 
 /**
  * 关键帧
+ *
+ * @description 使用统一的 UnifiedKeyframe 泛型作为基础
+ * 保持向后兼容：AnimationKeyframe 是 UnifiedKeyframe<any> 的别名
  */
-export interface AnimationKeyframe {
+export type AnimationKeyframe = UnifiedKeyframe<any>;
+
+/**
+ * 动画事件（基础类型，扩展核心事件）
+ */
+export interface AnimationEvent extends BaseEvent {
   /**
-   * 时间（秒）
+   * 事件类型
+   */
+  type: EventType;
+  /**
+   * 事件名称
+   */
+  name?: string;
+  /**
+   * 触发时间（秒）
    */
   time: number;
   /**
-   * 值
+   * 事件参数
    */
-  value: any;
+  parameters?: Record<string, any>;
   /**
-   * 插值类型
+   * 事件回调
    */
-  interpolation: InterpolationMode;
+  callback?: string;
+}
+
+/**
+ * 动画遮罩
+ */
+export interface AnimationMask {
   /**
-   * 贝塞尔控制点（仅贝塞尔插值使用）
+   * 遮罩名称
    */
-  bezierControlPoints?: {
-    inTangent: [number, number];
-    outTangent: [number, number];
-  };
+  name: string;
   /**
-   * 缓动函数
+   * 包含的路径
    */
-  easing?: string;
+  includePaths: string[];
+  /**
+   * 排除的路径
+   */
+  excludePaths?: string[];
+  /**
+   * 权重
+   */
+  weight: number;
 }
 
 /**
  * 动画轨道
+ *
+ * @description 基于 UnifiedAnimationTrack 泛型，添加帧动画特有的 dataType 字段
+ * 保持向后兼容：保留所有原有属性
  */
-export interface AnimationTrack {
+export interface AnimationTrack extends Omit<UnifiedAnimationTrack<AnimationKeyframe>, 'property' | 'blendMode'> {
   /**
-   * 轨道名称
-   */
-  name: string;
-  /**
-   * 目标路径
-   */
-  targetPath: string;
-  /**
-   * 目标属性
+   * 目标属性（重命名为 propertyName 以保持兼容）
    */
   propertyName: string;
   /**
@@ -124,19 +159,7 @@ export interface AnimationTrack {
    */
   dataType: AnimationFrameDataType;
   /**
-   * 关键帧列表
-   */
-  keyframes: AnimationKeyframe[];
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
-  /**
-   * 权重
-   */
-  weight: number;
-  /**
-   * 混合模式
+   * 混合模式（特化为帧动画的混合模式）
    */
   blendMode?: 'override' | 'additive' | 'multiply';
 }

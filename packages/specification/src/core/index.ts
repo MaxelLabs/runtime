@@ -8,3 +8,4 @@ export * from './enums';
 export * from './interfaces';
 export * from './usd';
 export * from './math';
+export * from './generics';

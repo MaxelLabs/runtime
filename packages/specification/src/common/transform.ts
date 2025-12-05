@@ -1,6 +1,8 @@
 /**
  * Maxellabs 通用变换
  * 定义所有系统共通的变换相关类型
+ *
+ * Phase 2 重构: TransformKeyframe 和 TransformAnimationTrack 现在基于 core/generics.ts 中的统一泛型
  */
 
 import type {
@@ -12,6 +14,9 @@ import type {
   QuaternionLike,
   TransformSpace,
   EulerLike,
+  UnifiedKeyframe,
+  UnifiedAnimationTrack,
+  ITransform,
 } from '../core';
 
 /**
@@ -50,36 +55,14 @@ export interface CommonTransform2D {
 
 /**
  * 通用3D变换
+ *
+ * @description 继承 ITransform，添加欧拉角旋转支持
  */
-export interface CommonTransform3D {
-  /**
-   * 位置
-   */
-  position: Vector3Like;
-  /**
-   * 旋转（四元数）
-   */
-  rotation: QuaternionLike;
+export interface CommonTransform3D extends ITransform {
   /**
    * 欧拉角旋转（可选，与四元数互斥）
    */
   eulerRotation?: EulerLike;
-  /**
-   * 缩放
-   */
-  scale: Vector3Like;
-  /**
-   * 锚点
-   */
-  anchor?: Vector3Like;
-  /**
-   * 变换矩阵（可选，优先级高于其他属性）
-   */
-  matrix?: Matrix4Like;
-  /**
-   * 变换空间
-   */
-  space?: TransformSpace;
 }
 
 /**
@@ -230,48 +213,37 @@ export interface TransformHierarchy {
 
 /**
  * 变换关键帧
+ *
+ * @description 基于 UnifiedKeyframe 泛型，但使用 transform 而不是 value 以保持向后兼容
+ * 继承了 UnifiedKeyframe 的 interpolation、inTangent、outTangent、bezierControlPoints 等属性
  */
-export interface TransformKeyframe {
+export interface TransformKeyframe extends Omit<UnifiedKeyframe<CommonTransform>, 'value' | 'interpolation'> {
   /**
-   * 时间
-   */
-  time: number;
-  /**
-   * 变换值
+   * 变换值 (等价于 UnifiedKeyframe.value)
    */
   transform: CommonTransform;
   /**
-   * 插值类型
+   * 插值类型（特化为变换支持的插值方式）
    */
   interpolation: 'linear' | 'step' | 'bezier' | 'spline';
-  /**
-   * 缓动函数
-   */
-  easing?: string;
 }
 
 /**
  * 变换动画轨道
+ *
+ * @description 基于 UnifiedAnimationTrack 泛型，特化为变换属性
  */
-export interface TransformAnimationTrack {
+export interface TransformAnimationTrack extends Omit<UnifiedAnimationTrack<TransformKeyframe>, 'property' | 'targetPath'> {
   /**
-   * 轨道名称
-   */
-  name: string;
-  /**
-   * 目标属性
+   * 目标属性（特化为变换属性）
    */
   property: 'position' | 'rotation' | 'scale' | 'transform';
   /**
-   * 关键帧列表
+   * 目标路径（可选）
    */
-  keyframes: TransformKeyframe[];
+  targetPath?: string;
   /**
-   * 是否启用
+   * 数据类型标识
    */
-  enabled: boolean;
-  /**
-   * 权重
-   */
-  weight: number;
+  dataType?: 'transform';
 }

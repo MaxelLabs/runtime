@@ -23,6 +23,9 @@ import type {
   ColorLike,
   UsdPrim,
   UsdValue,
+  UnifiedKeyframe,
+  UnifiedAnimationTrack,
+  BaseTextureRef,
 } from '../core';
 
 /**
@@ -301,7 +304,7 @@ export interface MaterialProperty {
   /**
    * 变换
    */
-  transform?: TextureTransform;
+  transform?: MaterialTextureTransform;
   /**
    * 强度
    */
@@ -309,19 +312,21 @@ export interface MaterialProperty {
 }
 
 /**
- * 纹理引用
+ * 纹理引用（RHI 特化）
+ *
+ * @description 继承 BaseTextureRef，添加 RHI 特有的类型和采样器
  */
-export interface TextureReference {
+export interface TextureReference extends Omit<BaseTextureRef, 'sampler'> {
   /**
-   * 纹理路径
+   * 纹理路径 (映射到 BaseTextureRef.assetId)
    */
   path: string;
   /**
-   * 纹理类型
+   * 纹理类型（RHI 特有）
    */
   type: RHITextureType;
   /**
-   * 采样器
+   * 采样器（使用 RHI 特化采样器）
    */
   sampler?: MaterialTextureSampler;
 }
@@ -382,9 +387,12 @@ export interface MaterialTextureSampler {
 }
 
 /**
- * 纹理变换
+ * 材质纹理变换
+ *
+ * @description 使用元组类型的纹理变换，特化于材质系统
+ * 注意: 通用的 TextureTransform 使用 Vector2Like，定义在 generics.ts 中
  */
-export interface TextureTransform {
+export interface MaterialTextureTransform {
   /**
    * 偏移
    */
@@ -842,44 +850,30 @@ export interface MaterialAnimation {
 }
 
 /**
- * 材质动画轨道
+ * 材质关键帧
+ *
+ * @description 基于 UnifiedKeyframe 泛型，材质动画使用 any 类型值
+ * 保持向后兼容：MaterialKeyframe 是 UnifiedKeyframe<any> 的别名
  */
-export interface MaterialAnimationTrack {
+export type MaterialKeyframe = UnifiedKeyframe<any>;
+
+/**
+ * 材质动画轨道
+ *
+ * @description 基于 UnifiedAnimationTrack 泛型，特化为材质属性动画
+ */
+export interface MaterialAnimationTrack
+  extends Omit<UnifiedAnimationTrack<MaterialKeyframe>, 'property' | 'targetPath'> {
   /**
-   * 目标属性
+   * 目标属性 (使用 targetProperty 以保持向后兼容)
    */
   targetProperty: string;
   /**
-   * 关键帧
-   */
-  keyframes: MaterialKeyframe[];
-  /**
-   * 插值模式
+   * 插值模式 (覆盖默认，使轨道级插值更明确)
    */
   interpolation: InterpolationMode;
-}
-
-/**
- * 材质关键帧
- */
-export interface MaterialKeyframe {
   /**
-   * 时间
+   * 数据类型标识
    */
-  time: number;
-  /**
-   * 值
-   */
-  value: any;
-  /**
-   * 切线输入
-   */
-
-  inTangent?: Vector2Like;
-  /**
-
-
-   * 切线输出
-   */
-  outTangent?: Vector2Like;
+  dataType?: 'material';
 }
