@@ -5,7 +5,8 @@
  */
 
 import type { CommonTexture, CommonTextureConfig, TextureData } from '@maxellabs/specification';
-import type { IRHIDevice, IRHITexture } from '../../../specification/src/common/rhi';
+import type { IRHIDevice, IRHITexture } from '@maxellabs/specification';
+import { RHITextureType } from '@maxellabs/specification';
 import { EventDispatcher } from '../base/event-dispatcher';
 
 /**
@@ -413,7 +414,7 @@ export class TextureCube implements CommonTexture {
       height: this.config.height,
       format: this.mapTextureFormat(this.config.format),
       usage: this.mapTextureUsage(this.config.usage),
-      dimension: 'cube',
+      dimension: RHITextureType.Cube,
       mipLevelCount: this.config.mipmapLevels || 1,
       label: this.config.name,
     });

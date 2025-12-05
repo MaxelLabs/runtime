@@ -13,7 +13,7 @@ import {
   type IRHIBindGroupLayout,
   type IRHIPipelineLayout,
   RHITextureFormat,
-} from '../../../../specification/src/common/rhi';
+} from '@maxellabs/specification';
 import {
   RHIPrimitiveTopology,
   RHICullMode,
@@ -21,7 +21,7 @@ import {
   RHICompareFunction,
   RHIBlendFactor,
   RHIBlendOperation,
-} from '@maxellabs/math';
+} from '@maxellabs/specification';
 import type { Camera } from '../../camera/camera';
 import type { RenderElement } from '../render-element';
 import { RenderPassBase, type RenderPassConfig } from './render-pass-base';
@@ -286,7 +286,7 @@ export class OpaquePass extends RenderPassBase {
         primitiveTopology: RHIPrimitiveTopology.TRIANGLE_LIST,
         layout: this.pipelineLayout,
         rasterizationState: {
-          cullMode: RHICullMode.BACK,
+          cullMode: RHICullMode.Back,
           frontFace: RHIFrontFace.CCW,
         },
         depthStencilState: {
@@ -299,14 +299,14 @@ export class OpaquePass extends RenderPassBase {
             {
               color: {
                 enable: false,
-                srcFactor: RHIBlendFactor.SRC_ALPHA,
-                dstFactor: RHIBlendFactor.ONE_MINUS_SRC_ALPHA,
+                srcFactor: RHIBlendFactor.SrcAlpha,
+                dstFactor: RHIBlendFactor.OneMinusSrcAlpha,
                 operation: RHIBlendOperation.ADD,
               },
               alpha: {
                 enable: false,
-                srcFactor: RHIBlendFactor.SRC_ALPHA,
-                dstFactor: RHIBlendFactor.ONE_MINUS_SRC_ALPHA,
+                srcFactor: RHIBlendFactor.SrcAlpha,
+                dstFactor: RHIBlendFactor.OneMinusSrcAlpha,
                 operation: RHIBlendOperation.ADD,
               },
             },

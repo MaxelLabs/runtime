@@ -4,11 +4,11 @@
  * 负责纹理的创建、缓存、加载和生命周期管理
  */
 
-import type { IRHIDevice } from '../../../specification/src/common/rhi';
+import type { IRHIDevice } from '@maxellabs/specification';
 import { EventDispatcher } from '../base/event-dispatcher';
 import { Texture2D, type Texture2DOptions } from './texture2d';
 import { TextureCube, type TextureCubeOptions } from './texture-cube';
-import type { CommonTexture, CommonTextureConfig, TextureData } from '@maxellabs/math';
+import type { CommonTexture, CommonTextureConfig, TextureData } from '@maxellabs/specification';
 import { ResourceManagerEvent } from '../resource/resource-manager';
 
 // 删除重复的TextureManagerEventType，统一使用ResourceManagerEvent

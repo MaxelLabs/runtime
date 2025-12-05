@@ -13,8 +13,8 @@ import {
   type IRHIBindGroupLayout,
   type IRHIPipelineLayout,
   RHITextureFormat,
-} from '../../../../specification/src/common/rhi';
-import { RHIPrimitiveTopology, RHICullMode, RHIFrontFace, RHICompareFunction } from '@maxellabs/math';
+} from '@maxellabs/specification';
+import { RHIPrimitiveTopology, RHICullMode, RHIFrontFace, RHICompareFunction } from '@maxellabs/specification';
 import type { Camera } from '../../camera/camera';
 import type { RenderElement } from '../render-element';
 import { RenderPassBase, type RenderPassConfig } from './render-pass-base';
@@ -326,7 +326,7 @@ export class TransparentPass extends RenderPassBase {
         primitiveTopology: RHIPrimitiveTopology.TRIANGLE_LIST,
         layout: this.pipelineLayout,
         rasterizationState: {
-          cullMode: RHICullMode.NONE, // 透明物体通常不剔除背面
+          cullMode: RHICullMode.None, // 透明物体通常不剔除背面
           frontFace: RHIFrontFace.CCW,
         },
         depthStencilState: {

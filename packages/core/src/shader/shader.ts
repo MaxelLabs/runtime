@@ -5,9 +5,9 @@
  */
 import { ShaderData } from './shader-data';
 import { EventDispatcher } from '../base/event-dispatcher';
-import { IRHIDevice } from '@max/specification';
-import { IRHIShaderModule } from '@max/specification';
-import { IRHIRenderPipeline } from '@max/specification';
+import { IRHIDevice } from '@maxellabs/specification';
+import { IRHIShaderModule } from '@maxellabs/specification';
+import { IRHIRenderPipeline } from '@maxellabs/specification';
 
 /**
  * 着色器类型枚举

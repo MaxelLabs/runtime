@@ -11,21 +11,21 @@ import {
   MaterialType,
   UsdDataType,
   FillMode,
-  CullMode,
+  RHICullMode,
   RHIBlendFactor,
   RHIBlendOperation,
   RHICompareFunction,
   RHIFrontFace,
-} from '@maxellabs/math';
+} from '@maxellabs/specification';
 import type {
   MaterialProperties,
   UsdValue,
   IMaterial,
   ShaderNetwork,
-  RenderState,
+  MaterialRenderState,
   MaterialProperty,
   TextureReference,
-} from '@maxellabs/math';
+} from '@maxellabs/specification';
 import type { IRHIDevice } from '../../../specification/src/common/rhi/device';
 import type { IRHITexture } from '../../../specification/src/common/rhi/resources/texture';
 import type { IRHIBindGroup } from '../../../specification/src/common/rhi/bindings';
@@ -89,7 +89,7 @@ export class Material extends Resource implements IMaterial {
   /**
    * 渲染状态
    */
-  renderState?: RenderState;
+  renderState?: MaterialRenderState;
 
   /**
    * 材质关系
@@ -168,8 +168,8 @@ export class Material extends Resource implements IMaterial {
     this.renderState = {
       blendState: {
         enabled: false,
-        srcFactor: RHIBlendFactor.ONE,
-        dstFactor: RHIBlendFactor.ZERO,
+        srcFactor: RHIBlendFactor.One,
+        dstFactor: RHIBlendFactor.Zero,
         operation: RHIBlendOperation.ADD,
       },
       depthState: {
@@ -179,7 +179,7 @@ export class Material extends Resource implements IMaterial {
       },
       rasterState: {
         fillMode: FillMode.Solid,
-        cullMode: CullMode.Back,
+        cullMode: RHICullMode.Back,
         frontFace: RHIFrontFace.CCW,
         depthClampEnabled: false,
         scissorTestEnabled: false,
@@ -415,8 +415,8 @@ export class Material extends Resource implements IMaterial {
         break;
       case AlphaMode.Blend:
         this.renderState.blendState.enabled = true;
-        this.renderState.blendState.srcFactor = RHIBlendFactor.SRC_ALPHA;
-        this.renderState.blendState.dstFactor = RHIBlendFactor.ONE_MINUS_SRC_ALPHA;
+        this.renderState.blendState.srcFactor = RHIBlendFactor.SrcAlpha;
+        this.renderState.blendState.dstFactor = RHIBlendFactor.OneMinusSrcAlpha;
         break;
       case AlphaMode.Mask:
         this.renderState.blendState.enabled = false;
@@ -434,7 +434,7 @@ export class Material extends Resource implements IMaterial {
       return;
     }
 
-    this.renderState.rasterState.cullMode = doubleSided ? CullMode.None : CullMode.Back;
+    this.renderState.rasterState.cullMode = doubleSided ? RHICullMode.None : RHICullMode.Back;
     this.needsRecompile = true;
   }
 

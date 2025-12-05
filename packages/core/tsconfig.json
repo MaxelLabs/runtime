@@ -6,7 +6,7 @@
     "composite": true,
     "declaration": true // 生成声明文件
   },
-  "include": ["src", "../../types", "../specification/src/common/renderer", "../specification/src/common/rhi"],
+  "include": ["src", "../../types"],
   "references": [
     {
       "path": "../math"

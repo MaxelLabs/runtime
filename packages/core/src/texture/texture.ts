@@ -4,9 +4,14 @@
  * 提供纹理资源的基础功能和生命周期管理
  */
 
-import type { CommonTexture, CommonTextureConfig, PixelFormat, TextureData } from '@maxellabs/math';
-import type { IRHIDevice, IRHITexture, RHITextureFormat, RHITextureUsage } from '../../../specification/src/common/rhi';
-import { RHITextureType } from '../../../specification/src/common/rhi';
+import type { CommonTexture, CommonTextureConfig, PixelFormat, TextureData } from '@maxellabs/specification';
+import type { IRHIDevice, IRHITexture } from '@maxellabs/specification';
+import {
+  RHITextureFormat,
+  RHITextureUsage,
+  TextureUsage,
+  TextureTarget,
+} from '@maxellabs/specification';
 import type { ResourceLoadOptions } from '../resource/resource';
 import { Resource, ResourceType } from '../resource/resource';
 import { EventDispatcher } from '../base/event-dispatcher';
@@ -427,23 +432,42 @@ export class Texture extends Resource implements CommonTexture {
    * 映射纹理格式
    */
   protected mapTextureFormat(format: RHITextureFormat): RHITextureFormat {
-    // 这里需要根据规范包的格式映射到RHI格式
-    // 暂时返回RGBA8格式
-    return 'rgba8unorm';
+    return format;
   }
 
   /**
    * 映射纹理用途
    */
-  protected mapTextureUsage(usage: RHITextureUsage): RHITextureUsage {
-    return usage;
+  protected mapTextureUsage(usage: TextureUsage): RHITextureUsage {
+    switch (usage) {
+      case TextureUsage.RenderTarget:
+        return RHITextureUsage.RENDER_ATTACHMENT;
+      case TextureUsage.Static:
+      case TextureUsage.Dynamic:
+      case TextureUsage.Stream:
+      default:
+        return RHITextureUsage.TEXTURE_BINDING;
+    }
   }
 
   /**
    * 映射纹理维度
    */
-  protected mapTextureDimension(target: RHITextureType): RHITextureType {
-    return RHITextureType.TEXTURE_2D;
+  protected mapTextureDimension(target: TextureTarget): RHITextureType {
+    switch (target) {
+      case TextureTarget.Texture2D:
+        return RHITextureType.TEXTURE_2D;
+      case TextureTarget.Texture3D:
+        return RHITextureType.TEXTURE_3D;
+      case TextureTarget.TextureCube:
+        return RHITextureType.TEXTURE_CUBE;
+      case TextureTarget.Texture2DArray:
+        return RHITextureType.TEXTURE_2D_ARRAY;
+      case TextureTarget.TextureCubeArray:
+        return RHITextureType.TEXTURE_CUBE_ARRAY;
+      default:
+        return RHITextureType.TEXTURE_2D;
+    }
   }
 
   /**

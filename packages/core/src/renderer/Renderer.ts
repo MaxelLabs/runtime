@@ -7,17 +7,7 @@
 import type { Scene } from '../scene/scene';
 import type { Camera } from '../camera/camera';
 import { EventDispatcher } from '../base/event-dispatcher';
-
-// 暂时使用any类型，后续需要正确导入RHI类型
-export interface IRHIDevice {
-  createCommandEncoder(label?: string): IRHICommandEncoder;
-  submit(commandBuffers: any[]): void;
-  checkDeviceLost(): Promise<boolean>;
-}
-
-export interface IRHICommandEncoder {
-  finish(descriptor?: { label?: string }): any;
-}
+import type { IRHIDevice, IRHICommandEncoder } from '@maxellabs/specification';
 
 /**
  * 渲染器配置（统一定义，扩展RendererConfiguration）

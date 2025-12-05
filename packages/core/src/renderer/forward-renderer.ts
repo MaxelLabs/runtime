@@ -6,7 +6,7 @@
 
 import type { Scene } from '../scene/scene';
 import type { Camera } from '../camera/camera';
-import type { IRHIDevice, IRHITextureView } from '../../../specification/src/common/rhi';
+import type { IRHIDevice, IRHITextureView } from '@maxellabs/specification';
 import { Renderer, type RendererConfig } from './renderer';
 import { RenderQueue, type RenderQueueConfig } from './render-queue';
 import { OpaquePass, type OpaquePassConfig } from './passes/opaque-pass';

@@ -1,5 +1,5 @@
 import type { Entity } from './entity';
-import type { ITransform } from '@maxellabs/math';
+import type { ITransform, Vector3Like, QuaternionLike, Matrix4Like, TransformSpace } from '@maxellabs/specification';
 import { Vector3, Quaternion, Matrix4 } from '@maxellabs/math';
 import { Component } from './component';
 
@@ -17,13 +17,44 @@ export class Transform extends Component implements ITransform {
   private children: Transform[] = [];
 
   /** 本地位置 */
-  private position: Vector3 = new Vector3();
+  private _position: Vector3 = new Vector3();
 
   /** 本地旋转 */
-  private rotation: Quaternion = new Quaternion();
+  private _rotation: Quaternion = new Quaternion();
 
   /** 本地缩放 */
-  private scale: Vector3 = new Vector3(1, 1, 1);
+  private _scale: Vector3 = new Vector3(1, 1, 1);
+
+  get position(): Vector3 {
+    return this._position;
+  }
+  set position(value: Vector3Like) {
+    this._position.copyFrom(value);
+    this.localMatrixDirty = true;
+    this.worldMatrixDirty = true;
+    this.onTransformChanged();
+  }
+
+  get rotation(): Quaternion {
+    return this._rotation;
+  }
+  set rotation(value: QuaternionLike) {
+    this._rotation.copyFrom(value);
+    this.localMatrixDirty = true;
+    this.worldMatrixDirty = true;
+    this.directionsDirty = true;
+    this.onTransformChanged();
+  }
+
+  get scale(): Vector3 {
+    return this._scale;
+  }
+  set scale(value: Vector3Like) {
+    this._scale.copyFrom(value);
+    this.localMatrixDirty = true;
+    this.worldMatrixDirty = true;
+    this.onTransformChanged();
+  }
 
   /** 世界位置 */
   private worldPosition: Vector3 = new Vector3();
@@ -69,6 +100,9 @@ export class Transform extends Component implements ITransform {
   constructor(entity: Entity) {
     super(entity);
   }
+  matrix?: Matrix4Like | undefined;
+  anchor?: Vector3Like | undefined;
+  space?: TransformSpace | undefined;
 
   /**
    * 获取父变换

@@ -11,9 +11,10 @@ import { Material } from '../material/material';
 import { Geometry } from '../geometry/geometry';
 import { MeshRenderer } from '../components/mesh-renderer';
 import { Transform } from '../base/transform';
-import { VertexAttribute, Vector3 } from '@maxellabs/math';
-import { RHIIndexFormat } from '../../../specification/src/common/rhi/types/enums';
-import type { IRHIDevice } from '../../../specification/src/common/rhi';
+import { Vector3 } from '@maxellabs/math';
+import { VertexAttribute } from '@maxellabs/specification';
+import { RHIIndexFormat } from '@maxellabs/specification';
+import type { IRHIDevice } from '@maxellabs/specification';
 
 /**
  * 简单的立方体几何体类

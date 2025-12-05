@@ -1,10 +1,22 @@
-import type { GeometryPrim, BoundingBox, VertexAttributeDescriptor } from '@maxellabs/math';
-import { VertexAttribute } from '@maxellabs/math';
+import type {
+  GeometryProperties,
+  LODConfiguration,
+  MaterialBinding,
+  TopologyType,
+  GeometryType,
+  GeometryPrim,
+  CoreBoundingBox as BoundingBox,
+  VertexAttributeDescriptor,
+} from '@maxellabs/specification';
+import { VertexAttribute } from '@maxellabs/specification';
 import { Resource, ResourceType } from '../resource/resource';
 import type { ResourceLoadOptions } from '../resource/resource';
-import type { IRHIBuffer, IRHIDevice } from '../../../specification/src/common/rhi';
-import type { RHIVertexBufferLayout } from '../../../specification/src/common/rhi/types/states';
-import { RHIBufferUsage, RHIIndexFormat, RHIVertexFormat } from '../../../specification/src/common/rhi/types/enums';
+import type {
+  IRHIDevice,
+  IRHIBuffer,
+  RHIVertexBufferLayout,
+} from '@maxellabs/specification';
+import { RHIBufferUsage, RHIIndexFormat, RHIVertexFormat } from '@maxellabs/specification';
 
 /**
  * 几何体缓冲区数据
@@ -224,11 +236,11 @@ export abstract class Geometry extends Resource implements GeometryPrim {
     for (const [attribute, bufferData] of this.vertexBuffers) {
       if (!bufferData.rhiBuffer) {
         bufferData.rhiBuffer = this.device.createBuffer({
-          size: bufferData.data.byteLength,
-          usage: bufferData.usage,
-          initialData: bufferData.data,
-          label: `Geometry-${this.name}-${attribute}`,
-        });
+            size: bufferData.data.byteLength,
+            usage: bufferData.usage,
+            initialData: bufferData.data as any,
+            label: `Geometry-${this.name}-${attribute}`,
+          });
       }
     }
 
@@ -237,7 +249,7 @@ export abstract class Geometry extends Resource implements GeometryPrim {
       this.indexBuffer.rhiBuffer = this.device.createBuffer({
         size: this.indexBuffer.data.byteLength,
         usage: this.indexBuffer.usage,
-        initialData: this.indexBuffer.data,
+        initialData: this.indexBuffer.data as any,
         label: `Geometry-${this.name}-Index`,
       });
     }
@@ -271,7 +283,7 @@ export abstract class Geometry extends Resource implements GeometryPrim {
   private getAttributeFormat(descriptor: VertexAttributeDescriptor): RHIVertexFormat {
     // 根据描述符返回RHI格式枚举
     // 这里需要根据实际的RHI格式枚举来实现
-    return RHIVertexFormat.FLOAT32X3; // 默认格式，实际应该根据descriptor计算
+    return RHIVertexFormat.Float32x3; // 默认格式，实际应该根据descriptor计算
   }
 
   /**

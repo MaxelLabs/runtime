@@ -1,4 +1,4 @@
-import type { ObjectPoolStats } from './object-pool';
+import type { CoreObjectPoolStats } from './object-pool';
 import { ObjectPool } from './object-pool';
 import { EventDispatcher } from './event-dispatcher';
 
@@ -216,8 +216,8 @@ export class ObjectPoolManager extends EventDispatcher {
    * @param detailed 是否包含详细统计信息
    * @returns 对象池状态映射
    */
-  getAllPoolStats(detailed: boolean = false): Map<string, ObjectPoolStats> {
-    const stats = new Map<string, ObjectPoolStats>();
+  getAllPoolStats(detailed: boolean = false): Map<string, CoreObjectPoolStats> {
+    const stats = new Map<string, CoreObjectPoolStats>();
 
     for (const [id, pool] of this.pools.entries()) {
       const poolStats = pool.getStatus();
@@ -374,7 +374,7 @@ export class ObjectPoolManager extends EventDispatcher {
    * @param force 是否强制分析，忽略时间间隔
    * @returns 对象池状态映射，如果未到分析时间则返回null
    */
-  analyzePerformance(force: boolean = false): Map<string, ObjectPoolStats> | null {
+  analyzePerformance(force: boolean = false): Map<string, CoreObjectPoolStats> | null {
     const now = Date.now();
     const elapsed = now - this.lastAnalysisTime;
 
