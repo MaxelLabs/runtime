@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>图元拓扑类型 - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+      width: 100vw;
+      height: 100vh;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #J-canvas {
+      display: block;
+      cursor: crosshair;
+    }
+
+    .info-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      max-width: 320px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .controls h3 {
+      margin: 0 0 10px 0;
+      color: #9C27B0;
+      font-size: 16px;
+    }
+
+    .controls p {
+      margin: 5px 0;
+      line-height: 1.4;
+    }
+
+    .controls .description {
+      color: #ccc;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .controls .shortcuts {
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      padding-top: 10px;
+      margin-top: 10px;
+    }
+
+    .controls .shortcuts h4 {
+      margin: 0 0 5px 0;
+      color: #FFC107;
+      font-size: 14px;
+    }
+
+    .controls .shortcuts p {
+      margin: 2px 0;
+      font-family: monospace;
+      font-size: 11px;
+    }
+
+    .error-message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 0, 0, 0.9);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      font-family: monospace;
+      z-index: 1000;
+      max-width: 80%;
+      text-align: center;
+    }
+
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 18px;
+      z-index: 999;
+    }
+
+    .primitive-list {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 11px;
+    }
+
+    .primitive-list .item {
+      display: flex;
+      align-items: center;
+      margin: 4px 0;
+      padding: 4px 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    }
+
+    .primitive-list .key {
+      background: #9C27B0;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-right: 8px;
+      font-weight: bold;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .primitive-list .name {
+      color: #E1BEE7;
+    }
+
+    .primitive-list .desc {
+      color: #888;
+      margin-left: auto;
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+  </div>
+
+  <div class="info-panel">
+    <h3>🎯 图元拓扑类型</h3>
+    <p class="description">
+      展示 5 种图元拓扑类型。
+      相同顶点数据，不同拓扑类型产生不同图形。
+    </p>
+    <div class="primitive-list">
+      <div class="item">
+        <span class="key">1</span>
+        <span class="name">POINT_LIST</span>
+        <span class="desc">点</span>
+      </div>
+      <div class="item">
+        <span class="key">2</span>
+        <span class="name">LINE_LIST</span>
+        <span class="desc">线段</span>
+      </div>
+      <div class="item">
+        <span class="key">3</span>
+        <span class="name">LINE_STRIP</span>
+        <span class="desc">线带</span>
+      </div>
+      <div class="item">
+        <span class="key">4</span>
+        <span class="name">TRIANGLE_LIST</span>
+        <span class="desc">三角形</span>
+      </div>
+      <div class="item">
+        <span class="key">5</span>
+        <span class="name">TRIANGLE_STRIP</span>
+        <span class="desc">三角带</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    正在加载图元拓扑demo...
+  </div>
+
+  <script type="module" src="../src/primitive-types.ts"></script>
+
+  <script>
+    // 隐藏加载提示
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const loading = document.getElementById('loading');
+        if (loading) {
+          loading.style.display = 'none';
+        }
+      }, 1000);
+    });
+
+    // 添加一些交互提示
+    let hintShown = false;
+    document.addEventListener('click', () => {
+      if (!hintShown) {
+        console.log('🎯 图元拓扑类型决定了顶点如何被连接成图形！');
+        console.log('📊 相同的顶点数据，不同的拓扑类型产生不同的图形');
+        hintShown = true;
+      }
+    });
+  </script>
+</body>
+</html>

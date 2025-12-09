@@ -1,7 +1,11 @@
 /**
- * triangle.ts
- * 最简单的三角形渲染 Demo
- * 使用 DemoRunner 和 GeometryGenerator 工具库
+ * quad-indexed.ts
+ * 索引缓冲区绘制 Demo
+ *
+ * 功能演示：
+ * - 索引缓冲区的创建和使用
+ * - drawIndexed API
+ * - 顶点复用（4个顶点绘制2个三角形）
  */
 
 import { MSpec, MMath } from '@maxellabs/core';
@@ -15,14 +19,13 @@ precision highp float;
 in vec3 aPosition;
 in vec3 aColor;
 
-// Uniform 块
+out vec3 vColor;
+
 uniform Transforms {
   mat4 uModelMatrix;
   mat4 uViewMatrix;
   mat4 uProjectionMatrix;
 };
-
-out vec3 vColor;
 
 void main() {
   vColor = aColor;
@@ -48,18 +51,18 @@ async function main(): Promise<void> {
   // 1. 创建 DemoRunner
   const runner = new DemoRunner({
     canvasId: 'J-canvas',
-    name: '三角形渲染 Demo',
-    clearColor: [0.1, 0.1, 0.1, 1.0],
+    name: '索引缓冲区绘制 Demo',
+    clearColor: [0.1, 0.1, 0.15, 1.0],
   });
 
   try {
     // 2. 初始化
     await runner.init();
 
-    // 3. 创建性能统计
+    // 创建性能统计
     const stats = new Stats({ position: 'top-left', show: ['fps', 'ms'] });
 
-    // 4. 创建轨道控制器
+    // 创建轨道控制器
     const orbit = new OrbitController(runner.canvas, {
       distance: 2,
       target: [0, 0, 0],
@@ -68,27 +71,38 @@ async function main(): Promise<void> {
       autoRotateSpeed: 0.5,
     });
 
-    // 5. 生成三角形几何体
-    const geometry = GeometryGenerator.triangle({ colors: true });
+    // 3. 生成四边形几何体（使用索引绘制）
+    const geometry = GeometryGenerator.quad({ colors: true });
 
-    // 6. 创建顶点缓冲区
+    // 4. 创建顶点缓冲区
     const vertexBuffer = runner.track(
       runner.device.createBuffer({
         size: geometry.vertices.byteLength,
         usage: MSpec.RHIBufferUsage.VERTEX,
         hint: 'static',
         initialData: geometry.vertices as BufferSource,
-        label: 'Triangle Vertex Buffer',
+        label: 'Quad Vertex Buffer',
       })
     );
 
-    // 7. 创建着色器
+    // 5. 创建索引缓冲区
+    const indexBuffer = runner.track(
+      runner.device.createBuffer({
+        size: geometry.indices!.byteLength,
+        usage: MSpec.RHIBufferUsage.INDEX,
+        hint: 'static',
+        initialData: geometry.indices as BufferSource,
+        label: 'Quad Index Buffer',
+      })
+    );
+
+    // 6. 创建着色器
     const vertexShader = runner.track(
       runner.device.createShaderModule({
         code: vertexShaderSource,
         language: 'glsl',
         stage: MSpec.RHIShaderStage.VERTEX,
-        label: 'Triangle Vertex Shader',
+        label: 'Quad Vertex Shader',
       })
     );
 
@@ -97,12 +111,11 @@ async function main(): Promise<void> {
         code: fragmentShaderSource,
         language: 'glsl',
         stage: MSpec.RHIShaderStage.FRAGMENT,
-        label: 'Triangle Fragment Shader',
+        label: 'Quad Fragment Shader',
       })
     );
 
-    // 8. 创建 Uniform 缓冲区
-    // Transform uniform: 3 个 mat4 = 192 bytes (对齐到 256)
+    // 7. 创建 Uniform 缓冲区和绑定组
     const transformBuffer = runner.track(
       runner.device.createBuffer({
         size: 256,
@@ -112,7 +125,6 @@ async function main(): Promise<void> {
       })
     );
 
-    // 9. 创建绑定组布局
     const bindGroupLayout = runner.track(
       runner.device.createBindGroupLayout(
         [
@@ -120,24 +132,20 @@ async function main(): Promise<void> {
             binding: 0,
             visibility: MSpec.RHIShaderStage.VERTEX,
             buffer: { type: 'uniform' },
-            name: 'Transforms', // 对应 vertex shader 中的 uniform 块
+            name: 'Transforms',
           },
         ],
-        'Triangle BindGroup Layout'
+        'BindGroup Layout'
       )
     );
 
-    // 10. 创建绑定组
     const bindGroup = runner.track(
       runner.device.createBindGroup(bindGroupLayout, [{ binding: 0, resource: transformBuffer }])
     );
 
-    // 11. 创建管线布局
-    const pipelineLayout = runner.track(
-      runner.device.createPipelineLayout([bindGroupLayout], 'Triangle Pipeline Layout')
-    );
+    // 8. 创建管线
+    const pipelineLayout = runner.track(runner.device.createPipelineLayout([bindGroupLayout], 'Quad Pipeline Layout'));
 
-    // 12. 创建管线
     const pipeline = runner.track(
       runner.device.createRenderPipeline({
         vertexShader,
@@ -145,14 +153,11 @@ async function main(): Promise<void> {
         vertexLayout: geometry.layout,
         primitiveTopology: MSpec.RHIPrimitiveTopology.TRIANGLE_LIST,
         layout: pipelineLayout,
-        label: 'Triangle Render Pipeline',
+        label: 'Quad Render Pipeline',
       })
     );
 
-    // 13. 矩阵
-    const modelMatrix = new MMath.Matrix4();
-
-    // 14. 设置键盘事件
+    // 9. 设置键盘事件
     runner.onKey('Escape', () => {
       stats.destroy();
       orbit.destroy();
@@ -168,47 +173,63 @@ async function main(): Promise<void> {
       }
     });
 
-    // 15. 启动渲染循环
+    // 10. 创建模型矩阵
+    const modelMatrix = new MMath.Matrix4();
+
+    // 11. 启动渲染循环
     runner.start((dt) => {
-      // 更新轨道控制器
       orbit.update(dt);
 
-      // 获取视图和投影矩阵
       const viewMatrix = orbit.getViewMatrix();
       const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
 
-      // 更新 Transform Uniform
-      const transformData = new Float32Array(64); // 4 * 16
+      const transformData = new Float32Array(64);
       transformData.set(modelMatrix.toArray(), 0);
       transformData.set(viewMatrix, 16);
       transformData.set(projMatrix, 32);
       transformBuffer.update(transformData, 0);
 
-      // 开始性能统计
       stats.begin();
+
       const { encoder, passDescriptor } = runner.beginFrame();
 
       const renderPass = encoder.beginRenderPass(passDescriptor);
       renderPass.setPipeline(pipeline);
       renderPass.setBindGroup(0, bindGroup);
       renderPass.setVertexBuffer(0, vertexBuffer);
-      renderPass.draw(geometry.vertexCount);
+      renderPass.setIndexBuffer(indexBuffer, MSpec.RHIIndexFormat.UINT16);
+      renderPass.drawIndexed(geometry.indexCount!);
       renderPass.end();
 
       runner.endFrame(encoder);
 
-      // 结束性能统计
       stats.end();
     });
 
-    // 16. 显示帮助
+    // 12. 显示帮助信息
     DemoRunner.showHelp([
       'ESC: 退出 Demo',
       'F11: 切换全屏',
-      '鼠标左键拖动: 旋转视角',
-      '鼠标滚轮: 缩放',
-      '鼠标右键拖动: 平移',
+      '',
+      '🖱️ 鼠标控制:',
+      '• 左键拖拽: 旋转视角',
+      '• 右键拖拽: 平移视角',
+      '• 滚轮: 缩放视角',
+      '• 中键拖拽: 平移视角',
+      '',
+      '索引缓冲区说明:',
+      '• 4个顶点，6个索引',
+      '• 顶点复用减少内存',
+      '• drawIndexed 绘制',
     ]);
+
+    // 13. 输出技术信息
+    console.info('📐 Quad Indexed Demo');
+    console.info(`  顶点数: ${geometry.vertexCount}`);
+    console.info(`  索引数: ${geometry.indexCount}`);
+    console.info(`  索引格式: UINT16`);
+    console.info(`  顶点缓冲区大小: ${geometry.vertices.byteLength} bytes`);
+    console.info(`  索引缓冲区大小: ${geometry.indices!.byteLength} bytes`);
   } catch (error) {
     console.error('Demo 初始化失败:', error);
     DemoRunner.showError(`Demo 初始化失败: ${(error as Error).message}`);

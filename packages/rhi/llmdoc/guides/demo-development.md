@@ -183,8 +183,14 @@ runner.start((dt) => {
 
 | # | 名称 | 文件 | 功能点 |
 |---|------|------|--------|
-| 01 | triangle | triangle.ts | 最小化渲染流程，使用新工具库 |
+| 01 | triangle | triangle.ts | 最小化渲染流程，MVP 矩阵变换基础实现 |
 | 02 | rotating-cube | rotating-cube.ts | 3D变换、纹理、光照、GUI、相机控制 |
+| 03 | quad-indexed | quad-indexed.ts | 索引缓冲区绘制，顶点复用 |
+| 04 | primitive-types | primitive-types.ts | 图元拓扑类型（点/线/三角形） |
+| 05 | viewport-scissor | viewport-scissor.ts | 视口和裁剪矩形，多视口渲染 |
+| 06 | blend-modes | blend-modes.ts | 各种混合模式（Alpha/加法/乘法等） |
+
+**注意**：所有 Demo 均已集成 Stats 性能监控、OrbitController 相机控制和完整的 MVP 矩阵变换管线（自 2025-12-10）。
 
 ---
 
@@ -196,16 +202,16 @@ runner.start((dt) => {
 |---|------|----------|------|
 | 01 | triangle | 最小化渲染流程 | ✅ 完成 |
 | 02 | colored-triangle | 顶点颜色属性 | 可复用 triangle |
-| 03 | quad-indexed | 索引缓冲区绘制 | 待实现 |
+| 03 | quad-indexed | 索引缓冲区绘制 | ✅ 完成 |
 | 04 | rotating-cube | 3D 变换矩阵 | ✅ 完成 |
 | 05 | multiple-buffers | 多顶点缓冲区 | 待实现 |
 | 06 | dynamic-buffer | 缓冲区动态更新 | 待实现 |
 | 07 | vertex-formats | 各种顶点格式 | 待实现 |
-| 08 | primitive-types | 点/线/三角形拓扑 | 待实现 |
-| 09 | viewport-scissor | 视口和裁剪矩形 | 待实现 |
+| 08 | primitive-types | 点/线/三角形拓扑 | ✅ 完成 |
+| 09 | viewport-scissor | 视口和裁剪矩形 | ✅ 完成 |
 | 10 | depth-test | 深度测试 | 待实现 |
 | 11 | stencil-test | 模板测试 | 待实现 |
-| 12 | blend-modes | 混合模式 | 待实现 |
+| 12 | blend-modes | 混合模式 | ✅ 完成，支持 MVP 变换 |
 
 ### 第二层：纹理系统 (10 demos)
 
@@ -267,7 +273,193 @@ runner.start((dt) => {
 
 ---
 
-## 六、相关文档
+## 六、Demo 开发规范
+
+### 1. 必需组件（自 2025-12-10 起强制）
+
+每个 Demo **必须**包含以下组件：
+
+#### MVP 矩阵变换（自 2025-12-10 起新增）
+
+所有 Demo 必须实现完整的 Model-View-Projection 矩阵变换管线：
+
+```typescript
+import { MMath } from '@maxellabs/core';
+
+// 1. 创建模型矩阵
+const modelMatrix = new MMath.Matrix4();
+
+// 2. 在渲染循环中更新变换
+runner.start((dt) => {
+  orbit.update(dt);
+
+  // 获取视图和投影矩阵
+  const viewMatrix = orbit.getViewMatrix();
+  const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
+
+  // 3. 更新 Uniform 缓冲区
+  const transformData = new Float32Array(64);
+  transformData.set(modelMatrix.toArray(), 0);
+  transformData.set(viewMatrix, 16);
+  transformData.set(projMatrix, 32);
+  transformBuffer.update(transformData, 0);
+
+  // 渲染代码...
+});
+```
+
+**着色器要求**：
+```glsl
+// 必须包含 Transforms uniform 块
+uniform Transforms {
+  mat4 uModelMatrix;
+  mat4 uViewMatrix;
+  mat4 uProjectionMatrix;
+};
+
+// 使用 MVP 变换
+gl_Position = uProjectionMatrix * uViewMatrix * (uModelMatrix * vec4(aPosition, 1.0));
+```
+
+#### Stats 性能监控
+```typescript
+import { Stats } from './utils';
+
+// 初始化
+const stats = new Stats({ position: 'top-left', show: ['fps', 'ms'] });
+
+// 渲染循环中
+runner.start((dt) => {
+  stats.begin();
+  // 渲染代码...
+  stats.end();
+});
+```
+
+#### OrbitController 相机控制
+```typescript
+import { OrbitController } from './utils';
+
+// 初始化
+const orbit = new OrbitController(runner.canvas, {
+  distance: 3,  // 根据场景大小调整
+  target: [0, 0, 0],
+  enableDamping: true,
+  autoRotate: true,
+  autoRotateSpeed: 0.5,
+});
+
+// 渲染循环中
+runner.start((dt) => {
+  orbit.update(dt);
+  // 获取矩阵
+  const viewMatrix = orbit.getViewMatrix();
+  const projMatrix = orbit.getProjectionMatrix(aspect);
+});
+
+// 退出时销毁
+runner.onKey('Escape', () => {
+  stats.destroy();
+  orbit.destroy();
+  runner.destroy();
+});
+```
+
+### 2. UI 布局规范
+
+#### 左上角：Stats 性能监控
+- 由 Stats 组件自动渲染
+- 位置：`position: 'top-left'`
+- 显示 FPS 和帧时间
+
+#### 左下角：Demo 介绍面板
+```css
+.info-panel {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 15px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  max-width: 320px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+```
+
+HTML 结构：
+```html
+<div class="info-panel">
+  <h3>🔺 Demo 名称</h3>
+  <p class="description">
+    简洁的 Demo 描述...
+  </p>
+  <div class="tech-points">
+    <h4>💡 技术要点</h4>
+    <ul>
+      <li>技术点 1</li>
+      <li>技术点 2</li>
+      <li>技术点 3</li>
+    </ul>
+  </div>
+</div>
+```
+
+### 3. 渲染循环规范
+
+```typescript
+runner.start((dt) => {
+  // 1. 更新状态
+  orbit.update(dt);
+
+  // 2. 开始性能统计
+  stats.begin();
+
+  // 3. 渲染代码
+  const { encoder, passDescriptor } = runner.beginFrame();
+  // ... 渲染逻辑 ...
+  runner.endFrame(encoder);
+
+  // 4. 结束性能统计
+  stats.end();
+});
+```
+
+### 4. 帮助信息规范
+
+必须包含以下内容：
+- ESC：退出 Demo
+- F11：切换全屏
+- 鼠标控制说明
+
+```typescript
+DemoRunner.showHelp([
+  'ESC: 退出 Demo',
+  'F11: 切换全屏',
+  '鼠标左键拖动: 旋转视角',
+  '鼠标滚轮: 缩放',
+  '鼠标右键拖动: 平移',
+]);
+```
+
+### 5. 导入规范
+
+```typescript
+import { MSpec } from '@maxellabs/core';
+import {
+  DemoRunner,
+  GeometryGenerator,
+  OrbitController,  // 必需
+  Stats            // 必需
+} from './utils';
+```
+
+---
+
+## 七、相关文档
 
 - [RHI 概览](/llmdoc/overview/rhi-overview.md)
 - [WebGL 实现架构](/llmdoc/architecture/webgl-implementation.md)

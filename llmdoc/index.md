@@ -75,6 +75,12 @@
   - std140 布局规范和 WebGL 实现
 - [Resource Tracker API](./packages/rhi/llmdoc/reference/resource-tracker-api.md) - 资源生命周期管理
   - 资源追踪、泄漏检测和自动销毁
+- [RHI Demo 系统更新记录](./reference/rhi-demo-system-update-20251210.md) - Demo 系统重大更新文档
+  - 性能监控、相机控制集成和 UI 布局规范
+- [MVP 矩阵实现架构](./architecture/mvp-matrix-implementation.md) - MVP 矩阵变换实现架构
+  - Uniform 缓冲区、着色器集成和相机控制
+- [MVP 矩阵更新指南](./reference/mvp-matrix-update-guide.md) - 从固定管线到 MVP 矩阵的迁移
+  - 技术细节、实现步骤和最佳实践
 
 ## 3. 核心概念和对应文档
 
@@ -112,6 +118,13 @@
   - [WebGL 实现](./architecture/webgl-implementation.md) - 技术细节
   - [WebGL 命令](./guides/webgl-commands.md) - 使用方法
   - [RHI 演示开发](./packages/rhi/llmdoc/guides/demo-development.md) - 演示系统开发指南
+
+#### MVP 矩阵变换
+- **概念**: Model-View-Projection 矩阵变换管线，实现 3D 空间的完整变换流程
+- **相关文档**:
+  - [MVP 矩阵实现架构](./architecture/mvp-matrix-implementation.md) - 实现架构和组件设计
+  - [MVP 矩阵更新指南](./reference/mvp-matrix-update-guide.md) - 迁移指南和技术细节
+  - [OrbitController 相机控制](./packages/rhi/llmdoc/reference/orbit-controller.md) - 交互式相机系统
 
 ### 🧮 数学系统
 
@@ -201,6 +214,7 @@
    - [数学类型参考](./reference/math-type-reference.md) - API 参考
    - [RHI 接口参考](./reference/rhi-interfaces.md) - 接口文档
    - [USD 类型参考](./reference/usd-core-types.md) - USD API
+   - [MVP 矩阵实现架构](./architecture/mvp-matrix-implementation.md) - 3D 变换管线
 
 ### 📋 开发环境配置
 
@@ -251,8 +265,8 @@ pnpm test
 | 概述文档 | 5 | 100% | 2024-12 |
 | 操作指南 | 7 | 100% | 2024-12 |
 | 架构设计 | 9 | 100% | 2025-12 |
-| 参考资料 | 9 | 100% | 2025-12 |
-| **总计** | **30** | **100%** | **2025-12** |
+| 参考资料 | 10 | 100% | 2025-12 |
+| **总计** | **31** | **100%** | **2025-12** |
 
 ## 🤝 贡献指南
 
