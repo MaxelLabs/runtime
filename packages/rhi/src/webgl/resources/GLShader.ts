@@ -1,5 +1,4 @@
 import { MSpec } from '@maxellabs/core';
-import { Vector3Like } from '@maxellabs/specification';
 
 /**
  * WebGL着色器实现
@@ -26,17 +25,17 @@ export class GLShader implements MSpec.IRHIShaderModule {
     }>;
     entryPoints: Array<{
       name: string;
-      stage: 'vertex' | 'fragment' | 'compute';
-      workgroupSize?: Vector3Like;
+      stage: MSpec.RHIShaderStage;
+      workgroupSize?: MSpec.Vector3Like;
     }>;
     attributes?: Array<{
       name: string;
       location: number;
-      type: string;
+      type: MSpec.RHIVertexFormat;
     }>;
     varyings?: Array<{
       name: string;
-      type: string;
+      type: MSpec.RHIVertexFormat;
     }>;
   };
   private isDestroyed = false;
@@ -193,7 +192,7 @@ export class GLShader implements MSpec.IRHIShaderModule {
     }
 
     // 将texture替换为texture2D或textureCube
-    adapted = adapted.replace(/texture\s*\(\s*(\w+)\s*,/g, (match, samplerName) => {
+    adapted = adapted.replace(/texture\s*\(\s*(\w+)\s*,/g, (_match, samplerName) => {
       // 这里可以添加逻辑来检测sampler类型并选择合适的函数
       // 简单实现：默认使用texture2D
       return `texture2D(${samplerName},`;
@@ -235,48 +234,48 @@ export class GLShader implements MSpec.IRHIShaderModule {
       name: string;
       binding: number;
       group: number;
-      type: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture';
+      type: MSpec.RHIBindGroupLayoutEntryType;
       arraySize?: number;
     }>;
     entryPoints: Array<{
       name: string;
-      stage: 'vertex' | 'fragment' | 'compute';
-      workgroupSize?: [number, number, number];
+      stage: MSpec.RHIShaderStage;
+      workgroupSize?: MSpec.Vector3Like;
     }>;
     attributes?: Array<{
       name: string;
       location: number;
-      type: string;
+      type: MSpec.RHIVertexFormat;
     }>;
     varyings?: Array<{
       name: string;
-      type: string;
+      type: MSpec.RHIVertexFormat;
     }>;
   } {
     const bindings: Array<{
       name: string;
       binding: number;
       group: number;
-      type: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture';
+      type: MSpec.RHIBindGroupLayoutEntryType;
       arraySize?: number;
     }> = [];
 
     const attributes: Array<{
       name: string;
       location: number;
-      type: string;
+      type: MSpec.RHIVertexFormat;
     }> = [];
 
     const varyings: Array<{
       name: string;
-      type: string;
+      type: MSpec.RHIVertexFormat;
     }> = [];
 
     // 提取uniform声明
     this.extractUniforms(this.code, bindings);
 
     // 提取attribute/in变量（顶点着色器）
-    if (this.stage === RHIShaderStage.VERTEX) {
+    if (this.stage === MSpec.RHIShaderStage.VERTEX) {
       this.extractAttributes(this.code, attributes);
     }
 
@@ -285,7 +284,11 @@ export class GLShader implements MSpec.IRHIShaderModule {
 
     // 提取入口点 - 在GLSL中通常不显式定义，使用main函数
     const stage =
-      this.stage === RHIShaderStage.VERTEX ? 'vertex' : this.stage === RHIShaderStage.FRAGMENT ? 'fragment' : 'compute';
+      this.stage === MSpec.RHIShaderStage.VERTEX
+        ? MSpec.RHIShaderStage.VERTEX
+        : this.stage === MSpec.RHIShaderStage.FRAGMENT
+          ? MSpec.RHIShaderStage.FRAGMENT
+          : MSpec.RHIShaderStage.COMPUTE;
 
     return {
       bindings,
@@ -317,13 +320,12 @@ export class GLShader implements MSpec.IRHIShaderModule {
       const arraySize = match[4] ? parseInt(match[4], 10) : undefined;
 
       // 确定绑定类型
-      let bindingType: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture' =
-        'uniform-buffer';
+      let bindingType: MSpec.RHIBindGroupLayoutEntryType = MSpec.RHIBindGroupLayoutEntryType.UNIFORM_BUFFER;
 
       if (/sampler\w+/.test(type)) {
-        bindingType = 'sampler';
+        bindingType = MSpec.RHIBindGroupLayoutEntryType.SAMPLER;
       } else if (/texture\w+/.test(type)) {
-        bindingType = 'texture';
+        bindingType = MSpec.RHIBindGroupLayoutEntryType.TEXTURE;
       }
 
       bindings.push({
@@ -348,15 +350,14 @@ export class GLShader implements MSpec.IRHIShaderModule {
         const arraySize = match[6] ? parseInt(match[6], 10) : undefined;
 
         // 确定绑定类型
-        let bindingType: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture' =
-          'uniform-buffer';
+        let bindingType: MSpec.RHIBindGroupLayoutEntryType = MSpec.RHIBindGroupLayoutEntryType.UNIFORM_BUFFER;
 
         if (/sampler\w+/.test(type)) {
-          bindingType = 'sampler';
+          bindingType = MSpec.RHIBindGroupLayoutEntryType.SAMPLER;
         } else if (/texture\w+/.test(type) || /image\w+/.test(type)) {
-          bindingType = 'texture';
+          bindingType = MSpec.RHIBindGroupLayoutEntryType.TEXTURE;
         } else if (/buffer\b/.test(type)) {
-          bindingType = 'uniform-buffer';
+          bindingType = MSpec.RHIBindGroupLayoutEntryType.UNIFORM_BUFFER;
         }
 
         bindings.push({
@@ -440,7 +441,7 @@ export class GLShader implements MSpec.IRHIShaderModule {
     let keyword = 'varying';
 
     if (this.isWebGL2) {
-      keyword = this.stage === RHIShaderStage.VERTEX ? 'out' : 'in';
+      keyword = this.stage === MSpec.RHIShaderStage.VERTEX ? 'out' : 'in';
     }
 
     // 匹配varying/out/in变量
@@ -452,7 +453,7 @@ export class GLShader implements MSpec.IRHIShaderModule {
       const name = match[2];
 
       // 忽略片元着色器中的内置变量
-      if (this.stage === RHIShaderStage.FRAGMENT && this.isWebGL2 && name === 'fragColor') {
+      if (this.stage === MSpec.RHIShaderStage.FRAGMENT && this.isWebGL2 && name === 'fragColor') {
         continue;
       }
 
@@ -496,7 +497,7 @@ export class GLShader implements MSpec.IRHIShaderModule {
 
     // 需要一个完整的程序才能查询uniform信息
     // 为另一阶段创建一个空着色器
-    const otherStage = this.stage === RHIShaderStage.VERTEX ? gl.FRAGMENT_SHADER : gl.VERTEX_SHADER;
+    const otherStage = this.stage === MSpec.RHIShaderStage.VERTEX ? gl.FRAGMENT_SHADER : gl.VERTEX_SHADER;
     const emptyShader = gl.createShader(otherStage);
 
     if (!emptyShader) {
@@ -508,12 +509,12 @@ export class GLShader implements MSpec.IRHIShaderModule {
 
     if (this.isWebGL2) {
       emptyCode =
-        this.stage === RHIShaderStage.VERTEX
+        this.stage === MSpec.RHIShaderStage.VERTEX
           ? '#version 300 es\nvoid main() { }\n'
           : '#version 300 es\nout vec4 fragColor;\nvoid main() { fragColor = vec4(1.0); }\n';
     } else {
       emptyCode =
-        this.stage === RHIShaderStage.VERTEX
+        this.stage === MSpec.RHIShaderStage.VERTEX
           ? 'void main() { gl_Position = vec4(0.0, 0.0, 0.0, 1.0); }'
           : 'void main() { gl_FragColor = vec4(1.0); }';
     }
@@ -586,7 +587,7 @@ export class GLShader implements MSpec.IRHIShaderModule {
   /**
    * 获取着色器阶段
    */
-  getStage(): RHIShaderStage {
+  getStage(): MSpec.RHIShaderStage {
     return this.stage;
   }
 
@@ -605,13 +606,13 @@ export class GLShader implements MSpec.IRHIShaderModule {
       name: string;
       binding: number;
       group: number;
-      type: 'uniform-buffer' | 'storage-buffer' | 'sampler' | 'texture' | 'storage-texture';
+      type: MSpec.RHIBindGroupLayoutEntryType;
       arraySize?: number;
     }>;
     entryPoints: Array<{
       name: string;
-      stage: 'vertex' | 'fragment' | 'compute';
-      workgroupSize?: [number, number, number];
+      stage: MSpec.RHIShaderStage;
+      workgroupSize?: MSpec.Vector3Like;
     }>;
     attributes?: Array<{
       name: string;

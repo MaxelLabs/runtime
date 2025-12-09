@@ -146,22 +146,22 @@ export enum RHITextureUsage {
  * 过滤模式统一定义
  */
 export enum RHIFilterMode {
-  Nearest = 'nearest',
-  Linear = 'linear',
-  NearestMipmapNearest = 'nearest-mipmap-nearest',
-  LinearMipmapNearest = 'linear-mipmap-nearest',
-  NearestMipmapLinear = 'nearest-mipmap-linear',
-  LinearMipmapLinear = 'linear-mipmap-linear',
+  NEAREST = 'nearest',
+  LINEAR = 'linear',
+  NEAREST_MIPMAP_NEAREST = 'nearest-mipmap-nearest',
+  LINEAR_MIPMAP_NEAREST = 'linear-mipmap-nearest',
+  NEAREST_MIPMAP_LINEAR = 'nearest-mipmap-linear',
+  LINEAR_MIPMAP_LINEAR = 'linear-mipmap-linear',
 }
 
 /**
  * 寻址模式统一定义
  */
 export enum RHIAddressMode {
-  Repeat = 'repeat',
-  MirrorRepeat = 'mirror-repeat',
-  ClampToEdge = 'clamp-to-edge',
-  ClampToBorder = 'clamp-to-border',
+  REPEAT = 'repeat',
+  MIRROR_REPEAT = 'mirror-repeat',
+  CLAMP_TO_EDGE = 'clamp-to-edge',
+  CLAMP_TO_BORDER = 'clamp-to-border',
 }
 
 /**
@@ -233,10 +233,10 @@ export enum RHIFrontFace {
  * 面剔除模式统一定义
  */
 export enum RHICullMode {
-  None = 'none',
-  Front = 'front',
-  Back = 'back',
-  FrontAndBack = 'front-and-back',
+  NONE = 'none',
+  FRONT = 'front',
+  BACK = 'back',
+  FRONT_AND_BACK = 'front-and-back',
 }
 
 /**
@@ -251,36 +251,36 @@ export enum RHIIndexFormat {
  * 顶点格式统一定义
  */
 export enum RHIVertexFormat {
-  Uint8x2 = 'uint8x2',
-  Uint8x4 = 'uint8x4',
-  Sint8x2 = 'sint8x2',
-  Sint8x4 = 'sint8x4',
-  Unorm8x2 = 'unorm8x2',
-  Unorm8x4 = 'unorm8x4',
-  Snorm8x2 = 'snorm8x2',
-  Snorm8x4 = 'snorm8x4',
-  Uint16x2 = 'uint16x2',
-  Uint16x4 = 'uint16x4',
-  Sint16x2 = 'sint16x2',
-  Sint16x4 = 'sint16x4',
-  Unorm16x2 = 'unorm16x2',
-  Unorm16x4 = 'unorm16x4',
-  Snorm16x2 = 'snorm16x2',
-  Snorm16x4 = 'snorm16x4',
-  Float16x2 = 'float16x2',
-  Float16x4 = 'float16x4',
-  Float32 = 'float32',
-  Float32x2 = 'float32x2',
-  Float32x3 = 'float32x3',
-  Float32x4 = 'float32x4',
-  Uint32 = 'uint32',
-  Uint32x2 = 'uint32x2',
-  Uint32x3 = 'uint32x3',
-  Uint32x4 = 'uint32x4',
-  Sint32 = 'sint32',
-  Sint32x2 = 'sint32x2',
-  Sint32x3 = 'sint32x3',
-  Sint32x4 = 'sint32x4',
+  UINT8x2 = 'uint8x2',
+  UINT8x4 = 'uint8x4',
+  SINT8x2 = 'sint8x2',
+  SINT8x4 = 'sint8x4',
+  UNORM8x2 = 'unorm8x2',
+  UNORM8x4 = 'unorm8x4',
+  SNORM8x2 = 'snorm8x2',
+  SNORM8x4 = 'snorm8x4',
+  UINT16x2 = 'uint16x2',
+  UINT16x4 = 'uint16x4',
+  SINT16x2 = 'sint16x2',
+  SINT16x4 = 'sint16x4',
+  UNORM16x2 = 'unorm16x2',
+  UNORM16x4 = 'unorm16x4',
+  SNORM16x2 = 'snorm16x2',
+  SNORM16x4 = 'snorm16x4',
+  FLOAT16x2 = 'float16x2',
+  FLOAT16x4 = 'float16x4',
+  FLOAT32 = 'float32',
+  FLOAT32x2 = 'float32x2',
+  FLOAT32x3 = 'float32x3',
+  FLOAT32x4 = 'float32x4',
+  UINT32 = 'uint32',
+  UINT32x2 = 'uint32x2',
+  UINT32x3 = 'uint32x3',
+  UINT32x4 = 'uint32x4',
+  SINT32 = 'sint32',
+  SINT32x2 = 'sint32x2',
+  SINT32x3 = 'sint32x3',
+  SINT32x4 = 'sint32x4',
 }
 
 /**
@@ -301,22 +301,22 @@ export enum RHIShaderStage {
  * RHI特性标志统一定义
  */
 export enum RHIFeatureFlags {
-  DEPTH_TEXTURE = 'depth-texture',
-  FLOAT_TEXTURE = 'float-texture',
-  HALF_FLOAT_TEXTURE = 'half-float-texture',
-  MULTIPLE_RENDER_TARGETS = 'multiple-render-targets',
-  INSTANCED_DRAWING = 'instanced-drawing',
-  ANISOTROPIC_FILTERING = 'anisotropic-filtering',
-  BC_TEXTURE_COMPRESSION = 'bc-texture-compression',
-  ETC2_TEXTURE_COMPRESSION = 'etc2-texture-compression',
-  ASTC_TEXTURE_COMPRESSION = 'astc-texture-compression',
-  COMPUTE_SHADER = 'compute-shader',
-  STORAGE_TEXTURE = 'storage-texture',
-  VERTEX_ARRAY_OBJECT = 'vertex-array-object',
-  BLEND_OPERATION = 'blend-operation',
-  INDIRECT_DRAWING = 'indirect-drawing',
-  RAY_TRACING = 'ray-tracing',
-  MESH_SHADER = 'mesh-shader',
+  DEPTH_TEXTURE = 1 << 0,
+  FLOAT_TEXTURE = 1 << 1,
+  HALF_FLOAT_TEXTURE = 1 << 2,
+  MULTIPLE_RENDER_TARGETS = 1 << 3,
+  INSTANCED_DRAWING = 1 << 4,
+  ANISOTROPIC_FILTERING = 1 << 5,
+  BC_TEXTURE_COMPRESSION = 1 << 6,
+  ETC2_TEXTURE_COMPRESSION = 1 << 7,
+  ASTC_TEXTURE_COMPRESSION = 1 << 8,
+  COMPUTE_SHADER = 1 << 9,
+  STORAGE_TEXTURE = 1 << 10,
+  VERTEX_ARRAY_OBJECT = 1 << 11,
+  BLEND_OPERATION = 1 << 12,
+  INDIRECT_DRAWING = 1 << 13,
+  RAY_TRACING = 1 << 14,
+  MESH_SHADER = 1 << 15,
 }
 
 /**

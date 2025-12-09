@@ -12,6 +12,7 @@ import type {
   RHIBufferUsage,
   RHITextureFormat,
   RHITextureUsage,
+  RHIShaderStage,
 } from './enums';
 import type { ColorLike } from '../../../core';
 import type { IRHIShaderModule } from '../resources';
@@ -273,7 +274,7 @@ export interface RHIShaderModuleDescriptor {
   /**
    * 着色器阶段
    */
-  stage: 'vertex' | 'fragment' | 'compute';
+  stage: RHIShaderStage;
 
   /**
    * 可选标签，用于调试

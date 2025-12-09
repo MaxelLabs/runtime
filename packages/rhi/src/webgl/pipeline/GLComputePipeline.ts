@@ -2,7 +2,7 @@ import type { MSpec } from '@maxellabs/core';
 
 /**
  * WebGL计算管线实现
- * ⚠️ 注意：WebGL不直接支持计算管线，这里仅作为接口实现
+ * 注意：WebGL不直接支持计算管线，这里仅作为接口实现
  */
 export class WebGLComputePipeline implements MSpec.IRHIComputePipeline {
   computeShader: MSpec.IRHIShaderModule;

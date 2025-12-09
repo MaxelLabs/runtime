@@ -84,10 +84,10 @@ function configureServerPlugin() {
 
   return {
     name: 'configure-server',
-    configurePreviewServer(server) {
+    configurePreviewServer(server: Server) {
       server.httpServer.once('listening', handleServer.bind(this, server));
     },
-    configureServer(server) {
+    configureServer(server: Server) {
       server.httpServer.once('listening', handleServer.bind(this, server));
     },
   };

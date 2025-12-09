@@ -6,7 +6,6 @@ lib
 *.tgz
 .eslintcache
 *.tsbuildinfo
-.vscode
 .idea
 .history
 .accesskey.yml

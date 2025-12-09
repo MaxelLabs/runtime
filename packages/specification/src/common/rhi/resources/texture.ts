@@ -3,7 +3,7 @@
  * 定义纹理资源接口
  */
 
-import type { RHITextureFormat, RHITextureUsage } from '../types';
+import type { RHITextureFormat, RHITextureType, RHITextureUsage } from '../types';
 
 /**
  * 纹理资源接口
@@ -42,7 +42,7 @@ export interface IRHITexture {
   /**
    * 纹理维度
    */
-  readonly dimension: '1d' | '2d' | '3d' | 'cube';
+  readonly dimension: RHITextureType;
 
   /**
    * 采样数量

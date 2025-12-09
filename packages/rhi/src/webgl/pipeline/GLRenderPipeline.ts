@@ -65,7 +65,7 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
    */
   private getDefaultRasterizationState(): MSpec.RHIRasterizationState {
     return {
-      cullMode: MSpec.RHICullMode.Back,
+      cullMode: MSpec.RHICullMode.BACK,
       frontFace: MSpec.RHIFrontFace.CCW,
       lineWidth: 1,
       depthBias: 0,
@@ -335,7 +335,7 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
   private applyRasterizationState(): void {
     const gl = this.gl;
     const state = this._rasterizationState || {};
-    const cullMode = state.cullMode ?? MSpec.RHICullMode.None;
+    const cullMode = state.cullMode ?? MSpec.RHICullMode.NONE;
     const frontFace = state.frontFace ?? MSpec.RHIFrontFace.CCW;
     const lineWidth = state.lineWidth ?? 1;
     const depthBias = state.depthBias ?? 0;

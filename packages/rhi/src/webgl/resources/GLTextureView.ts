@@ -1,4 +1,4 @@
-import type { IRHITexture, IRHITextureView, RHITextureFormat } from '@maxellabs/core';
+import { MSpec } from '@maxellabs/core';
 import type { GLTexture } from './GLTexture';
 
 /**
@@ -27,11 +27,11 @@ import type { GLTexture } from './GLTexture';
  *    const mipView = texture.createView(undefined, undefined, 2, 1); // 只使用第2级mip
  *    ```
  */
-export class WebGLTextureView implements IRHITextureView {
+export class WebGLTextureView implements MSpec.IRHITextureView {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
-  readonly texture: IRHITexture;
-  format: RHITextureFormat;
-  dimension: '1d' | '2d' | '3d' | 'cube' | '2d-array' | 'cube-array';
+  readonly texture: MSpec.IRHITexture;
+  format: MSpec.RHITextureFormat;
+  dimension: MSpec.RHITextureType;
   baseMipLevel: number;
   mipLevelCount: number;
   baseArrayLayer: number;
@@ -48,9 +48,9 @@ export class WebGLTextureView implements IRHITextureView {
   constructor(
     gl: WebGLRenderingContext | WebGL2RenderingContext,
     descriptor: {
-      texture: IRHITexture;
-      format?: RHITextureFormat;
-      dimension?: '1d' | '2d' | '3d' | 'cube' | '2d-array' | 'cube-array';
+      texture: MSpec.IRHITexture;
+      format?: MSpec.RHITextureFormat;
+      dimension?: MSpec.RHITextureType;
       baseMipLevel?: number;
       mipLevelCount?: number;
       baseArrayLayer?: number;
@@ -142,7 +142,8 @@ export class WebGLTextureView implements IRHITextureView {
 
     // 检查2D数组和立方体数组视图（WebGL2特性）
     if (
-      (this.dimension === '2d-array' || this.dimension === 'cube-array') &&
+      (this.dimension === MSpec.RHITextureType.TEXTURE_2D_ARRAY ||
+        this.dimension === MSpec.RHITextureType.TEXTURE_CUBE) &&
       !(this.gl instanceof WebGL2RenderingContext)
     ) {
       throw new Error(`WebGL1不支持${this.dimension}纹理视图`);
@@ -152,14 +153,14 @@ export class WebGLTextureView implements IRHITextureView {
   /**
    * 获取源纹理
    */
-  getTexture(): IRHITexture {
+  getTexture(): MSpec.IRHITexture {
     return this.texture;
   }
 
   /**
    * 获取视图格式
    */
-  getFormat(): RHITextureFormat {
+  getFormat(): MSpec.RHITextureFormat {
     return this.format;
   }
 

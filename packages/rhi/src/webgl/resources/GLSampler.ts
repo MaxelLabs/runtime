@@ -73,7 +73,7 @@ export class GLSampler implements MSpec.IRHISampler {
    */
   private getAddressMode(mode?: MSpec.RHIAddressMode): MSpec.RHIAddressMode {
     if (mode === undefined || mode === null) {
-      return MSpec.RHIAddressMode.ClampToEdge;
+      return MSpec.RHIAddressMode.CLAMP_TO_EDGE;
     }
 
     // 如果已经是枚举类型，直接返回
@@ -84,7 +84,7 @@ export class GLSampler implements MSpec.IRHISampler {
       }
       console.warn(`无效的寻址模式枚举值: ${mode}，使用默认值CLAMP_TO_EDGE`);
 
-      return MSpec.RHIAddressMode.ClampToEdge;
+      return MSpec.RHIAddressMode.CLAMP_TO_EDGE;
     }
 
     return mode;
@@ -95,7 +95,7 @@ export class GLSampler implements MSpec.IRHISampler {
    */
   private getFilterMode(mode?: MSpec.RHIFilterMode): MSpec.RHIFilterMode {
     if (mode === undefined || mode === null) {
-      return MSpec.RHIFilterMode.Linear;
+      return MSpec.RHIFilterMode.LINEAR;
     }
 
     // 如果已经是枚举类型，直接返回
@@ -106,7 +106,7 @@ export class GLSampler implements MSpec.IRHISampler {
       }
       console.warn(`无效的过滤模式枚举值: ${mode}，使用默认值LINEAR`);
 
-      return MSpec.RHIFilterMode.Linear;
+      return MSpec.RHIFilterMode.LINEAR;
     }
 
     return mode;
@@ -115,9 +115,7 @@ export class GLSampler implements MSpec.IRHISampler {
   /**
    * 将字符串或枚举比较函数转换为枚举值
    */
-  private getCompareFunction(
-    func: MSpec.RHICompareFunction
-  ): MSpec.RHICompareFunction {
+  private getCompareFunction(func: MSpec.RHICompareFunction): MSpec.RHICompareFunction {
     if (typeof func === 'number') {
       // 验证枚举值合法性
       if (Object.values(MSpec.RHICompareFunction).includes(func)) {
@@ -167,9 +165,9 @@ export class GLSampler implements MSpec.IRHISampler {
 
       // 处理边界颜色（如果使用CLAMP_TO_BORDER模式）
       if (
-        this.addressModeU === MSpec.RHIAddressMode.ClampToBorder ||
-        this.addressModeV === MSpec.RHIAddressMode.ClampToBorder ||
-        this.addressModeW === MSpec.RHIAddressMode.ClampToBorder
+        this.addressModeU === MSpec.RHIAddressMode.CLAMP_TO_BORDER ||
+        this.addressModeV === MSpec.RHIAddressMode.CLAMP_TO_BORDER ||
+        this.addressModeW === MSpec.RHIAddressMode.CLAMP_TO_BORDER
       ) {
         try {
           // 获取TEXTURE_BORDER_COLOR常量
@@ -192,16 +190,16 @@ export class GLSampler implements MSpec.IRHISampler {
           // 边界颜色设置失败，降级到 CLAMP_TO_EDGE
           console.warn('边界颜色设置失败，降级到 CLAMP_TO_EDGE 模式:', e);
 
-          if (this.addressModeU === MSpec.RHIAddressMode.ClampToBorder) {
-            this.addressModeU = MSpec.RHIAddressMode.ClampToEdge;
+          if (this.addressModeU === MSpec.RHIAddressMode.CLAMP_TO_BORDER) {
+            this.addressModeU = MSpec.RHIAddressMode.CLAMP_TO_EDGE;
             gl2.samplerParameteri(sampler, gl2.TEXTURE_WRAP_S, this.utils.addressModeToGL(this.addressModeU));
           }
-          if (this.addressModeV === MSpec.RHIAddressMode.ClampToBorder) {
-            this.addressModeV = MSpec.RHIAddressMode.ClampToEdge;
+          if (this.addressModeV === MSpec.RHIAddressMode.CLAMP_TO_BORDER) {
+            this.addressModeV = MSpec.RHIAddressMode.CLAMP_TO_EDGE;
             gl2.samplerParameteri(sampler, gl2.TEXTURE_WRAP_T, this.utils.addressModeToGL(this.addressModeV));
           }
-          if (this.addressModeW ===  MSpec.RHIAddressMode.ClampToBorder) {
-            this.addressModeW = MSpec.RHIAddressMode.ClampToEdge
+          if (this.addressModeW === MSpec.RHIAddressMode.CLAMP_TO_BORDER) {
+            this.addressModeW = MSpec.RHIAddressMode.CLAMP_TO_EDGE;
             gl2.samplerParameteri(sampler, gl2.TEXTURE_WRAP_R, this.utils.addressModeToGL(this.addressModeW));
           }
         }
@@ -278,13 +276,13 @@ export class GLSampler implements MSpec.IRHISampler {
     // 处理是否使用mipmap
     if (!this.useMipmap) {
       // 不使用mipmap时的简单过滤
-      return this.minFilter === MSpec.RHIFilterMode.Nearest ? gl.NEAREST : gl.LINEAR;
+      return this.minFilter === MSpec.RHIFilterMode.NEAREST ? gl.NEAREST : gl.LINEAR;
     } else {
       // 使用mipmap时的组合过滤
-      if (this.minFilter === MSpec.RHIFilterMode.Nearest) {
-        return this.mipmapFilter === MSpec.RHIFilterMode.Nearest ? gl.NEAREST_MIPMAP_NEAREST : gl.NEAREST_MIPMAP_LINEAR;
+      if (this.minFilter === MSpec.RHIFilterMode.NEAREST) {
+        return this.mipmapFilter === MSpec.RHIFilterMode.NEAREST ? gl.NEAREST_MIPMAP_NEAREST : gl.NEAREST_MIPMAP_LINEAR;
       } else {
-        return this.mipmapFilter === MSpec.RHIFilterMode.Nearest ? gl.LINEAR_MIPMAP_NEAREST : gl.LINEAR_MIPMAP_LINEAR;
+        return this.mipmapFilter === MSpec.RHIFilterMode.NEAREST ? gl.LINEAR_MIPMAP_NEAREST : gl.LINEAR_MIPMAP_LINEAR;
       }
     }
   }
@@ -467,9 +465,9 @@ export class GLSampler implements MSpec.IRHISampler {
 
     // 处理边界颜色（如果使用CLAMP_TO_BORDER模式）
     if (
-      this.addressModeU === MSpec.RHIAddressMode.ClampToBorder ||
-      this.addressModeV === MSpec.RHIAddressMode.ClampToBorder ||
-      this.addressModeW === MSpec.RHIAddressMode.ClampToBorder
+      this.addressModeU === MSpec.RHIAddressMode.CLAMP_TO_BORDER ||
+      this.addressModeV === MSpec.RHIAddressMode.CLAMP_TO_BORDER ||
+      this.addressModeW === MSpec.RHIAddressMode.CLAMP_TO_BORDER
     ) {
       if (this.isWebGL2) {
         // WebGL2
@@ -489,12 +487,12 @@ export class GLSampler implements MSpec.IRHISampler {
         } else {
           // 无法设置边界颜色，降级处理
           console.warn('WebGL1不支持边界颜色设置，使用CLAMP_TO_EDGE代替');
-          if (this.addressModeU === MSpec.RHIAddressMode.ClampToBorder) {
-            this.addressModeU = MSpec.RHIAddressMode.ClampToEdge;
+          if (this.addressModeU === MSpec.RHIAddressMode.CLAMP_TO_BORDER) {
+            this.addressModeU = MSpec.RHIAddressMode.CLAMP_TO_EDGE;
             gl.texParameteri(textureTarget, gl.TEXTURE_WRAP_S, this.utils.addressModeToGL(this.addressModeU));
           }
-          if (this.addressModeV === MSpec.RHIAddressMode.ClampToBorder) {
-            this.addressModeV = MSpec.RHIAddressMode.ClampToEdge;
+          if (this.addressModeV === MSpec.RHIAddressMode.CLAMP_TO_BORDER) {
+            this.addressModeV = MSpec.RHIAddressMode.CLAMP_TO_EDGE;
             gl.texParameteri(textureTarget, gl.TEXTURE_WRAP_T, this.utils.addressModeToGL(this.addressModeV));
           }
         }

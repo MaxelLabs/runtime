@@ -76,7 +76,142 @@ import type { Scene } from '../scene/';
 - 使用 `private` 修饰符
 - 命名使用 camelCase，如 `transform`、`parent`
 
-## 6. 关键的 Lint 规则
+## 6. 类型系统最佳实践
+
+### 6.1 继承体系设计
+
+**泛型基类原则**:
+- 优先使用泛型接口定义通用行为
+- 通过约束（constraints）限制泛型范围
+- 使用 `extends` 关键字实现特化
+
+**示例**:
+```typescript
+// 定义泛型基类
+interface BaseAnimationTrack<K extends MinimalKeyframe> {
+  id: string;
+  keyframes: K[];
+  duration: number;
+}
+
+// 继承实现特化
+interface TransformTrack extends BaseAnimationTrack<TransformKeyframe> {
+  space: TransformSpace;
+}
+```
+
+### 6.2 类型别名使用
+
+**适用场景**:
+- 简化复杂泛型类型
+- 保持向后兼容性
+- 提供语义化名称
+
+**示例**:
+```typescript
+// 复杂泛型类型简化
+type AnimationKeyframe = UnifiedKeyframe<any>;
+type MaterialKeyframe = UnifiedKeyframe<any>;
+
+// 语义化命名
+type CommonTextureRef = BaseTextureRef & {
+  // 扩展属性
+};
+```
+
+### 6.3 枚举设计
+
+**命名规范**:
+- 枚举使用 PascalCase
+- 枚举值使用 UPPER_SNAKE_CASE
+- 枚举和类型联合区分使用
+
+**示例**:
+```typescript
+// 基础功能枚举
+enum EasingFunction {
+  Linear = 'linear',
+  EaseInOut = 'easeInOut'
+}
+
+// 扩展功能枚举
+enum ExtendedEasingType {
+  Elastic = 'elastic',
+  Bounce = 'bounce'
+}
+
+// 完整类型联合
+type FullEasingType = EasingFunction | ExtendedEasingType;
+```
+
+### 6.4 接口扩展
+
+**扩展原则**:
+- 明确继承关系，避免深层嵌套
+- 使用 `&` 符号进行交叉类型扩展
+- 保持接口单一职责
+
+**示例**:
+```typescript
+// 错误：深层嵌套
+interface A extends B {}
+interface B extends C {}
+interface C extends D {}
+
+// 正确：扁平化扩展
+interface BaseTransform {
+  position: Vector3;
+  rotation: Quaternion;
+}
+
+interface Transform3D extends BaseTransform {
+  eulerRotation: Vector3; // 添加新属性
+}
+```
+
+### 6.5 避免循环依赖
+
+**依赖方向**:
+- 核心 → 通用 → 包 → 设计
+- 使用重新导出模式组织类型
+- 避免相互引用的接口
+
+**示例**:
+```typescript
+// 核心定义 (core/generics.ts)
+export interface UnifiedKeyframe<T> { /* ... */ }
+
+// 通用实现 (common/frame.ts)
+import { UnifiedKeyframe } from '../core/generics';
+export type AnimationKeyframe = UnifiedKeyframe<any>;
+
+// 包实现 (animation/core.ts)
+import { UnifiedKeyframe } from '../core/generics';
+export interface UsdKeyframe extends Omit<UnifiedKeyframe<any>, 'tangents'> { /* ... */ }
+```
+
+### 6.6 类型安全
+
+**强制类型检查**:
+- 启用 strict 模式
+- 使用 noImplicitAny
+- 使用 noImplicitReturns
+- 使用 noUnusedLocals/Parameters
+
+**配置示例**:
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  }
+}
+```
+
+## 7. 关键的 Lint 规则
 
 ### ESLint 配置
 - 解析器：`@typescript-eslint/parser`
@@ -96,7 +231,7 @@ import type { Scene } from '../scene/';
 - 跨环境兼容性（浏览器和 Node.js）
 - 优先使用格式化工具而非手动格式化
 
-## 7. 其他约定
+## 8. 其他约定
 
 ### 文件结构
 - 所有代码源文件位于 `src/` 目录

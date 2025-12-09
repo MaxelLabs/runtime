@@ -1,16 +1,4 @@
-import {
-  RHITextureFormat,
-  RHIAddressMode,
-  RHIFilterMode,
-  RHICompareFunction,
-  RHIVertexFormat,
-  RHIBlendFactor,
-  RHIBlendOperation,
-  RHIPrimitiveTopology,
-  RHICullMode,
-  RHIFrontFace,
-  RHIStencilOperation,
-} from '@maxellabs/core';
+import { MSpec } from '@maxellabs/core';
 
 /**
  * WebGL工具类，提供格式转换和辅助功能
@@ -116,7 +104,7 @@ export class WebGLUtils {
    * 2. 对于深度纹理，提供更好的降级选项
    * 3. 增加详细的调试信息，帮助理解降级原因
    */
-  textureFormatToGL(format: RHITextureFormat): {
+  textureFormatToGL(format: MSpec.RHITextureFormat): {
     internalFormat: number;
     format: number;
     type: number;
@@ -143,7 +131,7 @@ export class WebGLUtils {
 
     // 根据RHI格式查找对应的WebGL格式
     switch (format) {
-      case RHITextureFormat.R8_UNORM:
+      case MSpec.RHITextureFormat.R8_UNORM:
         if (this.isWebGL2) {
           result = {
             internalFormat: (gl as WebGL2RenderingContext).R8,
@@ -160,7 +148,7 @@ export class WebGLUtils {
         }
 
         break;
-      case RHITextureFormat.RG8_UNORM:
+      case MSpec.RHITextureFormat.RG8_UNORM:
         if (this.isWebGL2) {
           result = {
             internalFormat: (gl as WebGL2RenderingContext).RG8,
@@ -177,7 +165,7 @@ export class WebGLUtils {
         }
 
         break;
-      case RHITextureFormat.RGBA8_UNORM:
+      case MSpec.RHITextureFormat.RGBA8_UNORM:
         if (this.isWebGL2) {
           result = {
             internalFormat: (gl as WebGL2RenderingContext).RGBA8,
@@ -193,7 +181,7 @@ export class WebGLUtils {
         }
 
         break;
-      case RHITextureFormat.RGBA16_FLOAT:
+      case MSpec.RHITextureFormat.RGBA16_FLOAT:
         if (this.isWebGL2) {
           result = {
             internalFormat: (gl as WebGL2RenderingContext).RGBA16F,
@@ -221,7 +209,7 @@ export class WebGLUtils {
         }
 
         break;
-      case RHITextureFormat.RGBA32_FLOAT:
+      case MSpec.RHITextureFormat.RGBA32_FLOAT:
         if (this.isWebGL2) {
           result = {
             internalFormat: (gl as WebGL2RenderingContext).RGBA32F,
@@ -249,15 +237,15 @@ export class WebGLUtils {
         }
 
         break;
-      case RHITextureFormat.DEPTH16_UNORM:
+      case MSpec.RHITextureFormat.DEPTH16_UNORM:
         return this.tryDepthTextureFormat(16) || this.fallbackForDepthTexture();
-      case RHITextureFormat.DEPTH24_UNORM:
+      case MSpec.RHITextureFormat.DEPTH24_UNORM:
         return this.tryDepthTextureFormat(24) || this.fallbackForDepthTexture();
-      case RHITextureFormat.DEPTH32_FLOAT:
+      case MSpec.RHITextureFormat.DEPTH32_FLOAT:
         return this.tryDepthFloatTextureFormat() || this.tryDepthTextureFormat(24) || this.fallbackForDepthTexture();
-      case RHITextureFormat.DEPTH24_UNORM_STENCIL8:
+      case MSpec.RHITextureFormat.DEPTH24_UNORM_STENCIL8:
         return this.tryDepthStencilTextureFormat(24) || this.fallbackForDepthTexture();
-      case RHITextureFormat.DEPTH32_FLOAT_STENCIL8:
+      case MSpec.RHITextureFormat.DEPTH32_FLOAT_STENCIL8:
         return (
           this.tryDepthFloatStencilTextureFormat() ||
           this.tryDepthStencilTextureFormat(24) ||
@@ -489,17 +477,17 @@ export class WebGLUtils {
   /**
    * 转换RHI寻址模式到WebGL寻址模式
    */
-  addressModeToGL(mode: RHIAddressMode): GLenum {
+  addressModeToGL(mode: MSpec.RHIAddressMode): GLenum {
     const gl = this.gl;
 
     switch (mode) {
-      case RHIAddressMode.REPEAT:
+      case MSpec.RHIAddressMode.REPEAT:
         return gl.REPEAT;
-      case RHIAddressMode.MIRROR_REPEAT:
+      case MSpec.RHIAddressMode.MIRROR_REPEAT:
         return gl.MIRRORED_REPEAT;
-      case RHIAddressMode.CLAMP_TO_EDGE:
+      case MSpec.RHIAddressMode.CLAMP_TO_EDGE:
         return gl.CLAMP_TO_EDGE;
-      case RHIAddressMode.CLAMP_TO_BORDER: {
+      case MSpec.RHIAddressMode.CLAMP_TO_BORDER: {
         const ext = this.getExtension('EXT_texture_border_clamp');
 
         return ext ? ext.CLAMP_TO_BORDER_EXT : gl.CLAMP_TO_EDGE;
@@ -512,10 +500,10 @@ export class WebGLUtils {
   /**
    * 转换RHI过滤模式到WebGL过滤模式
    */
-  filterModeToGL(mode: RHIFilterMode, useMipmap: boolean = false): number {
+  filterModeToGL(mode: MSpec.RHIFilterMode, useMipmap: boolean = false): number {
     const gl = this.gl;
 
-    if (mode === RHIFilterMode.NEAREST) {
+    if (mode === MSpec.RHIFilterMode.NEAREST) {
       return useMipmap ? gl.NEAREST_MIPMAP_NEAREST : gl.NEAREST;
     } else {
       return useMipmap ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR;
@@ -525,25 +513,25 @@ export class WebGLUtils {
   /**
    * 转换RHI比较函数到WebGL比较函数
    */
-  compareFunctionToGL(func: RHICompareFunction): number {
+  compareFunctionToGL(func: MSpec.RHICompareFunction): number {
     const gl = this.gl;
 
     switch (func) {
-      case RHICompareFunction.NEVER:
+      case MSpec.RHICompareFunction.NEVER:
         return gl.NEVER;
-      case RHICompareFunction.LESS:
+      case MSpec.RHICompareFunction.LESS:
         return gl.LESS;
-      case RHICompareFunction.EQUAL:
+      case MSpec.RHICompareFunction.EQUAL:
         return gl.EQUAL;
-      case RHICompareFunction.LESS_EQUAL:
+      case MSpec.RHICompareFunction.LESS_EQUAL:
         return gl.LEQUAL;
-      case RHICompareFunction.GREATER:
+      case MSpec.RHICompareFunction.GREATER:
         return gl.GREATER;
-      case RHICompareFunction.NOT_EQUAL:
+      case MSpec.RHICompareFunction.NOT_EQUAL:
         return gl.NOTEQUAL;
-      case RHICompareFunction.GREATER_EQUAL:
+      case MSpec.RHICompareFunction.GREATER_EQUAL:
         return gl.GEQUAL;
-      case RHICompareFunction.ALWAYS:
+      case MSpec.RHICompareFunction.ALWAYS:
         return gl.ALWAYS;
       default:
         return gl.ALWAYS;
@@ -553,41 +541,41 @@ export class WebGLUtils {
   /**
    * 转换RHI顶点格式到WebGL类型
    */
-  vertexFormatToGL(format: RHIVertexFormat): { type: number; size: number; normalized: boolean } {
+  vertexFormatToGL(format: MSpec.RHIVertexFormat): { type: number; size: number; normalized: boolean } {
     const gl = this.gl;
 
     switch (format) {
-      case RHIVertexFormat.FLOAT32:
+      case MSpec.RHIVertexFormat.FLOAT32:
         return { type: gl.FLOAT, size: 1, normalized: false };
-      case RHIVertexFormat.FLOAT32X2:
+      case MSpec.RHIVertexFormat.FLOAT32x2:
         return { type: gl.FLOAT, size: 2, normalized: false };
-      case RHIVertexFormat.FLOAT32X3:
+      case MSpec.RHIVertexFormat.FLOAT32x3:
         return { type: gl.FLOAT, size: 3, normalized: false };
-      case RHIVertexFormat.FLOAT32X4:
+      case MSpec.RHIVertexFormat.FLOAT32x4:
         return { type: gl.FLOAT, size: 4, normalized: false };
-      case RHIVertexFormat.UINT8X2:
+      case MSpec.RHIVertexFormat.UINT8x2:
         return { type: gl.UNSIGNED_BYTE, size: 2, normalized: false };
-      case RHIVertexFormat.UINT8X4:
+      case MSpec.RHIVertexFormat.UINT8x4:
         return { type: gl.UNSIGNED_BYTE, size: 4, normalized: false };
-      case RHIVertexFormat.UNORM8X2:
+      case MSpec.RHIVertexFormat.UNORM8x2:
         return { type: gl.UNSIGNED_BYTE, size: 2, normalized: true };
-      case RHIVertexFormat.UNORM8X4:
+      case MSpec.RHIVertexFormat.UNORM8x4:
         return { type: gl.UNSIGNED_BYTE, size: 4, normalized: true };
-      case RHIVertexFormat.SINT8X2:
+      case MSpec.RHIVertexFormat.SINT8x2:
         return { type: gl.BYTE, size: 2, normalized: false };
-      case RHIVertexFormat.SINT8X4:
+      case MSpec.RHIVertexFormat.SINT8x4:
         return { type: gl.BYTE, size: 4, normalized: false };
-      case RHIVertexFormat.SNORM8X2:
+      case MSpec.RHIVertexFormat.SNORM8x2:
         return { type: gl.BYTE, size: 2, normalized: true };
-      case RHIVertexFormat.SNORM8X4:
+      case MSpec.RHIVertexFormat.SNORM8x4:
         return { type: gl.BYTE, size: 4, normalized: true };
-      case RHIVertexFormat.UINT16X2:
+      case MSpec.RHIVertexFormat.UINT16x2:
         return { type: gl.UNSIGNED_SHORT, size: 2, normalized: false };
-      case RHIVertexFormat.UINT16X4:
+      case MSpec.RHIVertexFormat.UINT16x4:
         return { type: gl.UNSIGNED_SHORT, size: 4, normalized: false };
-      case RHIVertexFormat.SINT16X2:
+      case MSpec.RHIVertexFormat.SINT16x2:
         return { type: gl.SHORT, size: 2, normalized: false };
-      case RHIVertexFormat.SINT16X4:
+      case MSpec.RHIVertexFormat.SINT16x4:
         return { type: gl.SHORT, size: 4, normalized: false };
       default:
         return { type: gl.FLOAT, size: 4, normalized: false };
@@ -597,39 +585,39 @@ export class WebGLUtils {
   /**
    * 转换RHI混合因子到WebGL混合因子
    */
-  blendFactorToGL(factor: RHIBlendFactor): number {
+  blendFactorToGL(factor: MSpec.RHIBlendFactor): number {
     const gl = this.gl;
 
     switch (factor) {
-      case RHIBlendFactor.ZERO:
+      case MSpec.RHIBlendFactor.Zero:
         return gl.ZERO;
-      case RHIBlendFactor.ONE:
+      case MSpec.RHIBlendFactor.One:
         return gl.ONE;
-      case RHIBlendFactor.SRC_COLOR:
+      case MSpec.RHIBlendFactor.SrcColor:
         return gl.SRC_COLOR;
-      case RHIBlendFactor.ONE_MINUS_SRC_COLOR:
+      case MSpec.RHIBlendFactor.OneMinusSrcColor:
         return gl.ONE_MINUS_SRC_COLOR;
-      case RHIBlendFactor.DST_COLOR:
+      case MSpec.RHIBlendFactor.DstColor:
         return gl.DST_COLOR;
-      case RHIBlendFactor.ONE_MINUS_DST_COLOR:
+      case MSpec.RHIBlendFactor.OneMinusDstColor:
         return gl.ONE_MINUS_DST_COLOR;
-      case RHIBlendFactor.SRC_ALPHA:
+      case MSpec.RHIBlendFactor.SrcAlpha:
         return gl.SRC_ALPHA;
-      case RHIBlendFactor.ONE_MINUS_SRC_ALPHA:
+      case MSpec.RHIBlendFactor.OneMinusSrcAlpha:
         return gl.ONE_MINUS_SRC_ALPHA;
-      case RHIBlendFactor.DST_ALPHA:
+      case MSpec.RHIBlendFactor.DstAlpha:
         return gl.DST_ALPHA;
-      case RHIBlendFactor.ONE_MINUS_DST_ALPHA:
+      case MSpec.RHIBlendFactor.OneMinusDstAlpha:
         return gl.ONE_MINUS_DST_ALPHA;
-      case RHIBlendFactor.CONSTANT_COLOR:
+      case MSpec.RHIBlendFactor.ConstantColor:
         return gl.CONSTANT_COLOR;
-      case RHIBlendFactor.ONE_MINUS_CONSTANT_COLOR:
+      case MSpec.RHIBlendFactor.OneMinusConstantColor:
         return gl.ONE_MINUS_CONSTANT_COLOR;
-      case RHIBlendFactor.CONSTANT_ALPHA:
+      case MSpec.RHIBlendFactor.ConstantAlpha:
         return gl.CONSTANT_ALPHA;
-      case RHIBlendFactor.ONE_MINUS_CONSTANT_ALPHA:
+      case MSpec.RHIBlendFactor.OneMinusConstantAlpha:
         return gl.ONE_MINUS_CONSTANT_ALPHA;
-      case RHIBlendFactor.SRC_ALPHA_SATURATE:
+      case MSpec.RHIBlendFactor.SrcAlphaSaturate:
         return gl.SRC_ALPHA_SATURATE;
       default:
         return gl.ONE;
@@ -639,22 +627,22 @@ export class WebGLUtils {
   /**
    * 转换RHI混合操作到WebGL混合等式
    */
-  blendOperationToGL(operation: RHIBlendOperation): number {
+  blendOperationToGL(operation: MSpec.RHIBlendOperation): number {
     const gl = this.gl;
 
     switch (operation) {
-      case RHIBlendOperation.ADD:
+      case MSpec.RHIBlendOperation.ADD:
         return gl.FUNC_ADD;
-      case RHIBlendOperation.SUBTRACT:
+      case MSpec.RHIBlendOperation.SUBTRACT:
         return gl.FUNC_SUBTRACT;
-      case RHIBlendOperation.REVERSE_SUBTRACT:
+      case MSpec.RHIBlendOperation.REVERSE_SUBTRACT:
         return gl.FUNC_REVERSE_SUBTRACT;
-      case RHIBlendOperation.MIN: {
+      case MSpec.RHIBlendOperation.MIN: {
         const minExt = this.extension['EXT_blend_minmax'];
 
         return minExt ? minExt.MIN_EXT : gl.FUNC_ADD;
       }
-      case RHIBlendOperation.MAX: {
+      case MSpec.RHIBlendOperation.MAX: {
         const maxExt = this.extension['EXT_blend_minmax'];
 
         return maxExt ? maxExt.MAX_EXT : gl.FUNC_ADD;
@@ -667,19 +655,19 @@ export class WebGLUtils {
   /**
    * 转换RHI图元类型到WebGL图元类型
    */
-  primitiveTopologyToGL(topology: RHIPrimitiveTopology): number {
+  primitiveTopologyToGL(topology: MSpec.RHIPrimitiveTopology): number {
     const gl = this.gl;
 
     switch (topology) {
-      case RHIPrimitiveTopology.POINT_LIST:
+      case MSpec.RHIPrimitiveTopology.POINT_LIST:
         return gl.POINTS;
-      case RHIPrimitiveTopology.LINE_LIST:
+      case MSpec.RHIPrimitiveTopology.LINE_LIST:
         return gl.LINES;
-      case RHIPrimitiveTopology.LINE_STRIP:
+      case MSpec.RHIPrimitiveTopology.LINE_STRIP:
         return gl.LINE_STRIP;
-      case RHIPrimitiveTopology.TRIANGLE_LIST:
+      case MSpec.RHIPrimitiveTopology.TRIANGLE_LIST:
         return gl.TRIANGLES;
-      case RHIPrimitiveTopology.TRIANGLE_STRIP:
+      case MSpec.RHIPrimitiveTopology.TRIANGLE_STRIP:
         return gl.TRIANGLE_STRIP;
       default:
         return gl.TRIANGLES;
@@ -687,17 +675,17 @@ export class WebGLUtils {
   }
 
   /**
-   * 转换RHI剔除模式到WebGL
+   * 转换RHI剔除模式到WebGL剔除模式
    */
-  cullModeToGL(mode: RHICullMode): { enable: boolean; mode: number } {
+  cullModeToGL(mode: MSpec.RHICullMode): { enable: boolean; mode: number } {
     const gl = this.gl;
 
     switch (mode) {
-      case RHICullMode.NONE:
+      case MSpec.RHICullMode.NONE:
         return { enable: false, mode: gl.BACK };
-      case RHICullMode.FRONT:
+      case MSpec.RHICullMode.FRONT:
         return { enable: true, mode: gl.FRONT };
-      case RHICullMode.BACK:
+      case MSpec.RHICullMode.BACK:
         return { enable: true, mode: gl.BACK };
       default:
         return { enable: false, mode: gl.BACK };
@@ -705,36 +693,36 @@ export class WebGLUtils {
   }
 
   /**
-   * 转换RHI正面方向到WebGL
+   * 转换RHI正面方向到WebGL正面方向
    */
-  frontFaceToGL(face: RHIFrontFace): number {
+  frontFaceToGL(face: MSpec.RHIFrontFace): number {
     const gl = this.gl;
 
-    return face === RHIFrontFace.CW ? gl.CW : gl.CCW;
+    return face === MSpec.RHIFrontFace.CW ? gl.CW : gl.CCW;
   }
 
   /**
    * 转换RHI模板操作到WebGL
    */
-  stencilOperationToGL(operation: RHIStencilOperation): number {
+  stencilOperationToGL(operation: MSpec.RHIStencilOperation): number {
     const gl = this.gl;
 
     switch (operation) {
-      case RHIStencilOperation.KEEP:
+      case MSpec.RHIStencilOperation.KEEP:
         return gl.KEEP;
-      case RHIStencilOperation.ZERO:
+      case MSpec.RHIStencilOperation.ZERO:
         return gl.ZERO;
-      case RHIStencilOperation.REPLACE:
+      case MSpec.RHIStencilOperation.REPLACE:
         return gl.REPLACE;
-      case RHIStencilOperation.INCR_CLAMP:
+      case MSpec.RHIStencilOperation.INCR_CLAMP:
         return gl.INCR;
-      case RHIStencilOperation.DECR_CLAMP:
+      case MSpec.RHIStencilOperation.DECR_CLAMP:
         return gl.DECR;
-      case RHIStencilOperation.INVERT:
+      case MSpec.RHIStencilOperation.INVERT:
         return gl.INVERT;
-      case RHIStencilOperation.INCR_WRAP:
+      case MSpec.RHIStencilOperation.INCR_WRAP:
         return gl.INCR_WRAP;
-      case RHIStencilOperation.DECR_WRAP:
+      case MSpec.RHIStencilOperation.DECR_WRAP:
         return gl.DECR_WRAP;
       default:
         return gl.KEEP;

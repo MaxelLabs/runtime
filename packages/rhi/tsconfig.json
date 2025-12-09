@@ -10,9 +10,6 @@
   "exclude": ["node_modules", "dist", "test/**/*", "**/*.test.ts"],
   "references": [
     {
-      "path": "../math"
-    },
-    {
       "path": "../core"
     }
   ]

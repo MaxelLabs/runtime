@@ -1,27 +1,20 @@
-import type {
-  IRHITexture,
-  IRHITextureView,
-  RHITextureDescriptor,
-  RHITextureFormat,
-  RHITextureUsage,
-} from '@maxellabs/core';
-import { RHIFilterMode, RHIAddressMode } from '@maxellabs/core';
+import { MSpec } from '@maxellabs/core';
 import { WebGLUtils } from '../utils/GLUtils';
 import { WebGLTextureView } from './GLTextureView';
 
 /**
  * WebGL纹理实现
  */
-export class GLTexture implements IRHITexture {
+export class GLTexture implements MSpec.IRHITexture {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private glTexture: WebGLTexture | null;
   width: number;
   height: number;
   depthOrArrayLayers: number;
   mipLevelCount: number;
-  format: RHITextureFormat;
-  usage: RHITextureUsage;
-  dimension: '1d' | '2d' | '3d' | 'cube';
+  format: MSpec.RHITextureFormat;
+  usage: MSpec.RHITextureUsage;
+  dimension: MSpec.RHITextureType;
   sampleCount: number;
   label?: string;
   target: number;
@@ -51,7 +44,7 @@ export class GLTexture implements IRHITexture {
    * @param gl WebGL上下文
    * @param descriptor 纹理描述符
    */
-  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: RHITextureDescriptor) {
+  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: MSpec.RHITextureDescriptor) {
     this.gl = gl;
     this.extension = descriptor.extension || {};
 
@@ -62,12 +55,12 @@ export class GLTexture implements IRHITexture {
     this.mipLevelCount = descriptor.mipLevelCount || 1;
     this.format = descriptor.format;
     this.usage = descriptor.usage;
-    this.dimension = descriptor.dimension || '2d';
+    this.dimension = descriptor.dimension || MSpec.RHITextureType.TEXTURE_2D;
     this.sampleCount = descriptor.sampleCount || 1;
     this.label = descriptor.label;
 
     // 检查3D纹理是否需要降级
-    if (this.dimension === '3d' && !(gl instanceof WebGL2RenderingContext)) {
+    if (this.dimension === MSpec.RHITextureType.TEXTURE_3D && !(gl instanceof WebGL2RenderingContext)) {
       console.warn('WebGL1不支持3D纹理，降级为2D纹理');
       this.is3DDowngradedTo2D = true;
     }
@@ -115,8 +108,8 @@ export class GLTexture implements IRHITexture {
     gl.bindTexture(this.target, this.glTexture);
 
     // 获取默认的过滤和寻址模式（从extension或使用默认值）
-    const defaultFilter = this.extension?.defaultFilter || RHIFilterMode.LINEAR;
-    const defaultAddressMode = this.extension?.defaultAddressMode || RHIAddressMode.CLAMP_TO_EDGE;
+    const defaultFilter = this.extension?.defaultFilter || MSpec.RHIFilterMode.LINEAR;
+    const defaultAddressMode = this.extension?.defaultAddressMode || MSpec.RHIAddressMode.CLAMP_TO_EDGE;
 
     // 设置纹理过滤参数
     gl.texParameteri(
@@ -424,16 +417,16 @@ export class GLTexture implements IRHITexture {
   /**
    * 获取WebGL纹理目标
    */
-  private getGLTextureTarget(dimension: '1d' | '2d' | '3d' | 'cube'): number {
+  private getGLTextureTarget(dimension: MSpec.RHITextureType): number {
     const gl = this.gl;
 
     switch (dimension) {
-      case '1d':
-      case '2d':
+      case MSpec.RHITextureType.TEXTURE_1D:
+      case MSpec.RHITextureType.TEXTURE_2D:
         return gl.TEXTURE_2D;
-      case '3d':
+      case MSpec.RHITextureType.TEXTURE_3D:
         return gl instanceof WebGL2RenderingContext ? gl.TEXTURE_3D : gl.TEXTURE_2D;
-      case 'cube':
+      case MSpec.RHITextureType.TEXTURE_CUBE:
         return gl.TEXTURE_CUBE_MAP;
       default:
         return gl.TEXTURE_2D;
@@ -600,13 +593,13 @@ export class GLTexture implements IRHITexture {
    * 创建纹理视图
    */
   createView(
-    format?: RHITextureFormat,
-    dimension?: '1d' | '2d' | '3d' | 'cube' | '2d-array' | 'cube-array',
+    format?: MSpec.RHITextureFormat,
+    dimension?: MSpec.RHITextureType,
     baseMipLevel = 0,
     mipLevelCount?: number,
     baseArrayLayer = 0,
     arrayLayerCount?: number
-  ): IRHITextureView {
+  ): MSpec.IRHITextureView {
     if (this.isDestroyed) {
       throw new Error('试图从已销毁的纹理创建视图');
     }
@@ -708,21 +701,21 @@ export class GLTexture implements IRHITexture {
   /**
    * 获取纹理格式
    */
-  getFormat(): RHITextureFormat {
+  getFormat(): MSpec.RHITextureFormat {
     return this.format;
   }
 
   /**
    * 获取纹理用途
    */
-  getUsage(): RHITextureUsage {
+  getUsage(): MSpec.RHITextureUsage {
     return this.usage;
   }
 
   /**
    * 获取纹理维度
    */
-  getDimension(): '1d' | '2d' | '3d' | 'cube' {
+  getDimension(): MSpec.RHITextureType {
     return this.dimension;
   }
 

@@ -1,4 +1,4 @@
-import type { MSpec } from '@maxellabs/core';
+import { MSpec } from '@maxellabs/core';
 import { GLBuffer } from './resources/GLBuffer';
 import { GLTexture } from './resources/GLTexture';
 import { GLSampler } from './resources/GLSampler';
@@ -90,7 +90,7 @@ export class WebGLDevice implements MSpec.IRHIDevice {
   /**
    * 初始化设备信息
    */
-  private initDeviceInfo(): IRHIDeviceInfo {
+  private initDeviceInfo(): MSpec.IRHIDeviceInfo {
     const gl = this.gl;
     const isWebGL2 = this.isWebGL2;
     const vendor = gl.getParameter(gl.VENDOR);
@@ -99,48 +99,72 @@ export class WebGLDevice implements MSpec.IRHIDevice {
     const maxTextureUnits = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
 
     // 计算功能标志
-    let features = RHIFeatureFlags.DEPTH_TEXTURE | RHIFeatureFlags.VERTEX_ARRAY_OBJECT;
+    let features = 0;
 
     if (isWebGL2) {
-      features |=
-        RHIFeatureFlags.FLOAT_TEXTURE |
-        RHIFeatureFlags.HALF_FLOAT_TEXTURE |
-        RHIFeatureFlags.MULTIPLE_RENDER_TARGETS |
-        RHIFeatureFlags.INSTANCED_DRAWING;
+      // WebGL2 核心特性
+      features |= MSpec.RHIFeatureFlags.DEPTH_TEXTURE;
+      features |= MSpec.RHIFeatureFlags.VERTEX_ARRAY_OBJECT;
+      features |= MSpec.RHIFeatureFlags.INSTANCED_DRAWING;
+      features |= MSpec.RHIFeatureFlags.MULTIPLE_RENDER_TARGETS;
+      features |= MSpec.RHIFeatureFlags.FLOAT_TEXTURE;
+      features |= MSpec.RHIFeatureFlags.HALF_FLOAT_TEXTURE;
+    } else {
+      // WebGL1 扩展特性检测
+      if (gl.getExtension('WEBGL_depth_texture')) {
+        features |= MSpec.RHIFeatureFlags.DEPTH_TEXTURE;
+      }
+      if (gl.getExtension('OES_vertex_array_object')) {
+        features |= MSpec.RHIFeatureFlags.VERTEX_ARRAY_OBJECT;
+      }
+      if (gl.getExtension('ANGLE_instanced_arrays')) {
+        features |= MSpec.RHIFeatureFlags.INSTANCED_DRAWING;
+      }
+      if (gl.getExtension('WEBGL_draw_buffers')) {
+        features |= MSpec.RHIFeatureFlags.MULTIPLE_RENDER_TARGETS;
+      }
+      if (gl.getExtension('OES_texture_float')) {
+        features |= MSpec.RHIFeatureFlags.FLOAT_TEXTURE;
+      }
+      if (gl.getExtension('OES_texture_half_float')) {
+        features |= MSpec.RHIFeatureFlags.HALF_FLOAT_TEXTURE;
+      }
     }
 
-    // 检查扩展并更新功能
-    if (gl.getExtension('EXT_texture_filter_anisotropic')) {
-      features |= RHIFeatureFlags.ANISOTROPIC_FILTERING;
-    }
+    // 通用扩展检测
+    const extAnisotropic =
+      gl.getExtension('EXT_texture_filter_anisotropic') ||
+      gl.getExtension('MOZ_EXT_texture_filter_anisotropic') ||
+      gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic');
 
-    if (gl.getExtension('OES_texture_float')) {
-      features |= RHIFeatureFlags.FLOAT_TEXTURE;
-    }
-
-    if (gl.getExtension('OES_texture_half_float')) {
-      features |= RHIFeatureFlags.HALF_FLOAT_TEXTURE;
+    if (extAnisotropic) {
+      features |= MSpec.RHIFeatureFlags.ANISOTROPIC_FILTERING;
     }
 
     if (gl.getExtension('WEBGL_compressed_texture_s3tc')) {
-      features |= RHIFeatureFlags.BC_TEXTURE_COMPRESSION;
+      features |= MSpec.RHIFeatureFlags.BC_TEXTURE_COMPRESSION;
     }
 
     if (gl.getExtension('WEBGL_compressed_texture_etc')) {
-      features |= RHIFeatureFlags.ETC2_TEXTURE_COMPRESSION;
+      features |= MSpec.RHIFeatureFlags.ETC2_TEXTURE_COMPRESSION;
     }
 
     if (gl.getExtension('WEBGL_compressed_texture_astc')) {
-      features |= RHIFeatureFlags.ASTC_TEXTURE_COMPRESSION;
+      features |= MSpec.RHIFeatureFlags.ASTC_TEXTURE_COMPRESSION;
     }
+
+    // 输出调试信息
+    console.info(`[WebGLDevice] Initialized device: ${renderer}`);
+    console.info(`[WebGLDevice] Backend: ${isWebGL2 ? 'WebGL2' : 'WebGL1'}`);
+    console.info(`[WebGLDevice] Features: ${features.toString(2)}`);
 
     return {
       deviceName: renderer,
       vendorName: vendor,
-      backend: isWebGL2 ? RHIBackend.WebGL2 : RHIBackend.WebGL,
+      backend: isWebGL2 ? MSpec.RHIBackend.WebGL2 : MSpec.RHIBackend.WebGL,
       features,
       maxTextureSize,
-      supportsAnisotropy: !!(features & RHIFeatureFlags.ANISOTROPIC_FILTERING),
+      supportsAnisotropy: !!(features & MSpec.RHIFeatureFlags.ANISOTROPIC_FILTERING),
       supportsMSAA: isWebGL2,
       maxSampleCount: isWebGL2 ? 4 : 0,
       maxBindings: maxTextureUnits,
@@ -152,39 +176,48 @@ export class WebGLDevice implements MSpec.IRHIDevice {
    * 初始化WebGL扩展
    */
   private initExtensions(): void {
-    // 基本WebGL1扩展
-    const requiredExtensions = [
-      'OES_vertex_array_object',
-      'OES_texture_float',
-      'OES_texture_half_float',
-      'WEBGL_depth_texture',
-      'OES_element_index_uint',
-      'EXT_texture_filter_anisotropic',
-      'EXT_blend_minmax',
-    ];
+    const requiredExtensions: string[] = [];
 
     // WebGL1特有扩展
     if (!this.isWebGL2) {
-      requiredExtensions.push('OES_standard_derivatives', 'EXT_shader_texture_lod', 'EXT_frag_depth');
+      requiredExtensions.push(
+        'OES_vertex_array_object',
+        'OES_texture_float',
+        'OES_texture_half_float',
+        'WEBGL_depth_texture',
+        'OES_element_index_uint',
+        'EXT_blend_minmax',
+        'OES_standard_derivatives',
+        'EXT_shader_texture_lod',
+        'EXT_frag_depth'
+      );
+    } else {
+      // WebGL2特有扩展 (如果需要)
+      requiredExtensions.push(
+        'EXT_color_buffer_float',
+        'OES_texture_float_linear' // 浮点纹理线性过滤通常需要显式启用
+      );
     }
 
-    // 压缩纹理扩展
-    const compressionExtensions = [
+    // 通用扩展
+    const commonExtensions = [
+      'EXT_texture_filter_anisotropic',
       'WEBGL_compressed_texture_s3tc',
       'WEBGL_compressed_texture_etc',
       'WEBGL_compressed_texture_astc',
     ];
 
     // 加载所有扩展
-    [...requiredExtensions, ...compressionExtensions].forEach((extName) => {
-      try {
-        const ext = this.gl.getExtension(extName);
+    [...requiredExtensions, ...commonExtensions].forEach((extName) => {
+      const ext = this.gl.getExtension(extName);
 
-        if (ext) {
-          this.extensions[extName] = ext;
+      if (ext) {
+        this.extensions[extName] = ext;
+      } else {
+        // 对于必需扩展失败的情况，记录警告
+        if (requiredExtensions.includes(extName)) {
+          console.warn(`[WebGLDevice] Optional extension not found: ${extName}`);
         }
-      } catch (e) {
-        console.warn(`扩展${extName}不可用或加载失败,请检查浏览器支持.`, e);
       }
     });
   }
@@ -199,63 +232,68 @@ export class WebGLDevice implements MSpec.IRHIDevice {
   /**
    * 获取设备信息
    */
-  getInfo(): IRHIDeviceInfo {
+  getInfo(): MSpec.IRHIDeviceInfo {
     return this.info;
   }
 
   /**
    * 创建缓冲区
    */
-  createBuffer(descriptor: RHIBufferDescriptor): IRHIBuffer {
+  createBuffer(descriptor: MSpec.RHIBufferDescriptor): MSpec.IRHIBuffer {
     return new GLBuffer(this.gl, descriptor);
   }
 
   /**
    * 创建纹理
    */
-  createTexture(descriptor: RHITextureDescriptor): IRHITexture {
+  createTexture(descriptor: MSpec.RHITextureDescriptor): MSpec.IRHITexture {
     return new GLTexture(this.gl, descriptor);
   }
 
   /**
    * 创建采样器
    */
-  createSampler(descriptor?: RHISamplerDescriptor): IRHISampler {
+  createSampler(
+    descriptor?: MSpec.RHISamplerDescriptor & {
+      borderColor?: [number, number, number, number];
+      useMipmap?: boolean;
+    }
+  ): MSpec.IRHISampler {
     return new GLSampler(this.gl, descriptor);
   }
 
   /**
    * 创建着色器模块
    */
-  createShaderModule(descriptor: RHIShaderModuleDescriptor): IRHIShaderModule {
+  createShaderModule(descriptor: MSpec.RHIShaderModuleDescriptor): MSpec.IRHIShaderModule {
     return new GLShader(this.gl, descriptor);
   }
 
   /**
    * 创建绑定组布局
    */
-  createBindGroupLayout(entries: any[], label?: string): IRHIBindGroupLayout {
+  createBindGroupLayout(entries: any[], label?: string): MSpec.IRHIBindGroupLayout {
     return new WebGLBindGroupLayout(this.gl, entries, label);
   }
 
   /**
    * 创建管线布局
    */
-  createPipelineLayout(bindGroupLayouts: IRHIBindGroupLayout[], label?: string): IRHIPipelineLayout {
+  createPipelineLayout(bindGroupLayouts: MSpec.IRHIBindGroupLayout[], label?: string): MSpec.IRHIPipelineLayout {
     return new WebGLPipelineLayout(this.gl, bindGroupLayouts, label);
   }
 
   /**
    * 创建绑定组
    */
-  createBindGroup(layout: IRHIBindGroupLayout, entries: any[], label?: string): IRHIBindGroup {
+  createBindGroup(layout: MSpec.IRHIBindGroupLayout, entries: any[], label?: string): MSpec.IRHIBindGroup {
     return new WebGLBindGroup(this.gl, layout, entries, label);
   }
 
   /**
    * 创建渲染管线
    */
-  createRenderPipeline(descriptor: RHIRenderPipelineDescriptor): IRHIRenderPipeline {
+  createRenderPipeline(descriptor: MSpec.RHIRenderPipelineDescriptor): MSpec.IRHIRenderPipeline {
     return new WebGLRenderPipeline(this.gl, descriptor);
   }
 
@@ -263,7 +301,7 @@ export class WebGLDevice implements MSpec.IRHIDevice {
    * 创建计算管线
    * 注意：WebGL1/2不支持计算着色器，这里仅为接口兼容性
    */
-  createComputePipeline(descriptor: RHIComputePipelineDescriptor): IRHIComputePipeline {
+  createComputePipeline(descriptor: MSpec.RHIComputePipelineDescriptor): MSpec.IRHIComputePipeline {
     console.warn('WebGL不支持计算着色器，创建的计算管线将不起作用');
 
     return new WebGLComputePipeline(this.gl, descriptor);
@@ -272,14 +310,14 @@ export class WebGLDevice implements MSpec.IRHIDevice {
   /**
    * 创建命令编码器
    */
-  createCommandEncoder(label?: string): IRHICommandEncoder {
+  createCommandEncoder(label?: string): MSpec.IRHICommandEncoder {
     return new WebGLCommandEncoder(this.gl, label);
   }
 
   /**
    * 提交命令
    */
-  submit(commands: IRHICommandBuffer[]): void {
+  submit(commands: MSpec.IRHICommandBuffer[]): void {
     if (!commands || commands.length === 0) {
       return;
     }
