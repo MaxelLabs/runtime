@@ -2,42 +2,24 @@
 
 ## 1. 核心摘要
 
-本文档提供了 `@maxellabs/specification` 包中核心类型的完整定义和接口规范，包括统一的关键帧系统、动画轨道系统、纹理引用系统和变换系统等关键组件。
+本文档提供了 `@maxellabs/specification` 包中核心类型的完整定义和接口规范，包括统一的泛型基类系统、动画轨道系统、纹理引用系统和变换系统等关键组件。
 
 ## 2. 源代码定义
 
 ### 泛型基类
 
-**文件**: `packages/specification/src/core/generics.ts:1-62`
-```typescript
-// 最小关键帧约束
-export interface MinimalKeyframe {
-  time: number;
-}
-
-// 统一关键帧接口
-export interface UnifiedKeyframe<T = any> extends BaseKeyframe<T> {
-  interpolation?: InterpolationMode;
-  inTangent?: Vector2Like;
-  outTangent?: Vector2Like;
-  bezierControlPoints?: { inTangent: [number, number]; outTangent: [number, number]; };
-}
-
-// 统一动画轨道接口
-export interface UnifiedAnimationTrack<K extends MinimalKeyframe = UnifiedKeyframe>
-  extends BlendableAnimationTrack<K> {
-  targetPath: string;
-  property: string;
-  dataType?: string;
-}
-
-// 纹理引用基类
-export interface BaseTextureRef {
-  textureId: string;
-  samplerId?: string;
-  transform?: TextureTransform;
-}
-```
+**文件**: `packages/specification/src/core/generics.ts`
+- BaseKeyframe<T> - 基础关键帧接口
+- TangentKeyframe<T> - 带切线支持的关键帧
+- InterpolatedKeyframe<T> - 带插值模式的关键帧
+- FullKeyframe<T> - 完整功能的关键帧
+- MinimalKeyframe - 最小关键帧约束
+- BaseAnimationTrack<K> - 基础动画轨道
+- TargetedAnimationTrack<K> - 带目标路径的动画轨道
+- BlendableAnimationTrack<K> - 支持混合的动画轨道
+- BaseTextureRef - 纹理引用基类
+- UnifiedKeyframe<T> - 统一关键帧接口
+- UnifiedAnimationTrack<K> - 统一动画轨道接口
 
 ### 核心接口
 
@@ -85,7 +67,6 @@ export enum EasingFunction {
   EaseIn = 'easeIn',
   EaseOut = 'easeOut',
   EaseInOut = 'easeInOut',
-  EaseInSine = 'easeInSine',
   // ... 更多基础函数
 }
 
@@ -113,12 +94,7 @@ export interface AnimationTrack extends UnifiedAnimationTrack<AnimationKeyframe>
   blendMode?: BlendMode;
   weight?: number;
 }
-```
 
-### 变换类型
-
-**文件**: `packages/specification/src/common/transform.ts`
-```typescript
 // 变换关键帧（继承，限制属性）
 export interface TransformKeyframe extends Omit<UnifiedKeyframe<CommonTransform>, 'bezierControlPoints'> {
   // 特定属性
@@ -128,29 +104,19 @@ export interface TransformKeyframe extends Omit<UnifiedKeyframe<CommonTransform>
 export interface TransformAnimationTrack extends UnifiedAnimationTrack<TransformKeyframe> {
   space?: TransformSpace;
 }
-
-// 通用变换 3D
-export interface CommonTransform3D extends ITransform {
-  eulerRotation: Vector3Like;
-}
 ```
 
 ### 材质类型（通用）
 
 **文件**: `packages/specification/src/common/material.ts`
 ```typescript
-// 通用纹理引用（继承）
+// 通用纹理引用（继承 BaseTextureRef）
 export interface CommonTextureRef extends BaseTextureRef {
   // 通用扩展属性
 }
 
 // 材质关键帧（类型别名）
 export type MaterialKeyframe = UnifiedKeyframe<any>;
-
-// 材质动画轨道（继承）
-export interface MaterialAnimationTrack extends UnifiedAnimationTrack<MaterialKeyframe> {
-  materialId: string;
-}
 ```
 
 ### USD 动画类型
@@ -173,7 +139,7 @@ export interface UsdAnimationTrack extends UnifiedAnimationTrack<UsdKeyframe> {
 
 **文件**: `packages/specification/src/rendering/material.ts`
 ```typescript
-// 纹理引用（继承）
+// 纹理引用（继承 BaseTextureRef）
 export interface TextureReference extends BaseTextureRef {
   // 渲染特定属性
 }
@@ -186,14 +152,47 @@ export interface MaterialAnimationTrack extends UnifiedAnimationTrack<MaterialKe
   materialId: string;
   channel?: string;
 }
-
-// 材质纹理变换（重命名避免冲突）
-export interface MaterialTextureTransform extends TextureTransform {
-  // 材质特定属性
-}
 ```
 
-## 3. 使用示例
+## 3. 类型继承关系
+
+### 关键帧类型继承
+
+```typescript
+BaseKeyframe<T>
+├── TangentKeyframe<T>
+├── InterpolatedKeyframe<T>
+└── FullKeyframe<T>
+    └── UnifiedKeyframe<T>
+        ├── AnimationKeyframe (type alias)
+        ├── MaterialKeyframe (type alias)
+        ├── TransformKeyframe (extends)
+        └── UsdKeyframe (extends)
+```
+
+### 动画轨道类型继承
+
+```typescript
+MinimalKeyframe
+└── BaseAnimationTrack<K>
+    ├── TargetedAnimationTrack<K>
+    └── BlendableAnimationTrack<K>
+        └── UnifiedAnimationTrack<K>
+            ├── AnimationTrack (extends)
+            ├── MaterialAnimationTrack (extends)
+            ├── TransformAnimationTrack (extends)
+            └── UsdAnimationTrack (extends)
+```
+
+### 纹理引用类型继承
+
+```typescript
+BaseTextureRef
+├── CommonTextureRef (extends)
+└── TextureReference (extends)
+```
+
+## 4. 使用示例
 
 ### 创建动画轨道
 
@@ -226,23 +225,24 @@ const usdTrack: UsdAnimationTrack = {
 ```typescript
 // 通用纹理引用
 const commonTexture: CommonTextureRef = {
-  textureId: 'texture-1',
-  samplerId: 'sampler-1',
+  assetId: 'texture-1',
+  slot: 'diffuse',
   transform: {
-    translation: [0, 0],
-    rotation: 0,
-    scale: [1, 1]
+    scale: [1, 1],
+    offset: [0, 0],
+    rotation: 0
   }
 };
 
 // 渲染纹理引用
 const renderTexture: TextureReference = {
-  textureId: 'diffuse-map',
-  samplerId: 'diffuse-sampler',
+  assetId: 'diffuse-map',
+  slot: 'diffuse',
+  uvChannel: 0,
   transform: {
-    translation: [0, 0],
-    rotation: 0,
-    scale: [1, 1]
+    scale: [1, 1],
+    offset: [0, 0],
+    rotation: 0
   }
 };
 ```
@@ -265,7 +265,7 @@ function applyEasing(easing: FullEasingType, t: number): number {
 }
 ```
 
-## 4. 相关文档
+## 5. 相关文档
 
 - **架构设计**: `/llmdoc/architecture/specification-type-system.md` - 类型系统整体架构
 - **编码约定**: `/llmdoc/reference/coding-conventions.md` - TypeScript 编码规范

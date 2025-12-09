@@ -1,13 +1,22 @@
 /**
  * utils/index.ts
- * 工具模块导出文件
+ * Demo 工具库统一导出
  */
 
-// 几何体生成工具
+// 核心框架
+export * from './core';
+
+// 几何体生成
 export * from './geometry';
 
-// 纹理生成工具
+// 纹理工具
 export * from './texture';
 
-// 常用工具函数
-export * from './common';
+// 相机系统
+export * from './camera';
+
+// 着色器工具（待实现）
+// export * from './shader';
+
+// UI 工具
+export * from './ui';

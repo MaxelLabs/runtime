@@ -2,6 +2,7 @@ import { MSpec } from '@maxellabs/core';
 import type { GLShader } from '../resources/GLShader';
 import { WebGLUtils } from '../utils/GLUtils';
 import type { GLBuffer } from '../resources';
+import type { Std140Layout } from '../utils/Std140Layout';
 
 /**
  * WebGL渲染管线实现
@@ -28,6 +29,14 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
   private isDestroyed: boolean = false;
   private utils: WebGLUtils;
 
+  // Push Constants UBO 相关
+  private pushConstantBuffer: WebGLBuffer | null = null;
+  private pushConstantLayout: Std140Layout | null = null;
+  private pushConstantData: Float32Array | null = null;
+  private pushConstantBlockIndex: number = -1;
+  private pushConstantBindingPoint: number = 15; // 使用高编号绑定点避免冲突
+  private static readonly PUSH_CONSTANT_BLOCK_NAME = '_PushConstants';
+
   /**
    * 构造函数
    * @param gl WebGL上下文
@@ -52,6 +61,9 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
 
     // 解析顶点属性位置
     this.extractAttributeLocations();
+
+    // 初始化 Push Constants UBO（仅 WebGL2）
+    this.initPushConstantsUBO();
 
     // 准备顶点布局数据
     this.prepareVertexLayout();
@@ -639,6 +651,146 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
     return this._label;
   }
 
+  // ==================== Push Constants UBO 方法 ====================
+
+  /**
+   * 初始化 Push Constants UBO
+   * 在程序链接后查询 uniform block 并创建 UBO
+   */
+  private initPushConstantsUBO(): void {
+    if (!this.isWebGL2 || !this.program) {
+      return;
+    }
+
+    const gl2 = this.gl as WebGL2RenderingContext;
+
+    // 查询着色器中是否有 _PushConstants uniform block
+    this.pushConstantBlockIndex = gl2.getUniformBlockIndex(this.program, WebGLRenderPipeline.PUSH_CONSTANT_BLOCK_NAME);
+
+    if (this.pushConstantBlockIndex === gl2.INVALID_INDEX) {
+      // 着色器中没有定义 _PushConstants block，这是正常情况
+      return;
+    }
+
+    // 获取 uniform block 的大小
+    const blockSize = gl2.getActiveUniformBlockParameter(
+      this.program,
+      this.pushConstantBlockIndex,
+      gl2.UNIFORM_BLOCK_DATA_SIZE
+    ) as number;
+
+    if (blockSize <= 0) {
+      console.warn(`[${this._label || 'WebGLRenderPipeline'}] Push Constants block 大小无效: ${blockSize}`);
+
+      return;
+    }
+
+    // 创建 UBO
+    this.pushConstantBuffer = gl2.createBuffer();
+
+    if (!this.pushConstantBuffer) {
+      console.error(`[${this._label || 'WebGLRenderPipeline'}] 创建 Push Constants UBO 失败`);
+
+      return;
+    }
+
+    // 初始化 UBO 数据
+    this.pushConstantData = new Float32Array(Math.ceil(blockSize / 4));
+
+    gl2.bindBuffer(gl2.UNIFORM_BUFFER, this.pushConstantBuffer);
+    gl2.bufferData(gl2.UNIFORM_BUFFER, this.pushConstantData, gl2.DYNAMIC_DRAW);
+    gl2.bindBuffer(gl2.UNIFORM_BUFFER, null);
+
+    // 绑定 uniform block 到绑定点
+    gl2.uniformBlockBinding(this.program, this.pushConstantBlockIndex, this.pushConstantBindingPoint);
+
+    // console.log(`[${this._label || 'WebGLRenderPipeline'}] Push Constants UBO 初始化完成，大小: ${blockSize} 字节`);
+  }
+
+  /**
+   * 更新 Push Constants 数据
+   *
+   * @param offset 字节偏移
+   * @param data 要写入的数据
+   */
+  updatePushConstants(offset: number, data: ArrayBufferView): void {
+    if (!this.isWebGL2 || !this.pushConstantBuffer || !this.pushConstantData) {
+      // WebGL1 或未初始化 UBO，降级到标量 uniform
+      this.updatePushConstantsLegacy(offset, data);
+
+      return;
+    }
+
+    const gl2 = this.gl as WebGL2RenderingContext;
+
+    // 直接更新 UBO 中的数据
+    gl2.bindBuffer(gl2.UNIFORM_BUFFER, this.pushConstantBuffer);
+    gl2.bufferSubData(gl2.UNIFORM_BUFFER, offset, data);
+    gl2.bindBuffer(gl2.UNIFORM_BUFFER, null);
+  }
+
+  /**
+   * 绑定 Push Constants UBO
+   * 在绘制之前调用
+   */
+  bindPushConstantsUBO(): void {
+    if (!this.isWebGL2 || !this.pushConstantBuffer) {
+      return;
+    }
+
+    const gl2 = this.gl as WebGL2RenderingContext;
+
+    gl2.bindBufferBase(gl2.UNIFORM_BUFFER, this.pushConstantBindingPoint, this.pushConstantBuffer);
+  }
+
+  /**
+   * 获取 Push Constants UBO 是否可用
+   */
+  hasPushConstantsUBO(): boolean {
+    return this.isWebGL2 && this.pushConstantBuffer !== null;
+  }
+
+  /**
+   * 获取 Push Constants 数据缓冲区（用于批量更新）
+   */
+  getPushConstantData(): Float32Array | null {
+    return this.pushConstantData;
+  }
+
+  /**
+   * 刷新整个 Push Constants 缓冲区到 GPU
+   */
+  flushPushConstants(): void {
+    if (!this.isWebGL2 || !this.pushConstantBuffer || !this.pushConstantData) {
+      return;
+    }
+
+    const gl2 = this.gl as WebGL2RenderingContext;
+
+    gl2.bindBuffer(gl2.UNIFORM_BUFFER, this.pushConstantBuffer);
+    gl2.bufferSubData(gl2.UNIFORM_BUFFER, 0, this.pushConstantData);
+    gl2.bindBuffer(gl2.UNIFORM_BUFFER, null);
+  }
+
+  /**
+   * WebGL1 降级方案：通过标量 uniform 更新数据
+   * 这需要知道 uniform 的名称，目前只是占位实现
+   */
+  private updatePushConstantsLegacy(offset: number, data: ArrayBufferView): void {
+    if (!this.program) {
+      return;
+    }
+
+    // WebGL1 降级方案需要更多信息
+    // 这里暂时只输出警告
+    console.warn(
+      `[${this._label || 'WebGLRenderPipeline'}] WebGL1 不支持 UBO，` +
+        `pushConstants 需要通过标量 uniform 实现。offset=${offset}, size=${data.byteLength}`
+    );
+  }
+
+  // ==================== Push Constants UBO 方法结束 ====================
+
   /**
    * 销毁资源
    */
@@ -651,6 +803,14 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
       this.gl.deleteProgram(this.program);
       this.program = null;
     }
+
+    // 清理 Push Constants UBO
+    if (this.pushConstantBuffer && this.isWebGL2) {
+      this.gl.deleteBuffer(this.pushConstantBuffer);
+      this.pushConstantBuffer = null;
+    }
+    this.pushConstantData = null;
+    this.pushConstantLayout = null;
 
     if (this.vertexArrayObject) {
       if (this.isWebGL2) {

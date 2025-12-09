@@ -439,7 +439,7 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
 
           if (program && webglBindGroup.applyBindings) {
             webglBindGroup.applyBindings(program, dynamicOffsets);
-            // console.log('成功应用绑定组');
+            // console.log('[RenderPass] 成功应用绑定组', webglBindGroup.label || '(unnamed)');
           } else {
             console.error('无法应用绑定组：程序无效或绑定组不支持applyBindings');
           }
@@ -615,36 +615,73 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
 
   /**
    * 执行间接绘制
+   *
+   * 注意：WebGL 不支持真正的间接绘制（从 GPU 缓冲区读取绘制参数）。
+   * WebGL 支持 WEBGL_multi_draw 扩展进行批量绘制，但这与间接绘制不同。
+   *
+   * 如需间接绘制功能，请考虑：
+   * 1. 使用 WebGPU 后端
+   * 2. 在 CPU 端解析缓冲区数据后调用常规 draw 方法
+   * 3. 使用 WEBGL_multi_draw 扩展的 multiDrawArrays 进行批量绘制
+   *
+   * @throws Error 始终抛出错误，因为 WebGL 不支持此功能
    */
   drawIndirect(indirectBuffer: MSpec.IRHIBuffer, indirectOffset: number): void {
-    throw new Error('WebGL不支持间接绘制');
+    throw new Error(
+      'WebGL 不支持间接绘制。间接绘制需要从 GPU 缓冲区读取绘制参数，这在 WebGL 中不可实现。' +
+        '如需批量绘制，可考虑使用 WEBGL_multi_draw 扩展的 multiDrawArraysWEBGL 方法，' +
+        '或升级到 WebGPU 后端以获得完整的间接绘制支持。'
+    );
   }
 
   /**
    * 执行间接索引绘制
+   *
+   * 注意：WebGL 不支持真正的间接绘制（从 GPU 缓冲区读取绘制参数）。
+   * WebGL 支持 WEBGL_multi_draw 扩展进行批量绘制，但这与间接绘制不同。
+   *
+   * @throws Error 始终抛出错误，因为 WebGL 不支持此功能
    */
   drawIndexedIndirect(indirectBuffer: MSpec.IRHIBuffer, indirectOffset: number): void {
-    throw new Error('WebGL不支持间接索引绘制');
+    throw new Error(
+      'WebGL 不支持间接索引绘制。间接绘制需要从 GPU 缓冲区读取绘制参数，这在 WebGL 中不可实现。' +
+        '如需批量索引绘制，可考虑使用 WEBGL_multi_draw 扩展的 multiDrawElementsWEBGL 方法，' +
+        '或升级到 WebGPU 后端以获得完整的间接绘制支持。'
+    );
   }
 
   /**
    * 执行推送常量更新
+   * 通过 UBO 实现 WebGPU 风格的 push constants
+   *
+   * @param offset 字节偏移
+   * @param data 要写入的数据
    */
   pushConstants(offset: number, data: ArrayBufferView): void {
     if (!this.isActive) {
       throw new Error('渲染通道已结束，无法推送常量');
     }
 
-    // WebGL没有推送常量的概念，需通过uniform实现
-    // 这里简化处理，实际实现需更复杂的策略
-    this.encoder.addCommand(() => {
-      if (this.currentPipeline) {
-        const program = this.currentPipeline.getProgram();
+    if (!this.currentPipeline) {
+      console.error('没有设置渲染管线，无法推送常量');
 
-        if (program) {
-          // 这里应该有更复杂的逻辑来映射推送常量到uniform
-          console.warn('WebGL不直接支持推送常量，需要通过uniform实现');
-        }
+      return;
+    }
+
+    // 捕获当前管线引用，用于延迟执行
+    const pipeline = this.currentPipeline;
+
+    // 复制数据以避免引用问题（延迟执行时原数据可能已改变）
+    const dataCopy = new Uint8Array(data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength));
+
+    this.encoder.addCommand(() => {
+      if (pipeline.hasPushConstantsUBO()) {
+        // WebGL2 路径：通过 UBO 更新
+        pipeline.updatePushConstants(offset, dataCopy);
+        pipeline.bindPushConstantsUBO();
+      } else {
+        // WebGL1 降级路径
+        pipeline.updatePushConstants(offset, dataCopy);
       }
     });
   }
@@ -727,5 +764,200 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
    */
   get label(): string | undefined {
     return this._label;
+  }
+
+  // ==================== WebGL 扩展方法 ====================
+
+  /**
+   * WEBGL_multi_draw 扩展接口定义
+   */
+  private get multiDrawExtension(): {
+    multiDrawArraysWEBGL: (
+      mode: number,
+      firstsList: Int32Array,
+      firstsOffset: number,
+      countsList: Int32Array,
+      countsOffset: number,
+      drawcount: number
+    ) => void;
+    multiDrawElementsWEBGL: (
+      mode: number,
+      countsList: Int32Array,
+      countsOffset: number,
+      type: number,
+      offsetsList: Int32Array,
+      offsetsOffset: number,
+      drawcount: number
+    ) => void;
+    multiDrawArraysInstancedWEBGL: (
+      mode: number,
+      firstsList: Int32Array,
+      firstsOffset: number,
+      countsList: Int32Array,
+      countsOffset: number,
+      instanceCountsList: Int32Array,
+      instanceCountsOffset: number,
+      drawcount: number
+    ) => void;
+    multiDrawElementsInstancedWEBGL: (
+      mode: number,
+      countsList: Int32Array,
+      countsOffset: number,
+      type: number,
+      offsetsList: Int32Array,
+      offsetsOffset: number,
+      instanceCountsList: Int32Array,
+      instanceCountsOffset: number,
+      drawcount: number
+    ) => void;
+  } | null {
+    return this.gl.getExtension('WEBGL_multi_draw') as any;
+  }
+
+  /**
+   * 执行多重批量绘制（WebGL 扩展方法）
+   *
+   * 使用 WEBGL_multi_draw 扩展一次性绘制多个图元批次，
+   * 减少 JavaScript 到 GPU 的调用开销。
+   *
+   * @param mode 图元类型（如 gl.TRIANGLES）
+   * @param firstsList 每次绘制的起始顶点索引数组
+   * @param countsList 每次绘制的顶点数量数组
+   * @throws Error 如果扩展不可用
+   *
+   * @example
+   * ```typescript
+   * const firsts = new Int32Array([0, 100, 200]);
+   * const counts = new Int32Array([100, 50, 150]);
+   * renderPass.multiDrawArrays(gl.TRIANGLES, firsts, counts);
+   * ```
+   */
+  multiDrawArrays(mode: number, firstsList: Int32Array, countsList: Int32Array): void {
+    if (!this.isActive) {
+      throw new Error('渲染通道已结束，无法执行多重绘制');
+    }
+
+    const ext = this.multiDrawExtension;
+    if (!ext) {
+      throw new Error(
+        'WEBGL_multi_draw 扩展不可用。请检查浏览器支持或使用 device.hasFeature(RHIFeatureFlags.MULTI_DRAW_INDIRECT) 预先检测。'
+      );
+    }
+
+    if (firstsList.length !== countsList.length) {
+      throw new Error('firstsList 和 countsList 数组长度必须相同');
+    }
+
+    const drawcount = firstsList.length;
+
+    this.encoder.addCommand(() => {
+      ext.multiDrawArraysWEBGL(mode, firstsList, 0, countsList, 0, drawcount);
+    });
+  }
+
+  /**
+   * 执行多重批量索引绘制（WebGL 扩展方法）
+   *
+   * 使用 WEBGL_multi_draw 扩展一次性绘制多个索引图元批次。
+   *
+   * @param mode 图元类型（如 gl.TRIANGLES）
+   * @param countsList 每次绘制的索引数量数组
+   * @param type 索引类型（gl.UNSIGNED_SHORT 或 gl.UNSIGNED_INT）
+   * @param offsetsList 每次绘制的索引缓冲区字节偏移数组
+   * @throws Error 如果扩展不可用
+   */
+  multiDrawElements(mode: number, countsList: Int32Array, type: number, offsetsList: Int32Array): void {
+    if (!this.isActive) {
+      throw new Error('渲染通道已结束，无法执行多重绘制');
+    }
+
+    const ext = this.multiDrawExtension;
+    if (!ext) {
+      throw new Error(
+        'WEBGL_multi_draw 扩展不可用。请检查浏览器支持或使用 device.hasFeature(RHIFeatureFlags.MULTI_DRAW_INDIRECT) 预先检测。'
+      );
+    }
+
+    if (countsList.length !== offsetsList.length) {
+      throw new Error('countsList 和 offsetsList 数组长度必须相同');
+    }
+
+    const drawcount = countsList.length;
+
+    this.encoder.addCommand(() => {
+      ext.multiDrawElementsWEBGL(mode, countsList, 0, type, offsetsList, 0, drawcount);
+    });
+  }
+
+  /**
+   * 执行多重批量实例化绘制（WebGL 扩展方法）
+   *
+   * 使用 WEBGL_multi_draw 扩展一次性绘制多个实例化图元批次。
+   *
+   * @param mode 图元类型
+   * @param firstsList 每次绘制的起始顶点索引数组
+   * @param countsList 每次绘制的顶点数量数组
+   * @param instanceCountsList 每次绘制的实例数量数组
+   * @throws Error 如果扩展不可用
+   */
+  multiDrawArraysInstanced(
+    mode: number,
+    firstsList: Int32Array,
+    countsList: Int32Array,
+    instanceCountsList: Int32Array
+  ): void {
+    if (!this.isActive) {
+      throw new Error('渲染通道已结束，无法执行多重绘制');
+    }
+
+    const ext = this.multiDrawExtension;
+    if (!ext) {
+      throw new Error('WEBGL_multi_draw 扩展不可用。');
+    }
+
+    const n = firstsList.length;
+    if (countsList.length !== n || instanceCountsList.length !== n) {
+      throw new Error('所有参数数组长度必须相同');
+    }
+
+    this.encoder.addCommand(() => {
+      ext.multiDrawArraysInstancedWEBGL(mode, firstsList, 0, countsList, 0, instanceCountsList, 0, n);
+    });
+  }
+
+  /**
+   * 执行多重批量实例化索引绘制（WebGL 扩展方法）
+   *
+   * @param mode 图元类型
+   * @param countsList 每次绘制的索引数量数组
+   * @param type 索引类型
+   * @param offsetsList 每次绘制的索引缓冲区字节偏移数组
+   * @param instanceCountsList 每次绘制的实例数量数组
+   * @throws Error 如果扩展不可用
+   */
+  multiDrawElementsInstanced(
+    mode: number,
+    countsList: Int32Array,
+    type: number,
+    offsetsList: Int32Array,
+    instanceCountsList: Int32Array
+  ): void {
+    if (!this.isActive) {
+      throw new Error('渲染通道已结束，无法执行多重绘制');
+    }
+
+    const ext = this.multiDrawExtension;
+    if (!ext) {
+      throw new Error('WEBGL_multi_draw 扩展不可用。');
+    }
+
+    const n = countsList.length;
+    if (offsetsList.length !== n || instanceCountsList.length !== n) {
+      throw new Error('所有参数数组长度必须相同');
+    }
+
+    this.encoder.addCommand(() => {
+      ext.multiDrawElementsInstancedWEBGL(mode, countsList, 0, type, offsetsList, 0, instanceCountsList, 0, n);
+    });
   }
 }

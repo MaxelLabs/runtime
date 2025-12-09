@@ -69,6 +69,12 @@
   - 节点、属性、层、阶段等核心类型
 - [Specification 类型参考](./reference/specification-type-reference.md) - 统一类型系统完整定义
   - 关键帧、动画轨道、纹理引用、变换等核心类型
+- [Query Set API](./reference/webgl-query-set.md) - WebGL 查询集功能完整参考
+  - 遮挡查询、时间戳查询的 API 和实现细节
+- [Push Constants 实现](./packages/rhi/llmdoc/reference/push-constants.md) - Push Constants 参数传递机制
+  - std140 布局规范和 WebGL 实现
+- [Resource Tracker API](./packages/rhi/llmdoc/reference/resource-tracker-api.md) - 资源生命周期管理
+  - 资源追踪、泄漏检测和自动销毁
 
 ## 3. 核心概念和对应文档
 
@@ -81,11 +87,31 @@
   - [RHI 架构](./architecture/rhi-architecture.md) - 深入理解实现原理
   - [使用 RHI](./guides/using-rhi.md) - 实践指南
 
+#### WebGL 查询集功能
+- **概念**: 支持 GPU 遮挡查询，用于优化渲染性能
+- **相关文档**:
+  - [Query Set API](./reference/webgl-query-set.md) - API 参考
+  - [Query Set API (RHI)](./packages/rhi/llmdoc/reference/query-set-api.md) - RHI 接口规范
+  - [WebGL 实现](./architecture/webgl-implementation.md) - 实现细节
+
+#### Push Constants 机制
+- **概念**: 高效参数传递机制，通过 UBO 实现 WebGPU 风格的 push constants
+- **相关文档**:
+  - [Push Constants 实现](./packages/rhi/llmdoc/reference/push-constants.md) - 完整实现细节
+  - [std140 布局规范](./packages/rhi/llmdoc/reference/push-constants.md) - 内存布局规则
+
+#### 资源管理系统
+- **概念**: 全局资源追踪和生命周期管理，自动检测泄漏
+- **相关文档**:
+  - [Resource Tracker API](./packages/rhi/llmdoc/reference/resource-tracker-api.md) - API 使用指南
+  - [设备生命周期](./packages/rhi/llmdoc/reference/device-lifecycle.md) - 设备资源管理
+
 #### WebGL 渲染管线
 - **概念**: 基于 WebGL 的渲染流水线，支持现代图形特性
 - **相关文档**:
   - [WebGL 实现](./architecture/webgl-implementation.md) - 技术细节
   - [WebGL 命令](./guides/webgl-commands.md) - 使用方法
+  - [RHI 演示开发](./packages/rhi/llmdoc/guides/demo-development.md) - 演示系统开发指南
 
 ### 🧮 数学系统
 
@@ -124,10 +150,12 @@
   - [USD 类型参考](./reference/usd-core-types.md) - API 文档
 
 #### 统一类型系统
-- **概念**: Specification 包的泛型基类体系和类型继承系统
+- **概念**: Specification 包的泛型基类体系和类型继承系统，解决类型重复问题
 - **相关文档**:
   - [类型系统架构](./architecture/specification-type-system.md) - 整体架构设计
   - [Specification 类型参考](./reference/specification-type-reference.md) - 完整类型定义
+- **重构报告**: [重复类型分析](./packages/specification/docs/duplicate-analysis-report.md) - 类型重复问题分析
+- [重构完成](./packages/specification/docs/refactoring-completion-report.md) - 重构过程和结果
 
 ## 4. 快速开始指南
 
@@ -136,7 +164,8 @@
 #### 路径一：快速体验 (30分钟)
 1. 阅读 [项目概览](./overview/project-overview.md) - 了解项目定位和核心功能
 2. 查看 [RHI 概述](./overview/rhi-overview.md) - 了解渲染抽象层概念
-3. 尝试 [使用 RHI](./guides/using-rhi.md) - 运行第一个渲染示例
+3. 查看 [RHI 演示开发](./packages/rhi/llmdoc/guides/demo-development.md) - 了解演示系统架构
+4. 尝试 [使用 RHI](./guides/using-rhi.md) - 运行第一个渲染示例
 
 #### 路径二：开发者入门 (2-4小时)
 1. **环境准备**:
@@ -152,6 +181,7 @@
    - [数学库使用指南](./guides/using-math-library.md) - 基础运算
    - [使用 RHI](./guides/using-rhi.md) - 渲染入门
    - [引擎使用指南](./guides/engine-usage.md) - 场景管理
+   - [RHI 演示开发](./packages/rhi/llmdoc/guides/demo-development.md) - 演示系统开发
 
 #### 路径三：深度开发 (1-2周)
 1. **架构理解**:
@@ -163,6 +193,9 @@
    - [WebGL 实现](./architecture/webgl-implementation.md) - 底层细节
    - [性能优化](./guides/performance-tuning.md) - 性能调优
    - [USD 系统](./overview/usd-overview.md) - 场景描述
+   - [查询集 API](./reference/webgl-query-set.md) - GPU 查询功能
+   - [Push Constants](./packages/rhi/llmdoc/reference/push-constants.md) - 高效参数传递
+   - [Resource Tracker](./packages/rhi/llmdoc/reference/resource-tracker-api.md) - 资源管理
 
 3. **扩展开发**:
    - [数学类型参考](./reference/math-type-reference.md) - API 参考
@@ -218,8 +251,8 @@ pnpm test
 | 概述文档 | 5 | 100% | 2024-12 |
 | 操作指南 | 7 | 100% | 2024-12 |
 | 架构设计 | 9 | 100% | 2025-12 |
-| 参考资料 | 6 | 100% | 2025-12 |
-| **总计** | **27** | **100%** | **2025-12** |
+| 参考资料 | 9 | 100% | 2025-12 |
+| **总计** | **30** | **100%** | **2025-12** |
 
 ## 🤝 贡献指南
 

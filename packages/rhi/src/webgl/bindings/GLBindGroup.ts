@@ -1,6 +1,6 @@
-import { WebGLTextureView, GLSampler, GLBuffer, UniformType } from '../resources';
+import { WebGLTextureView, GLSampler, GLBuffer } from '../resources';
 import { WebGLBindGroupLayout } from './GLBindGroupLayout';
-import type { MSpec } from '@maxellabs/core';
+import { MSpec } from '@maxellabs/core';
 
 // Helper function to apply uniform data based on name (temporary solution)
 function applyKnownUniformFromBufferData(
@@ -64,39 +64,39 @@ function applyKnownUniformFromBufferData(
         // 处理enum类型的uniformType（旧的格式）
         switch (type) {
           // 矩阵类型
-          case UniformType.FLOAT_MAT2:
+          case MSpec.RHIUniformType.MAT2:
             gl.uniformMatrix2fv(location, false, new Float32Array(data, 0, 4));
             return;
-          case UniformType.FLOAT_MAT3:
+          case MSpec.RHIUniformType.MAT3:
             gl.uniformMatrix3fv(location, false, new Float32Array(data, 0, 9));
             return;
-          case UniformType.FLOAT_MAT4:
+          case MSpec.RHIUniformType.MAT4:
             gl.uniformMatrix4fv(location, false, new Float32Array(data, 0, 16));
             return;
           // 向量类型
-          case UniformType.FLOAT:
+          case MSpec.RHIUniformType.FLOAT:
             gl.uniform1f(location, new Float32Array(data, 0, 1)[0]);
             return;
-          case UniformType.FLOAT_VEC2:
+          case MSpec.RHIUniformType.VEC2:
             gl.uniform2fv(location, new Float32Array(data, 0, 2));
             return;
-          case UniformType.FLOAT_VEC3:
+          case MSpec.RHIUniformType.VEC3:
             gl.uniform3fv(location, new Float32Array(data, 0, 3));
             return;
-          case UniformType.FLOAT_VEC4:
+          case MSpec.RHIUniformType.VEC4:
             gl.uniform4fv(location, new Float32Array(data, 0, 4));
             return;
           // 整数类型
-          case UniformType.INT:
+          case MSpec.RHIUniformType.INT:
             gl.uniform1i(location, new Int32Array(data, 0, 1)[0]);
             return;
-          case UniformType.INT_VEC2:
+          case MSpec.RHIUniformType.IVEC2:
             gl.uniform2iv(location, new Int32Array(data, 0, 2));
             return;
-          case UniformType.INT_VEC3:
+          case MSpec.RHIUniformType.IVEC3:
             gl.uniform3iv(location, new Int32Array(data, 0, 3));
             return;
-          case UniformType.INT_VEC4:
+          case MSpec.RHIUniformType.IVEC4:
             gl.uniform4iv(location, new Int32Array(data, 0, 4));
             return;
           default:
@@ -342,8 +342,13 @@ export class WebGLBindGroup implements MSpec.IRHIBindGroup {
               gl.bindBufferBase(gl.UNIFORM_BUFFER, binding, glBuffer.getGLBuffer());
             }
             uboPathSuccess = true; // Mark UBO path as successful
+            // console.log(`[UBO] Successfully bound '${uniformName}' to binding point ${binding}, blockIndex=${blockIndex}`);
           } else {
-            // Not a UBO block, warning was already printed by previous check or will be handled below
+            // UBO block not found - this is a critical issue if we expected a UBO
+            console.warn(
+              `[${this.label || 'WebGLBindGroup'}] UBO '${uniformName}' not found in shader (blockIndex=INVALID_INDEX). ` +
+                `Check that the uniform block name in shader matches exactly.`
+            );
           }
         }
 

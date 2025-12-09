@@ -78,8 +78,16 @@ Maxell 3D Runtime 是一个企业级的 3D Web 运行时系统，致力于在浏
     ↓
 @maxellabs/math (数学基础层)
     ↓
-@maxellabs/specification (规范定义层)
+@maxellabs/specification (规范定义层，包含统一类型系统)
 ```
+
+#### 统一类型系统架构
+
+Specification 包已重构为完整的泛型基类体系：
+- **Core 层**: 定义所有泛型基类 (BaseKeyframe, UnifiedAnimationTrack, BaseTextureRef)
+- **Common 层**: 通用类型实现 (AnimationTrack, TransformKeyframe, CommonTextureRef)
+- **Package 层**: 特定模块扩展 (UsdKeyframe, MaterialAnimationTrack, TextureReference)
+- **Design 层**: 设计系统特化类型
 
 ## 5. 应用场景和目标用户
 

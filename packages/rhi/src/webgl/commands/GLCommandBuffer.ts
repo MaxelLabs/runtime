@@ -656,6 +656,15 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
     // 绑定到默认帧缓冲区（画布）
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
+    // 禁用深度测试，确保全屏四边形能够绘制
+    gl.disable(gl.DEPTH_TEST);
+
+    // 禁用混合，确保纹理颜色完整显示
+    gl.disable(gl.BLEND);
+
+    // 禁用面剔除
+    gl.disable(gl.CULL_FACE);
+
     // 清除屏幕
     gl.clearColor(0.1, 0.1, 0.1, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);

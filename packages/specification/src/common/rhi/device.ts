@@ -305,6 +305,46 @@ export interface IRHIDevice {
    */
   readonly info: IRHIDeviceInfo;
 
+  // ==================== 能力查询方法 ====================
+
+  /**
+   * 检查设备是否支持指定特性
+   *
+   * @param feature 特性标志（可以是单个或多个特性的组合）
+   * @returns 如果支持所有指定特性则返回 true
+   *
+   * @example
+   * ```typescript
+   * // 检查单个特性
+   * if (device.hasFeature(RHIFeatureFlags.COMPUTE_SHADER)) { ... }
+   *
+   * // 检查多个特性（必须全部支持）
+   * const features = RHIFeatureFlags.UNIFORM_BUFFER | RHIFeatureFlags.INSTANCED_DRAWING;
+   * if (device.hasFeature(features)) { ... }
+   * ```
+   */
+  hasFeature(feature: RHIFeatureFlags): boolean;
+
+  /**
+   * 检查是否支持指定的 WebGL 扩展
+   * 仅对 WebGL 后端有效，其他后端返回 false
+   *
+   * @param extensionName 扩展名称（如 'WEBGL_multi_draw', 'OES_texture_float'）
+   * @returns 是否支持该扩展
+   */
+  hasExtension?(extensionName: string): boolean;
+
+  /**
+   * 获取已启用的 WebGL 扩展对象
+   * 仅对 WebGL 后端有效，其他后端返回 null
+   *
+   * @param extensionName 扩展名称
+   * @returns 扩展对象，如果不支持则返回 null
+   */
+  getExtension?<T = unknown>(extensionName: string): T | null;
+
+  // ==================== 资源创建方法 ====================
+
   /**
    * 创建缓冲区
    */
@@ -360,6 +400,8 @@ export interface IRHIDevice {
    * 创建命令编码器
    */
   createCommandEncoder(label?: string): IRHICommandEncoder;
+
+  // ==================== 命令提交与生命周期 ====================
 
   /**
    * 提交命令

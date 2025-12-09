@@ -81,13 +81,14 @@ export class WebGLCommandEncoder implements MSpec.IRHICommandEncoder {
     label?: string;
   }): MSpec.IRHIRenderPass {
     // 创建渲染通道
+    // 注意：WebGLRenderPass 构造函数中已经通过 addCommand 添加了 beginPass 命令，
+    // 不需要再额外添加 beginRenderPass 命令，否则会导致帧缓冲被创建两次
     const renderPass = new WebGLRenderPass(this.gl, options, this);
-
-    // 记录渲染通道命令
-    this.commands.push({
-      type: 'beginRenderPass',
-      params: options,
-    });
+    // // 记录渲染通道命令
+    // this.commands.push({
+    //   type: 'beginRenderPass',
+    //   params: options,
+    // });
 
     return renderPass;
   }

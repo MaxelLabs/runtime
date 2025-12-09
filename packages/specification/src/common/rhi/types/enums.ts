@@ -299,24 +299,82 @@ export enum RHIShaderStage {
 
 /**
  * RHI特性标志统一定义
+ * 使用位标志表示设备支持的特性
+ *
+ * @example
+ * ```typescript
+ * // 检查是否支持某个特性
+ * if (device.info.features & RHIFeatureFlags.COMPUTE_SHADER) {
+ *   // 使用计算着色器
+ * }
+ *
+ * // 检查多个特性
+ * const required = RHIFeatureFlags.INSTANCED_DRAWING | RHIFeatureFlags.UNIFORM_BUFFER;
+ * if ((device.info.features & required) === required) {
+ *   // 同时支持实例化绘制和 UBO
+ * }
+ * ```
  */
 export enum RHIFeatureFlags {
+  // ==================== 纹理相关特性 ====================
+  /** 深度纹理支持 (WebGL: WEBGL_depth_texture) */
   DEPTH_TEXTURE = 1 << 0,
+  /** 浮点纹理支持 (WebGL: OES_texture_float) */
   FLOAT_TEXTURE = 1 << 1,
+  /** 半浮点纹理支持 (WebGL: OES_texture_half_float) */
   HALF_FLOAT_TEXTURE = 1 << 2,
-  MULTIPLE_RENDER_TARGETS = 1 << 3,
-  INSTANCED_DRAWING = 1 << 4,
-  ANISOTROPIC_FILTERING = 1 << 5,
-  BC_TEXTURE_COMPRESSION = 1 << 6,
-  ETC2_TEXTURE_COMPRESSION = 1 << 7,
-  ASTC_TEXTURE_COMPRESSION = 1 << 8,
-  COMPUTE_SHADER = 1 << 9,
-  STORAGE_TEXTURE = 1 << 10,
-  VERTEX_ARRAY_OBJECT = 1 << 11,
-  BLEND_OPERATION = 1 << 12,
-  INDIRECT_DRAWING = 1 << 13,
-  RAY_TRACING = 1 << 14,
-  MESH_SHADER = 1 << 15,
+  /** 浮点纹理线性过滤 (WebGL: OES_texture_float_linear) */
+  FLOAT_TEXTURE_LINEAR = 1 << 3,
+
+  // ==================== 渲染相关特性 ====================
+  /** 多渲染目标支持 (WebGL: WEBGL_draw_buffers / WebGL2 原生) */
+  MULTIPLE_RENDER_TARGETS = 1 << 4,
+  /** 实例化绘制支持 (WebGL: ANGLE_instanced_arrays / WebGL2 原生) */
+  INSTANCED_DRAWING = 1 << 5,
+  /** 间接绘制支持 (WebGL2 + 扩展) */
+  INDIRECT_DRAWING = 1 << 6,
+  /** 多重间接绘制支持 (WebGL: WEBGL_multi_draw) */
+  MULTI_DRAW_INDIRECT = 1 << 7,
+  /** 各向异性过滤支持 (WebGL: EXT_texture_filter_anisotropic) */
+  ANISOTROPIC_FILTERING = 1 << 8,
+
+  // ==================== 纹理压缩格式 ====================
+  /** BC(S3TC) 纹理压缩 (WebGL: WEBGL_compressed_texture_s3tc) */
+  BC_TEXTURE_COMPRESSION = 1 << 9,
+  /** ETC2 纹理压缩 (WebGL: WEBGL_compressed_texture_etc) */
+  ETC2_TEXTURE_COMPRESSION = 1 << 10,
+  /** ASTC 纹理压缩 (WebGL: WEBGL_compressed_texture_astc) */
+  ASTC_TEXTURE_COMPRESSION = 1 << 11,
+
+  // ==================== 着色器与缓冲区特性 ====================
+  /** 计算着色器支持 (WebGPU / WebGL 不支持) */
+  COMPUTE_SHADER = 1 << 12,
+  /** 存储纹理支持 */
+  STORAGE_TEXTURE = 1 << 13,
+  /** 顶点数组对象支持 (WebGL: OES_vertex_array_object / WebGL2 原生) */
+  VERTEX_ARRAY_OBJECT = 1 << 14,
+  /** Uniform Buffer Object 支持 (WebGL2 原生) */
+  UNIFORM_BUFFER = 1 << 15,
+  /** 存储缓冲区支持 (SSBO, WebGPU / WebGL 不支持) */
+  STORAGE_BUFFER = 1 << 16,
+
+  // ==================== 混合与操作特性 ====================
+  /** 高级混合操作支持 (WebGL: EXT_blend_minmax) */
+  BLEND_OPERATION = 1 << 17,
+
+  // ==================== 查询特性 ====================
+  /** 遮挡查询支持 (WebGL2 原生) */
+  OCCLUSION_QUERY = 1 << 18,
+  /** 时间戳查询支持 (WebGPU / WebGL 不支持) */
+  TIMESTAMP_QUERY = 1 << 19,
+
+  // ==================== 高级特性 (WebGPU/未来) ====================
+  /** 光线追踪支持 */
+  RAY_TRACING = 1 << 20,
+  /** 网格着色器支持 */
+  MESH_SHADER = 1 << 21,
+  /** 可变速率着色支持 */
+  VARIABLE_RATE_SHADING = 1 << 22,
 }
 
 /**
@@ -408,4 +466,94 @@ export enum RHIBindGroupLayoutEntryType {
   TEXTURE = 'texture',
   /** 存储纹理 */
   STORAGE_TEXTURE = 'storage-texture',
+}
+
+/**
+ * Uniform 数据类型统一定义
+ * 用于着色器 uniform 变量和 UBO 布局
+ *
+ * 命名遵循 WebGPU/GLSL 风格：
+ * - 标量：FLOAT, INT, UINT, BOOL
+ * - 向量：VEC2, VEC3, VEC4 (前缀 I/U/B 表示 int/uint/bool)
+ * - 矩阵：MAT2, MAT3, MAT4 (MATCxR 表示 C 列 R 行)
+ * - 采样器：SAMPLER_2D, SAMPLER_CUBE 等
+ */
+export enum RHIUniformType {
+  // ==================== 标量类型 ====================
+  /** 32位浮点数 */
+  FLOAT = 'float',
+  /** 32位有符号整数 */
+  INT = 'int',
+  /** 32位无符号整数 */
+  UINT = 'uint',
+  /** 布尔值（在 GPU 中占 4 字节） */
+  BOOL = 'bool',
+
+  // ==================== 浮点向量 ====================
+  /** 2分量浮点向量 */
+  VEC2 = 'vec2',
+  /** 3分量浮点向量 */
+  VEC3 = 'vec3',
+  /** 4分量浮点向量 */
+  VEC4 = 'vec4',
+
+  // ==================== 整数向量 ====================
+  /** 2分量有符号整数向量 */
+  IVEC2 = 'ivec2',
+  /** 3分量有符号整数向量 */
+  IVEC3 = 'ivec3',
+  /** 4分量有符号整数向量 */
+  IVEC4 = 'ivec4',
+
+  // ==================== 无符号整数向量 ====================
+  /** 2分量无符号整数向量 */
+  UVEC2 = 'uvec2',
+  /** 3分量无符号整数向量 */
+  UVEC3 = 'uvec3',
+  /** 4分量无符号整数向量 */
+  UVEC4 = 'uvec4',
+
+  // ==================== 布尔向量 ====================
+  /** 2分量布尔向量 */
+  BVEC2 = 'bvec2',
+  /** 3分量布尔向量 */
+  BVEC3 = 'bvec3',
+  /** 4分量布尔向量 */
+  BVEC4 = 'bvec4',
+
+  // ==================== 方阵矩阵 ====================
+  /** 2x2 浮点矩阵 */
+  MAT2 = 'mat2',
+  /** 3x3 浮点矩阵 */
+  MAT3 = 'mat3',
+  /** 4x4 浮点矩阵 */
+  MAT4 = 'mat4',
+
+  // ==================== 非方阵矩阵 ====================
+  /** 2列3行 浮点矩阵 */
+  MAT2X3 = 'mat2x3',
+  /** 2列4行 浮点矩阵 */
+  MAT2X4 = 'mat2x4',
+  /** 3列2行 浮点矩阵 */
+  MAT3X2 = 'mat3x2',
+  /** 3列4行 浮点矩阵 */
+  MAT3X4 = 'mat3x4',
+  /** 4列2行 浮点矩阵 */
+  MAT4X2 = 'mat4x2',
+  /** 4列3行 浮点矩阵 */
+  MAT4X3 = 'mat4x3',
+
+  // ==================== 纹理采样器 ====================
+  /** 2D 纹理采样器 */
+  SAMPLER_2D = 'sampler2D',
+  /** 3D 纹理采样器 */
+  SAMPLER_3D = 'sampler3D',
+  /** 立方体纹理采样器 */
+  SAMPLER_CUBE = 'samplerCube',
+  /** 2D 阴影纹理采样器 */
+  SAMPLER_2D_SHADOW = 'sampler2DShadow',
+  /** 2D 数组纹理采样器 */
+  SAMPLER_2D_ARRAY = 'sampler2DArray',
+  /** 立方体阴影纹理采样器 */
+  SAMPLER_CUBE_SHADOW = 'samplerCubeShadow',
 }

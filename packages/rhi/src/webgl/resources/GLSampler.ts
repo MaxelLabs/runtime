@@ -51,7 +51,7 @@ export class GLSampler implements MSpec.IRHISampler {
     this.lodMinClamp = descriptor.lodMinClamp !== undefined ? descriptor.lodMinClamp : 0;
     this.lodMaxClamp = descriptor.lodMaxClamp !== undefined ? descriptor.lodMaxClamp : 32;
     this.borderColor = descriptor.borderColor || [0, 0, 0, 1];
-    this.useMipmap = descriptor.useMipmap !== undefined ? descriptor.useMipmap : true;
+    this.useMipmap = descriptor.useMipmap !== undefined ? descriptor.useMipmap : false;
 
     if (descriptor.compareFunction) {
       this.compareFunction = this.getCompareFunction(descriptor.compareFunction);
