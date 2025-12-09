@@ -1,4 +1,5 @@
-import type { GLTexture,WebGLTextureView ,GLBuffer} from '../resources';
+import type { GLTexture, WebGLTextureView, GLBuffer } from '../resources';
+import type { GLQuerySet } from '../resources/GLQuerySet';
 import type { WebGLRenderPipeline } from '../pipeline';
 import type { WebGLCommandEncoder } from './GLCommandEncoder';
 import { WebGLUtils } from '../utils/GLUtils';
@@ -41,6 +42,10 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
   private isActive: boolean = true;
   private utils: WebGLUtils;
   private isEnded = false;
+
+  // 遮挡查询状态
+  private activeQuerySet: GLQuerySet | null = null;
+  private activeQueryIndex: number = -1;
 
   /**
    * 构造函数
@@ -642,6 +647,79 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
         }
       }
     });
+  }
+
+  /**
+   * 开始遮挡查询
+   * 记录从此刻起绘制命令通过深度测试的样本数
+   *
+   * @param querySet 查询集
+   * @param queryIndex 查询索引
+   */
+  beginOcclusionQuery(querySet: MSpec.IRHIQuerySet, queryIndex: number): void {
+    if (!this.isActive) {
+      throw new Error('渲染通道已结束，无法开始遮挡查询');
+    }
+
+    if (!this.isWebGL2) {
+      throw new Error('遮挡查询需要 WebGL 2.0 支持');
+    }
+
+    if (this.activeQuerySet !== null) {
+      throw new Error('已有活动的遮挡查询，同一时间只能有一个活动查询');
+    }
+
+    const glQuerySet = querySet as GLQuerySet;
+
+    // 验证查询类型
+    if (glQuerySet.type !== MSpec.RHIQueryType.OCCLUSION) {
+      throw new Error('查询集类型必须是 OCCLUSION');
+    }
+
+    this.activeQuerySet = glQuerySet;
+    this.activeQueryIndex = queryIndex;
+
+    // 添加开始查询的命令
+    this.encoder.addCommand(() => {
+      const gl2 = this.gl as WebGL2RenderingContext;
+      const query = glQuerySet.getGLQuery(queryIndex);
+
+      if (query) {
+        // 使用保守模式，性能更好
+        gl2.beginQuery(gl2.ANY_SAMPLES_PASSED_CONSERVATIVE, query);
+      } else {
+        console.error(`查询对象不存在，索引: ${queryIndex}`);
+      }
+    });
+  }
+
+  /**
+   * 结束遮挡查询
+   * 停止记录样本数
+   */
+  endOcclusionQuery(): void {
+    if (!this.isActive) {
+      throw new Error('渲染通道已结束，无法结束遮挡查询');
+    }
+
+    if (!this.isWebGL2) {
+      throw new Error('遮挡查询需要 WebGL 2.0 支持');
+    }
+
+    if (this.activeQuerySet === null) {
+      throw new Error('没有活动的遮挡查询');
+    }
+
+    // 添加结束查询的命令
+    this.encoder.addCommand(() => {
+      const gl2 = this.gl as WebGL2RenderingContext;
+
+      gl2.endQuery(gl2.ANY_SAMPLES_PASSED_CONSERVATIVE);
+    });
+
+    // 清除活动查询状态
+    this.activeQuerySet = null;
+    this.activeQueryIndex = -1;
   }
 
   /**

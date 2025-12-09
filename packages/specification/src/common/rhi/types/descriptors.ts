@@ -13,6 +13,7 @@ import type {
   RHITextureFormat,
   RHITextureUsage,
   RHIShaderStage,
+  RHIQueryType,
 } from './enums';
 import type { ColorLike } from '../../../core';
 import type { IRHIShaderModule } from '../resources';
@@ -275,6 +276,26 @@ export interface RHIShaderModuleDescriptor {
    * 着色器阶段
    */
   stage: RHIShaderStage;
+
+  /**
+   * 可选标签，用于调试
+   */
+  label?: string;
+}
+
+/**
+ * 查询集描述符
+ */
+export interface RHIQuerySetDescriptor {
+  /**
+   * 查询类型
+   */
+  type: RHIQueryType;
+
+  /**
+   * 查询数量
+   */
+  count: number;
 
   /**
    * 可选标签，用于调试

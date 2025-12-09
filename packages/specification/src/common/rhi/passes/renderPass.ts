@@ -4,6 +4,7 @@
  */
 
 import type { IRHIBuffer } from '../resources/buffer';
+import type { IRHIQuerySet } from '../resources/querySet';
 import type { IRHIRenderPipeline } from '../pipeline';
 import type { IRHIBindGroup } from '../bindings';
 import type { RHIIndexFormat } from '../types/enums';
@@ -85,6 +86,20 @@ export interface IRHIRenderPass {
    * @param data 数据
    */
   pushConstants(offset: number, data: ArrayBufferView): void;
+
+  /**
+   * 开始遮挡查询
+   * 记录从此刻起绘制命令通过深度测试的样本数
+   * @param querySet 查询集
+   * @param queryIndex 查询索引
+   */
+  beginOcclusionQuery(querySet: IRHIQuerySet, queryIndex: number): void;
+
+  /**
+   * 结束遮挡查询
+   * 停止记录样本数
+   */
+  endOcclusionQuery(): void;
 
   /**
    * 结束渲染通道

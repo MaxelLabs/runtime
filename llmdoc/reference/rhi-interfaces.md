@@ -109,6 +109,126 @@ export interface IPlatformBuffer {
 
 定义立方体贴图的接口，支持环境贴图和天空盒。
 
+## 查询集接口
+
+### IRHIQuerySet 接口
+
+**主要代码**: `specification/src/common/rhi/resources/querySet.ts`
+
+```typescript
+/**
+ * RHI 查询集接口
+ * 用于 GPU 查询操作，如遮挡查询
+ */
+export interface IRHIQuerySet {
+  /** 查询类型 */
+  readonly type: RHIQueryType;
+
+  /** 查询数量 */
+  readonly count: number;
+
+  /**
+   * 检查指定查询的结果是否可用
+   * @param queryIndex - 查询索引
+   * @returns 结果是否可用
+   */
+  isResultAvailable(queryIndex: number): boolean;
+
+  /**
+   * 同步获取查询结果
+   * 阻塞直到结果可用
+   * @param queryIndex - 查询索引
+   * @returns 查询结果
+   */
+  getResult(queryIndex: number): number;
+
+  /**
+   * 异步获取查询结果
+   * @param queryIndex - 查询索引
+   * @returns Promise 返回查询结果
+   */
+  getResultAsync(queryIndex: number): Promise<number>;
+
+  /**
+   * 重置指定的查询
+   * @param queryIndex - 查询索引
+   */
+  reset(queryIndex: number): void;
+
+  /**
+   * 销毁查询集资源
+   */
+  destroy(): void;
+}
+```
+
+### RHIQueryType 枚举
+
+```typescript
+/**
+ * 查询类型
+ */
+export enum RHIQueryType {
+  /** 遮挡查询 - 查询有多少个像素通过深度测试 */
+  OCCLUSION = 'OCCLUSION',
+
+  /** 时间戳查询 - 记录 GPU 时间戳 */
+  TIMESTAMP = 'TIMESTAMP',
+
+  /** 流统计查询 - 查询顶点/图元流的统计信息 */
+  PIPELINE_STATISTICS = 'PIPELINE_STATISTICS'
+}
+```
+
+### RHIQuerySetDescriptor 类型
+
+```typescript
+/**
+ * 查询集描述符
+ */
+export interface RHIQuerySetDescriptor {
+  /** 查询类型 */
+  type: RHIQueryType;
+
+  /** 查询数量 */
+  count: number;
+
+  /** 查询集标签（用于调试） */
+  label?: string;
+}
+```
+
+### 设备上的查询集方法
+
+在 `IRHIDevice` 中添加以下方法：
+
+```typescript
+/**
+ * 创建查询集
+ * @param descriptor - 查询集描述符
+ * @returns 查询集接口
+ */
+createQuerySet(descriptor: RHIQuerySetDescriptor): IRHIQuerySet;
+```
+
+### 渲染通道上的查询方法
+
+在 `IRHIRenderPass` 中添加以下方法：
+
+```typescript
+/**
+ * 开始遮挡查询
+ * @param querySet - 查询集
+ * @param queryIndex - 查询索引
+ */
+beginOcclusionQuery(querySet: IRHIQuerySet, queryIndex: number): void;
+
+/**
+ * 结束当前遮挡查询
+ */
+endOcclusionQuery(): void;
+```
+
 ## WebGL 实现特有接口
 
 ### WebGL 图形设备选项

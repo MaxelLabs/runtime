@@ -3,7 +3,7 @@
  * 定义RHI设备接口
  */
 
-import type { IRHIBuffer, IRHITexture, IRHITextureView, IRHIShaderModule } from './resources';
+import type { IRHIBuffer, IRHITexture, IRHITextureView, IRHIShaderModule, IRHIQuerySet } from './resources';
 import type { IRHISampler, IRHIBindGroup, IRHIBindGroupLayout } from './bindings';
 import type { IRHIPipelineLayout, IRHIRenderPipeline, IRHIComputePipeline } from './pipeline';
 import type { IRHIRenderPass, IRHIComputePass } from './passes';
@@ -14,6 +14,7 @@ import type {
   RHIComputePipelineDescriptor,
   RHIShaderModuleDescriptor,
   RHISamplerDescriptor,
+  RHIQuerySetDescriptor,
   RHIFeatureFlags,
 } from './types';
 import type { RHIBackend } from '../texture';
@@ -348,6 +349,12 @@ export interface IRHIDevice {
    * 创建计算管线
    */
   createComputePipeline(descriptor: RHIComputePipelineDescriptor): IRHIComputePipeline;
+
+  /**
+   * 创建查询集
+   * 用于遮挡查询、时间戳查询等
+   */
+  createQuerySet(descriptor: RHIQuerySetDescriptor): IRHIQuerySet;
 
   /**
    * 创建命令编码器

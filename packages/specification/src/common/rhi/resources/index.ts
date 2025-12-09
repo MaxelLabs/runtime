@@ -7,6 +7,7 @@ export * from './buffer';
 export * from './texture';
 export * from './shader';
 export * from './vertexArray';
+export * from './querySet';
 
 /**
  * RHI资源基础接口

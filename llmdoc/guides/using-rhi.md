@@ -75,8 +75,105 @@
    renderTarget.destroy();
    ```
 
+## 如何使用查询集进行遮挡查询
+
+查询集用于获取 GPU 关于渲染操作的信息，最常见的用途是遮挡查询（Occlusion Query），用于检测对象是否被其他对象遮挡。
+
+1. **创建查询集**
+   ```typescript
+   import { RHIQueryType } from '@maxellabs/rhi';
+
+   const querySet = device.createQuerySet({
+     type: RHIQueryType.OCCLUSION,
+     count: 10,  // 创建 10 个查询槽位
+     label: 'Occlusion Queries'
+   });
+   ```
+
+2. **在渲染通道中使用查询**
+   ```typescript
+   // 开始一个查询
+   renderPass.beginOcclusionQuery(querySet, 0);
+
+   // 执行需要被查询的渲染操作
+   renderPass.draw(vertexCount, instanceCount, firstVertex, firstInstance);
+
+   // 结束查询
+   renderPass.endOcclusionQuery();
+   ```
+
+3. **获取查询结果**
+
+   **同步方式**（会阻塞）:
+   ```typescript
+   // 检查结果是否可用
+   if (querySet.isResultAvailable(0)) {
+     const pixelCount = querySet.getResult(0);
+     console.log(`有 ${pixelCount} 个像素通过深度测试`);
+
+     if (pixelCount > 0) {
+       // 对象可见
+       console.log('对象可见');
+     } else {
+       // 对象被完全遮挡
+       console.log('对象被遮挡');
+     }
+   }
+   ```
+
+   **异步方式**（推荐）:
+   ```typescript
+   // 不会阻塞，返回 Promise
+   const pixelCount = await querySet.getResultAsync(0);
+
+   if (pixelCount > 0) {
+     console.log('对象可见');
+   } else {
+     console.log('对象被遮挡');
+   }
+   ```
+
+4. **批量查询示例**
+   ```typescript
+   // 对多个对象进行遮挡查询
+   const objects = [obj1, obj2, obj3];
+
+   for (let i = 0; i < objects.length; i++) {
+     renderPass.beginOcclusionQuery(querySet, i);
+     renderPass.drawObject(objects[i]);
+     renderPass.endOcclusionQuery();
+   }
+
+   // 异步获取所有结果
+   const results = await Promise.all(
+     objects.map((_, i) => querySet.getResultAsync(i))
+   );
+
+   results.forEach((count, i) => {
+     console.log(`对象 ${i}: ${count > 0 ? '可见' : '被遮挡'}`);
+   });
+   ```
+
+5. **重置和清理**
+   ```typescript
+   // 重置特定查询以便重新使用
+   querySet.reset(0);
+
+   // 销毁查询集
+   querySet.destroy();
+   ```
+
+## 查询集最佳实践
+
+- **使用异步 API**: 优先使用 `getResultAsync()` 以避免 GPU 同步阻塞
+- **提前检查可用性**: 在关键路径中使用 `isResultAvailable()` 检查结果
+- **批量创建**: 一次创建多个查询槽位以减少创建开销
+- **及时销毁**: 使用完毕后立即调用 `destroy()` 释放 GPU 资源
+- **合理复用**: 重置查询后可继续复用相同的查询集对象
+
 **参考代码**:
 - 引擎创建: `temp/engine/packages/rhi-webgl/src/WebGLEngine.ts:14-25`
 - 设备初始化: `temp/engine/packages/rhi-webgl/src/WebGLGraphicDevice.ts:168-211`
 - 图元创建: `temp/engine/packages/rhi-webgl/src/WebGLGraphicDevice.ts:213-240`
 - 渲染执行: `temp/engine/packages/rhi-webgl/src/WebGLGraphicDevice.ts:328-335`
+- 查询集: `rhi/src/webgl/resources/GLQuerySet.ts`

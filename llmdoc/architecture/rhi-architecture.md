@@ -14,6 +14,8 @@
 - `temp/engine/packages/rhi-webgl/src/WebGLGraphicDevice.ts` (`WebGLGraphicDevice`): WebGL 图形设备实现
 - `temp/engine/packages/rhi-webgl/src/WebGLEngine.ts` (`WebGLEngine`): WebGL 引擎封装
 - `temp/engine/packages/rhi-webgl/src/GLPrimitive.ts` (`GLPrimitive`): WebGL 图元实现
+- `specification/src/common/rhi/resources/querySet.ts` (`IRHIQuerySet`, `RHIQuerySetDescriptor`): 查询集接口和描述符
+- `rhi/src/webgl/resources/GLQuerySet.ts` (`GLQuerySet`): WebGL 查询集实现
 
 ## 3. 执行流程 (LLM 检索地图)
 
@@ -33,6 +35,14 @@
 - **1. 渲染目标**: `createPlatformRenderTarget()` 调用 `temp/engine/packages/rhi-webgl/src/WebGLGraphicDevice.ts:229-231`
 - **2. 纹理数组**: `createPlatformTexture2DArray()` 调用 `temp/engine/packages/rhi-webgl/src/WebGLGraphicDevice.ts:221-223`
 - **3. 立方体贴图**: `createPlatformTextureCube()` 调用 `temp/engine/packages/rhi-webgl/src/WebGLGraphicDevice.ts:225-227`
+
+### 3.4 查询集流程
+- **1. 创建查询集**: `device.createQuerySet(descriptor)` 创建查询对象
+- **2. 开始查询**: `renderPass.beginOcclusionQuery(querySet, queryIndex)` 开始遮挡查询
+- **3. 渲染阶段**: 执行需要被查询的渲染操作
+- **4. 结束查询**: `renderPass.endOcclusionQuery()` 结束当前查询
+- **5. 获取结果**: 通过 `getResult()` 同步获取或 `getResultAsync()` 异步获取查询结果
+- **6. 资源清理**: 调用 `destroy()` 销毁查询集
 
 ## 4. 设计原理
 

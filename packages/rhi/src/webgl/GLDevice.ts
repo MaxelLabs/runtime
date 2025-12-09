@@ -3,6 +3,7 @@ import { GLBuffer } from './resources/GLBuffer';
 import { GLTexture } from './resources/GLTexture';
 import { GLSampler } from './resources/GLSampler';
 import { GLShader } from './resources/GLShader';
+import { GLQuerySet } from './resources/GLQuerySet';
 import { WebGLBindGroupLayout } from './bindings/GLBindGroupLayout';
 import { WebGLBindGroup } from './bindings/GLBindGroup';
 import { WebGLPipelineLayout } from './pipeline/GLPipelineLayout';
@@ -305,6 +306,19 @@ export class WebGLDevice implements MSpec.IRHIDevice {
     console.warn('WebGL不支持计算着色器，创建的计算管线将不起作用');
 
     return new WebGLComputePipeline(this.gl, descriptor);
+  }
+
+  /**
+   * 创建查询集
+   * 用于遮挡查询、时间戳查询等
+   * 注意：需要 WebGL 2.0 支持
+   */
+  createQuerySet(descriptor: MSpec.RHIQuerySetDescriptor): MSpec.IRHIQuerySet {
+    if (!this.isWebGL2) {
+      throw new Error('查询集需要 WebGL 2.0 支持');
+    }
+
+    return new GLQuerySet(this.gl, descriptor);
   }
 
   /**

@@ -3,3 +3,4 @@ export * from './GLTexture';
 export * from './GLSampler';
 export * from './GLShader';
 export * from './GLTextureView';
+export * from './GLQuerySet';
