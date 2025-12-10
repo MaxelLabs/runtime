@@ -131,3 +131,66 @@ export interface TorusOptions extends GeometryOptions {
   /** 管道分段数 */
   tubularSegments?: number;
 }
+
+/**
+ * 圆锥几何体选项
+ */
+export interface ConeOptions extends GeometryOptions {
+  /** 底面半径 */
+  radius?: number;
+
+  /** 高度 */
+  height?: number;
+
+  /** 圆周分段数 */
+  radialSegments?: number;
+
+  /** 高度分段数 */
+  heightSegments?: number;
+
+  /** 是否开口（无底面） */
+  openEnded?: boolean;
+}
+
+/**
+ * 圆柱几何体选项
+ */
+export interface CylinderOptions extends GeometryOptions {
+  /** 顶部半径 */
+  radiusTop?: number;
+
+  /** 底部半径 */
+  radiusBottom?: number;
+
+  /** 高度 */
+  height?: number;
+
+  /** 圆周分段数 */
+  radialSegments?: number;
+
+  /** 高度分段数 */
+  heightSegments?: number;
+
+  /** 是否开口（无顶底面） */
+  openEnded?: boolean;
+}
+
+/**
+ * 胶囊几何体选项
+ */
+export interface CapsuleOptions extends GeometryOptions {
+  /** 半球和圆柱的半径 */
+  radius?: number;
+
+  /** 圆柱部分高度（不含半球） */
+  height?: number;
+
+  /** 圆周分段数 */
+  radialSegments?: number;
+
+  /** 圆柱高度分段数 */
+  heightSegments?: number;
+
+  /** 半球分段数 */
+  capSegments?: number;
+}
