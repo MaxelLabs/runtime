@@ -15,8 +15,11 @@ export * from './texture';
 // 相机系统
 export * from './camera';
 
-// 着色器工具（待实现）
-// export * from './shader';
+// 渲染工具
+export * from './rendering';
+
+// 着色器工具
+export * from './shader';
 
 // UI 工具
 export * from './ui';
