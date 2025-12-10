@@ -9,55 +9,55 @@
 ## 2. 核心子系统
 
 ### 2.1 渲染管线系统
-- `temp/engine/packages/core/src/RenderPipeline/BasicRenderPipeline.ts` (`BasicRenderPipeline`): 基础渲染管线实现
-- `temp/engine/packages/core/src/RenderPipeline/RenderContext.ts` (`RenderContext`): 渲染上下文，管理渲染状态
-- `temp/engine/packages/core/src/RenderPipeline/RenderQueue.ts` (`RenderQueue`): 渲染队列，管理渲染对象排序
-- `temp/engine/packages/core/src/RenderPipeline/RenderElement.ts` (`RenderElement`): 渲染元素，封装渲染调用
-- `temp/engine/packages/core/src/RenderPipeline/CullingResults.ts` (`CullingResults`): 裁剪结果，优化渲染性能
+- `packages/core/src/code.zip` (`BasicRenderPipeline`): 基础渲染管线实现
+- `packages/core/src/code.zip` (`RenderContext`): 渲染上下文，管理渲染状态
+- `packages/core/src/code.zip` (`RenderQueue`): 渲染队列，管理渲染对象排序
+- `packages/core/src/code.zip` (`RenderElement`): 渲染元素，封装渲染调用
+- `packages/core/src/code.zip` (`CullingResults`): 裁剪结果，优化渲染性能
 
 ### 2.2 组件管理系统
-- `temp/engine/packages/core/src/Component.ts` (`Component`): 组件基类，定义组件生命周期
-- `temp/engine/packages/core/src/ComponentsManager.ts` (`ComponentsManager`): 组件管理器，管理组件的添加、删除和更新
-- `temp/engine/packages/core/src/ComponentsDependencies.ts` (`ComponentsDependencies`): 组件依赖关系管理
+- `packages/core/src/code.zip` (`Component`): 组件基类，定义组件生命周期
+- `packages/core/src/code.zip` (`ComponentsManager`): 组件管理器，管理组件的添加、删除和更新
+- `packages/core/src/code.zip` (`ComponentsDependencies`): 组件依赖关系管理
 
 ### 2.3 场景图系统
-- `temp/engine/packages/core/src/Scene.ts` (`Scene`): 场景类，管理场景层次结构
-- `temp/engine/packages/core/src/Entity.ts` (`Entity`): 实体类，场景图节点
-- `temp/engine/packages/core/src/Transform.ts` (`Transform`): 变换组件，处理空间变换
+- `packages/core/src/code.zip` (`Scene`): 场景类，管理场景层次结构
+- `packages/core/src/code.zip` (`Entity`): 实体类，场景图节点
+- `packages/core/src/code.zip` (`Transform`): 变换组件，处理空间变换
 
 ### 2.4 动画系统
-- `temp/engine/packages/core/src/animation/Animator.ts` (`Animator`): 动画组件，控制动画播放
-- `temp/engine/packages/core/src/animation/AnimationClip.ts` (`AnimationClip`): 动画剪辑，定义动画数据
-- `temp/engine/packages/core/src/animation/AnimatorController.ts` (`AnimatorController`): 动画控制器，管理动画状态机
+- `packages/core/src/code.zip` (`Animator`): 动画组件，控制动画播放
+- `packages/core/src/code.zip` (`AnimationClip`): 动画剪辑，定义动画数据
+- `packages/core/src/code.zip` (`AnimatorController`): 动画控制器，管理动画状态机
 
 ### 2.5 资源管理系统
-- `temp/engine/packages/core/src/asset/ResourceManager.ts` (`ResourceManager`): 资源管理器，处理资源生命周期
-- `temp/engine/packages/core/src/asset/AssetPromise.ts` (`AssetPromise`): 资源Promise，处理异步加载
-- `temp/engine/packages/core/src/BasicResources.ts` (`BasicResources`): 基础资源集合
+- `packages/core/src/code.zip` (`ResourceManager`): 资源管理器，处理资源生命周期
+- `packages/core/src/code.zip` (`AssetPromise`): 资源Promise，处理异步加载
+- `packages/core/src/code.zip` (`BasicResources`): 基础资源集合
 
 ### 2.6 材质与着色器系统
-- `temp/engine/packages/core/src/material/Material.ts` (`Material`): 材质类，定义渲染属性
-- `temp/engine/packages/core/src/shader/Shader.ts` (`Shader`): 着色器类，管理着色器代码
-- `temp/engine/packages/core/src/shader/ShaderPass.ts` (`ShaderPass`): 着色器通道，定义渲染阶段
-- `temp/engine/packages/core/src/shader/ShaderPool.ts` (`ShaderPool`): 着色器池，缓存着色器实例
+- `packages/core/src/code.zip` (`Material`): 材质类，定义渲染属性
+- `packages/core/src/code.zip` (`Shader`): 着色器类，管理着色器代码
+- `packages/core/src/code.zip` (`ShaderPass`): 着色器通道，定义渲染阶段
+- `packages/core/src/code.zip` (`ShaderPool`): 着色器池，缓存着色器实例
 
 ### 2.7 纹理系统
-- `temp/engine/packages/core/src/texture/Texture2D.ts` (`Texture2D`): 2D纹理实现
-- `temp/engine/packages/core/src/texture/TextureCube.ts` (`TextureCube`): 立方体贴图实现
-- `temp/engine/packages/core/src/texture/TextureFormat.ts` (`TextureFormat`): 纹理格式定义
+- `packages/core/src/code.zip` (`Texture2D`): 2D纹理实现
+- `packages/core/src/code.zip` (`TextureCube`): 立方体贴图实现
+- `packages/core/src/code.zip` (`TextureFormat`): 纹理格式定义
 
 ### 2.8 光照系统
-- `temp/engine/packages/core/src/lighting/LightManager.ts` (`LightManager`): 光照管理器，管理场景光照
-- `temp/engine/packages/core/src/lighting/AmbientLight.ts` (`AmbientLight`): 环境光组件
-- `temp/engine/packages/core/src/lighting/DirectLight.ts` (`DirectLight`): 平行光组件
+- `packages/core/src/code.zip` (`LightManager`): 光照管理器，管理场景光照
+- `packages/core/src/code.zip` (`AmbientLight`): 环境光组件
+- `packages/core/src/code.zip` (`DirectLight`): 平行光组件
 
 ### 2.9 输入系统
-- `temp/engine/packages/core/src/input/InputManager.ts` (`InputManager`): 输入管理器，处理用户输入
-- `temp/engine/packages/core/src/input/Touch.ts` (`Touch`): 触摸输入处理
+- `packages/core/src/code.zip` (`InputManager`): 输入管理器，处理用户输入
+- `packages/core/src/code.zip` (`Touch`): 触摸输入处理
 
 ### 2.10 XR系统
-- `temp/engine/packages/core/src/xr/XRManager.ts` (`XRManager`): XR管理器，处理XR设备
-- `temp/engine/packages/core/src/xr/XRSession.ts` (`XRSession`): XR会话管理
+- `packages/core/src/code.zip` (`XRManager`): XR管理器，处理XR设备
+- `packages/core/src/code.zip` (`XRSession`): XR会话管理
 
 ## 3. 子系统交互流程
 

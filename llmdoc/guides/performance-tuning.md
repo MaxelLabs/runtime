@@ -13,7 +13,7 @@ function badPractice() {
 }
 
 // 正确做法：使用对象池
-import { RecyclePool } from './temp/cocos/core/memop/recycle-pool';
+import { RecyclePool } from '@maxellabs/math';
 
 const tempVectorPool = new RecyclePool(() => new Vec3(), 100);
 
@@ -112,18 +112,62 @@ const direction = Vec3.FORWARD; // 冻结对象，性能更优
 // 而不是每次 new Vec3(0, 0, -1)
 ```
 
+## 引擎特定的性能优化
+
+### 1. 渲染管线优化
+```typescript
+// 启用视锥裁剪
+scene.enableFrustumCulling = true;
+
+// 使用静态批处理
+renderer.staticBatching = true;
+
+// 优化光照
+scene.lightManager.lightProbeMode = LightProbeMode.Baked;
+
+// 使用实例化渲染
+renderer.instancing = true;
+```
+
+### 2. 资源管理优化
+```typescript
+// 预加载资源
+engine.resourceManager.preload([
+    'textures/texture1.png',
+    'textures/texture2.png',
+    'shaders/shader1.shader'
+]);
+
+// 使用纹理集
+const textureAtlas = new TextureAtlas('atlas.png');
+renderer.material.setTexture('map', textureAtlas.getTexture('player'));
+```
+
+### 3. 场景优化
+```typescript
+// 使用场景分区
+const sceneOctree = new SceneOctree(scene);
+sceneOctree.cellSize = 50;
+
+// 静态物体标记
+staticEntity.addComponent(StaticTag);
+scene.addStaticEntity(staticEntity);
+
+// 使用LOD系统
+const lodSystem = new LODSystem();
+lodSystem.addLODLevel(0, highPolyMesh);
+lodSystem.addLODLevel(50, mediumPolyMesh);
+lodSystem.addLODLevel(100, lowPolyMesh);
+```
+
 ## 验证性能提升
 
 1. **内存使用监控**：使用 Chrome DevTools 的 Memory 面板监控 GC 频率
 2. **性能分析**：使用 Performance 面板对比优化前后的执行时间
 3. **帧率测试**：在目标设备上测试 FPS 改善情况
+4. **渲染统计**：监控 Draw calls、Triangles 等渲染指标
 
-参考 `temp/cocos/core/memop/pool.ts` 和 `temp/cocos/core/memop/recycle-pool.ts` 中的实现细节。
-</ContentFormat_Guide>
-
-## 质量检查清单
-- [x] **简洁性**：文档少于 150 行
-- [x] **清晰性**：目的从标题和开头几行即可清楚理解
-- [x] **准确性**：所有信息基于源代码验证
-- [x] **分类**：文档位于正确的 guides 目录中
-- [x] **格式**：严格遵循 ContentFormat_Guide 格式要求
+参考实现：
+- 数学库对象池：`packages/math/src/pool/`
+- 引擎核心模块：`packages/core/src/code.zip`
+- RHI 渲染优化：`packages/rhi/src/webgl/`

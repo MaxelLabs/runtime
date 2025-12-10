@@ -87,6 +87,14 @@
   - 问题描述、根本原因、修复方案和UBO使用规范
 - [混合模式 Demo 参考](./packages/rhi/llmdoc/reference/blend-modes-demo.md) - 混合模式 Demo 完整实现
   - 7种混合模式实现、纹理加载、交互控制和MVP变换
+- [ShaderUtils 着色器工具参考](./packages/rhi/llmdoc/reference/shader-utils-reference.md) - 着色器代码生成和管理工具
+  - Uniform 块生成、std140 布局计算、着色器模板、代码片段库
+- [TextureLoader 纹理加载器参考](./packages/rhi/demo/src/utils/texture/TEXTURELOADER.md) - 纹理加载和处理工具
+  - 异步加载、Mipmap 生成、Y 轴翻转、预乘 Alpha
+- [CubemapGenerator 立方体贴图生成器](./packages/rhi/demo/src/utils/texture/CubemapGenerator.ts) - 立方体贴图生成工具
+  - 程序化生成、天空渐变、调试着色、全景图转换
+- [RenderTarget 渲染目标管理器](./packages/rhi/demo/src/utils/rendering/RenderTarget.ts) - 离屏渲染工具
+  - 多渲染目标 MRT、MSAA 支持、自动资源管理
 
 ## 3. 核心概念和对应文档
 
@@ -133,6 +141,15 @@
   - [MVP 矩阵实现架构](./architecture/mvp-matrix-implementation.md) - 实现架构和组件设计
   - [MVP 矩阵更新指南](./reference/mvp-matrix-update-guide.md) - 迁移指南和技术细节
   - [OrbitController 相机控制](./packages/rhi/llmdoc/reference/orbit-controller.md) - 交互式相机系统
+
+#### Demo 开发工具库
+- **概念**: 增强 Demo 开发能力的工具集合
+- **相关文档**:
+  - [RHI 演示开发](./packages/rhi/llmdoc/guides/demo-development.md) - 完整开发指南
+  - [TextureLoader 纹理加载器](./packages/rhi/demo/src/utils/texture/TEXTURELOADER.md) - 纹理加载和处理
+  - [CubemapGenerator 立方体贴图生成器](./packages/rhi/demo/src/utils/texture/CubemapGenerator.ts) - 立方体贴图生成
+  - [RenderTarget 渲染目标管理器](./packages/rhi/demo/src/utils/rendering/RenderTarget.ts) - 离屏渲染
+  - [ShaderUtils 着色器工具](./packages/rhi/llmdoc/reference/shader-utils-reference.md) - 着色器代码生成
 
 ### 🧮 数学系统
 
@@ -223,6 +240,7 @@
    - [RHI 接口参考](./reference/rhi-interfaces.md) - 接口文档
    - [USD 类型参考](./reference/usd-core-types.md) - USD API
    - [MVP 矩阵实现架构](./architecture/mvp-matrix-implementation.md) - 3D 变换管线
+   - [Demo 工具库](./packages/rhi/llmdoc/guides/demo-development.md) - 增强开发能力
 
 ### 📋 开发环境配置
 
@@ -271,12 +289,12 @@ pnpm test
 | 类别 | 文档数量 | 完成度 | 更新时间 |
 |------|----------|--------|----------|
 | 概述文档 | 5 | 100% | 2024-12 |
-| 操作指南 | 7 | 100% | 2024-12 |
-| 架构设计 | 10 | 100% | 2025-12 |
-| 参考资料 | 10 | 100% | 2025-12 |
-| **核心总计** | **32** | **100%** | **2025-12 (RHI 命令类型系统新增)** |
+| 操作指南 | 7 | 100% | 2025-12 (新增引擎特定性能优化) |
+| 架构设计 | 10 | 100% | 2025-12 (引擎架构路径更新) |
+| 参考资料 | 13 | 100% | 2025-12 (新增 Demo 工具库参考) |
+| **核心总计** | **35** | **100%** | **2025-12 (新增 3 个 Demo 工具库参考)** |
 | **包内文档** | **18** | **100%** | **2025-12 (RHI Demo 系统、Specification 类型系统)** |
-| **总计** | **50** | **100%** | **2025-12** |
+| **总计** | **53** | **100%** | **2025-12 (系统功能增强)** |
 
 ## 🤝 贡献指南
 

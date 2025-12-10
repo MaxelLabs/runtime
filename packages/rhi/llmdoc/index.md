@@ -29,6 +29,15 @@ RHI 是一个跨平台的图形渲染硬件接口框架，提供统一的 API �
 
 ## 最近更新
 
+### 2025-12-10 新增工具库功能（第四批）
+
+**Demo 工具库扩展**
+- TextureLoader: 纹理加载器（URL 加载、Mipmap 生成、批量加载、压缩格式检测）
+- CubemapGenerator: 立方体贴图生成器（纯色、天空渐变、调试着色、从 URL 加载、全景图转换）
+- RenderTarget: 渲染目标管理器（离屏渲染、MRT、自动资源管理、动态调整大小）
+- ShaderUtils: 着色器工具类（Uniform 块生成、std140 布局计算、着色器模板、代码片段库）
+- GeometryGenerator 扩展：新增 Torus、Cone、Cylinder、Capsule
+
 ### 2024-12-10 新增功能（第三批）
 
 **WebGL 查询集功能实现**

@@ -5,3 +5,5 @@
 
 export * from './types';
 export { ProceduralTexture } from './ProceduralTexture';
+export { CubemapGenerator } from './CubemapGenerator';
+export { TextureLoader } from './TextureLoader';

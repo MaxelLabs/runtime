@@ -2,6 +2,20 @@
 
 本文档是 RHI Demo 系统的综合调研报告和开发指南。
 
+## 最近更新
+
+### 2025-12-10 新增工具库功能
+
+添加了四个新的工具库模块，进一步完善 Demo 开发能力：
+
+- **TextureLoader**: 纹理加载器（图片加载、Y 轴翻转、Mipmap 自动生成、批量加载）
+- **CubemapGenerator**: 立方体贴图工具（纯色、天空渐变、调试着色、从 URL 加载、全景图转换）
+- **RenderTarget**: 渲染目标管理器（离屏渲染、多渲染目标 MRT、自动资源管理）
+- **ShaderUtils**: 着色器工具类（Uniform 块生成、std140 布局计算、着色器模板、代码片段库）
+- **GeometryGenerator 扩展**: 新增 Torus（圆环）、Cone（圆锥）、Cylinder（圆柱）、Capsule（胶囊体）
+
+---
+
 ## 一、RHI API 功能模块清单
 
 ### 1. 资源模块 (Resources)
@@ -62,8 +76,18 @@ demo/src/utils/
 │   ├── GeometryGenerator.ts    # 几何体工厂
 │   └── types.ts                # 几何体类型
 ├── texture/                    # 纹理工具
+│   ├── TextureLoader.ts        # 纹理加载器（新增）
+│   ├── CubemapGenerator.ts     # 立方体贴图生成器（新增）
 │   ├── ProceduralTexture.ts    # 程序化纹理
 │   └── types.ts                # 纹理类型
+├── rendering/                  # 渲染工具（新增）
+│   ├── RenderTarget.ts         # 渲染目标管理器
+│   ├── types.ts                # 渲染类型
+│   └── index.ts                # 导出
+├── shader/                     # 着色器工具（新增）
+│   ├── ShaderUtils.ts          # 着色器工具类
+│   ├── types.ts                # 着色器类型
+│   └── index.ts                # 导出
 ├── camera/                     # 相机系统
 │   ├── OrbitController.ts      # 轨道控制器
 │   └── types.ts                # 相机类型
@@ -113,6 +137,165 @@ runner.start((dt) => {
 - `cube(options)` - 立方体
 - `plane(options)` - 平面
 - `sphere(options)` - 球体
+- `torus(options)` - 圆环（新增）
+- `cone(options)` - 圆锥（新增）
+- `cylinder(options)` - 圆柱（新增）
+- `capsule(options)` - 胶囊体（新增）
+
+### TextureLoader (纹理加载器 - 新增)
+
+图片加载和处理工具：
+
+- `load(url, options)` - 从 URL 加载单张图片纹理
+- `loadAll(urls, options)` - 批量加载多张图片
+- `fromImage(image, options)` - 从 HTMLImageElement 创建纹理数据
+- `fromImageData(imageData, options)` - 从 ImageData 创建纹理数据
+- `generateMipmaps(data, width, height)` - 生成 Mipmap 链（双线性插值）
+- `isCompressedFormat(url)` - 检测 KTX/KTX2/DDS 压缩纹理格式
+
+选项支持：
+- `flipY` - Y 轴翻转（符合 WebGL 坐标系），默认 `true`
+- `generateMipmaps` - 自动生成 Mipmap 链，默认 `false`
+- `premultiplyAlpha` - 预乘 Alpha 处理，默认 `false`
+- `format` - 纹理格式，默认 `'rgba8-unorm'`
+
+```typescript
+// 从 URL 加载单张图片
+const texture = await TextureLoader.load('path/to/image.jpg', {
+  flipY: true,
+  generateMipmaps: true,
+});
+
+// 批量加载
+const textures = await TextureLoader.loadAll([
+  'texture1.jpg',
+  'texture2.jpg',
+]);
+```
+
+### CubemapGenerator (立方体贴图 - 新增)
+
+生成和加载立方体贴图（天空盒、环境映射等）：
+
+- `solidColor(config)` - 生成纯色立方体贴图
+- `skyGradient(config)` - 生成天空渐变立方体贴图（顶部-中间-底部）
+- `debug(config)` - 生成调试用立方体贴图（每个面不同颜色）
+- `loadFromUrls(urls)` - 从 6 张图片 URL 加载立方体贴图
+- `fromEquirectangular(url, size)` - 从全景图（等距柱状投影）转换为立方体贴图
+
+```typescript
+// 创建天空渐变立方体贴图
+const cubemap = CubemapGenerator.skyGradient({
+  topColor: [135, 206, 250, 255],    // 天空蓝
+  horizonColor: [176, 196, 222, 255], // 淡蓝
+  bottomColor: [139, 69, 19, 255],   // 地面棕
+  size: 256,
+});
+
+// 调试立方体贴图
+const debug = CubemapGenerator.debug({ size: 256, showLabels: true });
+
+// 从全景图加载
+const cubemapFromPanorama = await CubemapGenerator.fromEquirectangular(
+  'panorama.jpg',
+  512
+);
+```
+
+### RenderTarget (渲染目标 - 新增)
+
+简化离屏渲染的封装，自动管理 FBO 和纹理资源：
+
+- 支持多渲染目标（MRT - Multiple Render Targets）
+- 自动资源追踪和生命周期管理
+- 可选深度/模板附件
+- 动态调整大小
+
+主要方法：
+- `getRenderPassDescriptor(clearColor?, depthClearValue?)` - 获取渲染通道描述符
+- `getColorView(index)` - 获取颜色附件纹理视图
+- `getColorTexture(index)` - 获取颜色附件纹理
+- `getDepthView()` - 获取深度附件纹理视图
+- `getDepthTexture()` - 获取深度附件纹理
+- `resize(width, height)` - 调整渲染目标大小
+- `destroy()` - 销毁所有资源
+
+```typescript
+const renderTarget = runner.track(
+  new RenderTarget(runner.device, {
+    width: 800,
+    height: 600,
+    colorAttachmentCount: 2,  // MRT with 2 targets
+    depthFormat: RHITextureFormat.DEPTH24_UNORM_STENCIL8,
+  })
+);
+
+// 获取渲染通道描述符
+const passDescriptor = renderTarget.getRenderPassDescriptor([0.1, 0.1, 0.1, 1.0]);
+
+// 获取颜色纹理进行后续采样
+const colorTexture = renderTarget.getColorView(0);
+```
+
+### ShaderUtils (着色器工具 - 新增)
+
+生成和管理着色器代码：
+
+**Uniform 块工具：**
+- `generateUniformBlock(definition)` - 生成 Uniform 块 GLSL 代码（std140 布局）
+- `calculateUniformBlockSize(fields)` - 计算 std140 布局大小（字节）
+- `calculateUniformBlockLayout(fields)` - 获取详细布局信息（字段偏移）
+
+**标准 Uniform 块：**
+- `getTransformsBlock(binding)` - MVP 矩阵块（uModelMatrix, uViewMatrix, uProjectionMatrix）
+- `getLightingBlock(binding)` - 光照参数块（uLightPosition, uLightColor, uAmbientColor）
+- `getMaterialBlock(binding)` - 材质参数块（uAmbientColor, uDiffuseColor, uSpecularColor, uShininess）
+
+**着色器模板：**
+- `basicVertexShader(options)` - 基础顶点着色器（支持法线、UV、顶点颜色）
+- `basicFragmentShader(options)` - 基础片段着色器（支持纯色、顶点颜色、纹理、光照）
+- `phongShaders()` - 完整的 Phong 光照着色器对（顶点 + 片段）
+
+**着色器片段库：**
+- `getLightingSnippet()` - Phong 光照计算代码片段
+- `getNormalTransformSnippet()` - 法线变换代码片段
+- `getTextureSamplingSnippet()` - 纹理采样代码片段
+- `getCommonUniformsSnippet()` - 常见 Uniform 声明
+- `getScreenPositionSnippet()` - 屏幕空间位置计算
+
+```typescript
+// 生成 Uniform 块
+const block = ShaderUtils.generateUniformBlock({
+  name: 'Transforms',
+  binding: 0,
+  fields: [
+    { name: 'uModelMatrix', type: 'mat4' },
+    { name: 'uViewMatrix', type: 'mat4' },
+    { name: 'uProjectionMatrix', type: 'mat4' },
+  ],
+});
+
+// 计算 Uniform 块大小
+const size = ShaderUtils.calculateUniformBlockSize([
+  { name: 'time', type: 'float' },
+  { name: 'color', type: 'vec3' },
+]);
+
+// 使用着色器模板
+const vs = ShaderUtils.basicVertexShader({
+  hasNormals: true,
+  hasUVs: true,
+  hasColors: false,
+});
+
+const fs = ShaderUtils.basicFragmentShader({
+  mode: 'texture',
+  hasLighting: true,
+});
+
+// Phong 着色器
+const { vertex, fragment } = ShaderUtils.phongShaders();
+```
 
 ### ProceduralTexture (程序化纹理)
 

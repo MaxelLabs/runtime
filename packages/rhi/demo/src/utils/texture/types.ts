@@ -124,3 +124,96 @@ export interface NormalMapConfig {
   /** 强度 (0-1) */
   strength?: number;
 }
+
+/**
+ * 立方体贴图面标识符
+ * 遵循 WebGL/OpenGL 标准顺序
+ */
+export type CubemapFace = 'posX' | 'negX' | 'posY' | 'negY' | 'posZ' | 'negZ';
+
+/**
+ * 立方体贴图数据
+ */
+export interface CubemapData {
+  /** 每个面的尺寸（正方形） */
+  size: number;
+
+  /** 6 个面的 RGBA 数据 */
+  faces: Record<CubemapFace, Uint8Array>;
+}
+
+/**
+ * 天空渐变立方体贴图配置
+ */
+export interface SkyboxGradientConfig {
+  /** 每个面的尺寸（默认 256） */
+  size?: number;
+
+  /** 天顶颜色 [R,G,B,A]（默认蓝色） */
+  topColor?: [number, number, number, number];
+
+  /** 地平线颜色 [R,G,B,A]（默认浅蓝） */
+  horizonColor?: [number, number, number, number];
+
+  /** 底部颜色 [R,G,B,A]（默认棕色） */
+  bottomColor?: [number, number, number, number];
+}
+
+/**
+ * 纯色立方体贴图配置
+ */
+export interface SolidColorCubemapConfig {
+  /** 每个面的尺寸（默认 256） */
+  size?: number;
+
+  /** 纹理颜色 [R,G,B,A]（默认白色） */
+  color?: [number, number, number, number];
+}
+
+/**
+ * 调试立方体贴图配置
+ */
+export interface DebugCubemapConfig {
+  /** 每个面的尺寸（默认 256） */
+  size?: number;
+
+  /** 是否显示文本标签（默认 true） */
+  showLabels?: boolean;
+}
+
+/**
+ * 纹理加载选项
+ */
+export interface TextureLoadOptions {
+  /** 是否翻转 Y 轴（默认 true，因为 WebGL Y 轴与图片坐标相反） */
+  flipY?: boolean;
+
+  /** 是否生成 Mipmap（默认 false） */
+  generateMipmaps?: boolean;
+
+  /** 是否预乘 Alpha（默认 false） */
+  premultiplyAlpha?: boolean;
+
+  /** 目标纹理格式（默认 RGBA8_UNORM） */
+  format?: string;
+}
+
+/**
+ * 已加载的纹理数据
+ */
+export interface LoadedTexture {
+  /** 纹理宽度 */
+  width: number;
+
+  /** 纹理高度 */
+  height: number;
+
+  /** 像素数据 (RGBA) */
+  data: Uint8Array;
+
+  /** Mipmap 链（如果已生成） */
+  mipmaps?: Uint8Array[];
+
+  /** 纹理格式 */
+  format: string;
+}

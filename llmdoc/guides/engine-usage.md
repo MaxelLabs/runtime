@@ -242,8 +242,8 @@ console.log(`Triangles: ${stats.triangles}`);
 ```
 
 ## 代码参考：
-- 引擎创建: `temp/engine/packages/core/src/Engine.ts:52-149`
-- 场景管理: `temp/engine/packages/core/src/SceneManager.ts`
-- 实体组件: `temp/engine/packages/core/src/Entity.ts`
-- 资源管理: `temp/engine/packages/core/src/asset/ResourceManager.ts`
-- 渲染管线: `temp/engine/packages/core/src/RenderPipeline/BasicRenderPipeline.ts`
+- 引擎创建: `packages/core/src/code.zip:Engine`
+- 场景管理: `packages/core/src/code.zip:Scene`
+- 实体组件: `packages/core/src/code.zip:Entity`
+- 资源管理: `packages/core/src/code.zip:ResourceManager`
+- 渲染管线: `packages/core/src/code.zip:BasicRenderPipeline`
