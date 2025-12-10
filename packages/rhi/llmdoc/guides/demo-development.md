@@ -4,6 +4,13 @@
 
 ## 最近更新
 
+### 2025-12-10 新增基础渲染 Demo
+
+添加了两个基础渲染 Demo，进一步完善 RHI Demo 系统的核心功能：
+
+- **colored-triangle**: 顶点颜色插值演示，展示红绿蓝渐变插值效果
+- **depth-test**: 深度测试演示，展示多个重叠几何体的正确遮挡关系
+
 ### 2025-12-10 新增工具库功能
 
 添加了四个新的工具库模块，进一步完善 Demo 开发能力：
@@ -372,11 +379,13 @@ runner.start((dt) => {
 | #   | 名称             | 文件                | 功能点                               |
 | --- | ---------------- | ------------------- | ------------------------------------ |
 | 01  | triangle         | triangle.ts         | 最小化渲染流程，MVP 矩阵变换基础实现 |
-| 02  | rotating-cube    | rotating-cube.ts    | 3D变换、纹理、光照、GUI、相机控制    |
-| 03  | quad-indexed     | quad-indexed.ts     | 索引缓冲区绘制，顶点复用             |
-| 04  | primitive-types  | primitive-types.ts  | 图元拓扑类型（点/线/三角形）         |
-| 05  | viewport-scissor | viewport-scissor.ts | 视口和裁剪矩形，多视口渲染           |
-| 06  | blend-modes      | blend-modes.ts      | 各种混合模式（Alpha/加法/乘法等），支持纹理和MVP变换 |
+| 02  | colored-triangle  | colored-triangle.ts  | 顶点颜色属性，红绿蓝渐变插值效果     |
+| 03  | rotating-cube    | rotating-cube.ts    | 3D变换、纹理、光照、GUI、相机控制    |
+| 04  | quad-indexed     | quad-indexed.ts     | 索引缓冲区绘制，顶点复用             |
+| 05  | primitive-types  | primitive-types.ts  | 图元拓扑类型（点/线/三角形）         |
+| 06  | viewport-scissor | viewport-scissor.ts | 视口和裁剪矩形，多视口渲染           |
+| 07  | depth-test       | depth-test.ts       | 深度测试功能，多个重叠几何体遮挡     |
+| 08  | blend-modes      | blend-modes.ts      | 各种混合模式（Alpha/加法/乘法等），支持纹理和MVP变换 |
 
 **注意**：所有 Demo 均已集成 Stats 性能监控、OrbitController 相机控制和完整的 MVP 矩阵变换管线（自 2025-12-10）。
 
@@ -389,7 +398,7 @@ runner.start((dt) => {
 | #   | 名称             | 验证功能点       | 状态                   |
 | --- | ---------------- | ---------------- | ---------------------- |
 | 01  | triangle         | 最小化渲染流程   | ✅ 完成                |
-| 02  | colored-triangle | 顶点颜色属性     | 可复用 triangle        |
+| 02  | colored-triangle | 顶点颜色属性     | ✅ 完成                |
 | 03  | quad-indexed     | 索引缓冲区绘制   | ✅ 完成                |
 | 04  | rotating-cube    | 3D 变换矩阵      | ✅ 完成                |
 | 05  | multiple-buffers | 多顶点缓冲区     | 待实现                 |
@@ -397,7 +406,7 @@ runner.start((dt) => {
 | 07  | vertex-formats   | 各种顶点格式     | 待实现                 |
 | 08  | primitive-types  | 点/线/三角形拓扑 | ✅ 完成                |
 | 09  | viewport-scissor | 视口和裁剪矩形   | ✅ 完成                |
-| 10  | depth-test       | 深度测试         | 待实现                 |
+| 10  | depth-test       | 深度测试         | ✅ 完成                |
 | 11  | stencil-test     | 模板测试         | 待实现                 |
 | 12  | blend-modes      | 混合模式         | ✅ 完成，支持 MVP 变换和纹理 |
 

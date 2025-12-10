@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>顶点颜色插值 Demo - Maxell RHI</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #0a0a0a;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      cursor: grab;
+    }
+
+    canvas:active {
+      cursor: grabbing;
+    }
+
+    /* 信息面板 */
+    .info-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      max-width: 320px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      animation: slideIn 0.5s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(100px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .info-panel h3 {
+      margin: 0 0 10px 0;
+      font-size: 15px;
+      color: #4fc3f7;
+    }
+
+    .info-panel .description {
+      margin: 10px 0;
+      line-height: 1.5;
+      color: #e0e0e0;
+    }
+
+    .info-panel .tech-points {
+      margin-top: 15px;
+    }
+
+    .info-panel .tech-points h4 {
+      margin: 0 0 8px 0;
+      font-size: 13px;
+      color: #81c784;
+    }
+
+    .info-panel .tech-points ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #bdbdbd;
+    }
+
+    .info-panel .tech-points li {
+      margin: 4px 0;
+    }
+
+    /* 控制提示 */
+    .controls {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.75);
+      color: white;
+      padding: 10px 15px;
+      border-radius: 6px;
+      font-size: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      opacity: 0;
+      animation: fadeIn 1s 1s forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    .controls div {
+      margin: 3px 0;
+    }
+
+    .controls kbd {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-right: 5px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="J-canvas"></canvas>
+
+  <!-- 信息面板 -->
+  <div class="info-panel">
+    <h3>🔺 顶点颜色插值 Demo</h3>
+    <p class="description">
+      展示顶点颜色在光栅化过程中的平滑插值效果。三角形的每个顶点分别设置了红、绿、蓝三原色，
+      内部颜色通过重心坐标插值计算得到。
+    </p>
+    <div class="tech-points">
+      <h4>💡 技术要点</h4>
+      <ul>
+        <li>顶点属性：位置 (aPosition) 和颜色 (aColor)</li>
+        <li>重心坐标插值 (Barycentric Interpolation)</li>
+        <li>可变插值 (smooth qualifier) - 从顶点到片段的自动插值</li>
+        <li>MVP 矩阵变换管线</li>
+        <li>自动旋转演示效果</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 控制提示 -->
+  <div class="controls">
+    <div><kbd>ESC</kbd> 退出 Demo</div>
+    <div><kbd>F11</kbd> 切换全屏</div>
+    <div><kbd>Space</kbd> 切换自动旋转</div>
+    <div><kbd>Mouse</kbd> 拖动旋转视角</div>
+    <div><kbd>Scroll</kbd> 缩放</div>
+  </div>
+
+  <!-- 加载 Demo -->
+  <script type="module" src="../src/colored-triangle.ts"></script>
+</body>
+</html>
