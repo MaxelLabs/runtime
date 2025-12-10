@@ -13,12 +13,14 @@
 ### 1. 架构重大升级
 
 #### MVP 矩阵变换管线
+
 - **引入完整的 Model-View-Projection 矩阵变换**，取代固定管线渲染
 - 所有 Demo 使用统一的 `transforms` uniform 块进行矩阵传递
 - 支持 std140 布局规范的 Uniform 缓冲区管理
 - 每帧动态更新视图和投影矩阵，支持实时相机控制
 
 #### OrbitController 相机控制增强
+
 - 所有 Demo 必须集成 `OrbitController` 轨道控制器
 - 支持 MVP 矩阵的完整 3D 交互：旋转、缩放、平移
 - 自动旋转和阻尼平滑效果
@@ -26,6 +28,7 @@
 - 退出时必须正确销毁控制器实例
 
 #### Stats 性能监控集成
+
 - 所有 Demo 必须使用 `Stats` 组件进行实时性能监控
 - 显示 FPS（每秒帧数）和帧时间（毫秒）
 - 位置固定在左上角，半透明背景，不影响主视图
@@ -33,12 +36,14 @@
 ### 2. UI 布局标准化
 
 #### 左上角：Stats 性能面板
+
 ```css
 /* Stats 组件自动渲染，位置固定 */
-position: 'top-left'
+position: 'top-left';
 ```
 
 #### 左下角：Demo 介绍面板
+
 ```css
 .info-panel {
   position: absolute;
@@ -49,6 +54,7 @@ position: 'top-left'
   /* ... 其他样式 */
 }
 ```
+
 - 包含 Demo 名称、描述和技术要点
 - 最大宽度 320px，响应式设计
 - 使用 emoji 增强视觉效果
@@ -56,6 +62,7 @@ position: 'top-left'
 ### 3. 渲染循环标准化
 
 标准渲染流程：
+
 1. 更新轨道控制器状态
 2. 开始性能统计（`stats.begin()`）
 3. 执行渲染逻辑
@@ -64,6 +71,7 @@ position: 'top-left'
 ## 更新的文件列表
 
 ### TypeScript 源文件
+
 - `packages/rhi/demo/src/triangle.ts`
 - `packages/rhi/demo/src/quad-indexed.ts`
 - `packages/rhi/demo/src/primitive-types.ts`
@@ -72,6 +80,7 @@ position: 'top-left'
 - `packages/rhi/demo/src/rotating-cube.ts`（如果存在）
 
 ### HTML 文件
+
 - `packages/rhi/demo/html/triangle.html`
 - `packages/rhi/demo/html/quad-indexed.html`
 - `packages/rhi/demo/html/primitive-types.html`
@@ -80,22 +89,25 @@ position: 'top-left'
 - `packages/rhi/demo/html/rotating-cube.html`（如果存在）
 
 ### 文档文件
+
 - `packages/rhi/llmdoc/guides/demo-development.md` - 更新了开发规范
 
 ## 技术规范
 
 ### 必需导入
+
 ```typescript
 import { MSpec, MMath } from '@maxellabs/core';
 import {
   DemoRunner,
   GeometryGenerator,
-  OrbitController,  // 必需
-  Stats            // 必需
+  OrbitController, // 必需
+  Stats, // 必需
 } from './utils';
 ```
 
 ### 初始化代码
+
 ```typescript
 // 创建模型矩阵
 const modelMatrix = new MMath.Matrix4();
@@ -103,20 +115,21 @@ const modelMatrix = new MMath.Matrix4();
 // Stats 性能监控
 const stats = new Stats({
   position: 'top-left',
-  show: ['fps', 'ms']
+  show: ['fps', 'ms'],
 });
 
 // OrbitController 相机控制
 const orbit = new OrbitController(runner.canvas, {
-  distance: 3,  // 根据场景调整
+  distance: 3, // 根据场景调整
   target: [0, 0, 0],
   enableDamping: true,
-  autoRotate: true,
+  autoRotate: false,
   autoRotateSpeed: 0.5,
 });
 ```
 
 ### 渲染循环
+
 ```typescript
 runner.start((dt) => {
   // 1. 更新相机
@@ -147,6 +160,7 @@ runner.start((dt) => {
 ```
 
 ### 着色器代码要求
+
 ```glsl
 // 顶点着色器必须包含 Transforms uniform 块
 uniform Transforms {
@@ -167,6 +181,7 @@ void main() {
 ```
 
 ### Uniform 缓冲区创建
+
 ```typescript
 // 创建动态 Uniform 缓冲区（256字节，std140对齐）
 const transformBuffer = runner.track(
@@ -180,18 +195,22 @@ const transformBuffer = runner.track(
 
 // 创建绑定组布局
 const bindGroupLayout = runner.track(
-  runner.device.createBindGroupLayout([
-    {
-      binding: 0,
-      visibility: MSpec.RHIShaderStage.VERTEX,
-      buffer: { type: 'uniform' },
-      name: 'Transforms',
-    },
-  ], 'Transform BindGroup Layout')
+  runner.device.createBindGroupLayout(
+    [
+      {
+        binding: 0,
+        visibility: MSpec.RHIShaderStage.VERTEX,
+        buffer: { type: 'uniform' },
+        name: 'Transforms',
+      },
+    ],
+    'Transform BindGroup Layout'
+  )
 );
 ```
 
 ### 资源清理
+
 ```typescript
 // ESC 键退出时销毁资源
 runner.onKey('Escape', () => {
@@ -204,13 +223,12 @@ runner.onKey('Escape', () => {
 ## 布局示例
 
 ### HTML 结构
+
 ```html
 <!-- 左下角介绍面板 -->
 <div class="info-panel">
   <h3>🔺 Demo 名称</h3>
-  <p class="description">
-    简洁的 Demo 描述...
-  </p>
+  <p class="description">简洁的 Demo 描述...</p>
   <div class="tech-points">
     <h4>💡 技术要点</h4>
     <ul>
@@ -223,6 +241,7 @@ runner.onKey('Escape', () => {
 ```
 
 ### CSS 样式
+
 ```css
 .info-panel {
   position: absolute;
@@ -243,23 +262,27 @@ runner.onKey('Escape', () => {
 ## 更新影响
 
 ### 架构升级
+
 1. **从固定管线到可编程变换**：MVP 矩阵提供了更灵活的 3D 渲染能力
 2. **统一的变换架构**：所有 Demo 使用相同的矩阵变换管线，降低维护成本
 3. **可扩展性增强**：为后续功能（如模型动画、骨骼蒙皮）奠定基础
 
 ### 开发体验提升
+
 1. **统一的开发流程**：所有 Demo 遵循相同的规范，降低学习成本
 2. **实时性能监控**：开发者可以直观看到渲染性能
 3. **便捷的相机控制**：支持 3D 场景的自由查看和交互
 4. **清晰的调试支持**：通过 MVP 分离便于问题定位
 
 ### 演示效果提升
+
 1. **真正的 3D 演示**：支持旋转、缩放、平移的完整 3D 交互
 2. **专业的外观**：统一的 UI 风格，更专业的展示效果
 3. **交互友好**：鼠标控制让演示更加生动和直观
 4. **信息完整**：每个 Demo 都有清晰的功能说明
 
 ### 代码质量
+
 1. **强制规范**：通过工具库强制执行开发规范
 2. **资源管理**：确保所有组件正确销毁，避免内存泄漏
 3. **可维护性**：统一的代码结构便于后续维护和扩展

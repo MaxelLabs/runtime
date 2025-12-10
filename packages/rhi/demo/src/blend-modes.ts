@@ -17,32 +17,46 @@ import { DemoRunner, SimpleGUI, OrbitController, Stats } from './utils';
 const vertexShaderSource = `#version 300 es
 precision highp float;
 
-in vec3 aPosition;
+layout(location = 0) in vec2 aPosition;
+layout(location = 1) in vec2 aTexCoord;
 
-uniform vec2 uOffset;
-uniform float uScale;
+uniform VertexUniforms {
+  vec2 uOffset;
+  vec2 uScalePadding;  // uScale + padding for 16-byte alignment
+};
+
 uniform Transforms {
   mat4 uModelMatrix;
   mat4 uViewMatrix;
   mat4 uProjectionMatrix;
 };
 
+out vec2 vTexCoord;
+
 void main() {
-  vec2 scaledPos = aPosition.xy * uScale;
-  vec4 worldPosition = uModelMatrix * vec4(scaledPos + uOffset, aPosition.z, 1.0);
+  float uScale = uScalePadding.x;
+  vec2 scaledPos = aPosition * uScale;
+  vec4 worldPosition = uModelMatrix * vec4(scaledPos + uOffset, 0.0, 1.0);
   gl_Position = uProjectionMatrix * uViewMatrix * worldPosition;
+  vTexCoord = aTexCoord;
 }
 `;
 
 const fragmentShaderSource = `#version 300 es
 precision mediump float;
 
-uniform vec4 uColor;
+uniform FragmentUniforms {
+  vec4 uColor;
+};
 
+uniform sampler2D uTexture;
+
+in vec2 vTexCoord;
 out vec4 fragColor;
 
 void main() {
-  fragColor = uColor;
+  vec4 texColor = texture(uTexture, vTexCoord);
+  fragColor = texColor * uColor;
 }
 `;
 
@@ -180,7 +194,7 @@ async function main(): Promise<void> {
       distance: 2,
       target: [0, 0, 0],
       enableDamping: true,
-      autoRotate: true,
+      autoRotate: false,
       autoRotateSpeed: 0.5,
     });
 
@@ -192,27 +206,46 @@ async function main(): Promise<void> {
       animateColors: true,
     };
 
-    // 4. 创建三角形顶点数据
-    const triangleVertices = new Float32Array([
+    // 4. 创建四边形顶点数据（位置 + 纹理坐标）
+    // 使用两个三角形绘制四边形，需要6个顶点
+    const quadVertices = new Float32Array([
+      // 位置 (x, y)    纹理坐标 (u, v)
+      // 第一个三角形
+      -0.5,
+      0.5,
       0.0,
+      0.0, // 左上
+      -0.5,
+      -0.5,
+      0.0,
+      1.0, // 左下
       0.5,
-      0.0, // 顶部
       -0.5,
+      1.0,
+      1.0, // 右下
+      // 第二个三角形
       -0.5,
-      0.0, // 左下
+      0.5,
+      0.0,
+      0.0, // 左上
       0.5,
       -0.5,
-      0.0, // 右下
+      1.0,
+      1.0, // 右下
+      0.5,
+      0.5,
+      1.0,
+      0.0, // 右上
     ]);
 
     // 5. 创建顶点缓冲区
     const vertexBuffer = runner.track(
       runner.device.createBuffer({
-        size: triangleVertices.byteLength,
+        size: quadVertices.byteLength,
         usage: MSpec.RHIBufferUsage.VERTEX,
         hint: 'static',
-        initialData: triangleVertices as BufferSource,
-        label: 'Blend Triangle Vertex Buffer',
+        initialData: quadVertices as BufferSource,
+        label: 'Blend Quad Vertex Buffer',
       })
     );
 
@@ -270,12 +303,62 @@ async function main(): Promise<void> {
       buffers: [
         {
           index: 0,
-          stride: 12, // 3 floats * 4 bytes
+          stride: 16, // 4 floats * 4 bytes (position + texCoord)
           stepMode: 'vertex',
-          attributes: [{ name: 'aPosition', format: MSpec.RHIVertexFormat.FLOAT32x3, offset: 0, shaderLocation: 0 }],
+          attributes: [
+            { name: 'aPosition', format: MSpec.RHIVertexFormat.FLOAT32x2, offset: 0, shaderLocation: 0 },
+            { name: 'aTexCoord', format: MSpec.RHIVertexFormat.FLOAT32x2, offset: 8, shaderLocation: 1 },
+          ],
         },
       ],
     };
+
+    // 9. 创建纹理和采样器
+    const texture = runner.track(
+      runner.device.createTexture({
+        width: 758,
+        height: 600,
+        format: MSpec.RHITextureFormat.RGBA8_UNORM,
+        usage: MSpec.RHITextureUsage.TEXTURE_BINDING,
+        label: 'Caravaggio Fruit Texture',
+      })
+    );
+
+    // 加载Caravaggio图片并上传到纹理
+    const imageUrl = '../assets/texture/758px-Canestra_di_frutta_(Caravaggio).jpg';
+    const image = new Image();
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => {
+        // 创建临时canvas来读取图片数据
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(image, 0, 0);
+
+        // 获取图片数据并上传到纹理
+        const imageData = ctx.getImageData(0, 0, image.width, image.height);
+        texture.update(imageData.data as BufferSource);
+
+        // console.log(`[Blend Demo] Loaded Caravaggio image: ${image.width}x${image.height}`);
+        resolve();
+      };
+      image.onerror = () => {
+        console.error('[Blend Demo] Failed to load Caravaggio image');
+        reject(new Error('Failed to load image'));
+      };
+      image.src = imageUrl;
+    });
+
+    const sampler = runner.track(
+      runner.device.createSampler({
+        magFilter: MSpec.RHIFilterMode.LINEAR,
+        minFilter: MSpec.RHIFilterMode.LINEAR,
+        addressModeU: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
+        addressModeV: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
+        label: 'Default Sampler',
+      })
+    );
 
     // 9. 创建绑定组
     const bindGroupLayout = runner.track(
@@ -285,7 +368,7 @@ async function main(): Promise<void> {
             binding: 0,
             visibility: MSpec.RHIShaderStage.VERTEX,
             buffer: { type: 'uniform' },
-            name: 'uOffset',
+            name: 'VertexUniforms',
           },
           {
             binding: 1,
@@ -297,7 +380,19 @@ async function main(): Promise<void> {
             binding: 2,
             visibility: MSpec.RHIShaderStage.FRAGMENT,
             buffer: { type: 'uniform' },
-            name: 'uColor',
+            name: 'FragmentUniforms',
+          },
+          {
+            binding: 3,
+            visibility: MSpec.RHIShaderStage.FRAGMENT,
+            texture: { sampleType: 'float', viewDimension: '2d' },
+            name: 'uTexture',
+          },
+          {
+            binding: 4,
+            visibility: MSpec.RHIShaderStage.FRAGMENT,
+            sampler: { type: 'filtering' },
+            name: 'uSampler',
           },
         ],
         'Blend BindGroup Layout'
@@ -309,6 +404,8 @@ async function main(): Promise<void> {
         { binding: 0, resource: vertexUniformBuffer },
         { binding: 1, resource: transformBuffer },
         { binding: 2, resource: colorBuffer },
+        { binding: 3, resource: texture.createView() },
+        { binding: 4, resource: sampler },
       ])
     );
 
@@ -411,7 +508,7 @@ async function main(): Promise<void> {
     });
 
     // 14. 渲染函数
-    const drawTriangle = (
+    const drawQuad = (
       renderPass: MSpec.IRHIRenderPass,
       offsetX: number,
       offsetY: number,
@@ -423,7 +520,7 @@ async function main(): Promise<void> {
         offsetX,
         offsetY, // uOffset
         scale,
-        0, // uScale + padding
+        0, // uScalePadding.x = scale, uScalePadding.y = padding
       ]);
       vertexUniformBuffer.update(vertexData, 0);
 
@@ -439,7 +536,7 @@ async function main(): Promise<void> {
       renderPass.setPipeline(getOrCreatePipeline(params.blendMode));
       renderPass.setBindGroup(0, bindGroup);
       renderPass.setVertexBuffer(0, vertexBuffer);
-      renderPass.draw(3);
+      renderPass.draw(6); // 绘制两个三角形组成四边形
     };
 
     // 15. 启动渲染循环
@@ -467,30 +564,31 @@ async function main(): Promise<void> {
       // 计算动画颜色
       const colorOffset = params.animateColors ? time * 0.5 : 0;
 
-      // 绘制背景三角形（如果启用）
+      // 绘制背景四边形（如果启用）
       if (params.showBackground) {
-        // 白色背景三角形
-        drawTriangle(renderPass, 0, 0, 0.8, [1.0, 1.0, 1.0, 1.0]);
+        // 白色背景四边形
+        drawQuad(renderPass, 0, 0, 1.2, [1.0, 1.0, 1.0, 1.0]);
       }
 
-      // 绘制三个重叠的彩色三角形
-      const triangles = [
-        { offset: [-0.2, 0.1], color: [1.0, 0.2, 0.2] }, // 红色
-        { offset: [0.2, 0.1], color: [0.2, 0.2, 1.0] }, // 蓝色
-        { offset: [0, -0.2], color: [0.2, 1.0, 0.2] }, // 绿色
+      // 绘制三个重叠的贴图四边形
+      const quads = [
+        { offset: [-0.3, 0.15], color: [1.0, 1.0, 1.0] }, // 左上
+        { offset: [0.3, 0.15], color: [1.0, 1.0, 1.0] }, // 右上
+        { offset: [0, -0.25], color: [1.0, 1.0, 1.0] }, // 下方
       ];
 
-      triangles.forEach((tri, index) => {
-        // 动画颜色变化
-        const color = [...tri.color];
+      quads.forEach((quad, index) => {
+        // 动画颜色变化（作为色调叠加）
+        const color = [...quad.color];
         if (params.animateColors) {
           const phase = colorOffset + (index * Math.PI * 2) / 3;
-          color[0] = Math.max(0.2, Math.abs(Math.sin(phase)));
-          color[1] = Math.max(0.2, Math.abs(Math.sin(phase + Math.PI / 3)));
-          color[2] = Math.max(0.2, Math.abs(Math.sin(phase + (Math.PI * 2) / 3)));
+          // 淡淡的色调变化，不会完全覆盖贴图
+          color[0] = 0.8 + 0.2 * Math.sin(phase);
+          color[1] = 0.8 + 0.2 * Math.sin(phase + Math.PI / 3);
+          color[2] = 0.8 + 0.2 * Math.sin(phase + (Math.PI * 2) / 3);
         }
 
-        drawTriangle(renderPass, tri.offset[0], tri.offset[1], 0.5, [color[0], color[1], color[2], params.alpha]);
+        drawQuad(renderPass, quad.offset[0], quad.offset[1], 0.6, [color[0], color[1], color[2], params.alpha]);
       });
 
       renderPass.end();

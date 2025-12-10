@@ -8,10 +8,7 @@ import type { MSpec } from '@maxellabs/core';
 export class WebGLCommandEncoder implements MSpec.IRHICommandEncoder {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
   private isWebGL2: boolean;
-  private commands: Array<{
-    type: string;
-    params: any;
-  }>;
+  private commands: MSpec.RHICommand[];
   private label?: string;
   private isDestroyed = false;
 
@@ -32,7 +29,7 @@ export class WebGLCommandEncoder implements MSpec.IRHICommandEncoder {
    * 添加命令到编码器
    * @param command 命令对象或函数
    */
-  addCommand(command: any): void {
+  addCommand(command: MSpec.RHICommand | (() => void)): void {
     if (this.isDestroyed) {
       console.error('尝试向已销毁的命令编码器添加命令');
 
@@ -249,10 +246,7 @@ export class WebGLCommandEncoder implements MSpec.IRHICommandEncoder {
    * 获取命令列表
    * 仅供内部使用
    */
-  getCommands(): Array<{
-    type: string;
-    params: any;
-  }> {
+  getCommands(): MSpec.RHICommand[] {
     return this.commands;
   }
 

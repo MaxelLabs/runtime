@@ -472,6 +472,7 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
         instanceCount,
         firstVertex,
         firstInstance,
+        primitiveTopology: this.currentPipeline.primitiveTopology,
       },
     });
 

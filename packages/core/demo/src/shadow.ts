@@ -52,7 +52,7 @@ let shadowParams: ShadowParams = {
   pcfRadius: 2,
   lightDistance: 10,
   lightHeight: 8,
-  autoRotate: true,
+  autoRotate: false,
   showShadowMap: true,
 };
 
@@ -1162,7 +1162,7 @@ function resetParameters(): void {
     pcfRadius: 2,
     lightDistance: 10,
     lightHeight: 8,
-    autoRotate: true,
+    autoRotate: false,
     showShadowMap: true,
   };
 

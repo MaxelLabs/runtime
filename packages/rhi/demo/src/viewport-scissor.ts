@@ -87,7 +87,7 @@ async function main(): Promise<void> {
       distance: 2,
       target: [0, 0, 0],
       enableDamping: true,
-      autoRotate: true,
+      autoRotate: false,
       autoRotateSpeed: 0.5,
     });
 

@@ -1,16 +1,16 @@
 import type { GLBuffer } from '../resources/GLBuffer';
 import type { GLTexture } from '../resources/GLTexture';
-import type { MSpec } from '@maxellabs/core';
+import type { WebGLTextureView } from '../resources/GLTextureView';
+import type { WebGLRenderPipeline } from '../pipeline/GLRenderPipeline';
+import type { WebGLBindGroup } from '../bindings/GLBindGroup';
+import { MSpec } from '@maxellabs/core';
 
 /**
  * WebGL命令缓冲区实现
  */
 export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
   private gl: WebGLRenderingContext | WebGL2RenderingContext;
-  private commands: Array<{
-    type: string;
-    params: any;
-  }>;
+  private commands: MSpec.RHICommand[];
   label?: string;
   private isDestroyed = false;
   private isWebGL2: boolean;
@@ -22,14 +22,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
    * @param commands 命令列表
    * @param label 可选标签
    */
-  constructor(
-    gl: WebGLRenderingContext | WebGL2RenderingContext,
-    commands: Array<{
-      type: string;
-      params: any;
-    }>,
-    label?: string
-  ) {
+  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, commands: MSpec.RHICommand[], label?: string) {
     this.gl = gl;
     this.commands = [...commands]; // 复制命令列表
     this.label = label;
@@ -55,7 +48,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
   /**
    * 执行单个命令
    */
-  private executeCommand(command: { type: string; params: any }): void {
+  private executeCommand(command: MSpec.RHICommand): void {
     if (!command || typeof command !== 'object') {
       console.error('无效的命令对象', command);
 
@@ -70,7 +63,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
     try {
       switch (command.type) {
         case 'beginRenderPass':
-          this.executeBeginRenderPass(command.params);
+          this.executeBeginRenderPass(command.params as MSpec.RHIBeginRenderPassParams);
 
           break;
         case 'endRenderPass':
@@ -78,65 +71,67 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
 
           break;
         case 'copyBufferToBuffer':
-          this.executeCopyBufferToBuffer(command.params);
+          this.executeCopyBufferToBuffer(command.params as MSpec.RHICopyBufferToBufferParams);
 
           break;
         case 'copyBufferToTexture':
-          this.executeCopyBufferToTexture(command.params);
+          this.executeCopyBufferToTexture(command.params as MSpec.RHICopyBufferToTextureParams);
 
           break;
         case 'copyTextureToBuffer':
-          this.executeCopyTextureToBuffer(command.params);
+          this.executeCopyTextureToBuffer(command.params as MSpec.RHICopyTextureToBufferParams);
 
           break;
         case 'copyTextureToTexture':
-          this.executeCopyTextureToTexture(command.params);
+          this.executeCopyTextureToTexture(command.params as MSpec.RHICopyTextureToTextureParams);
 
           break;
         case 'copyTextureToCanvas':
-          this.executeCopyTextureToCanvas(command.params);
+          this.executeCopyTextureToCanvas(command.params as MSpec.RHICopyTextureToCanvasParams);
 
           break;
         case 'draw':
-          this.executeDraw(command.params);
+          this.executeDraw(command.params as MSpec.RHIDrawParams);
 
           break;
         case 'drawIndexed':
-          this.executeDrawIndexed(command.params);
+          this.executeDrawIndexed(command.params as MSpec.RHIDrawIndexedParams);
 
           break;
         case 'setViewport':
-          this.executeSetViewport(command.params);
+          this.executeSetViewport(command.params as MSpec.RHISetViewportParams);
 
           break;
         case 'setScissor':
-          this.executeSetScissor(command.params);
+          this.executeSetScissor(command.params as MSpec.RHISetScissorParams);
 
           break;
         case 'setPipeline':
-          this.executeSetPipeline(command.params);
+          this.executeSetPipeline(command.params as MSpec.RHISetPipelineParams);
 
           break;
         case 'setBindGroup':
-          this.executeSetBindGroup(command.params);
+          this.executeSetBindGroup(command.params as MSpec.RHISetBindGroupParams);
 
           break;
         case 'setVertexBuffers':
-          this.executeSetVertexBuffers(command.params);
+          this.executeSetVertexBuffers(command.params as MSpec.RHISetVertexBuffersParams);
 
           break;
         case 'setIndexBuffer':
-          this.executeSetIndexBuffer(command.params);
+          this.executeSetIndexBuffer(command.params as MSpec.RHISetIndexBufferParams);
 
           break;
-        case 'custom':
-          if (command.params && typeof command.params.execute === 'function') {
-            command.params.execute();
+        case 'custom': {
+          const customParams = command.params as MSpec.RHICustomCommandParams;
+          if (customParams && typeof customParams.execute === 'function') {
+            customParams.execute();
           } else {
             console.error('自定义命令缺少有效的execute函数', command.params);
           }
 
           break;
+        }
         default:
           console.warn(`未知的命令类型: ${command.type}`);
       }
@@ -148,7 +143,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
   /**
    * 执行开始渲染通道命令
    */
-  private executeBeginRenderPass(params: any): void {
+  private executeBeginRenderPass(params: MSpec.RHIBeginRenderPassParams): void {
     const gl = this.gl;
 
     // 如果要渲染到画布，不使用帧缓冲区
@@ -166,7 +161,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
     // 处理颜色附件
     if (params.colorAttachments && params.colorAttachments.length > 0) {
       const colorAttachment = params.colorAttachments[0];
-      const textureView = colorAttachment.view;
+      const textureView = colorAttachment.view as WebGLTextureView;
 
       // 确保纹理视图有效
       if (!textureView) {
@@ -207,7 +202,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
     // 处理深度模板附件
     if (params.depthStencilAttachment) {
       const depthAttachment = params.depthStencilAttachment;
-      const depthTextureView = depthAttachment.view;
+      const depthTextureView = depthAttachment.view as WebGLTextureView;
 
       // 确保深度纹理视图有效
       if (!depthTextureView) {
@@ -275,7 +270,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
         // 先附加颜色缓冲区
         if (params.colorAttachments && params.colorAttachments.length > 0) {
           const colorAttachment = params.colorAttachments[0];
-          const textureView = colorAttachment.view;
+          const textureView = colorAttachment.view as WebGLTextureView;
           const glTexture = textureView.getGLTexture();
 
           gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, glTexture, 0);
@@ -310,7 +305,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
         gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 
         const colorAttachment = params.colorAttachments[0];
-        const textureView = colorAttachment.view;
+        const textureView = colorAttachment.view as WebGLTextureView;
         const glTexture = textureView.getGLTexture();
 
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, glTexture, 0);
@@ -429,7 +424,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
   /**
    * 执行缓冲区到缓冲区复制命令
    */
-  private executeCopyBufferToBuffer(params: any): void {
+  private executeCopyBufferToBuffer(params: MSpec.RHICopyBufferToBufferParams): void {
     const { source, sourceOffset, destination, destinationOffset, size } = params;
 
     // WebGL不直接支持缓冲区间复制，需要通过CPU执行
@@ -454,7 +449,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
   /**
    * 执行缓冲区到纹理复制命令
    */
-  private executeCopyBufferToTexture(params: any): void {
+  private executeCopyBufferToTexture(params: MSpec.RHICopyBufferToTextureParams): void {
     const { source, destination, copySize } = params;
 
     const sourceBuffer = source.buffer as GLBuffer;
@@ -492,7 +487,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
   /**
    * 执行纹理到缓冲区复制命令
    */
-  private executeCopyTextureToBuffer(params: any): void {
+  private executeCopyTextureToBuffer(params: MSpec.RHICopyTextureToBufferParams): void {
     const { source, destination, copySize } = params;
 
     const sourceTexture = source.texture as GLTexture;
@@ -545,7 +540,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
   /**
    * 执行纹理到纹理复制命令
    */
-  private executeCopyTextureToTexture(params: any): void {
+  private executeCopyTextureToTexture(params: MSpec.RHICopyTextureToTextureParams): void {
     const { source, destination, copySize } = params;
 
     const sourceTexture = source.texture as GLTexture;
@@ -650,7 +645,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
   /**
    * 复制纹理到画布
    */
-  private executeCopyTextureToCanvas(params: any): void {
+  private executeCopyTextureToCanvas(params: MSpec.RHICopyTextureToCanvasParams): void {
     const { source } = params;
     const gl = this.gl;
     // 绑定到默认帧缓冲区（画布）
@@ -782,7 +777,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
     gl.vertexAttribPointer(texcoordLoc, 2, gl.FLOAT, false, 16, 8);
 
     // 绑定源纹理
-    const sourceTexture = source.getGLTexture();
+    const sourceTexture = (source as WebGLTextureView).getGLTexture();
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, sourceTexture);
@@ -815,9 +810,9 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
   /**
    * 执行绘制命令
    */
-  private executeDraw(params: any): void {
+  private executeDraw(params: MSpec.RHIDrawParams): void {
     const gl = this.gl;
-    const { vertexCount, firstVertex } = params;
+    const { vertexCount, firstVertex, primitiveTopology } = params;
 
     try {
       // 检查WebGL状态
@@ -868,7 +863,32 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
       }
 
       // 执行绘制
-      gl.drawArrays(gl.TRIANGLES, firstVertex, vertexCount);
+      // 使用管线中的拓扑类型，如果没有指定则默认使用三角形
+      let primitiveType: number = gl.TRIANGLES;
+      if (primitiveTopology !== undefined) {
+        // 使用枚举值映射拓扑类型
+        switch (primitiveTopology as MSpec.RHIPrimitiveTopology) {
+          case MSpec.RHIPrimitiveTopology.POINT_LIST:
+            primitiveType = gl.POINTS;
+            break;
+          case MSpec.RHIPrimitiveTopology.LINE_LIST:
+            primitiveType = gl.LINES;
+            break;
+          case MSpec.RHIPrimitiveTopology.LINE_STRIP:
+            primitiveType = gl.LINE_STRIP;
+            break;
+          case MSpec.RHIPrimitiveTopology.TRIANGLE_LIST:
+            primitiveType = gl.TRIANGLES;
+            break;
+          case MSpec.RHIPrimitiveTopology.TRIANGLE_STRIP:
+            primitiveType = gl.TRIANGLE_STRIP;
+            break;
+          default:
+            console.warn('未知的拓扑类型:', primitiveTopology);
+            primitiveType = gl.TRIANGLES;
+        }
+      }
+      gl.drawArrays(primitiveType, firstVertex ?? 0, vertexCount);
 
       // 检查错误
       const error = gl.getError();
@@ -937,36 +957,37 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
   /**
    * 执行索引绘制命令
    */
-  private executeDrawIndexed(params: any): void {
+  private executeDrawIndexed(params: MSpec.RHIDrawIndexedParams): void {
     const gl = this.gl;
 
-    const { indexCount, instanceCount, firstIndex } = params;
-    const indexType = params.indexType || gl.UNSIGNED_SHORT;
+    const { indexCount, instanceCount, firstIndex = 0 } = params;
+    const indexType = params.indexType ?? gl.UNSIGNED_SHORT;
+    const primitiveType = params.primitiveType ?? gl.TRIANGLES;
     const offset = firstIndex * (indexType === gl.UNSIGNED_SHORT ? 2 : 4);
 
     if (instanceCount && instanceCount > 1) {
       // 实例化索引绘制
       if (gl instanceof WebGL2RenderingContext) {
-        gl.drawElementsInstanced(params.primitiveType, indexCount, indexType, offset, instanceCount);
+        gl.drawElementsInstanced(primitiveType, indexCount, indexType, offset, instanceCount);
       } else {
         const ext = gl.getExtension('ANGLE_instanced_arrays');
 
         if (ext) {
-          ext.drawElementsInstancedANGLE(params.primitiveType, indexCount, indexType, offset, instanceCount);
+          ext.drawElementsInstancedANGLE(primitiveType, indexCount, indexType, offset, instanceCount);
         } else {
           throw new Error('当前WebGL环境不支持实例化绘制');
         }
       }
     } else {
       // 普通索引绘制
-      gl.drawElements(params.primitiveType, indexCount, indexType, offset);
+      gl.drawElements(primitiveType, indexCount, indexType, offset);
     }
   }
 
   /**
    * 执行设置视口命令
    */
-  private executeSetViewport(params: any): void {
+  private executeSetViewport(params: MSpec.RHISetViewportParams): void {
     const gl = this.gl;
     const { x, y, width, height, minDepth, maxDepth } = params;
 
@@ -981,7 +1002,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
   /**
    * 执行设置裁剪区域命令
    */
-  private executeSetScissor(params: any): void {
+  private executeSetScissor(params: MSpec.RHISetScissorParams): void {
     const gl = this.gl;
     const { x, y, width, height, enabled } = params;
 
@@ -996,27 +1017,29 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
   /**
    * 执行设置管线命令
    */
-  private executeSetPipeline(params: any): void {
+  private executeSetPipeline(params: MSpec.RHISetPipelineParams): void {
     const { pipeline } = params;
 
-    // 应用管线状态
-    pipeline.applyState();
+    // 应用管线状态（WebGL 特有方法）
+    (pipeline as WebGLRenderPipeline).apply();
   }
 
   /**
    * 执行设置绑定组命令
    */
-  private executeSetBindGroup(params: any): void {
+  private executeSetBindGroup(params: MSpec.RHISetBindGroupParams): void {
     const { bindGroup, program } = params;
 
-    // 应用绑定
-    bindGroup.applyBindings(program);
+    // 应用绑定（WebGL 特有方法）
+    if (program) {
+      (bindGroup as WebGLBindGroup).applyBindings(program);
+    }
   }
 
   /**
    * 执行设置顶点缓冲区命令
    */
-  private executeSetVertexBuffers(params: any): void {
+  private executeSetVertexBuffers(params: MSpec.RHISetVertexBuffersParams): void {
     const { startSlot, buffers, pipeline } = params;
 
     if (!pipeline) {
@@ -1026,12 +1049,13 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
     }
 
     const gl = this.gl;
+    const webglPipeline = pipeline as WebGLRenderPipeline;
 
     // console.log('执行设置顶点缓冲区命令', params);
 
     try {
       // 确保顶点数组对象 (VAO) 已绑定
-      const vao = pipeline.getVertexArrayObject();
+      const vao = webglPipeline.getVertexArrayObject();
 
       if (vao && this.isWebGL2) {
         (gl as WebGL2RenderingContext).bindVertexArray(vao);
@@ -1057,7 +1081,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
         }
 
         // 如果渲染管线有顶点缓冲区布局，应用它
-        pipeline.applyVertexBufferLayout(startSlot + i, glBuffer, offset);
+        webglPipeline.applyVertexBufferLayout(startSlot + i, glBuffer, offset);
 
         // console.log(`成功设置槽位 ${startSlot + i} 的顶点缓冲区`, buffer);
       }
@@ -1069,7 +1093,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
   /**
    * 执行设置索引缓冲区命令
    */
-  private executeSetIndexBuffer(params: any): void {
+  private executeSetIndexBuffer(params: MSpec.RHISetIndexBufferParams): void {
     const gl = this.gl;
     const { buffer } = params;
 

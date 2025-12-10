@@ -141,7 +141,7 @@ async function main(): Promise<void> {
     // 5. Demo 参数
     const params: DemoParams = {
       rotationSpeed: 0.5,
-      autoRotate: true,
+      autoRotate: false,
       lightX: 1.0,
       lightY: 1.0,
       lightZ: 1.0,

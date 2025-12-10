@@ -24,7 +24,13 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
   private attributeLocations: Map<string, number> = new Map();
   private attributeBufferLayouts: Map<
     number,
-    { name: string; stride: number; offset: number; format: { type: number; size: number; normalized: boolean } }[]
+    {
+      name: string;
+      stride: number;
+      offset: number;
+      format: { type: number; size: number; normalized: boolean };
+      shaderLocation?: number;
+    }[]
   > = new Map();
   private isDestroyed: boolean = false;
   private utils: WebGLUtils;
@@ -219,6 +225,7 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
           }
           const attributeName = attr.name || `attr_slot${index}_loc${attr.shaderLocation}`;
 
+          // 优先尝试获取属性位置
           if (!this.attributeLocations.has(attributeName) && attr.name && this.program) {
             const loc = this.gl.getAttribLocation(this.program, attr.name);
 
@@ -231,12 +238,21 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
             );
           }
 
+          // 如果没有找到属性位置且shaderLocation有定义，使用shaderLocation作为备选
+          if (!this.attributeLocations.has(attributeName) && attr.shaderLocation !== undefined) {
+            this.attributeLocations.set(attributeName, attr.shaderLocation);
+            console.warn(
+              `[${this._label || 'WebGLRenderPipeline'}] Using shaderLocation ${attr.shaderLocation} for attribute '${attributeName}'`
+            );
+          }
+
           return {
             name: attributeName,
             stride: stride,
             offset: attr.offset,
             format: formatInfo,
             index: index,
+            shaderLocation: attr.shaderLocation, // 保存shaderLocation
           };
         })
         .filter(Boolean);
@@ -541,6 +557,15 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
       return;
     }
 
+    // 禁用所有之前启用的属性，确保状态清洁
+    const maxAttribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
+
+    for (let i = 0; i < maxAttribs; i++) {
+      if (gl.getVertexAttrib(i, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
+        gl.disableVertexAttribArray(i);
+      }
+    }
+
     // 获取WebGL缓冲区对象
     let nativeBuffer: WebGLBuffer | null = null;
 
@@ -561,22 +586,44 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
       return; // Cannot proceed without native buffer
     }
 
-    // 绑定缓冲区以确保后续顶点属性指针调用引用正确的缓冲区
-    gl.bindBuffer(gl.ARRAY_BUFFER, nativeBuffer);
-
     for (const attrLayout of layoutsForSlot) {
       if (!attrLayout?.name) {
         console.warn(`[${this._label || 'WebGLRenderPipeline'}] Skipping invalid layout in slot ${slot}.`, attrLayout);
         continue;
       }
 
-      const location = this.attributeLocations.get(attrLayout.name);
+      // 获取属性位置，优先使用显式位置
+      let location =
+        attrLayout.shaderLocation !== undefined
+          ? attrLayout.shaderLocation
+          : this.attributeLocations.get(attrLayout.name);
 
       if (location === undefined || location === -1) {
-        console.warn(`[${this._label || 'WebGLRenderPipeline'}] Attribute '${attrLayout.name}' location not found.`);
+        console.warn(
+          `[${this._label || 'WebGLRenderPipeline'}] Attribute '${attrLayout.name}' location not found, trying to locate...`
+        );
+        // 最后尝试一次直接获取
+        if (this.program && attrLayout.name) {
+          location = this.gl.getAttribLocation(this.program, attrLayout.name);
+        }
+      }
+
+      // 检查位置是否有效
+      const maxAttribs = this.gl.getParameter(this.gl.MAX_VERTEX_ATTRIBS);
+      if (location === undefined || location < 0 || location >= maxAttribs) {
+        console.error(
+          `[${this._label || 'WebGLRenderPipeline'}] Invalid attribute location ${location} for '${attrLayout.name}'. Range: 0-${maxAttribs - 1}`
+        );
         continue;
       }
+
+      // 绑定缓冲区
+      gl.bindBuffer(gl.ARRAY_BUFFER, nativeBuffer);
+
+      // 启用顶点属性
       gl.enableVertexAttribArray(location);
+
+      // 设置顶点属性指针
       gl.vertexAttribPointer(
         location,
         attrLayout.format.size,
