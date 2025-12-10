@@ -385,7 +385,8 @@ runner.start((dt) => {
 | 05  | primitive-types  | primitive-types.ts  | 图元拓扑类型（点/线/三角形）         |
 | 06  | viewport-scissor | viewport-scissor.ts | 视口和裁剪矩形，多视口渲染           |
 | 07  | depth-test       | depth-test.ts       | 深度测试功能，多个重叠几何体遮挡     |
-| 08  | blend-modes      | blend-modes.ts      | 各种混合模式（Alpha/加法/乘法等），支持纹理和MVP变换 |
+| 08  | stencil-test     | stencil-test.ts     | 模板测试功能，轮廓效果实现           |
+| 09  | blend-modes      | blend-modes.ts      | 各种混合模式（Alpha/加法/乘法等），支持纹理和MVP变换 |
 
 **注意**：所有 Demo 均已集成 Stats 性能监控、OrbitController 相机控制和完整的 MVP 矩阵变换管线（自 2025-12-10）。
 
@@ -407,7 +408,7 @@ runner.start((dt) => {
 | 08  | primitive-types  | 点/线/三角形拓扑 | ✅ 完成                |
 | 09  | viewport-scissor | 视口和裁剪矩形   | ✅ 完成                |
 | 10  | depth-test       | 深度测试         | ✅ 完成                |
-| 11  | stencil-test     | 模板测试         | 待实现                 |
+| 11  | stencil-test     | 模板测试         | ✅ 完成（2025-12-10 新增） |
 | 12  | blend-modes      | 混合模式         | ✅ 完成，支持 MVP 变换和纹理 |
 
 ### 第二层：纹理系统 (10 demos)
