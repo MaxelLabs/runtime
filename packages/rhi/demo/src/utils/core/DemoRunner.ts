@@ -177,6 +177,12 @@ export class DemoRunner {
       throw new Error(`[${this.config.name}] 找不到画布元素: ${this.config.canvasId}`);
     }
 
+    // 确保 Canvas 可聚焦并自动获得焦点
+    this._canvas.tabIndex = 1;
+    this._canvas.style.outline = 'none';
+    this._canvas.focus();
+    this._canvas.addEventListener('click', () => this._canvas?.focus());
+
     // 2. 设置画布大小
     this.updateCanvasSize();
 
@@ -585,20 +591,71 @@ export class DemoRunner {
 
   /** 处理键盘事件 */
   private handleKeyDown(event: KeyboardEvent): void {
-    // 特定键回调
-    const keyCallbacks = this.keyCallbacks.get(event.code);
-    if (keyCallbacks) {
-      for (const callback of keyCallbacks) {
-        callback(event.code, event);
+    // eslint-disable-next-line no-console
+    console.log(
+      `[DemoRunner] KeyDown: code=${event.code}, key=${event.key}, registered=${Array.from(this.keyCallbacks.keys()).join(',')}`
+    );
+    const executedCallbacks = new Set<KeyCallback>();
+
+    const runCallbacks = (key: string, callbacks: KeyCallback[]) => {
+      // eslint-disable-next-line no-console
+      console.log(`[DemoRunner] Running callbacks for key: ${key}`);
+      for (const callback of callbacks) {
+        if (!executedCallbacks.has(callback)) {
+          try {
+            callback(key, event);
+          } catch (e) {
+            console.error(`[${this.config.name}] Key callback error:`, e);
+          }
+          executedCallbacks.add(callback);
+        }
+      }
+    };
+
+    // 1. 尝试匹配 code (物理键码，如 "KeyA", "Digit1", "Escape")
+    // 这是游戏和跨布局应用的推荐方式
+    const codeCallbacks = this.keyCallbacks.get(event.code);
+    if (codeCallbacks) {
+      runCallbacks(event.code, codeCallbacks);
+    }
+
+    // 2. 尝试匹配 key (字符值，如 "a", "1", "Escape")
+    // 这是处理字符输入的推荐方式，也兼容用户习惯使用 "1" 而不是 "Digit1" 的情况
+    if (event.key !== event.code) {
+      const keyCallbacks = this.keyCallbacks.get(event.key);
+      if (keyCallbacks) {
+        runCallbacks(event.key, keyCallbacks);
       }
     }
 
-    // 全局键回调
+    // 3. 增强匹配：Digit 系列 (Digit1 -> 1)
+    if (event.code.startsWith('Digit')) {
+      const digit = event.code.replace('Digit', '');
+      const digitCallbacks = this.keyCallbacks.get(digit);
+      if (digitCallbacks) {
+        runCallbacks(digit, digitCallbacks);
+      }
+    }
+
+    // 4. 增强匹配：Key 系列 (KeyA -> a, KeyA -> A)
+    if (event.code.startsWith('Key')) {
+      const char = event.code.replace('Key', '');
+      // 尝试大写
+      const upperCallbacks = this.keyCallbacks.get(char.toUpperCase());
+      if (upperCallbacks) {
+        runCallbacks(char.toUpperCase(), upperCallbacks);
+      }
+      // 尝试小写
+      const lowerCallbacks = this.keyCallbacks.get(char.toLowerCase());
+      if (lowerCallbacks) {
+        runCallbacks(char.toLowerCase(), lowerCallbacks);
+      }
+    }
+
+    // 5. 全局回调
     const allCallbacks = this.keyCallbacks.get('*');
     if (allCallbacks) {
-      for (const callback of allCallbacks) {
-        callback(event.code, event);
-      }
+      runCallbacks('*', allCallbacks);
     }
   }
 

@@ -21,6 +21,7 @@ RHI 是一个跨平台的图形渲染硬件接口框架，提供统一的 API �
 - `device-lifecycle.md` - WebGL 上下文生命周期管理（新增）
 - `multiple-buffers-demo.md` - 多顶点缓冲区 Demo 实现参考（新增）
 - `dynamic-buffer-demo.md` - 动态缓冲区 Demo 实现参考（新增）
+- `texture-2d-demo.md` - 基础 2D 纹理 Demo 实现参考（新增）
 
 ### Guides（操作指南）
 
@@ -31,12 +32,12 @@ RHI 是一个跨平台的图形渲染硬件接口框架，提供统一的 API �
 
 ## 最近更新
 
-### 2025-12-10 新增基础渲染 Demo
+### 2025-12-11 开始第二层纹理系统 Demo
 
-**基础渲染功能完善**
-- colored-triangle: 顶点颜色插值演示，展示红绿蓝渐变插值效果
-- depth-test: 深度测试演示，展示多个重叠几何体的正确遮挡关系
-- 现已完成 12 个 Demo，覆盖基础渲染核心功能
+**纹理系统 Demo 开发**
+- texture-2d: 基础 2D 纹理加载和采样演示（新增）
+- 展示 TextureLoader 加载外部图片、ProceduralTexture 程序化纹理
+- 技术要点：UV 映射、采样器配置、多纹理对比显示
 
 ### 2025-12-10 新增动态缓冲区 Demo
 

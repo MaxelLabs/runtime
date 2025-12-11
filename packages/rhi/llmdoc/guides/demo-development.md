@@ -4,6 +4,14 @@
 
 ## 最近更新
 
+### 2025-12-11 开始第二层纹理系统 Demo
+
+RHI Demo 系统开始开发第二层纹理系统 Demo：
+
+- **texture-2d**: 基础 2D 纹理加载和采样演示，展示 TextureLoader 和 ProceduralTexture 的使用（新增）
+  - 文档索引：`/packages/rhi/llmdoc/reference/texture-2d-demo.md`
+  - 技术要点：TextureLoader 加载外部图片、ProceduralTexture 程序化纹理、UV 映射、采样器配置
+
 ### 2025-12-10 完成 Demo 系统最终索引更新
 
 RHI Demo 系统已完成全部第一层基础渲染 Demo 的文档索引更新：
@@ -404,12 +412,13 @@ runner.start((dt) => {
 | 06  | viewport-scissor | viewport-scissor.ts | 视口和裁剪矩形，多视口渲染           |
 | 07  | depth-test       | depth-test.ts       | 深度测试功能，多个重叠几何体遮挡     |
 | 08  | blend-modes      | blend-modes.ts      | 各种混合模式，支持纹理和MVP变换      |
-| 09  | multiple-buffers | multiple-buffers.ts | 多顶点缓冲区，位置/颜色/法线分离     | ✅ 完成 |
-| 10  | dynamic-buffer   | dynamic-buffer.ts   | 缓冲区动态更新，波浪动画效果         | ✅ 完成 |
-| 11  | vertex-formats   | vertex-formats.ts   | 顶点格式对比，内存优化演示           | ✅ 完成 |
-| 12  | stencil-test     | stencil-test.ts     | 模板测试，轮廓效果（Outline）        | ✅ 完成 |
+| 09  | multiple-buffers | multiple-buffers.ts | 多顶点缓冲区，位置/颜色/法线分离     |
+| 10  | dynamic-buffer   | dynamic-buffer.ts   | 缓冲区动态更新，波浪动画效果         |
+| 11  | vertex-formats   | vertex-formats.ts   | 顶点格式对比，内存优化演示           |
+| 12  | stencil-test     | stencil-test.ts     | 模板测试，轮廓效果（Outline）        |
+| 13  | texture-2d       | texture-2d.ts       | 基础2D纹理，TextureLoader + ProceduralTexture | ✅ 新增 |
 
-**注意**：所有 Demo 均已集成 Stats 性能监控、OrbitController 相机控制和完整的 MVP 矩阵变换管线。**第一层基础渲染 12 个 Demo 已全部完成（2025-12-10）。**
+**注意**：所有 Demo 均已集成 Stats 性能监控、OrbitController 相机控制和完整的 MVP 矩阵变换管线。**第一层基础渲染 12 个 Demo 已全部完成（2025-12-10）。第二层纹理系统开始开发（2025-12-11）。**
 
 ---
 
@@ -436,7 +445,7 @@ runner.start((dt) => {
 
 | #   | 名称               | 验证功能点         | 状态     |
 | --- | ------------------ | ------------------ | -------- |
-| 13  | texture-2d         | 基础 2D 纹理采样   | 待实现   |
+| 13  | texture-2d         | 基础 2D 纹理采样   | ✅ 完成  |
 | 14  | texture-wrapping   | 重复/镜像/钳制模式 | 待实现   |
 | 15  | texture-filtering  | 线性/最近邻过滤    | 待实现   |
 | 16  | mipmaps            | Mipmap 生成和使用  | 待实现   |

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>基础 2D 纹理 - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+      width: 100vw;
+      height: 100vh;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #J-canvas {
+      display: block;
+      cursor: grab;
+    }
+
+    #J-canvas:active {
+      cursor: grabbing;
+    }
+
+    /* 左下角介绍面板 */
+    .info-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      max-width: 350px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .info-panel h3 {
+      margin: 0 0 10px 0;
+      color: #4CAF50;
+      font-size: 16px;
+    }
+
+    .info-panel .description {
+      color: #ddd;
+      font-size: 12px;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    .info-panel .tech-points {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .info-panel .tech-points h4 {
+      margin: 0 0 5px 0;
+      color: #2196F3;
+      font-size: 13px;
+    }
+
+    .info-panel .tech-points ul {
+      margin: 5px 0;
+      padding-left: 20px;
+      color: #aaa;
+      font-size: 11px;
+    }
+
+    .info-panel .tech-points li {
+      margin: 3px 0;
+    }
+
+    .error-message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 0, 0, 0.9);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      font-family: monospace;
+      z-index: 1000;
+      max-width: 80%;
+      text-align: center;
+    }
+
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 18px;
+      z-index: 999;
+    }
+
+    .texture-labels {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      gap: 200px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .texture-label {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+  </div>
+
+  <!-- 左下角介绍面板 -->
+  <div class="info-panel">
+    <h3>🖼️ 基础 2D 纹理加载与采样</h3>
+    <p class="description">
+      演示如何使用 TextureLoader 工具加载多张外部图片，并将它们作为纹理应用到 3D 平面上。
+      展示了纹理的批量加载、采样器配置和纹理映射的基础流程。
+    </p>
+
+    <div class="tech-points">
+      <h4>💡 技术要点</h4>
+      <ul>
+        <li>TextureLoader 批量加载图片资源</li>
+        <li>自动 Y 轴翻转以符合 WebGL 坐标系</li>
+        <li>创建 IRHITexture 和 IRHISampler</li>
+        <li>纹理坐标 (UV) 映射到平面</li>
+        <li>通过 BindGroup 将纹理绑定到着色器</li>
+        <li>支持相机旋转和缩放查看细节</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    正在加载纹理资源...
+  </div>
+
+  <script type="module" src="../src/texture-2d.ts"></script>
+
+  <script>
+    // 隐藏加载提示
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const loading = document.getElementById('loading');
+        if (loading) {
+          loading.style.display = 'none';
+        }
+      }, 2000);
+    });
+
+    // 添加一些交互提示
+    let hintShown = false;
+    document.addEventListener('click', () => {
+      if (!hintShown) {
+        console.log('🖼️ 这个 Demo 展示了三种不同的纹理！');
+        console.log('🎯 UV Test - 用于调试纹理坐标');
+        console.log('🎨 Caravaggio - 经典艺术作品纹理');
+        console.log('🔲 Checkerboard - 棋盘格测试纹理');
+        console.log('🖱️ 拖动鼠标旋转视角，滚轮缩放');
+        hintShown = true;
+      }
+    });
+
+    // 监听错误
+    window.addEventListener('error', (event) => {
+      console.error('Demo Error:', event.error);
+    });
+  </script>
+</body>
+</html>
