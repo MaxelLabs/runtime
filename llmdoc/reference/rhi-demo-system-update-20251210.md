@@ -78,6 +78,10 @@ position: 'top-left';
 - `packages/rhi/demo/src/viewport-scissor.ts`
 - `packages/rhi/demo/src/blend-modes.ts`
 - `packages/rhi/demo/src/rotating-cube.ts`（如果存在）
+- `packages/rhi/demo/src/multiple-buffers.ts` - 多顶点缓冲区 Demo
+- `packages/rhi/demo/src/dynamic-buffer.ts` - 动态缓冲区 Demo
+- `packages/rhi/demo/src/vertex-formats.ts` - 顶点格式 Demo
+- `packages/rhi/demo/src/stencil-test.ts` - 模板测试 Demo
 
 ### HTML 文件
 
@@ -87,10 +91,21 @@ position: 'top-left';
 - `packages/rhi/demo/html/viewport-scissor.html`
 - `packages/rhi/demo/html/blend-modes.html`
 - `packages/rhi/demo/html/rotating-cube.html`（如果存在）
+- `packages/rhi/demo/html/multiple-buffers.html` - 多顶点缓冲区演示
+- `packages/rhi/demo/html/dynamic-buffer.html` - 动态缓冲区演示
+- `packages/rhi/demo/html/vertex-formats.html` - 顶点格式演示
+- `packages/rhi/demo/html/stencil-test.html` - 模板测试演示
+
+### 实现文档
+
+- `packages/rhi/demo/src/VERTEX_FORMATS_IMPLEMENTATION.md` - 顶点格式实现详解
+- `packages/rhi/demo/src/MULTIPLE_BUFFERS_IMPLEMENTATION.md` - 多缓冲区实现详解
+- `packages/rhi/demo/src/DYNAMIC_BUFFER_IMPLEMENTATION.md` - 动态缓冲区实现详解
 
 ### 文档文件
 
 - `packages/rhi/llmdoc/guides/demo-development.md` - 更新了开发规范
+- `packages/rhi/llmdoc/reference/vertex-formats-demo.md` - 顶点格式参考文档
 
 ## 技术规范
 

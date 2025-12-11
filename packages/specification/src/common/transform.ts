@@ -8,10 +8,8 @@
 import type {
   UsdValue,
   Vector2Like,
-  Vector3Like,
   Matrix3Like,
   Matrix4Like,
-  QuaternionLike,
   TransformSpace,
   EulerLike,
   UnifiedKeyframe,
@@ -233,7 +231,8 @@ export interface TransformKeyframe extends Omit<UnifiedKeyframe<CommonTransform>
  *
  * @description 基于 UnifiedAnimationTrack 泛型，特化为变换属性
  */
-export interface TransformAnimationTrack extends Omit<UnifiedAnimationTrack<TransformKeyframe>, 'property' | 'targetPath'> {
+export interface TransformAnimationTrack
+  extends Omit<UnifiedAnimationTrack<TransformKeyframe>, 'property' | 'targetPath'> {
   /**
    * 目标属性（特化为变换属性）
    */

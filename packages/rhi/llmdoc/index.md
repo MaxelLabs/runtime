@@ -19,6 +19,8 @@ RHI 是一个跨平台的图形渲染硬件接口框架，提供统一的 API �
 - `push-constants.md` - Push Constants 实现参考
 - `resource-tracker-api.md` - 资源追踪器 API 参考（新增）
 - `device-lifecycle.md` - WebGL 上下文生命周期管理（新增）
+- `multiple-buffers-demo.md` - 多顶点缓冲区 Demo 实现参考（新增）
+- `dynamic-buffer-demo.md` - 动态缓冲区 Demo 实现参考（新增）
 
 ### Guides（操作指南）
 
@@ -34,7 +36,14 @@ RHI 是一个跨平台的图形渲染硬件接口框架，提供统一的 API �
 **基础渲染功能完善**
 - colored-triangle: 顶点颜色插值演示，展示红绿蓝渐变插值效果
 - depth-test: 深度测试演示，展示多个重叠几何体的正确遮挡关系
-- 现已完成 8 个 Demo，覆盖基础渲染核心功能
+- 现已完成 12 个 Demo，覆盖基础渲染核心功能
+
+### 2025-12-10 新增动态缓冲区 Demo
+
+**动态缓冲区管理实现**
+- dynamic-buffer: 缓冲区动态更新演示，展示波浪动画效果和 hint: 'dynamic' 使用
+- 使用 buffer.update() 方法进行部分数据更新，每帧更新顶点位置
+- 实现了正弦波动画效果，展示动态几何体的实时更新能力
 
 ### 2025-12-10 新增工具库功能（第四批）
 

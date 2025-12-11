@@ -8,15 +8,11 @@
  * Phase 2 重构: UsdKeyframe 和 UsdAnimationTrack 现在基于 core/generics.ts 中的统一泛型
  */
 
-import type { UsdPrim, UsdValue, InterpolationMode, CommonMetadata, UnifiedKeyframe, UnifiedAnimationTrack } from '../core';
-import type { AnimationEvent, AnimationKeyframe, AnimationTrack } from '../common';
+import type { UsdPrim, UsdValue, CommonMetadata, UnifiedKeyframe, UnifiedAnimationTrack } from '../core';
+import type { AnimationEvent, AnimationTrack } from '../common';
 
 // 重新导出从 common/animation.ts 移动的类型（向后兼容）
-export type {
-  AnimationCondition,
-  AnimationConditionType,
-  ComparisonOperator,
-} from '../common';
+export type { AnimationCondition, AnimationConditionType, ComparisonOperator } from '../common';
 
 /**
  * 动画基础接口

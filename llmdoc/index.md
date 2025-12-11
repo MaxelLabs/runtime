@@ -83,6 +83,12 @@
   - Uniform 缓冲区、着色器集成和相机控制
 - [MVP 矩阵更新指南](./reference/mvp-matrix-update-guide.md) - 从固定管线到 MVP 矩阵的迁移
   - 技术细节、实现步骤和最佳实践
+- [多顶点缓冲区 Demo 参考](./packages/rhi/llmdoc/reference/multiple-buffers-demo.md) - 多顶点缓冲区架构实现
+  - 位置/颜色/法线分离、缓冲区槽位绑定、顶点布局配置
+- [动态缓冲区 Demo 参考](./packages/rhi/llmdoc/reference/dynamic-buffer-demo.md) - 动态缓冲区架构实现
+  - 实时波浪动画、缓冲区动态更新、hint: 'dynamic' 使用
+- [顶点格式 Demo 参考](./packages/rhi/llmdoc/reference/vertex-formats-demo.md) - 顶点格式优化实现
+  - 四种格式对比、71%内存节省、UNORM8x4和SNORM16x2归一化
 - [Blend Modes UBO 修复报告](./packages/rhi/llmdoc/reference/blend-modes-ubo-fix-report.md) - UBO 绑定问题修复过程
   - 问题描述、根本原因、修复方案和UBO使用规范
 - [混合模式 Demo 参考](./packages/rhi/llmdoc/reference/blend-modes-demo.md) - 混合模式 Demo 完整实现
@@ -95,6 +101,8 @@
   - 程序化生成、天空渐变、调试着色、全景图转换
 - [RenderTarget 渲染目标管理器](./packages/rhi/demo/src/utils/rendering/RenderTarget.ts) - 离屏渲染工具
   - 多渲染目标 MRT、MSAA 支持、自动资源管理
+- [混合模式 Demo 参考](./packages/rhi/llmdoc/reference/blend-modes-demo.md) - 混合模式 Demo 完整实现
+  - 7种混合模式实现、纹理加载、交互控制和MVP变换
 
 ## 3. 核心概念和对应文档
 
@@ -141,6 +149,26 @@
   - [MVP 矩阵实现架构](./architecture/mvp-matrix-implementation.md) - 实现架构和组件设计
   - [MVP 矩阵更新指南](./reference/mvp-matrix-update-guide.md) - 迁移指南和技术细节
   - [OrbitController 相机控制](./packages/rhi/llmdoc/reference/orbit-controller.md) - 交互式相机系统
+
+#### 多顶点缓冲区架构
+- **概念**: 将顶点数据分离到不同缓冲区，实现灵活的顶点属性管理
+- **相关文档**:
+  - [多顶点缓冲区 Demo 参考](./packages/rhi/llmdoc/reference/multiple-buffers-demo.md) - 完整实现参考
+  - [多缓冲区绑定技术](./packages/rhi/demo/src/multiple-buffers.ts) - 代码示例
+  - [顶点布局配置](./architecture/webgl-implementation.md) - WebGL 实现细节
+
+#### 顶点格式优化
+- **概念**: 使用不同的顶点数据格式（FLOAT32、UNORM8x4、FLOAT16、SNORM16）实现内存优化
+- **相关文档**:
+  - [顶点格式 Demo 参考](./packages/rhi/llmdoc/reference/vertex-formats-demo.md) - 完整实现参考
+  - [顶点格式实现详解](./packages/rhi/demo/src/VERTEX_FORMATS_IMPLEMENTATION.md) - 技术细节
+
+#### 动态缓冲区管理
+- **概念**: 实时更新顶点缓冲区数据，适用于动画和变形效果
+- **相关文档**:
+  - [动态缓冲区 Demo 参考](./packages/rhi/llmdoc/reference/dynamic-buffer-demo.md) - 完整实现参考
+  - [波浪动画实现](./packages/rhi/demo/src/dynamic-buffer.ts) - 代码示例
+  - [缓冲区 hint 优化](./packages/rhi/llmdoc/overview/rhi-overview.md) - 性能优化策略
 
 #### Demo 开发工具库
 - **概念**: 增强 Demo 开发能力的工具集合
@@ -202,8 +230,9 @@
 #### 路径一：快速体验 (30分钟)
 1. 阅读 [项目概览](./overview/project-overview.md) - 了解项目定位和核心功能
 2. 查看 [RHI 概述](./overview/rhi-overview.md) - 了解渲染抽象层概念
-3. 查看 [RHI 演示开发](./packages/rhi/llmdoc/guides/demo-development.md) - 了解演示系统架构
-4. 尝试 [使用 RHI](./guides/using-rhi.md) - 运行第一个渲染示例
+3. 查看 [顶点格式 Demo 参考](./packages/rhi/llmdoc/reference/vertex-formats-demo.md) - 了解内存优化技术
+4. 查看 [RHI 演示开发](./packages/rhi/llmdoc/guides/demo-development.md) - 了解演示系统架构
+5. 尝试 [使用 RHI](./guides/using-rhi.md) - 运行第一个渲染示例
 
 #### 路径二：开发者入门 (2-4小时)
 1. **环境准备**:
@@ -240,7 +269,9 @@
    - [RHI 接口参考](./reference/rhi-interfaces.md) - 接口文档
    - [USD 类型参考](./reference/usd-core-types.md) - USD API
    - [MVP 矩阵实现架构](./architecture/mvp-matrix-implementation.md) - 3D 变换管线
-   - [Demo 工具库](./packages/rhi/llmdoc/guides/demo-development.md) - 增强开发能力
+   - [混合模式 Demo 参考](./packages/rhi/llmdoc/reference/blend-modes-demo.md) - 混合模式完整实现
+  - 7种混合模式实现、纹理加载、交互控制和MVP变换
+- [Demo 工具库](./packages/rhi/llmdoc/guides/demo-development.md) - 增强开发能力
 
 ### 📋 开发环境配置
 
@@ -291,10 +322,10 @@ pnpm test
 | 概述文档 | 5 | 100% | 2024-12 |
 | 操作指南 | 7 | 100% | 2025-12 (新增引擎特定性能优化) |
 | 架构设计 | 10 | 100% | 2025-12 (引擎架构路径更新) |
-| 参考资料 | 13 | 100% | 2025-12 (新增 Demo 工具库参考) |
-| **核心总计** | **35** | **100%** | **2025-12 (新增 3 个 Demo 工具库参考)** |
-| **包内文档** | **18** | **100%** | **2025-12 (RHI Demo 系统、Specification 类型系统)** |
-| **总计** | **53** | **100%** | **2025-12 (系统功能增强)** |
+| 参考资料 | 20 | 100% | 2025-12-10 (新增混合模式 Demo 参考) |
+| **核心总计** | **37** | **100%** | **2025-12-10 (多缓冲区、动态缓冲区、顶点格式 Demo 参考)** |
+| **包内文档** | **22** | **100%** | **2025-12-10 (RHI Demo 系统最终索引完成)** |
+| **总计** | **60** | **100%** | **2025-12-10 (新增混合模式 Demo 参考)** |
 
 ## 🤝 贡献指南
 

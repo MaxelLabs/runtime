@@ -112,8 +112,7 @@ export interface BaseAnimationTrack<K extends MinimalKeyframe = BaseKeyframe> {
  *
  * @template K 关键帧类型
  */
-export interface TargetedAnimationTrack<K extends MinimalKeyframe = BaseKeyframe>
-  extends BaseAnimationTrack<K> {
+export interface TargetedAnimationTrack<K extends MinimalKeyframe = BaseKeyframe> extends BaseAnimationTrack<K> {
   /**
    * 目标对象路径
    */
@@ -130,8 +129,7 @@ export interface TargetedAnimationTrack<K extends MinimalKeyframe = BaseKeyframe
  *
  * @template K 关键帧类型
  */
-export interface BlendableAnimationTrack<K extends MinimalKeyframe = BaseKeyframe>
-  extends TargetedAnimationTrack<K> {
+export interface BlendableAnimationTrack<K extends MinimalKeyframe = BaseKeyframe> extends TargetedAnimationTrack<K> {
   /**
    * 混合模式
    */
@@ -509,8 +507,7 @@ export interface UnifiedKeyframe<T = any> extends BaseKeyframe<T> {
  *
  * @template K 关键帧类型，只需满足最小关键帧约束
  */
-export interface UnifiedAnimationTrack<K extends MinimalKeyframe = UnifiedKeyframe>
-  extends BlendableAnimationTrack<K> {
+export interface UnifiedAnimationTrack<K extends MinimalKeyframe = UnifiedKeyframe> extends BlendableAnimationTrack<K> {
   /**
    * 目标路径 (覆盖父接口，设为必需)
    */

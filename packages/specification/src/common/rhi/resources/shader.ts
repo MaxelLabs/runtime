@@ -3,7 +3,7 @@
  * 定义着色器资源接口
  */
 
-import { Vector3Like } from '../../../core';
+import type { Vector3Like } from '../../../core';
 import type { RHIBindGroupLayoutEntryType, RHIShaderStage } from '../types';
 
 /**

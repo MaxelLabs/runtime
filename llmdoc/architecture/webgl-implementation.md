@@ -26,6 +26,7 @@
 ## 3. 关键实现细节
 
 ### 3.1 上下文管理 (`WebGLGraphicDevice.ts:168-211`)
+
 ```typescript
 init(canvas: Canvas, onDeviceLost: () => void, onDeviceRestored: () => void): void {
   // 自动检测 WebGL 2.0/1.0 支持
@@ -43,38 +44,45 @@ init(canvas: Canvas, onDeviceLost: () => void, onDeviceRestored: () => void): vo
 ```
 
 ### 3.2 纹理管理
+
 - **GLTexture**: 纹理基类，处理通用的纹理操作
 - **GLTexture2D**: 2D 纹理实现，支持多种压缩格式
 - **GLTextureCube**: 立方体贴图实现，用于环境贴图
 - **GLTexture2DArray**: 纹理数组实现，支持实例化渲染
 
 ### 3.3 缓冲区管理 (`GLBuffer.ts`)
+
 - 支持顶点缓冲区和索引缓冲区
 - 提供动态和静态缓冲区创建选项
 - 实现高效的内存管理和数据传输
 
 ### 3.4 图元渲染 (`GLPrimitive.ts`)
+
 - **VAO 支持**: 自动检测和使用顶点数组对象
 - **实例化渲染**: 支持实例化绘制扩展
 - **图元类型**: 支持点、线、三角形等基本图元
 
 ### 3.5 渲染状态管理 (`GLRenderStates.ts`)
+
 - 混合状态管理
 - 深度测试配置
 - 模板测试设置
 - 视口和裁剪区域管理
 
 ### 3.6 扩展管理 (`GLExtensions.ts`)
+
 ```typescript
 requireExtension(ext) {
   return this._extensions.requireExtension(ext);
 }
 ```
+
 - 自动检测和加载 WebGL 扩展
 - 提供扩展可用性检查
 - 统一的扩展接口管理
 
 ### 3.7 设备状态恢复
+
 ```typescript
 private _onWebGLContextLost(event: WebGLContextEvent) {
   event.preventDefault();
@@ -85,23 +93,37 @@ private _onWebGLContextRestored(event: WebGLContextEvent) {
   this._onDeviceRestored();
 }
 ```
+
 - 监听上下文丢失事件
 - 自动触发设备丢失和恢复回调
 - 重置所有渲染状态
 
+### 3.8 Render Pass 实现细节
+
+- **Clear 操作依赖 Mask**: 在 WebGL 中，`gl.clear()` 操作受到 `depthMask` 和 `stencilMask` 的影响。如果 Mask 为 false 或 0，对应的缓冲将无法被清除。`GLRenderPass` 在执行 Clear 操作前会自动重置这些 Mask 为启用状态，以确保清除操作生效。
+- **延迟执行的状态捕获**: `GLRenderPass` 采用命令录制-延迟执行模式。在录制依赖于当前状态（如 `setPipeline`, `drawIndexed`）的命令时，必须在闭包中捕获**录制时**的状态引用（如 `pipeline` 实例、`buffer` 实例），而不是依赖 `this.currentPipeline` 等可变成员。这防止了同一 Pass 中多次状态切换导致后续命令错误使用最后一次设置的状态的问题。
+
+### 3.9 Render Pipeline 状态隔离
+
+- **完整状态重置**: `GLRenderPipeline.apply()` 在应用状态时（如深度/模板状态），不仅会启用/设置所需的状态，还会**显式重置**不需要的状态（例如，如果禁用了模板测试，会同时重置 `stencilMask` 为 `0xff`）。这确保了管线切换时，前一个管线的残留状态（如 `stencilMask: 0x00`）不会污染后续操作（如 `gl.clear()`）。
+- **状态全量应用**: 避免依赖 WebGL 的默认状态假设，尽可能显式设置所有相关的状态值。
+
 ## 4. 性能优化策略
 
 ### 4.1 状态缓存
+
 - 视口状态缓存，避免重复设置
 - 活动纹理跟踪，减少纹理绑定操作
 - 清除颜色缓存，优化渲染性能
 
 ### 4.2 批量处理
+
 - 纹理单元的批量管理
 - 状态变更的批量化处理
 - 减少状态切换的开销
 
 ### 4.3 内存管理
+
 - 智能的资源释放机制
 - 避免内存泄漏的防护措施
 - iOS 特殊优化，强制刷新命令缓冲区

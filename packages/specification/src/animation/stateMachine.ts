@@ -21,11 +21,7 @@ export type {
 } from '../common';
 
 // 重新导入用于本文件的类型
-import type {
-  AnimationTransition,
-  AnimationState,
-  InterruptionSource,
-} from '../common';
+import type { AnimationTransition, AnimationState, InterruptionSource } from '../common';
 
 /**
  * 动画状态机（使用通用类型）

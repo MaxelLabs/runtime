@@ -191,7 +191,9 @@
 
       <div class="demo-card">
         <h3>🔷 深度测试 <span class="difficulty beginner">入门</span></h3>
-        <p>展示3D渲染中深度缓冲区和深度测试的重要性。通过多个几何体的前后遮挡关系，演示深度缓冲如何正确处理渲染顺序。</p>
+        <p>
+          展示3D渲染中深度缓冲区和深度测试的重要性。通过多个几何体的前后遮挡关系，演示深度缓冲如何正确处理渲染顺序。
+        </p>
         <div class="tech-tags">
           <span class="tech-tag">深度缓冲区</span>
           <span class="tech-tag">Z-Buffer</span>
@@ -264,6 +266,54 @@
           <span class="tech-tag">Uniform Buffer</span>
         </div>
         <a class="demo-link" href="html/rotating-cube.html">🎮 运行Demo</a>
+      </div>
+
+      <div class="demo-card">
+        <h3>📊 多顶点缓冲区 <span class="difficulty intermediate">中级</span></h3>
+        <p>展示将位置、颜色、法线数据分离到不同缓冲区的技术。通过多缓冲区绑定实现灵活的顶点属性管理。</p>
+        <div class="tech-tags">
+          <span class="tech-tag">多缓冲区绑定</span>
+          <span class="tech-tag">setVertexBuffer</span>
+          <span class="tech-tag">顶点属性分离</span>
+          <span class="tech-tag">缓冲区槽位</span>
+        </div>
+        <a class="demo-link" href="html/multiple-buffers.html">🎮 运行Demo</a>
+      </div>
+
+      <div class="demo-card">
+        <h3>🌊 缓冲区动态更新 <span class="difficulty intermediate">中级</span></h3>
+        <p>展示顶点缓冲区的动态更新能力。通过正弦函数实时修改顶点位置，创建流畅的波浪动画效果。</p>
+        <div class="tech-tags">
+          <span class="tech-tag">hint: dynamic</span>
+          <span class="tech-tag">buffer.update()</span>
+          <span class="tech-tag">DYNAMIC_DRAW</span>
+          <span class="tech-tag">波浪动画</span>
+        </div>
+        <a class="demo-link" href="html/dynamic-buffer.html">🎮 运行Demo</a>
+      </div>
+
+      <div class="demo-card">
+        <h3>🔢 顶点格式对比 <span class="difficulty intermediate">中级</span></h3>
+        <p>展示不同顶点格式的内存效率对比。从标准FLOAT32到超紧凑格式，最高可节省71%内存。支持实时格式切换。</p>
+        <div class="tech-tags">
+          <span class="tech-tag">FLOAT32x3</span>
+          <span class="tech-tag">UNORM8x4</span>
+          <span class="tech-tag">SNORM16x2</span>
+          <span class="tech-tag">内存优化</span>
+        </div>
+        <a class="demo-link" href="html/vertex-formats.html">🎮 运行Demo</a>
+      </div>
+
+      <div class="demo-card">
+        <h3>✏️ 模板测试 <span class="difficulty intermediate">中级</span></h3>
+        <p>展示模板缓冲区的经典应用：轮廓效果。通过两遍渲染和REPLACE/NOT_EQUAL模板操作实现物体描边。</p>
+        <div class="tech-tags">
+          <span class="tech-tag">Stencil Buffer</span>
+          <span class="tech-tag">REPLACE操作</span>
+          <span class="tech-tag">NOT_EQUAL比较</span>
+          <span class="tech-tag">轮廓效果</span>
+        </div>
+        <a class="demo-link" href="html/stencil-test.html">🎮 运行Demo</a>
       </div>
     </div>
 

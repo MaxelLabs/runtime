@@ -4,6 +4,24 @@
 
 ## 最近更新
 
+### 2025-12-10 完成 Demo 系统最终索引更新
+
+RHI Demo 系统已完成全部第一层基础渲染 Demo 的文档索引更新：
+
+- **multiple-buffers**: 多顶点缓冲区演示，文档索引已更新（`/packages/rhi/llmdoc/reference/multiple-buffers-demo.md`）
+- **dynamic-buffer**: 动态缓冲区演示，文档索引已更新（`/packages/rhi/llmdoc/reference/dynamic-buffer-demo.md`）
+- **vertex-formats**: 顶点格式演示，文档索引已更新（`/packages/rhi/llmdoc/reference/vertex-formats-demo.md`）
+- **stencil-test**: 模板测试演示，已在主索引中完成注册
+
+### 2025-12-10 完成基础渲染层全部 Demo
+
+基础渲染层（第一层）12 个 Demo 全部完成：
+
+- **multiple-buffers**: 多顶点缓冲区演示，展示将位置、颜色、法线分离到不同缓冲区的技术（新增）
+- **dynamic-buffer**: 缓冲区动态更新演示，展示波浪动画效果和 hint: 'dynamic' 使用（新增）
+- **vertex-formats**: 顶点格式演示，展示 4 种格式的内存效率对比（最高节省 71%）（新增）
+- **stencil-test**: 模板测试演示，展示轮廓效果（Outline Effect）的经典实现（新增）
+
 ### 2025-12-10 新增基础渲染 Demo
 
 添加了两个基础渲染 Demo，进一步完善 RHI Demo 系统的核心功能：
@@ -379,16 +397,19 @@ runner.start((dt) => {
 | #   | 名称             | 文件                | 功能点                               |
 | --- | ---------------- | ------------------- | ------------------------------------ |
 | 01  | triangle         | triangle.ts         | 最小化渲染流程，MVP 矩阵变换基础实现 |
-| 02  | colored-triangle  | colored-triangle.ts  | 顶点颜色属性，红绿蓝渐变插值效果     |
+| 02  | colored-triangle | colored-triangle.ts | 顶点颜色属性，红绿蓝渐变插值效果     |
 | 03  | rotating-cube    | rotating-cube.ts    | 3D变换、纹理、光照、GUI、相机控制    |
 | 04  | quad-indexed     | quad-indexed.ts     | 索引缓冲区绘制，顶点复用             |
 | 05  | primitive-types  | primitive-types.ts  | 图元拓扑类型（点/线/三角形）         |
 | 06  | viewport-scissor | viewport-scissor.ts | 视口和裁剪矩形，多视口渲染           |
 | 07  | depth-test       | depth-test.ts       | 深度测试功能，多个重叠几何体遮挡     |
-| 08  | stencil-test     | stencil-test.ts     | 模板测试功能，轮廓效果实现           |
-| 09  | blend-modes      | blend-modes.ts      | 各种混合模式（Alpha/加法/乘法等），支持纹理和MVP变换 |
+| 08  | blend-modes      | blend-modes.ts      | 各种混合模式，支持纹理和MVP变换      |
+| 09  | multiple-buffers | multiple-buffers.ts | 多顶点缓冲区，位置/颜色/法线分离     | ✅ 完成 |
+| 10  | dynamic-buffer   | dynamic-buffer.ts   | 缓冲区动态更新，波浪动画效果         | ✅ 完成 |
+| 11  | vertex-formats   | vertex-formats.ts   | 顶点格式对比，内存优化演示           | ✅ 完成 |
+| 12  | stencil-test     | stencil-test.ts     | 模板测试，轮廓效果（Outline）        | ✅ 完成 |
 
-**注意**：所有 Demo 均已集成 Stats 性能监控、OrbitController 相机控制和完整的 MVP 矩阵变换管线（自 2025-12-10）。
+**注意**：所有 Demo 均已集成 Stats 性能监控、OrbitController 相机控制和完整的 MVP 矩阵变换管线。**第一层基础渲染 12 个 Demo 已全部完成（2025-12-10）。**
 
 ---
 
@@ -396,20 +417,20 @@ runner.start((dt) => {
 
 ### 第一层：基础渲染 (12 demos)
 
-| #   | 名称             | 验证功能点       | 状态                   |
-| --- | ---------------- | ---------------- | ---------------------- |
-| 01  | triangle         | 最小化渲染流程   | ✅ 完成                |
-| 02  | colored-triangle | 顶点颜色属性     | ✅ 完成                |
-| 03  | quad-indexed     | 索引缓冲区绘制   | ✅ 完成                |
-| 04  | rotating-cube    | 3D 变换矩阵      | ✅ 完成                |
-| 05  | multiple-buffers | 多顶点缓冲区     | 待实现                 |
-| 06  | dynamic-buffer   | 缓冲区动态更新   | 待实现                 |
-| 07  | vertex-formats   | 各种顶点格式     | 待实现                 |
-| 08  | primitive-types  | 点/线/三角形拓扑 | ✅ 完成                |
-| 09  | viewport-scissor | 视口和裁剪矩形   | ✅ 完成                |
-| 10  | depth-test       | 深度测试         | ✅ 完成                |
-| 11  | stencil-test     | 模板测试         | ✅ 完成（2025-12-10 新增） |
-| 12  | blend-modes      | 混合模式         | ✅ 完成，支持 MVP 变换和纹理 |
+| #   | 名称             | 验证功能点       | 状态     |
+| --- | ---------------- | ---------------- | -------- |
+| 01  | triangle         | 最小化渲染流程   | ✅ 完成  |
+| 02  | colored-triangle | 顶点颜色属性     | ✅ 完成  |
+| 03  | quad-indexed     | 索引缓冲区绘制   | ✅ 完成  |
+| 04  | rotating-cube    | 3D 变换矩阵      | ✅ 完成  |
+| 05  | multiple-buffers | 多顶点缓冲区     | ✅ 完成  |
+| 06  | dynamic-buffer   | 缓冲区动态更新   | ✅ 完成  |
+| 07  | vertex-formats   | 各种顶点格式     | ✅ 完成  |
+| 08  | primitive-types  | 点/线/三角形拓扑 | ✅ 完成  |
+| 09  | viewport-scissor | 视口和裁剪矩形   | ✅ 完成  |
+| 10  | depth-test       | 深度测试         | ✅ 完成  |
+| 11  | stencil-test     | 模板测试         | ✅ 完成  |
+| 12  | blend-modes      | 混合模式         | ✅ 完成  |
 
 ### 第二层：纹理系统 (10 demos)
 

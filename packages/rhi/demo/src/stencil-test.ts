@@ -20,6 +20,7 @@ precision highp float;
 
 // 顶点属性
 in vec3 aPosition;
+in vec3 aNormal;
 
 // Uniform 块
 uniform Transforms {
@@ -34,12 +35,20 @@ uniform ScaleParams {
 };
 
 void main() {
-  // 应用缩放因子用于轮廓效果
-  vec3 scaledPosition = aPosition * uScale;
+  // 将法线转换到视图空间
+  mat3 normalMatrix = transpose(inverse(mat3(uViewMatrix * uModelMatrix)));
+  vec3 viewNormal = normalize(normalMatrix * aNormal);
 
-  // MVP 变换
-  vec4 worldPosition = uModelMatrix * vec4(scaledPosition, 1.0);
-  gl_Position = uProjectionMatrix * uViewMatrix * worldPosition;
+  // 将位置转换到视图空间
+  vec4 viewPos = uViewMatrix * uModelMatrix * vec4(aPosition, 1.0);
+
+  // 沿法线方向挤出顶点创建轮廓
+  // 使用较小的缩放因子确保轮廓效果合适
+  float outlineWidth = (uScale - 1.0) * 0.1;
+  vec4 outlinePos = viewPos + vec4(viewNormal * outlineWidth, 0.0);
+
+  // 投影到屏幕空间
+  gl_Position = uProjectionMatrix * outlinePos;
 }
 `;
 
@@ -99,8 +108,8 @@ async function main(): Promise<void> {
 
     // 5. Demo 参数
     const params: DemoParams = {
-      outlineScale: 1.1, // 轮廓放大倍数
-      outlineColor: [1.0, 0.5, 0.0] as [number, number, number], // 橙色轮廓
+      outlineScale: 1.5, // 增大轮廓缩放倍数以获得更明显的效果
+      outlineColor: [1.0, 1.0, 0.0] as [number, number, number], // 黄色轮廓更加醒目
       enableOutline: true,
       mainColor: [0.2, 0.5, 1.0] as [number, number, number], // 蓝色主体
     };
@@ -274,7 +283,8 @@ async function main(): Promise<void> {
         depthStencilState: {
           format: MSpec.RHITextureFormat.DEPTH24_UNORM_STENCIL8,
           depthWriteEnabled: false, // 轮廓不写入深度
-          depthTestEnabled: false, // 禁用深度测试，绘制在所有对象之上
+          depthTestEnabled: true, // 启用深度测试，确保轮廓正确遮挡
+          depthCompare: MSpec.RHICompareFunction.LESS_EQUAL, // 使用LESS_EQUAL确保轮廓正确显示
           // 正面模板配置
           stencilFront: {
             compare: MSpec.RHICompareFunction.NOT_EQUAL, // 仅在模板 != 参考值时通过
@@ -313,7 +323,7 @@ async function main(): Promise<void> {
       .add('outlineScale', {
         value: params.outlineScale,
         min: 1.0,
-        max: 1.5,
+        max: 3.0, // 增加最大值到3.0，允许更宽的轮廓
         step: 0.01,
         onChange: (v) => {
           params.outlineScale = v as number;

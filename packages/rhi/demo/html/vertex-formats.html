@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>顶点格式演示 - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+      width: 100vw;
+      height: 100vh;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #J-canvas {
+      display: block;
+      cursor: crosshair;
+    }
+
+    .info-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      max-width: 360px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .info-panel h3 {
+      margin: 0 0 10px 0;
+      color: #4FC3F7;
+      font-size: 16px;
+    }
+
+    .info-panel p {
+      margin: 5px 0;
+      line-height: 1.4;
+    }
+
+    .info-panel .description {
+      color: #ccc;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .format-list {
+      margin-top: 10px;
+      font-size: 11px;
+    }
+
+    .format-item {
+      display: flex;
+      align-items: flex-start;
+      padding: 8px;
+      margin: 5px 0;
+      background: rgba(79, 195, 247, 0.1);
+      border-radius: 4px;
+      border-left: 3px solid #4FC3F7;
+    }
+
+    .format-item .key {
+      background: #4FC3F7;
+      color: #000;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-right: 8px;
+      font-weight: bold;
+      min-width: 18px;
+      text-align: center;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .format-item .info {
+      flex: 1;
+    }
+
+    .format-item .name {
+      color: #B3E5FC;
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+
+    .format-item .details {
+      color: #888;
+      font-size: 10px;
+      line-height: 1.3;
+    }
+
+    .memory-bar {
+      display: inline-block;
+      width: 60px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      margin: 2px 0;
+      overflow: hidden;
+    }
+
+    .memory-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #81C784, #FFB74D);
+      border-radius: 2px;
+    }
+
+    .shortcuts {
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      padding-top: 10px;
+      margin-top: 10px;
+    }
+
+    .shortcuts h4 {
+      margin: 0 0 5px 0;
+      color: #FFE082;
+      font-size: 12px;
+    }
+
+    .shortcuts p {
+      margin: 2px 0;
+      font-family: monospace;
+      font-size: 10px;
+    }
+
+    .error-message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 0, 0, 0.9);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      font-family: monospace;
+      z-index: 1000;
+      max-width: 80%;
+      text-align: center;
+    }
+
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 18px;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+  </div>
+
+  <div class="info-panel">
+    <h3>📊 顶点格式演示</h3>
+    <p class="description">
+      展示不同顶点格式的数据布局和内存效率对比。
+    </p>
+
+    <div class="format-list">
+      <div class="format-item">
+        <span class="key">1</span>
+        <div class="info">
+          <div class="name">Standard (FLOAT32)</div>
+          <div class="details">
+            标准浮点格式<br/>
+            28 字节/顶点
+            <div class="memory-bar"><div class="memory-fill" style="width: 100%;"></div></div>
+            100% (基准)
+          </div>
+        </div>
+      </div>
+
+      <div class="format-item">
+        <span class="key">2</span>
+        <div class="info">
+          <div class="name">Compressed Color</div>
+          <div class="details">
+            8 位颜色 (UNORM8x4)<br/>
+            16 字节/顶点
+            <div class="memory-bar"><div class="memory-fill" style="width: 57%;"></div></div>
+            节省 43% 内存
+          </div>
+        </div>
+      </div>
+
+      <div class="format-item">
+        <span class="key">3</span>
+        <div class="info">
+          <div class="name">Half Precision</div>
+          <div class="details">
+            半精度浮点 (FLOAT16)<br/>
+            22 字节/顶点
+            <div class="memory-bar"><div class="memory-fill" style="width: 79%;"></div></div>
+            节省 21% 内存
+          </div>
+        </div>
+      </div>
+
+      <div class="format-item">
+        <span class="key">4</span>
+        <div class="info">
+          <div class="name">Ultra Compact</div>
+          <div class="details">
+            最紧凑格式<br/>
+            8 字节/顶点
+            <div class="memory-bar"><div class="memory-fill" style="width: 29%;"></div></div>
+            节省 71% 内存！
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="shortcuts">
+      <h4>⌨️ 快捷键</h4>
+      <p>1-4: 切换顶点格式</p>
+      <p>ESC: 退出</p>
+      <p>F11: 全屏</p>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    正在加载顶点格式演示...
+  </div>
+
+  <script type="module" src="../src/vertex-formats.ts"></script>
+
+  <script>
+    // 隐藏加载提示
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const loading = document.getElementById('loading');
+        if (loading) {
+          loading.style.display = 'none';
+        }
+      }, 1000);
+    });
+
+    // 添加一些交互提示
+    let hintShown = false;
+    document.addEventListener('click', () => {
+      if (!hintShown) {
+        console.log('📊 顶点格式决定了顶点数据的内存布局和精度！');
+        console.log('💾 选择合适的格式可以显著降低内存占用和带宽消耗');
+        hintShown = true;
+      }
+    });
+  </script>
+</body>
+</html>
