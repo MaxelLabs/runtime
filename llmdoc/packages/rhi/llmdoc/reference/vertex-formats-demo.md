@@ -15,13 +15,19 @@
 
 | 格式类型 | 每顶点字节数 | 节省率 | 适用场景 |
 |---------|-------------|--------|----------|
-| FLOAT32x3 (位置) | 12 bytes | 基准 | 精确位置计算 |
-| UNORM8x4 (颜色) | 4 bytes | **67%** | 颜色插值 |
-| FLOAT16x3 (位置) | 6 bytes | **50%** | 半精度位置 |
-| SNORM16x2 (法线) | 4 bytes | **67%** | 法线存储 |
-| **总计优化** | **26 bytes** → **10 bytes** | **62%** | 综合优化 |
+| Standard (基准) | 28 bytes | 0% | 标准精度要求 |
+| Compressed Color | 20 bytes | **28%** | 8位颜色足够 |
+| Half Precision | 24 bytes | **14%** | 半精度位置可接受 |
+| Ultra Compact | 16 bytes | **43%** | 最大内存优化 |
 
-> 注：通过使用 UNORM8x4 和 SNORM16x2，最高可实现 **71%** 的内存节省。
+### 格式组成详细说明
+
+- **Standard**: FLOAT32x3(位置) + FLOAT32x3(颜色) + FLOAT32(法线) = 28 字节
+- **Compressed Color**: FLOAT32x3(位置) + UNORM8x4(颜色) + FLOAT32(法线) = 20 字节
+- **Half Precision**: FLOAT16x4(位置) + FLOAT32x3(颜色) + FLOAT16x2(法线) = 24 字节
+- **Ultra Compact**: FLOAT16x4(位置) + UNORM8x4(颜色) + SNORM16x2(法线) = 16 字节
+
+> 注：通过组合使用 FLOAT16、UNORM8 和 SNORM16 格式，最高可实现 **43%** 的内存节省。
 
 ## 3. 技术要点
 
@@ -66,6 +72,36 @@ function float32ToSnorm16(x: number, y: number): number[] {
     Math.floor(normY * 32767)
   ];
 }
+
+// IEEE 754 单精度浮点转半精度浮点
+function floatToFloat16(value: number): number {
+  const floatView = new Float32Array(1);
+  const int32View = new Int32Array(floatView.buffer);
+  floatView[0] = value;
+  const f = int32View[0];
+  const sign = (f >> 31) & 0x0001;
+  const exp = (f >> 23) & 0x00ff;
+  let frac = f & 0x007fffff;
+
+  if (exp === 0) {
+    return sign << 15;
+  } else if (exp === 0xff) {
+    return (sign << 15) | 0x7c00 | (frac ? 0x0200 : 0);
+  }
+
+  const newExp = exp - 127 + 15;
+  if (newExp >= 31) {
+    return (sign << 15) | 0x7c00;
+  } else if (newExp <= 0) {
+    if (newExp < -10) {
+      return sign << 15;
+    }
+    frac |= 0x00800000;
+    const shift = 14 - newExp;
+    return (sign << 15) | (frac >> shift);
+  }
+  return (sign << 15) | (newExp << 10) | (frac >> 13);
+}
 ```
 
 ### 着色器中的格式转换
@@ -106,7 +142,7 @@ void main() {
 ## 4. 性能优化策略
 
 ### 内存带宽节省
-- **减少内存占用**：62% 的内存节省意味着更少的 GPU 内存占用
+- **减少内存占用**：最高 43% 的内存节省意味着更少的 GPU 内存占用
 - **提高缓存命中率**：更小的顶点数据可以装入更多到缓存中
 - **降低带宽需求**：每帧传输的数据量大幅减少
 

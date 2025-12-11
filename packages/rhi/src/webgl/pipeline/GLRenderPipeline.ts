@@ -557,14 +557,10 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
       return;
     }
 
-    // 禁用所有之前启用的属性，确保状态清洁
-    const maxAttribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
-
-    for (let i = 0; i < maxAttribs; i++) {
-      if (gl.getVertexAttrib(i, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
-        gl.disableVertexAttribArray(i);
-      }
-    }
+    // 注意：不再在这里禁用所有顶点属性
+    // 原因：多缓冲区绑定时，连续调用 setVertexBuffer 会导致之前绑定的属性被禁用
+    // 这会导致多顶点缓冲区 Demo 黑屏（只有最后一个缓冲区被正确绑定）
+    // 顶点属性的清理应该在渲染通道开始时或管线切换时进行
 
     // 获取WebGL缓冲区对象
     let nativeBuffer: WebGLBuffer | null = null;

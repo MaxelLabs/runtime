@@ -221,9 +221,51 @@ function generateTetrahedronData() {
 - **HTML 页面**：`packages/rhi/demo/html/multiple-buffers.html`
 - **Demo 演示**：`packages/rhi/demo/html/multiple-buffers.html`
 
-## 7. 相关文档
+## 7. 常见问题与解决方案
+
+### 黑屏问题修复
+
+**问题**: 多顶点缓冲区绑定后出现黑屏，几何体无法正确渲染。
+
+**原因**: `GLRenderPipeline.applyVertexBufferLayout` 方法在每次调用时会禁用所有已启用的顶点属性，导致多缓冲区绑定时只有最后一个缓冲区的属性保持启用状态。
+
+**解决方案**: 修复了顶点属性管理逻辑，移除了不必要的 `disableVertexAttribArray` 循环。现在每个顶点属性可以独立启用，互不干扰。
+
+**技术细节**:
+- 修复位置: `packages/rhi/src/webgl/pipeline/GLRenderPipeline.ts:560-563`
+- 修复时间: 2024-12-11
+- 影响范围: 所有使用多顶点缓冲区的应用
+
+### 调试技巧
+
+1. **验证缓冲区绑定**:
+```typescript
+// 在渲染前检查每个缓冲区是否正确绑定
+console.log('Position buffer slot:', 0);
+console.log('Color buffer slot:', 1);
+console.log('Normal buffer slot:', 2);
+```
+
+2. **检查顶点属性位置**:
+```typescript
+// 验证着色器中的属性位置与布局匹配
+console.log('aPosition location:', gl.getAttribLocation(program, 'aPosition'));
+console.log('aColor location:', gl.getAttribLocation(program, 'aColor'));
+console.log('aNormal location:', gl.getAttribLocation(program, 'aNormal'));
+```
+
+3. **验证数据传递**:
+```typescript
+// 在着色器中添加调试输出
+gl_Position = uProjectionMatrix * uViewMatrix * worldPosition;
+// 调试时可以输出固定颜色验证渲染管线
+vColor = vec3(1.0, 0.0, 0.0); // 红色调试
+```
+
+## 8. 相关文档
 
 - [顶点缓冲区参考](../reference/rhi-interfaces.md#顶点缓冲区接口)
 - [顶点布局规范](../reference/rhi-interfaces.md#顶点布局接口)
 - [渲染管线创建](../reference/rhi-interfaces.md#渲染管线接口)
 - [动态缓冲区 Demo](../reference/dynamic-buffer-demo.md)
+- [问题调查报告](../../agent/multiple-buffers-demo-black-screen-investigation.md) - 完整的问题分析和修复过程

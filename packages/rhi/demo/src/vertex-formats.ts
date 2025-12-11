@@ -76,6 +76,7 @@ const VERTEX_FORMATS: Record<string, VertexFormatConfig> = {
   standard: {
     name: 'Standard (FLOAT32)',
     description: '标准浮点格式',
+    // FLOAT32x3(12) + FLOAT32x3(12) + FLOAT32(4) = 28 字节
     bytesPerVertex: 28,
     memoryPercent: 100,
     format: {
@@ -87,33 +88,36 @@ const VERTEX_FORMATS: Record<string, VertexFormatConfig> = {
   },
   compressed_color: {
     name: 'Compressed Color',
-    description: '使用8位无符号归一化颜色（节省 75% 颜色数据）',
-    bytesPerVertex: 16,
-    memoryPercent: 57,
+    description: '使用8位无符号归一化颜色（节省 28%）',
+    // FLOAT32x3(12) + UNORM8x4(4) + FLOAT32(4) = 20 字节
+    bytesPerVertex: 20,
+    memoryPercent: 72,
     format: {
       position: MSpec.RHIVertexFormat.FLOAT32x3,
       color: MSpec.RHIVertexFormat.UNORM8x4,
       normal: MSpec.RHIVertexFormat.FLOAT32,
     },
-    stride: 16,
+    stride: 20,
   },
   half_precision: {
     name: 'Half Precision (FLOAT16)',
-    description: '使用半精度浮点位置（节省 50% 位置数据）',
-    bytesPerVertex: 22,
-    memoryPercent: 79,
+    description: '使用半精度浮点位置（节省 14%）',
+    // FLOAT16x4(8) + FLOAT32x3(12) + FLOAT16x2(4) = 24 字节
+    bytesPerVertex: 24,
+    memoryPercent: 86,
     format: {
       position: MSpec.RHIVertexFormat.FLOAT16x4,
       color: MSpec.RHIVertexFormat.FLOAT32x3,
       normal: MSpec.RHIVertexFormat.FLOAT16x2,
     },
-    stride: 22,
+    stride: 24,
   },
   ultra_compact: {
     name: 'Ultra Compact',
-    description: '最紧凑格式：半精度 + 8位颜色（节省 71%）',
-    bytesPerVertex: 8,
-    memoryPercent: 29,
+    description: '最紧凑格式：半精度 + 8位颜色（节省 43%）',
+    // FLOAT16x4(8) + UNORM8x4(4) + SNORM16x2(4) = 16 字节
+    bytesPerVertex: 16,
+    memoryPercent: 57,
     format: {
       position: MSpec.RHIVertexFormat.FLOAT16x4,
       color: MSpec.RHIVertexFormat.UNORM8x4,
@@ -184,6 +188,37 @@ function generateCubeWithFormat(format: VertexFormatConfig): {
   const view32 = new Float32Array(vertices);
   const view8 = new Uint8Array(vertices);
   const view16 = new Int16Array(vertices);
+  const viewU16 = new Uint16Array(vertices);
+
+  // Float16 转换辅助函数
+  function floatToFloat16(value: number): number {
+    const floatView = new Float32Array(1);
+    const int32View = new Int32Array(floatView.buffer);
+    floatView[0] = value;
+    const f = int32View[0];
+    const sign = (f >> 31) & 0x0001;
+    const exp = (f >> 23) & 0x00ff;
+    let frac = f & 0x007fffff;
+
+    if (exp === 0) {
+      return sign << 15;
+    } else if (exp === 0xff) {
+      return (sign << 15) | 0x7c00 | (frac ? 0x0200 : 0);
+    }
+
+    const newExp = exp - 127 + 15;
+    if (newExp >= 31) {
+      return (sign << 15) | 0x7c00;
+    } else if (newExp <= 0) {
+      if (newExp < -10) {
+        return sign << 15;
+      }
+      frac |= 0x00800000;
+      const shift = 14 - newExp;
+      return (sign << 15) | (frac >> shift);
+    }
+    return (sign << 15) | (newExp << 10) | (frac >> 13);
+  }
 
   for (let i = 0; i < vertexCount; i++) {
     const faceIndex = Math.floor(i / 4);
@@ -191,53 +226,63 @@ function generateCubeWithFormat(format: VertexFormatConfig): {
 
     // 写入位置
     if (format.format.position === MSpec.RHIVertexFormat.FLOAT32x3) {
+      // FLOAT32x3: 12 字节
       view32[byteOffset / 4] = positions[i * 3];
       view32[byteOffset / 4 + 1] = positions[i * 3 + 1];
       view32[byteOffset / 4 + 2] = positions[i * 3 + 2];
     } else if (format.format.position === MSpec.RHIVertexFormat.FLOAT16x4) {
-      view32[byteOffset / 4] = positions[i * 3];
-      view32[byteOffset / 4 + 1] = positions[i * 3 + 1];
+      // FLOAT16x4: 8 字节 (使用真正的 Float16)
+      viewU16[byteOffset / 2] = floatToFloat16(positions[i * 3]);
+      viewU16[byteOffset / 2 + 1] = floatToFloat16(positions[i * 3 + 1]);
+      viewU16[byteOffset / 2 + 2] = floatToFloat16(positions[i * 3 + 2]);
+      viewU16[byteOffset / 2 + 3] = floatToFloat16(1.0); // w = 1.0
+    }
+
+    // 计算颜色偏移
+    let colorOffset = 0;
+    if (format.format.position === MSpec.RHIVertexFormat.FLOAT32x3) {
+      colorOffset = byteOffset + 12; // FLOAT32x3 = 12 字节
+    } else {
+      colorOffset = byteOffset + 8; // FLOAT16x4 = 8 字节
     }
 
     // 写入颜色
-    let colorOffset = 0;
-    if (format.format.position === MSpec.RHIVertexFormat.FLOAT32x3) {
-      colorOffset = byteOffset + 12;
-    } else {
-      colorOffset = byteOffset + 8;
-    }
-
     if (format.format.color === MSpec.RHIVertexFormat.FLOAT32x3) {
+      // FLOAT32x3: 12 字节
       view32[colorOffset / 4] = colors[i * 4];
       view32[colorOffset / 4 + 1] = colors[i * 4 + 1];
       view32[colorOffset / 4 + 2] = colors[i * 4 + 2];
     } else if (format.format.color === MSpec.RHIVertexFormat.UNORM8x4) {
+      // UNORM8x4: 4 字节
       view8[colorOffset] = Math.round(colors[i * 4] * 255);
       view8[colorOffset + 1] = Math.round(colors[i * 4 + 1] * 255);
       view8[colorOffset + 2] = Math.round(colors[i * 4 + 2] * 255);
       view8[colorOffset + 3] = Math.round(colors[i * 4 + 3] * 255);
     }
 
-    // 写入法线
+    // 计算法线偏移
     let normalOffset = 0;
-    if (format.format.position === MSpec.RHIVertexFormat.FLOAT32x3) {
-      if (format.format.color === MSpec.RHIVertexFormat.FLOAT32x3) {
-        normalOffset = byteOffset + 24;
-      } else {
-        normalOffset = byteOffset + 16;
-      }
-    } else {
-      normalOffset = byteOffset + 12;
-    }
+    const colorSize =
+      format.format.color === MSpec.RHIVertexFormat.FLOAT32x3
+        ? 12
+        : format.format.color === MSpec.RHIVertexFormat.UNORM8x4
+          ? 4
+          : 0;
+    normalOffset = colorOffset + colorSize;
 
+    // 写入法线
+    const normal = faceNormals[faceIndex];
     if (format.format.normal === MSpec.RHIVertexFormat.SNORM16x2) {
-      const normal = faceNormals[faceIndex];
+      // SNORM16x2: 4 字节
       view16[normalOffset / 2] = Math.round(normal[0] * 32767);
       view16[normalOffset / 2 + 1] = Math.round(normal[2] * 32767);
     } else if (format.format.normal === MSpec.RHIVertexFormat.FLOAT16x2) {
-      // 用32位浮点模拟16位
-      view32[normalOffset / 4] = faceNormals[faceIndex][0];
-      view32[normalOffset / 4 + 1] = faceNormals[faceIndex][2];
+      // FLOAT16x2: 4 字节
+      viewU16[normalOffset / 2] = floatToFloat16(normal[0]);
+      viewU16[normalOffset / 2 + 1] = floatToFloat16(normal[2]);
+    } else if (format.format.normal === MSpec.RHIVertexFormat.FLOAT32) {
+      // FLOAT32: 4 字节 (只存储一个分量，用于演示)
+      view32[normalOffset / 4] = normal[1]; // 存储 Y 分量
     }
   }
 

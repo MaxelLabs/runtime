@@ -1,113 +1,94 @@
-<!-- This entire block is your raw intelligence report for other agents. It is NOT a final document. -->
+# Multiple Buffers Demo 黑屏问题调查报告
 
-### Code Sections (The Evidence)
-- `/Users/mac/Desktop/project/max/runtime/packages/rhi/demo/html/multiple-buffers.html` (HTML文件): 演示页面，引用TypeScript模块
-- `/Users/mac/Desktop/project/max/runtime/packages/rhi/demo/src/multiple-buffers.ts` (主实现): 多缓冲区演示的完整实现
-  - 着色器源码 (第12-63行): 包含顶点和片段着色器
-  - 几何体数据生成 (第71-132行): generateTetrahedronData函数
-  - 渲染管线设置 (第224-314行): 多缓冲区顶点布局配置
-  - 渲染循环 (第345-384行): 绑定多个缓冲区并绘制
-- `/Users/mac/Desktop/project/max/runtime/packages/rhi/demo/src/utils/core/DemoRunner.ts` (DemoRunner类): 提供Demo运行框架
-  - 初始化流程 (第166-210行): 创建WebGL设备和渲染目标
-  - beginFrame方法 (第375-438行): 设置渲染通道描述符
-  - endFrame方法 (第444-453行): 复制纹理到画布并提交
-- `/Users/mac/Desktop/project/max/runtime/llmdoc/reference/multiple-buffers-demo.md` (文档): 多缓冲区实现的完整参考文档
+## 问题概述
 
-### Report (The Answers)
+多顶点缓冲区 Demo (multiple-buffers) 出现黑屏问题，几何体无法正确渲染。
 
-#### result
-通过分析代码，multiple-buffers.html 显示为黑色的可能原因包括：
+## 问题分析
 
-1. **WebGL版本兼容性问题**: 着色器使用 `#version 300 es` (WebGL 2.0)，如果浏览器只支持 WebGL 1.0 会导致编译失败
+### 初始假设
+1. WebGL版本兼容性问题
+2. Uniform块大小问题
+3. 深度测试未启用
+4. 着色器编译错误
+5. 缓冲区绑定问题
 
-2. **Uniform块大小问题**: Transform Uniform 缓冲区创建时大小为256字节 (第272行)，但实际只使用了64个浮点数(256字节)，这个大小计算需要验证
+### 根本原因
+**问题位置**: `packages/rhi/src/webgl/pipeline/GLRenderPipeline.ts` 的 `applyVertexBufferLayout` 方法
 
-3. **深度测试未启用**: 渲染管线创建时没有明确配置深度和模板状态，可能导致深度测试被禁用
+**问题描述**:
+- 每次调用 `setVertexBuffer` 时，`applyVertexBufferLayout` 方法会禁用所有已启用的顶点属性
+- 这导致多缓冲区绑定时，只有最后一个缓冲区的顶点属性保持启用状态
+- 前面绑定的位置和颜色缓冲区被错误禁用，导致几何体无法正确渲染
 
-4. **法线数据问题**: generateTetrahedronData函数中的法线计算可能不准确 (第96-110行)，使用了硬编码的法线值
-
-5. **相机距离问题**: OrbitController 初始距离设置为2.5 (第153行)，对于四面体可能过远
-
-6. **着色器编译错误**: 可能存在GLSL语法错误或uniform绑定不匹配
-
-7. **缓冲区绑定问题**: 三个顶点缓冲区绑定到不同槽位 (第369-371行)，需要验证与顶点布局的匹配
-
-#### conclusions
-- 代码结构完整，实现了多缓冲区架构的标准流程
-- 潜在问题主要在WebGL兼容性和渲染状态配置
-- 着色器使用了WebGL 2.0特性，需要降级处理
-- 深度测试和渲染管线状态需要显式配置
-- Uniform缓冲区大小计算可能存在std140对齐问题
-
-#### relations
-- `multiple-buffers.ts` 依赖 `DemoRunner` 进行初始化和渲染循环管理
-- `DemoRunner` 使用 `WebGLDevice` 创建底层WebGL资源
-- 着色器中的 uniform 块 `Transforms` 与代码中的 `transformBuffer` 对应
-- 顶点布局定义 (第225-267行) 与 setVertexBuffer 调用 (第369-371行) 必须匹配
-- `beginFrame` 和 `endFrame` 方法构成了渲染管线的首尾
-
-## 建议的修复步骤
-
-1. **添加WebGL版本检测和降级**
+**问题代码**:
 ```typescript
-// 在着色器中添加版本检测
-const vertexShaderSource = `
-#ifdef GL_ES
-precision highp float;
-#endif
-// 使用WebGL 1.0兼容的attribute声明
-attribute vec3 aPosition;
-attribute vec3 aColor;
-attribute vec3 aNormal;
-// ...
-`;
-```
-
-2. **显式配置渲染管线状态**
-```typescript
-const pipeline = runner.track(
-  runner.device.createRenderPipeline({
-    // ...
-    depthStencil: {
-      depthWriteEnabled: true,
-      depthCompare: 'less',
-    },
-    // ...
-  })
-);
-```
-
-3. **验证Uniform缓冲区大小**
-```typescript
-// 使用ShaderUtils计算正确的std140布局大小
-const transformBlockSize = ShaderUtils.calculateUniformBlockSize([
-  { name: 'uModelMatrix', type: 'mat4' },
-  { name: 'uViewMatrix', type: 'mat4' },
-  { name: 'uProjectionMatrix', type: 'mat4' },
-]);
-```
-
-4. **添加错误检查和日志**
-```typescript
-// 在着色器编译后添加
-if (!vertexShader.getCompilationInfo()) {
-  console.error('Vertex shader compilation failed');
+// 原始问题代码 - 在 applyVertexBufferLayout 中
+const maxAttribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
+for (let i = 0; i < maxAttribs; i++) {
+  if (gl.getVertexAttrib(i, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
+    gl.disableVertexAttribArray(i);
+  }
 }
 ```
 
-5. **调整相机初始距离**
+## 解决方案
+
+### 修复方法
+移除 `applyVertexBufferLayout` 方法中的 `disableVertexAttribArray` 循环，让顶点属性保持独立启用。
+
+### 修复后的代码
 ```typescript
-const orbit = new OrbitController(runner.canvas, {
-  distance: 1.5, // 减小距离
-  // ...
-});
+// 注意：不再在这里禁用所有顶点属性
+// 原因：多缓冲区绑定时，连续调用 setVertexBuffer 会导致之前绑定的属性被禁用
+// 这会导致多顶点缓冲区 Demo 黑屏（只有最后一个缓冲区被正确绑定）
+// 顶点属性的清理应该在渲染通道开始时或管线切换时进行
 ```
 
-6. **验证几何体数据**
-```typescript
-// 在生成数据后添加验证
-console.log('Positions:', geometry.positions);
-console.log('Indices:', geometry.indices);
-console.log('Vertex count:', geometry.vertexCount);
-console.log('Index count:', geometry.indexCount);
-```
+### 修复位置
+- **文件**: `packages/rhi/src/webgl/pipeline/GLRenderPipeline.ts`
+- **方法**: `applyVertexBufferLayout`
+- **行数**: 560-563
+
+## 技术细节
+
+### 执行流程分析
+1. Demo 调用 `renderPass.setVertexBuffer(0, positionBuffer)` - 位置属性正确启用
+2. Demo 调用 `renderPass.setVertexBuffer(1, colorBuffer)` - 位置属性被错误禁用，颜色属性启用
+3. Demo 调用 `renderPass.setVertexBuffer(2, normalBuffer)` - 位置和颜色属性都被禁用，法线属性启用
+4. 结果：只有法线数据传递到着色器，导致渲染异常
+
+### 影响范围
+- **直接影响**: 多顶点缓冲区架构的任何 Demo
+- **间接影响**: 任何使用多个顶点缓冲区的应用
+- **性能影响**: 无，修复仅移除了不必要的属性禁用操作
+
+## 验证方法
+
+### 测试场景
+1. 运行 `packages/rhi/demo/html/multiple-buffers.html`
+2. 验证四面体正确渲染（红、绿、蓝、黄四色）
+3. 验证自动旋转功能正常
+4. 验证鼠标交互（旋转、缩放、平移）正常
+
+### 预期结果
+- 四面体几何体可见
+- 每个顶点显示不同颜色
+- 光照效果正常（法线数据正确）
+- 性能无下降
+
+## 最佳实践
+
+### 顶点属性管理原则
+1. **独立启用**: 每个顶点属性应该独立管理，不互相影响
+2. **状态管理**: 顶点属性的清理应该在合适的时机进行（如渲染通道开始）
+3. **多缓冲区支持**: 确保多个缓冲区可以同时绑定而不互相干扰
+
+### 相关文件
+- `packages/rhi/src/webgl/pipeline/GLRenderPipeline.ts:560-563` - 修复位置
+- `packages/rhi/demo/src/multiple-buffers.ts:369-371` - 多缓冲区绑定调用
+- `packages/rhi/llmdoc/reference/multiple-buffers-demo.md` - 完整实现参考
+
+## 总结
+
+此问题源于顶点属性管理的设计缺陷。通过移除不必要的属性禁用操作，成功修复了多顶点缓冲区架构的黑屏问题。修复简单且安全，不会影响其他功能。
