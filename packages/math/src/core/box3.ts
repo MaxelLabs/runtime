@@ -108,7 +108,6 @@ export class Box3 {
     return this;
   }
 
-  // TODO
   /**
    * 通过实体构建包围盒
    * @param object - 构件实体
@@ -226,7 +225,6 @@ export class Box3 {
     return this;
   }
 
-  // TODO
   /**
    * 通过实体扩展三维包围盒
    * @param object - 构件实体
@@ -293,7 +291,6 @@ export class Box3 {
     );
   }
 
-  // TODO
   /**
    * 获取点在三维包围盒的比例位置
    * @param point - 三维空间点

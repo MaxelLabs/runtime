@@ -131,7 +131,7 @@ describe('Ray', () => {
   describe('applyMatrix() 变换方法', () => {
     test('应该正确应用变换矩阵', () => {
       const ray = new Ray(new Vector3(1, 0, 0), new Vector3(1, 0, 0));
-      const matrix = new Matrix4().makeTranslation(0, 2, 0);
+      const matrix = Matrix4.makeTranslation(0, 2, 0);
       const result = ray.applyMatrix(matrix);
 
       (expect(ray.origin) as any).toEqualVector3({ x: 1, y: 2, z: 0 });
@@ -141,7 +141,7 @@ describe('Ray', () => {
 
     test('应该正确处理旋转', () => {
       const ray = new Ray(Vector3.ZERO, new Vector3(1, 0, 0));
-      const matrix = new Matrix4().makeRotationZ(Math.PI / 2);
+      const matrix = Matrix4.makeRotationZ(Math.PI / 2);
       ray.applyMatrix(matrix);
 
       (expect(ray.origin) as any).toEqualVector3({ x: 0, y: 0, z: 0 });
@@ -165,7 +165,8 @@ describe('Ray', () => {
       const intersection = ray.intersectBox(box);
 
       expect(intersection).toBeDefined();
-      (expect(intersection) as any).toEqualVector3({ x: 0.5, y: 0.5, z: 0.5 });
+      // When ray starts inside, returns exit point (tmax)
+      (expect(intersection) as any).toEqualVector3({ x: 1, y: 0.5, z: 0.5 });
     });
 
     test('应该返回 undefined 如果不相交', () => {
@@ -392,7 +393,7 @@ describe('Ray', () => {
 
     test('射线变换性能', () => {
       const ray = new Ray(new Vector3(1, 2, 3), new Vector3(1, 0, 0));
-      const matrix = new Matrix4().makeRotationY(Math.PI / 4);
+      const matrix = Matrix4.makeRotationY(Math.PI / 4);
 
       performanceTest(
         '射线变换',

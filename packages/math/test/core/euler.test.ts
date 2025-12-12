@@ -374,8 +374,6 @@ describe('Euler', () => {
     });
   });
 
-  // TODO: rotateVector3方法存在bug（使用Quaternion.setFromEuler时未转换角度制），
-  // 暂时跳过部分测试并记录问题
   describe('rotateVector3方法', () => {
     test('应该旋转向量（使用小角度）', () => {
       // 使用小角度测试，因为弧度和角度的差异在小角度时较小
@@ -392,8 +390,7 @@ describe('Euler', () => {
       expect(out.z).toBeCloseTo(0, 3);
     });
 
-    test.skip('应该将旋转结果存储到out参数（90度旋转）', () => {
-      // 跳过：rotateVector3内部使用弧度，但传入的是角度
+    test('应该将旋转结果存储到out参数（90度旋转）', () => {
       const euler = new Euler(0, 90, 0); // 绕Y轴旋转90度
       const v = new Vector3(1, 0, 0);
       const out = new Vector3();

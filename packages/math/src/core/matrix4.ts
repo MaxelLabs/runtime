@@ -933,6 +933,56 @@ export class Matrix4 implements Matrix4Like, Poolable {
   }
 
   /**
+   * 创建一个纯平移矩阵（静态工厂方法）
+   * @param x - X轴平移
+   * @param y - Y轴平移
+   * @param z - Z轴平移
+   * @returns 新的平移矩阵
+   */
+  static makeTranslation(x: number, y: number, z: number): Matrix4 {
+    const m = new Matrix4();
+    m.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1);
+    return m;
+  }
+
+  /**
+   * 设置当前矩阵为平移矩阵（实例方法）
+   * @param x - X轴平移
+   * @param y - Y轴平移
+   * @param z - Z轴平移
+   * @returns 返回自身，用于链式调用
+   */
+  makeTranslation(x: number, y: number, z: number): this {
+    return this.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1);
+  }
+
+  /**
+   * 创建一个纯Y轴旋转矩阵（静态工厂方法）
+   * @param angle - 旋转角度（弧度）
+   * @returns 新的旋转矩阵
+   */
+  static makeRotationY(angle: number): Matrix4 {
+    const m = new Matrix4();
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    m.set(c, 0, s, 0, 0, 1, 0, 0, -s, 0, c, 0, 0, 0, 0, 1);
+    return m;
+  }
+
+  /**
+   * 创建一个纯Z轴旋转矩阵（静态工厂方法）
+   * @param angle - 旋转角度（弧度）
+   * @returns 新的旋转矩阵
+   */
+  static makeRotationZ(angle: number): Matrix4 {
+    const m = new Matrix4();
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    m.set(c, -s, 0, 0, s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+    return m;
+  }
+
+  /**
    * 创建正交投影矩阵
    * @param left - 左平面距离
    * @param right - 右平面距离

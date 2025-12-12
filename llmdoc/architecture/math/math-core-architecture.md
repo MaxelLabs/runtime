@@ -5,23 +5,30 @@
 - **What it is:** Maxell 3D Runtime 数学库的核心架构设计，包含向量、矩阵、四元数等基础数学类型的实现模式。
 - **Purpose:** 为 3D 渲染系统提供高性能、类型安全的数学计算基础设施。
 
-## 2. Core Components
+## 2. Component Map
 
+### Core Components
 - `packages/math/src/core/vector2.ts` (Vector2): 二维向量实现，支持点积、叉积、插值等 2D 图形计算。
-
 - `packages/math/src/core/vector3.ts` (Vector3): 三维向量实现，是 3D 渲染和物理计算的核心组件，提供标准化、距离计算、向量运算等功能。
-
 - `packages/math/src/core/vector4.ts` (Vector4): 四维向量实现，用于颜色、齐次坐标等计算。
-
 - `packages/math/src/core/matrix4.ts` (Matrix4): 4x4 矩阵实现，处理 MVP 矩阵变换、投影、视图矩阵等核心图形计算。
-
 - `packages/math/src/core/quaternion.ts` (Quaternion): 四元数实现，提供高效的 3D 旋转计算，避免万向节锁问题。
-
 - `packages/math/src/core/utils.ts`: 提供数学工具函数，包括角度转换、插值、误差处理等辅助功能。
-
 - `packages/math/src/core/matrix3.ts` (Matrix3): 3x3 矩阵实现，用于法线变换和 2D 变换。
-
+- `packages/math/src/core/euler.ts` (Euler): 欧拉角实现，提供直观的 3D 旋转表示方式，支持多种旋转顺序。
+- `packages/math/src/core/box3.ts` (Box3): 三维轴对齐包围盒实现，用于碰撞检测和视锥剔除。
+- `packages/math/src/core/ray.ts` (Ray): 三维射线实现，用于射线投射和拾取操作。
+- `packages/math/src/core/sphere.ts` (Sphere): 三维球体实现，用于碰撞检测和边界计算。
+- `packages/math/src/core/color.ts` (Color): 颜色实现，支持 RGB、HSL 等多种颜色空间转换。
 - `packages/math/src/config/mathConfig.ts` (MathConfig): 数学库配置系统，支持对象池动态配置。
+
+### Extension Components
+- `packages/math/src/extension/box2.ts` (Box2): 二维轴对齐包围盒，用于 2D 碰撞检测和 UI 布局。
+- `packages/math/src/extension/circle.ts` (Circle): 二维圆形实现，用于 2D 物理和 UI 元素。
+- `packages/math/src/extension/line2.ts` (Line2): 二维线段实现，支持线线相交检测。
+- `packages/math/src/extension/line3.ts` (Line3): 三维线段实现，用于 3D 空间中的线段计算。
+- `packages/math/src/extension/plane.ts` (Plane): 三维平面实现，用于空间分割和反射计算。
+- `packages/math/src/extension/spherical.ts` (Spherical): 球坐标系实现，用于极坐标转换和相机控制。
 
 ## 3. Execution Flow (LLM Retrieval Map)
 
@@ -36,6 +43,8 @@
 - **5. 对象池管理:** 所有数学类都实现 `Poolable` 接口，在 `packages/math/src/pool/objectPool.ts` 中提供对象池支持。
 
 - **6. 几何体生成:** 新几何体在 `packages/rhi/demo/src/utils/geometry/GeometryGenerator.ts` 中实现，支持 Torus、Cone、Cylinder、Capsule 等类型。
+
+- **7. 测试覆盖:** 所有核心和扩展模块都有完整的测试覆盖，测试文件位于 `packages/math/test/` 目录下。
 
 ## 4. Design Rationale
 

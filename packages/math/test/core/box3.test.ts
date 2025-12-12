@@ -577,8 +577,7 @@ describe('Box3', () => {
     });
   });
 
-  // TODO: applyMatrix4方法存在bug（Vector3.applyMatrix不存在），暂时跳过测试
-  describe.skip('applyMatrix4方法', () => {
+  describe('applyMatrix4方法', () => {
     test('应该应用变换矩阵', () => {
       const box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1));
       const matrix = new Matrix4().compose(new Vector3(1, 2, 3), new Quaternion(0, 0, 0, 1), new Vector3(1, 1, 1));
@@ -610,8 +609,7 @@ describe('Box3', () => {
     });
   });
 
-  // TODO: getOBBPoints方法内部调用了有bug的applyMatrix，暂时跳过测试
-  describe.skip('getOBBPoints方法', () => {
+  describe('getOBBPoints方法', () => {
     test('应该返回OBB的8个顶点', () => {
       const box = new Box3(new Vector3(0, 0, 0), new Vector3(1, 1, 1));
       const matrix = new Matrix4();

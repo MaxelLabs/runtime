@@ -269,7 +269,7 @@ export class Euler {
   rotateVector3(v: Vector3, out?: Vector3): Vector3 {
     const q = Euler.tempQuat0;
 
-    q.setFromEuler(this.x, this.y, this.z);
+    q.setFromEuler(this.x * DEG2RAD, this.y * DEG2RAD, this.z * DEG2RAD);
 
     return q.rotateVector3(v, out);
   }
