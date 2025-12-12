@@ -10,7 +10,6 @@ import { MathConfig } from '../../src/config/mathConfig';
 import { performanceTest, TestData, testRandom } from '../setup';
 
 describe('Vector3', () => {
-  
   describe('构造函数和基础属性', () => {
     test('应该创建默认零向量', () => {
       const v = new Vector3();
@@ -79,7 +78,7 @@ describe('Vector3', () => {
       const initialStats = Vector3.getPoolStats();
       Vector3.preallocate(5);
       const afterStats = Vector3.getPoolStats();
-      
+
       expect(afterStats.poolSize - initialStats.poolSize).toBe(5);
     });
 
@@ -94,7 +93,7 @@ describe('Vector3', () => {
     test('应该实现池化接口', () => {
       const v = new Vector3(1, 2, 3);
       expect(v.isPoolable()).toBe(true);
-      
+
       v.reset();
       expect(v.x).toBe(0);
       expect(v.y).toBe(0);
@@ -334,21 +333,21 @@ describe('Vector3', () => {
     test('dot() 应该计算点积', () => {
       const v1 = new Vector3(1, 2, 3);
       const v2 = new Vector3(4, 5, 6);
-      
+
       expect(v1.dot(v2)).toBe(32); // 1*4 + 2*5 + 3*6 = 32
     });
 
     test('Vector3.dot() 静态方法应该计算点积', () => {
       const v1 = new Vector3(1, 0, 0);
       const v2 = new Vector3(0, 1, 0);
-      
+
       expect(Vector3.dot(v1, v2)).toBe(0); // 垂直向量点积为0
     });
 
     test('cross() 应该计算叉积', () => {
       const v1 = new Vector3(1, 0, 0);
       const v2 = new Vector3(0, 1, 0);
-      
+
       v1.cross(v2);
       expect(v1).toEqualVector3({ x: 0, y: 0, z: 1 });
     });
@@ -357,7 +356,7 @@ describe('Vector3', () => {
       const result = new Vector3();
       const v1 = new Vector3(1, 0, 0);
       const v2 = new Vector3(0, 1, 0);
-      
+
       result.crossVectors(v1, v2);
       expect(result).toEqualVector3({ x: 0, y: 0, z: 1 });
     });
@@ -365,10 +364,10 @@ describe('Vector3', () => {
     test('叉积的反交换律', () => {
       const v1 = new Vector3(1, 2, 3);
       const v2 = new Vector3(4, 5, 6);
-      
+
       const cross1 = new Vector3().crossVectors(v1, v2);
       const cross2 = new Vector3().crossVectors(v2, v1);
-      
+
       expect(cross1.x).toBeCloseTo(-cross2.x);
       expect(cross1.y).toBeCloseTo(-cross2.y);
       expect(cross1.z).toBeCloseTo(-cross2.z);
@@ -379,21 +378,21 @@ describe('Vector3', () => {
     test('distanceTo() 应该计算到另一个向量的距离', () => {
       const v1 = new Vector3(0, 0, 0);
       const v2 = new Vector3(3, 4, 0);
-      
+
       expect(v1.distanceTo(v2)).toBe(5);
     });
 
     test('distanceToSquared() 应该计算距离的平方', () => {
       const v1 = new Vector3(0, 0, 0);
       const v2 = new Vector3(3, 4, 0);
-      
+
       expect(v1.distanceToSquared(v2)).toBe(25);
     });
 
     test('Vector3.distance() 静态方法', () => {
       const v1 = new Vector3(1, 1, 1);
       const v2 = new Vector3(2, 2, 2);
-      
+
       expect(Vector3.distance(v1, v2)).toBeCloseTo(Math.sqrt(3));
     });
   });
@@ -402,7 +401,7 @@ describe('Vector3', () => {
     test('lerp() 应该线性插值', () => {
       const v1 = new Vector3(0, 0, 0);
       const v2 = new Vector3(10, 20, 30);
-      
+
       v1.lerp(v2, 0.5);
       expect(v1).toEqualVector3({ x: 5, y: 10, z: 15 });
 
@@ -420,7 +419,7 @@ describe('Vector3', () => {
       const v1 = new Vector3(0, 0, 0);
       const v2 = new Vector3(10, 20, 30);
       const result = Vector3.lerp(v1, v2, 0.3);
-      
+
       expect(result).toEqualVector3({ x: 3, y: 6, z: 9 });
     });
 
@@ -428,7 +427,7 @@ describe('Vector3', () => {
       const result = new Vector3();
       const v1 = new Vector3(-10, -20, -30);
       const v2 = new Vector3(10, 20, 30);
-      
+
       result.lerpVectors(v1, v2, 0.25);
       expect(result).toEqualVector3({ x: -5, y: -10, z: -15 });
     });
@@ -439,7 +438,7 @@ describe('Vector3', () => {
       const v1 = new Vector3(1, 2, 3);
       const v2 = new Vector3(1, 2, 3);
       const v3 = new Vector3(1, 2, 4);
-      
+
       expect(v1.equals(v2)).toBe(true);
       expect(v1.equals(v3)).toBe(false);
     });
@@ -448,7 +447,7 @@ describe('Vector3', () => {
       const v1 = new Vector3(0, 0, 0);
       const v2 = new Vector3(1e-8, 1e-8, 1e-8);
       const v3 = new Vector3(0.1, 0, 0);
-      
+
       expect(v1.isZero()).toBe(true);
       expect(v2.isZero()).toBe(true);
       expect(v3.isZero()).toBe(false);
@@ -459,7 +458,7 @@ describe('Vector3', () => {
     test('clone() 应该创建向量副本', () => {
       const v1 = new Vector3(1, 2, 3);
       const v2 = v1.clone();
-      
+
       expect(v2).not.toBe(v1);
       expect(v2).toEqualVector3({ x: 1, y: 2, z: 3 });
     });
@@ -497,7 +496,7 @@ describe('Vector3', () => {
     test('min() 应该取最小值', () => {
       const v1 = new Vector3(1, 5, 3);
       const v2 = new Vector3(2, 3, 4);
-      
+
       v1.min(v2);
       expect(v1).toEqualVector3({ x: 1, y: 3, z: 3 });
     });
@@ -505,7 +504,7 @@ describe('Vector3', () => {
     test('max() 应该取最大值', () => {
       const v1 = new Vector3(1, 5, 3);
       const v2 = new Vector3(2, 3, 4);
-      
+
       v1.max(v2);
       expect(v1).toEqualVector3({ x: 2, y: 5, z: 4 });
     });
@@ -514,7 +513,7 @@ describe('Vector3', () => {
       const v = new Vector3(-5, 0, 15);
       const min = new Vector3(-2, -1, 0);
       const max = new Vector3(2, 1, 10);
-      
+
       v.clamp(min, max);
       expect(v).toEqualVector3({ x: -2, y: 0, z: 10 });
     });
@@ -529,8 +528,8 @@ describe('Vector3', () => {
       const v = new Vector3(3, 4, 0); // 长度为 5
       v.setLength(10);
       expect(v.getLength()).toBeCloseTo(10);
-      expect(v.x).toBeCloseTo(6);  // (3/5) * 10
-      expect(v.y).toBeCloseTo(8);  // (4/5) * 10
+      expect(v.x).toBeCloseTo(6); // (3/5) * 10
+      expect(v.y).toBeCloseTo(8); // (4/5) * 10
     });
   });
 
@@ -554,12 +553,12 @@ describe('Vector3', () => {
     test('applyMatrix() 应该应用矩阵变换', () => {
       const v = new Vector3(1, 0, 0);
       const m = new Matrix4();
-      
+
       // 创建一个沿Y轴90度旋转的矩阵
       // Matrix4 旋转方法需要确认实际 API
       // m.makeRotationY(Math.PI / 2);
       v.applyMatrix(m);
-      
+
       expect(v.x).toBeCloseTo(0, 5);
       expect(v.y).toBeCloseTo(0, 5);
       expect(v.z).toBeCloseTo(-1, 5);
@@ -568,11 +567,11 @@ describe('Vector3', () => {
     test('applyQuaternion() 应该应用四元数旋转', () => {
       const v = new Vector3(1, 0, 0);
       const q = new Quaternion();
-      
+
       // Y轴90度旋转
       q.setFromAxisAngle(new Vector3(0, 1, 0), Math.PI / 2);
       v.applyQuaternion(q);
-      
+
       expect(v.x).toBeCloseTo(0, 5);
       expect(v.y).toBeCloseTo(0, 5);
       expect(v.z).toBeCloseTo(-1, 5);
@@ -583,7 +582,7 @@ describe('Vector3', () => {
     test('normalized() 应该返回新的归一化向量', () => {
       const v = new Vector3(3, 4, 0);
       const normalized = v.normalized();
-      
+
       expect(normalized).not.toBe(v);
       expect(normalized.getLength()).toBeCloseTo(1);
       expect(normalized.x).toBeCloseTo(0.6);
@@ -593,7 +592,7 @@ describe('Vector3', () => {
     test('multiplyScalar() 应该返回新的缩放向量', () => {
       const v = new Vector3(1, 2, 3);
       const scaled = v.multiplyScalar(2.5);
-      
+
       expect(scaled).not.toBe(v);
       expect(scaled).toEqualVector3({ x: 2.5, y: 5, z: 7.5 });
     });
@@ -601,7 +600,7 @@ describe('Vector3', () => {
     test('divideScalar() 应该返回新的除法向量', () => {
       const v = new Vector3(6, 9, 12);
       const divided = v.divideScalar(3);
-      
+
       expect(divided).not.toBe(v);
       expect(divided).toEqualVector3({ x: 2, y: 3, z: 4 });
     });
@@ -609,11 +608,11 @@ describe('Vector3', () => {
     test('divideScalar() 应该处理零除数', () => {
       const v = new Vector3(1, 2, 3);
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-      
+
       const result = v.divideScalar(0);
       expect(consoleSpy).toHaveBeenCalledWith('Vector3.divideScalar: scalar is too close to zero');
       expect(result).toEqualVector3({ x: 0, y: 0, z: 0 });
-      
+
       consoleSpy.mockRestore();
     });
   });
@@ -622,21 +621,21 @@ describe('Vector3', () => {
     test('应该转换为IVector3接口格式', () => {
       const v = new Vector3(1, 2, 3);
       const iVector = v.toIVector3();
-      
+
       expect(iVector).toEqual({ x: 1, y: 2, z: 3 });
     });
 
     test('应该从IVector3接口创建实例', () => {
       const iVector = { x: 5, y: 10, z: 15 };
       const v = Vector3.fromIVector3(iVector);
-      
+
       expect(v).toEqualVector3(iVector);
     });
 
     test('应该设置IVector3接口值', () => {
       const v = new Vector3();
       const iVector = { x: 7, y: 14, z: 21 };
-      
+
       v.fromIVector3(iVector);
       expect(v).toEqualVector3(iVector);
     });
@@ -646,17 +645,17 @@ describe('Vector3', () => {
     test('应该转换为USD兼容格式', () => {
       const v = new Vector3(1.5, 2.5, 3.5);
       const usdValue = v.toUsdValue();
-      
+
       expect(usdValue.type).toBe('float3');
       expect(usdValue.value).toEqual([1.5, 2.5, 3.5]);
     });
-    
+
     test('应该从usd值创建向量', () => {
       const usdValue = {
         type: 'float3' as any, // 使用 any 类型避免类型错误
-        value: [2.1, 3.2, 4.3]
+        value: [2.1, 3.2, 4.3],
       };
-      
+
       const v = Vector3.fromUsdValue(usdValue);
       expect(v).toEqualVector3({ x: 2.1, y: 3.2, z: 4.3 });
     });
@@ -691,28 +690,48 @@ describe('Vector3', () => {
       const v1 = new Vector3(1, 2, 3);
       const v2 = new Vector3(4, 5, 6);
 
-      performanceTest('Vector3.add', () => {
-        v1.add(v2);
-      }, 10000);
+      performanceTest(
+        'Vector3.add',
+        () => {
+          v1.add(v2);
+        },
+        10000
+      );
 
-      performanceTest('Vector3.normalize', () => {
-        v1.normalize();
-      }, 10000);
+      performanceTest(
+        'Vector3.normalize',
+        () => {
+          v1.normalize();
+        },
+        10000
+      );
 
-      performanceTest('Vector3.dot', () => {
-        v1.dot(v2);
-      }, 10000);
+      performanceTest(
+        'Vector3.dot',
+        () => {
+          v1.dot(v2);
+        },
+        10000
+      );
     });
 
     test('对象池性能', () => {
-      performanceTest('Vector3.create/release (池化)', () => {
-        const v = Vector3.create(1, 2, 3);
-        Vector3.release(v);
-      }, 5000);
+      performanceTest(
+        'Vector3.create/release (池化)',
+        () => {
+          const v = Vector3.create(1, 2, 3);
+          Vector3.release(v);
+        },
+        5000
+      );
 
-      performanceTest('new Vector3 (无池化)', () => {
-        new Vector3(1, 2, 3);
-      }, 5000);
+      performanceTest(
+        'new Vector3 (无池化)',
+        () => {
+          new Vector3(1, 2, 3);
+        },
+        5000
+      );
     });
   });
 
@@ -721,20 +740,20 @@ describe('Vector3', () => {
       for (let i = 0; i < 100; i++) {
         const v1Data = TestData.randomVector3();
         const v2Data = TestData.randomVector3();
-        
+
         const v1 = new Vector3(v1Data.x, v1Data.y, v1Data.z);
         const v2 = new Vector3(v2Data.x, v2Data.y, v2Data.z);
-        
+
         // 加法交换律
         const sum1 = v1.clone().add(v2);
         const sum2 = v2.clone().add(v1);
         expect(sum1.x).toBeCloseTo(sum2.x, 10);
         expect(sum1.y).toBeCloseTo(sum2.y, 10);
         expect(sum1.z).toBeCloseTo(sum2.z, 10);
-        
+
         // 点积交换律
         expect(v1.dot(v2)).toBeCloseTo(v2.dot(v1), 10);
-        
+
         // 归一化后长度应为1（除非是零向量）
         if (v1.getLengthSquared() > 1e-10) {
           const normalized = v1.clone().normalize();
@@ -747,16 +766,16 @@ describe('Vector3', () => {
   describe('内存和清理', () => {
     test('大量对象创建不应导致内存泄漏', () => {
       const initialStats = Vector3.getPoolStats();
-      
+
       const vectors: Vector3[] = [];
       for (let i = 0; i < 1000; i++) {
         vectors.push(Vector3.create(i, i * 2, i * 3));
       }
-      
+
       for (const v of vectors) {
         Vector3.release(v);
       }
-      
+
       const finalStats = Vector3.getPoolStats();
       expect(finalStats.currentActive).toBeLessThanOrEqual(initialStats.currentActive + 10);
     });

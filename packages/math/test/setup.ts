@@ -11,7 +11,7 @@ beforeAll(() => {
   MathConfig.enableObjectPool(true);
   MathConfig.enableSIMD(true);
   MathConfig.enableBatchOperations(true);
-  
+
   // 设置较小的对象池大小用于测试
   MathConfig.setPoolSize({
     Vector2: 10,
@@ -38,10 +38,10 @@ declare global {
   namespace jest {
     interface Matchers<R> {
       toBeCloseTo(expected: number, precision?: number): R;
-      toEqualVector2(expected: {x: number, y: number}, precision?: number): R;
-      toEqualVector3(expected: {x: number, y: number, z: number}, precision?: number): R;
-      toEqualVector4(expected: {x: number, y: number, z: number, w: number}, precision?: number): R;
-      toEqualQuaternion(expected: {x: number, y: number, z: number, w: number}, precision?: number): R;
+      toEqualVector2(expected: { x: number; y: number }, precision?: number): R;
+      toEqualVector3(expected: { x: number; y: number; z: number }, precision?: number): R;
+      toEqualVector4(expected: { x: number; y: number; z: number; w: number }, precision?: number): R;
+      toEqualQuaternion(expected: { x: number; y: number; z: number; w: number }, precision?: number): R;
       toEqualMatrix4(expected: number[] | Float32Array): R;
     }
   }
@@ -49,8 +49,8 @@ declare global {
 
 // 自定义匹配器
 expect.extend({
-  toEqualVector2(received: any, expected: {x: number, y: number}, precision = 6) {
-    const pass = 
+  toEqualVector2(received: any, expected: { x: number; y: number }, precision = 6) {
+    const pass =
       Math.abs(received.x - expected.x) < Math.pow(10, -precision) &&
       Math.abs(received.y - expected.y) < Math.pow(10, -precision);
 
@@ -66,8 +66,8 @@ expect.extend({
       };
     }
   },
-  toEqualVector3(received: any, expected: {x: number, y: number, z: number}, precision = 6) {
-    const pass = 
+  toEqualVector3(received: any, expected: { x: number; y: number; z: number }, precision = 6) {
+    const pass =
       Math.abs(received.x - expected.x) < Math.pow(10, -precision) &&
       Math.abs(received.y - expected.y) < Math.pow(10, -precision) &&
       Math.abs(received.z - expected.z) < Math.pow(10, -precision);
@@ -85,8 +85,8 @@ expect.extend({
     }
   },
 
-  toEqualQuaternion(received: any, expected: {x: number, y: number, z: number, w: number}, precision = 6) {
-    const pass = 
+  toEqualQuaternion(received: any, expected: { x: number; y: number; z: number; w: number }, precision = 6) {
+    const pass =
       Math.abs(received.x - expected.x) < Math.pow(10, -precision) &&
       Math.abs(received.y - expected.y) < Math.pow(10, -precision) &&
       Math.abs(received.z - expected.z) < Math.pow(10, -precision) &&
@@ -143,32 +143,34 @@ export const performanceTest = (name: string, fn: () => void, iterations = 1000)
   }
   const end = performance.now();
   const duration = end - start;
-  
-  console.log(`[性能] ${name}: ${iterations} 次迭代, 总时间: ${duration.toFixed(2)}ms, 平均: ${(duration / iterations).toFixed(4)}ms/次`);
-  
+
+  console.log(
+    `[性能] ${name}: ${iterations} 次迭代, 总时间: ${duration.toFixed(2)}ms, 平均: ${(duration / iterations).toFixed(4)}ms/次`
+  );
+
   return duration;
 };
 
-// 内存测试辅助函数  
+// 内存测试辅助函数
 export const memoryTest = (name: string, fn: () => void) => {
   // 手动触发垃圾回收（如果可用）
   if (global.gc) {
     global.gc();
   }
-  
+
   const initialMemory = process.memoryUsage();
-  
+
   fn();
-  
+
   if (global.gc) {
     global.gc();
   }
-  
+
   const finalMemory = process.memoryUsage();
   const memoryDiff = finalMemory.heapUsed - initialMemory.heapUsed;
-  
+
   console.log(`[内存] ${name}: 内存变化: ${memoryDiff} bytes (${(memoryDiff / 1024 / 1024).toFixed(2)} MB)`);
-  
+
   return memoryDiff;
 };
 
@@ -202,8 +204,8 @@ export const TestData = {
   // 生成随机向量
   randomVector3: () => ({
     x: testRandom.nextFloat(-100, 100),
-    y: testRandom.nextFloat(-100, 100), 
-    z: testRandom.nextFloat(-100, 100)
+    y: testRandom.nextFloat(-100, 100),
+    z: testRandom.nextFloat(-100, 100),
   }),
 
   // 生成单位向量
@@ -218,7 +220,7 @@ export const TestData = {
     x: testRandom.nextFloat(-1, 1),
     y: testRandom.nextFloat(-1, 1),
     z: testRandom.nextFloat(-1, 1),
-    w: testRandom.nextFloat(-1, 1)
+    w: testRandom.nextFloat(-1, 1),
   }),
 
   // 生成单位四元数
@@ -239,22 +241,22 @@ export const TestData = {
 
   // 常用测试向量
   testVectors: [
-    { x: 0, y: 0, z: 0 },      // 零向量
-    { x: 1, y: 0, z: 0 },      // X轴单位向量
-    { x: 0, y: 1, z: 0 },      // Y轴单位向量
-    { x: 0, y: 0, z: 1 },      // Z轴单位向量
-    { x: 1, y: 1, z: 1 },      // 对角向量
-    { x: -1, y: -1, z: -1 },   // 负对角向量
-    { x: 3, y: 4, z: 5 },      // 随机向量1
-    { x: -2, y: 6, z: -8 },    // 随机向量2
+    { x: 0, y: 0, z: 0 }, // 零向量
+    { x: 1, y: 0, z: 0 }, // X轴单位向量
+    { x: 0, y: 1, z: 0 }, // Y轴单位向量
+    { x: 0, y: 0, z: 1 }, // Z轴单位向量
+    { x: 1, y: 1, z: 1 }, // 对角向量
+    { x: -1, y: -1, z: -1 }, // 负对角向量
+    { x: 3, y: 4, z: 5 }, // 随机向量1
+    { x: -2, y: 6, z: -8 }, // 随机向量2
   ],
 
   // 常用测试四元数
   testQuaternions: [
-    { x: 0, y: 0, z: 0, w: 1 },    // 单位四元数
-    { x: 1, y: 0, z: 0, w: 0 },    // X轴旋转90度
-    { x: 0, y: 1, z: 0, w: 0 },    // Y轴旋转90度
-    { x: 0, y: 0, z: 1, w: 0 },    // Z轴旋转90度
+    { x: 0, y: 0, z: 0, w: 1 }, // 单位四元数
+    { x: 1, y: 0, z: 0, w: 0 }, // X轴旋转90度
+    { x: 0, y: 1, z: 0, w: 0 }, // Y轴旋转90度
+    { x: 0, y: 0, z: 1, w: 0 }, // Z轴旋转90度
     { x: 0.5, y: 0.5, z: 0.5, w: 0.5 }, // 复合旋转
-  ]
+  ],
 };

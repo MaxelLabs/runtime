@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Texture Wrapping Demo - RHI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #e0e0e0;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #app-container {
+      flex: 1;
+      display: flex;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #canvas-container {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #J-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+
+    #J-canvas:active {
+      cursor: grabbing;
+    }
+
+    /* Info Panel */
+    #info-panel {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(20, 20, 35, 0.9);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+      min-width: 320px;
+      max-width: 400px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      z-index: 100;
+    }
+
+    #info-panel h2 {
+      margin: 0 0 16px 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #60a5fa;
+      border-bottom: 2px solid rgba(96, 165, 250, 0.3);
+      padding-bottom: 8px;
+    }
+
+    #info-panel h3 {
+      margin: 16px 0 8px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #818cf8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    #info-panel p {
+      margin: 8px 0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #d1d5db;
+    }
+
+    #info-panel .feature-list {
+      margin: 12px 0;
+      padding-left: 0;
+      list-style: none;
+    }
+
+    #info-panel .feature-list li {
+      margin: 8px 0;
+      padding-left: 24px;
+      position: relative;
+      font-size: 13px;
+      color: #d1d5db;
+      line-height: 1.5;
+    }
+
+    #info-panel .feature-list li::before {
+      content: "▹";
+      position: absolute;
+      left: 8px;
+      color: #60a5fa;
+      font-size: 16px;
+    }
+
+    #info-panel .controls-list {
+      background: rgba(96, 165, 250, 0.05);
+      border-left: 3px solid #60a5fa;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin: 12px 0;
+    }
+
+    #info-panel .controls-list li {
+      margin: 6px 0;
+      font-size: 12px;
+      color: #d1d5db;
+      display: flex;
+      align-items: center;
+    }
+
+    #info-panel .controls-list li::before {
+      content: none;
+    }
+
+    #info-panel .controls-list kbd {
+      display: inline-block;
+      padding: 2px 8px;
+      margin-right: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 11px;
+      color: #fbbf24;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    /* Loading Screen */
+    #loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      z-index: 1000;
+      transition: opacity 0.5s ease-out;
+    }
+
+    #loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .loader-spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(96, 165, 250, 0.2);
+      border-top-color: #60a5fa;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loader-text {
+      font-size: 16px;
+      color: #9ca3af;
+      font-weight: 500;
+    }
+
+    /* Error Screen */
+    #error-screen {
+      display: none;
+      position: absolute;
+      inset: 0;
+      align-items: center;
+      justify-content: center;
+      background: rgba(20, 20, 35, 0.95);
+      z-index: 1001;
+    }
+
+    #error-screen.visible {
+      display: flex;
+    }
+
+    .error-content {
+      text-align: center;
+      max-width: 500px;
+      padding: 40px;
+    }
+
+    .error-icon {
+      font-size: 60px;
+      margin-bottom: 20px;
+    }
+
+    .error-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #ef4444;
+      margin-bottom: 12px;
+    }
+
+    .error-message {
+      font-size: 14px;
+      color: #d1d5db;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .error-details {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: left;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 12px;
+      color: #fca5a5;
+      overflow: auto;
+      max-height: 200px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      #info-panel {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        max-width: none;
+        padding: 16px;
+      }
+
+      #info-panel h2 {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <!-- Canvas -->
+    <div id="canvas-container">
+      <canvas id="J-canvas"></canvas>
+    </div>
+
+    <!-- Info Panel -->
+    <div id="info-panel">
+      <h2>🎨 纹理包裹模式</h2>
+
+      <p>演示纹理采样器的不同包裹模式（Address Mode）如何影响超出 [0,1] 范围的 UV 坐标。</p>
+
+      <h3>包裹模式</h3>
+      <ul class="feature-list">
+        <li><strong>Repeat</strong>: 纹理重复平铺</li>
+        <li><strong>Mirror Repeat</strong>: 镜像重复</li>
+        <li><strong>Clamp to Edge</strong>: 边缘颜色延伸</li>
+      </ul>
+
+      <h3>技术特性</h3>
+      <ul class="feature-list">
+        <li>动态切换纹理和采样器</li>
+        <li>实时调整 UV 缩放</li>
+        <li>程序化测试纹理生成</li>
+        <li>多采样器绑定组管理</li>
+      </ul>
+
+      <h3>控制说明</h3>
+      <ul class="controls-list feature-list">
+        <li><kbd>1-3</kbd> 切换包裹模式</li>
+        <li><kbd>T</kbd> 切换纹理</li>
+        <li><kbd>鼠标拖动</kbd> 旋转视角</li>
+        <li><kbd>滚轮</kbd> 缩放距离</li>
+        <li><kbd>F11</kbd> 全屏切换</li>
+        <li><kbd>ESC</kbd> 退出 Demo</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Loading Screen -->
+  <div id="loading">
+    <div class="loader">
+      <div class="loader-spinner"></div>
+      <div class="loader-text">加载 Texture Wrapping Demo...</div>
+    </div>
+  </div>
+
+  <!-- Error Screen -->
+  <div id="error-screen">
+    <div class="error-content">
+      <div class="error-icon">⚠️</div>
+      <div class="error-title">初始化失败</div>
+      <div class="error-message">无法启动 Texture Wrapping Demo，请检查浏览器是否支持 WebGL 2.0。</div>
+      <div class="error-details" id="error-details"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    const loading = document.getElementById('loading');
+    const errorScreen = document.getElementById('error-screen');
+    const errorDetails = document.getElementById('error-details');
+
+    // Hide loading after 500ms minimum (for smooth transition)
+    const minLoadTime = new Promise(resolve => setTimeout(resolve, 500));
+
+    async function init() {
+      try {
+        await import('../src/texture-wrapping.ts');
+        await minLoadTime;
+        loading.classList.add('hidden');
+      } catch (error) {
+        console.error('Failed to initialize demo:', error);
+        loading.classList.add('hidden');
+        errorScreen.classList.add('visible');
+        errorDetails.textContent = error.stack || error.message || String(error);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
