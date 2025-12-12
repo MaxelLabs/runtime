@@ -35,19 +35,43 @@
   - 创建动画剪辑、关键帧动画、粒子系统
 - [性能调优指南](./guides/performance-tuning.md) - 数学库性能优化
   - 最佳实践、对象池使用、内存管理技巧
+- [Demo 开发指南](./guides/demo-development.md) - 演示系统开发方法
+  - Demo 框架使用、调试技巧、最佳实践
+
+#### 🎮 Demo 演示集合 (guides/demos)
+- [混合模式演示](./guides/demos/blend-modes-demo.md) - 展示不同的混合模式效果
+  - Alpha 混合、加法混合、乘法混合等视觉效果
+- [动态缓冲区演示](./guides/demos/dynamic-buffer-demo.md) - 实时更新缓冲区数据
+  - 顶点动画、变形效果、动态几何体
+- [顶点格式演示](./guides/demos/vertex-formats-demo.md) - 不同顶点数据格式的使用
+  - FLOAT32、UNORM8x4、FLOAT16、SNORM16 格式优化
+- [多缓冲区演示](./guides/demos/multiple-buffers-demo.md) - 多顶点缓冲区渲染
+  - 分离顶点属性、灵活的数据管理
+- [2D 纹理演示](./guides/demos/texture-2d-demo.md) - 基础纹理加载和采样
+  - 纹理创建、UV 映射、纹理采样
+- [纹理包裹演示](./guides/demos/texture-wrapping-demo.md) - 纹理包裹模式展示
+  - REPEAT、CLAMP_TO_EDGE、MIRRORED_REPEAT 模式
+- [多纹理混合演示](./guides/demos/multi-textures-demo.md) - 多纹理混合技术
+  - 纹理单元管理、纹理混合算法
+- [Mipmap 演示](./guides/demos/mipmaps-demo.md) - Mipmap 生成和使用
+  - LOD 控制、纹理优化、抗锯齿效果
+- [纹理过滤演示](./guides/demos/texture-filtering-demo.md) - 纹理过滤模式
+  - NEAREST、LINEAR、MIPMAP 过滤效果
 
 ### 🏗️ 架构设计 (architecture)
-- [RHI 抽象层架构](./architecture/rhi-architecture.md) - RHI 抽象层设计原理和核心组件
+- [RHI 抽象层架构](./architecture/rhi/rhi-architecture.md) - RHI 抽象层设计原理和核心组件
   - 硬件渲染器接口、平台资源、执行流程
-- [WebGL 实现细节](./architecture/webgl-implementation.md) - WebGL 实现的关键技术细节
+- [WebGL 实现细节](./architecture/rhi/webgl-implementation.md) - WebGL 实现的关键技术细节
   - 图形设备、扩展管理、状态追踪
-- [数学库核心架构](./architecture/math-core-architecture.md) - 向量、矩阵、四元数等核心数学类型的实现架构
+- [MVP 矩阵实现架构](./architecture/rhi/mvp-matrix-implementation.md) - 3D 变换管线架构
+  - 模型、视图、投影矩阵的级联变换
+- [数学库核心架构](./architecture/math/math-core-architecture.md) - 向量、矩阵、四元数等核心数学类型的实现架构
   - 数据结构、对象池、内存对齐
-- [数学库性能优化](./architecture/math-performance-optimization.md) - 对象池和内存管理优化策略
+- [数学库性能优化](./architecture/math/math-performance-optimization.md) - 对象池和内存管理优化策略
   - SIMD 优化、缓存友好设计、预分配策略
-- [引擎整体架构](./architecture/engine-architecture.md) - 3D 引擎架构设计
+- [引擎整体架构](./architecture/engine/engine-architecture.md) - 3D 引擎架构设计
   - 核心组件、执行流程、设计原理
-- [引擎子系统设计](./architecture/engine-systems.md) - 各子系统详细设计
+- [引擎子系统设计](./architecture/engine/engine-systems.md) - 各子系统详细设计
   - 渲染管线、组件管理、场景图、动画系统
 - [USD 架构设计](./architecture/usd-architecture.md) - OpenUSD 架构设计
   - 核心组件、执行流程、设计原理
@@ -56,55 +80,49 @@
 - [Specification 类型系统架构](./architecture/specification-type-system.md) - 统一类型系统架构设计
   - 泛型基类、类型继承、循环依赖解决
 
-### 📖 参考资料 (reference)
-- [编码约定](./reference/coding-conventions.md) - TypeScript 代码风格和规范
+### 📖 API参考 (api)
+- [编码约定](./api/coding-conventions.md) - TypeScript 代码风格和规范
   - 命名约定、导入导出、ESLint 配置、类型系统最佳实践
-- [Git 工作流](./reference/git-conventions.md) - Git 提交规范和分支管理
+- [Git 工作流](./api/git-conventions.md) - Git 提交规范和分支管理
   - 提交消息格式、分支策略、标签管理
-- [数学类型参考](./reference/math-type-reference.md) - 完整的数学类型定义和接口说明
+- [数学类型参考](./api/math-type-reference.md) - 完整的数学类型定义和接口说明
   - 向量、矩阵、四元数的详细 API 文档
-- [RHI 接口参考](./reference/rhi-interfaces.md) - RHI 抽象层的接口定义和规范
+- [RHI 接口参考](./api/rhi-interfaces.md) - RHI 抽象层的接口定义和规范
   - 平台缓冲区、纹理、渲染目标等接口
-- [USD 核心类型参考](./reference/usd-core-types.md) - USD 核心数据类型和接口规范
+- [USD 核心类型参考](./api/usd-core-types.md) - USD 核心数据类型和接口规范
   - 节点、属性、层、阶段等核心类型
-- [Specification 类型参考](./reference/specification-type-reference.md) - 统一类型系统完整定义
+- [Specification 类型参考](./api/specification-type-reference.md) - 统一类型系统完整定义
   - 关键帧、动画轨道、纹理引用、变换等核心类型
-- [Query Set API](./reference/webgl-query-set.md) - WebGL 查询集功能完整参考
+- [Query Set API](./api/webgl-query-set.md) - WebGL 查询集功能完整参考
   - 遮挡查询、时间戳查询的 API 和实现细节
-- [RHI 命令类型参考](./reference/rhi-command-types.md) - 命令参数类型定义和集成指南
+- [RHI 命令类型参考](./api/rhi-command-types.md) - 命令参数类型定义和集成指南
   - 16 个命令参数接口、类型安全设计、WebGL 实现集成
-- [Push Constants 实现](./packages/rhi/llmdoc/reference/push-constants.md) - Push Constants 参数传递机制
-  - std140 布局规范和 WebGL 实现
-- [Resource Tracker API](./packages/rhi/llmdoc/reference/resource-tracker-api.md) - 资源生命周期管理
-  - 资源追踪、泄漏检测和自动销毁
-- [RHI Demo 系统更新记录](./reference/rhi-demo-system-update-20251210.md) - Demo 系统重大更新文档
-  - 性能监控、相机控制集成和 UI 布局规范
-- [MVP 矩阵实现架构](./architecture/mvp-matrix-implementation.md) - MVP 矩阵变换实现架构
-  - Uniform 缓冲区、着色器集成和相机控制
-- [MVP 矩阵更新指南](./reference/mvp-matrix-update-guide.md) - 从固定管线到 MVP 矩阵的迁移
-  - 技术细节、实现步骤和最佳实践
-- [多顶点缓冲区 Demo 参考](./packages/rhi/llmdoc/reference/multiple-buffers-demo.md) - 多顶点缓冲区架构实现
-  - 位置/颜色/法线分离、缓冲区槽位绑定、顶点布局配置
-- [多顶点缓冲区黑屏修复指南](./reference/multiple-buffers-black-screen-fix.md) - 多缓冲区渲染问题修复
-  - 问题诊断、解决方案、调试技巧和最佳实践
-- [动态缓冲区 Demo 参考](./packages/rhi/llmdoc/reference/dynamic-buffer-demo.md) - 动态缓冲区架构实现
-  - 实时波浪动画、缓冲区动态更新、hint: 'dynamic' 使用
-- [顶点格式 Demo 参考](./packages/rhi/llmdoc/reference/vertex-formats-demo.md) - 顶点格式优化实现
-  - 四种格式对比、71%内存节省、UNORM8x4和SNORM16x2归一化
-- [Blend Modes UBO 修复报告](./packages/rhi/llmdoc/reference/blend-modes-ubo-fix-report.md) - UBO 绑定问题修复过程
-  - 问题描述、根本原因、修复方案和UBO使用规范
-- [混合模式 Demo 参考](./packages/rhi/llmdoc/reference/blend-modes-demo.md) - 混合模式 Demo 完整实现
-  - 7种混合模式实现、纹理加载、交互控制和MVP变换
-- [ShaderUtils 着色器工具参考](./packages/rhi/llmdoc/reference/shader-utils-reference.md) - 着色器代码生成和管理工具
-  - Uniform 块生成、std140 布局计算、着色器模板、代码片段库
-- [TextureLoader 纹理加载器参考](./packages/rhi/demo/src/utils/texture/TEXTURELOADER.md) - 纹理加载和处理工具
-  - 异步加载、Mipmap 生成、Y 轴翻转、预乘 Alpha
-- [CubemapGenerator 立方体贴图生成器](./packages/rhi/demo/src/utils/texture/CubemapGenerator.ts) - 立方体贴图生成工具
-  - 程序化生成、天空渐变、调试着色、全景图转换
-- [RenderTarget 渲染目标管理器](./packages/rhi/demo/src/utils/rendering/RenderTarget.ts) - 离屏渲染工具
-  - 多渲染目标 MRT、MSAA 支持、自动资源管理
-- [混合模式 Demo 参考](./packages/rhi/llmdoc/reference/blend-modes-demo.md) - 混合模式 Demo 完整实现
-  - 7种混合模式实现、纹理加载、交互控制和MVP变换
+- [设备生命周期 API](./api/device-lifecycle.md) - 图形设备创建和管理
+  - 设备初始化、资源管理、销毁流程
+- [Push Constants API](./api/push-constants.md) - 高效参数传递机制
+  - UBO 实现、WebGPU 风格的常量更新
+- [资源追踪器 API](./api/resource-tracker-api.md) - 全局资源管理系统
+  - 资源生命周期、泄漏检测、自动清理
+- [查询集 API](./api/query-set-api.md) - GPU 查询功能接口
+  - 查询类型定义、结果获取、性能分析
+- [MVP 矩阵更新指南](./api/mvp-matrix-update-guide.md) - MVP 矩阵使用指南
+  - 矩阵更新流程、性能优化建议
+- [多缓冲区黑屏修复](./api/multiple-buffers-black-screen-fix.md) - 问题解决方案
+  - 问题原因分析、修复方法、测试验证
+- [轨道控制器 API](./api/orbit-controller.md) - 3D 场景交互控制
+  - 相机轨道、缩放、平移操作
+- [着色器工具参考](./api/shader-utils-reference.md) - 着色器开发辅助工具
+  - 着色器编译、错误处理、调试功能
+- [RHI Demo 系统更新](./api/rhi-demo-system-update-20251210.md) - Demo 系统更新记录
+  - 新增功能、改进内容、使用说明
+
+### 🔧 故障排除 (troubleshooting)
+- [混合模式 UBO 绑定问题报告](./troubleshooting/blend-modes-ubo-binding-issue-report.md) - 问题排查记录
+  - 问题现象、原因分析、解决方案
+- [图元类型拓扑问题报告](./troubleshooting/primitive-types-topology-issue-report.md) - 图元渲染问题
+  - 问题定位、修复过程、测试结果
+- [混合模式 UBO 修复报告](./troubleshooting/blend-modes-ubo-fix-report.md) - 修复方案详情
+  - 代码修改、性能影响、验证测试
 
 ## 3. 核心概念和对应文档
 
@@ -114,72 +132,67 @@
 - **概念**: 硬件渲染抽象层，屏蔽底层图形 API 的复杂性
 - **相关文档**:
   - [RHI 概述](./overview/rhi-overview.md) - 了解 RHI 的设计理念
-  - [RHI 架构](./architecture/rhi-architecture.md) - 深入理解实现原理
+  - [RHI 架构](./architecture/rhi/rhi-architecture.md) - 深入理解实现原理
   - [使用 RHI](./guides/using-rhi.md) - 实践指南
 
 #### WebGL 查询集功能
 - **概念**: 支持 GPU 遮挡查询，用于优化渲染性能
 - **相关文档**:
-  - [Query Set API](./reference/webgl-query-set.md) - API 参考
-  - [Query Set API (RHI)](./packages/rhi/llmdoc/reference/query-set-api.md) - RHI 接口规范
-  - [WebGL 实现](./architecture/webgl-implementation.md) - 实现细节
+  - [Query Set API](./api/webgl-query-set.md) - API 参考
+  - [WebGL 实现](./architecture/rhi/webgl-implementation.md) - 实现细节
 
 #### Push Constants 机制
 - **概念**: 高效参数传递机制，通过 UBO 实现 WebGPU 风格的 push constants
 - **相关文档**:
-  - [Push Constants 实现](./packages/rhi/llmdoc/reference/push-constants.md) - 完整实现细节
-  - [std140 布局规范](./packages/rhi/llmdoc/reference/push-constants.md) - 内存布局规则
+  - [Push Constants API](./api/push-constants.md) - 使用方法
 
 #### 资源管理系统
 - **概念**: 全局资源追踪和生命周期管理，自动检测泄漏
 - **相关文档**:
-  - [Resource Tracker API](./packages/rhi/llmdoc/reference/resource-tracker-api.md) - API 使用指南
-  - [设备生命周期](./packages/rhi/llmdoc/reference/device-lifecycle.md) - 设备资源管理
+  - [资源追踪器 API](./api/resource-tracker-api.md) - 接口文档
 
 #### WebGL 渲染管线和命令系统
 - **概念**: 基于 WebGL 的渲染流水线，支持现代图形特性和类型安全的命令编码
 - **相关文档**:
-  - [WebGL 实现](./architecture/webgl-implementation.md) - 技术细节
+  - [WebGL 实现](./architecture/rhi/webgl-implementation.md) - 技术细节
   - [WebGL 命令](./guides/webgl-commands.md) - 使用方法
-  - [RHI 命令类型](./reference/rhi-command-types.md) - 类型安全的命令系统
-  - [RHI 演示开发](./packages/rhi/llmdoc/guides/demo-development.md) - 演示系统开发指南
-  - [混合模式 Demo 参考](./packages/rhi/llmdoc/reference/blend-modes-demo.md) - 混合模式完整实现
+  - [RHI 命令类型](./api/rhi-command-types.md) - 类型安全的命令系统
 
 #### MVP 矩阵变换
 - **概念**: Model-View-Projection 矩阵变换管线，实现 3D 空间的完整变换流程
 - **相关文档**:
-  - [MVP 矩阵实现架构](./architecture/mvp-matrix-implementation.md) - 实现架构和组件设计
-  - [MVP 矩阵更新指南](./reference/mvp-matrix-update-guide.md) - 迁移指南和技术细节
-  - [OrbitController 相机控制](./packages/rhi/llmdoc/reference/orbit-controller.md) - 交互式相机系统
+  - [MVP 矩阵实现架构](./architecture/rhi/mvp-matrix-implementation.md) - 实现架构和组件设计
+  - [MVP 矩阵更新指南](./api/mvp-matrix-update-guide.md) - 迁移指南和技术细节
 
 #### 多顶点缓冲区架构
 - **概念**: 将顶点数据分离到不同缓冲区，实现灵活的顶点属性管理
 - **相关文档**:
-  - [多顶点缓冲区 Demo 参考](./packages/rhi/llmdoc/reference/multiple-buffers-demo.md) - 完整实现参考
-  - [多缓冲区绑定技术](./packages/rhi/demo/src/multiple-buffers.ts) - 代码示例
-  - [顶点布局配置](./architecture/webgl-implementation.md) - WebGL 实现细节
+  - [顶点布局配置](./architecture/rhi/webgl-implementation.md) - WebGL 实现细节
+  - [多缓冲区演示](./guides/demos/multiple-buffers-demo.md) - 使用示例
 
 #### 顶点格式优化
 - **概念**: 使用不同的顶点数据格式（FLOAT32、UNORM8x4、FLOAT16、SNORM16）实现内存优化
 - **相关文档**:
-  - [顶点格式 Demo 参考](./packages/rhi/llmdoc/reference/vertex-formats-demo.md) - 完整实现参考
-  - [顶点格式实现详解](./packages/rhi/demo/src/VERTEX_FORMATS_IMPLEMENTATION.md) - 技术细节
+  - [顶点格式演示](./guides/demos/vertex-formats-demo.md) - 格式使用示例
 
 #### 动态缓冲区管理
 - **概念**: 实时更新顶点缓冲区数据，适用于动画和变形效果
 - **相关文档**:
-  - [动态缓冲区 Demo 参考](./packages/rhi/llmdoc/reference/dynamic-buffer-demo.md) - 完整实现参考
-  - [波浪动画实现](./packages/rhi/demo/src/dynamic-buffer.ts) - 代码示例
-  - [缓冲区 hint 优化](./packages/rhi/llmdoc/overview/rhi-overview.md) - 性能优化策略
+  - [动态缓冲区演示](./guides/demos/dynamic-buffer-demo.md) - 动画效果示例
 
 #### Demo 开发工具库
 - **概念**: 增强 Demo 开发能力的工具集合
 - **相关文档**:
-  - [RHI 演示开发](./packages/rhi/llmdoc/guides/demo-development.md) - 完整开发指南
-  - [TextureLoader 纹理加载器](./packages/rhi/demo/src/utils/texture/TEXTURELOADER.md) - 纹理加载和处理
-  - [CubemapGenerator 立方体贴图生成器](./packages/rhi/demo/src/utils/texture/CubemapGenerator.ts) - 立方体贴图生成
-  - [RenderTarget 渲染目标管理器](./packages/rhi/demo/src/utils/rendering/RenderTarget.ts) - 离屏渲染
-  - [ShaderUtils 着色器工具](./packages/rhi/llmdoc/reference/shader-utils-reference.md) - 着色器代码生成
+  - [Demo 开发指南](./guides/demo-development.md) - 开发方法
+
+#### 纹理系统
+- **概念**: 完整的纹理加载、采样、过滤和包裹系统
+- **相关文档**:
+  - [2D 纹理演示](./guides/demos/texture-2d-demo.md) - 基础纹理使用
+  - [纹理包裹演示](./guides/demos/texture-wrapping-demo.md) - 包裹模式
+  - [多纹理混合演示](./guides/demos/multi-textures-demo.md) - 多纹理技术
+  - [Mipmap 演示](./guides/demos/mipmaps-demo.md) - Mipmap 优化
+  - [纹理过滤演示](./guides/demos/texture-filtering-demo.md) - 过滤模式
 
 ### 🧮 数学系统
 
@@ -187,9 +200,9 @@
 - **概念**: 向量、矩阵、四元数等基础数学运算，性能优化
 - **相关文档**:
   - [数学库概述](./overview/math-overview.md) - 整体介绍
-  - [数学库架构](./architecture/math-core-architecture.md) - 实现原理
+  - [数学库架构](./architecture/math/math-core-architecture.md) - 实现原理
   - [数学使用指南](./guides/using-math-library.md) - 使用方法
-  - [数学类型参考](./reference/math-type-reference.md) - API 文档
+  - [数学类型参考](./api/math-type-reference.md) - API 文档
 
 ### 🏗️ 引擎系统
 
@@ -197,13 +210,13 @@
 - **概念**: 基于组件的实体管理架构，提供高性能的场景管理
 - **相关文档**:
   - [引擎概述](./overview/engine-overview.md) - 系统介绍
-  - [引擎架构](./architecture/engine-architecture.md) - 架构设计
+  - [引擎架构](./architecture/engine/engine-architecture.md) - 架构设计
   - [引擎使用指南](./guides/engine-usage.md) - 实践指南
 
 #### 渲染管线
 - **概念**: 完整的渲染流程，包括前向渲染、深度预通道、透明处理
 - **相关文档**:
-  - [引擎子系统](./architecture/engine-systems.md) - 详细设计
+  - [引擎子系统](./architecture/engine/engine-systems.md) - 详细设计
 
 ### 🎬 USD 规范系统
 
@@ -215,15 +228,13 @@
   - [USD 数据模型](./architecture/usd-data-model.md) - 数据结构
   - [USD 使用指南](./guides/using-usd-specification.md) - 使用方法
   - [USD 动画](./guides/usd-animation.md) - 动画系统
-  - [USD 类型参考](./reference/usd-core-types.md) - API 文档
+  - [USD 类型参考](./api/usd-core-types.md) - API 文档
 
 #### 统一类型系统
 - **概念**: Specification 包的泛型基类体系和类型继承系统，解决类型重复问题
 - **相关文档**:
   - [类型系统架构](./architecture/specification-type-system.md) - 整体架构设计
-  - [Specification 类型参考](./reference/specification-type-reference.md) - 完整类型定义
-- **重构报告**: [重复类型分析](./packages/specification/docs/duplicate-analysis-report.md) - 类型重复问题分析
-- [重构完成](./packages/specification/docs/refactoring-completion-report.md) - 重构过程和结果
+  - [Specification 类型参考](./api/specification-type-reference.md) - 完整类型定义
 
 ## 4. 快速开始指南
 
@@ -232,8 +243,8 @@
 #### 路径一：快速体验 (30分钟)
 1. 阅读 [项目概览](./overview/project-overview.md) - 了解项目定位和核心功能
 2. 查看 [RHI 概述](./overview/rhi-overview.md) - 了解渲染抽象层概念
-3. 查看 [顶点格式 Demo 参考](./packages/rhi/llmdoc/reference/vertex-formats-demo.md) - 了解内存优化技术
-4. 查看 [RHI 演示开发](./packages/rhi/llmdoc/guides/demo-development.md) - 了解演示系统架构
+3. 查看 [纹理过滤 Demo](./guides/demos/texture-filtering-demo.md) - 了解纹理优化技术
+4. 查看 [多纹理混合 Demo](./guides/demos/multi-textures-demo.md) - 了解混合技术
 5. 尝试 [使用 RHI](./guides/using-rhi.md) - 运行第一个渲染示例
 
 #### 路径二：开发者入门 (2-4小时)
@@ -244,36 +255,31 @@
 2. **核心概念学习**:
    - [项目概览](./overview/project-overview.md) - 整体认识
    - [数学库概述](./overview/math-overview.md) - 3D 数学基础
-   - [编码约定](./reference/coding-conventions.md) - 代码规范
+   - [编码约定](./api/coding-conventions.md) - 代码规范
 
 3. **实践操作**:
    - [数学库使用指南](./guides/using-math-library.md) - 基础运算
    - [使用 RHI](./guides/using-rhi.md) - 渲染入门
    - [引擎使用指南](./guides/engine-usage.md) - 场景管理
-   - [RHI 演示开发](./packages/rhi/llmdoc/guides/demo-development.md) - 演示系统开发
+   - [多缓冲区演示](./guides/demos/multiple-buffers-demo.md) - 演示系统开发
 
 #### 路径三：深度开发 (1-2周)
 1. **架构理解**:
-   - [RHI 架构](./architecture/rhi-architecture.md) - 渲染抽象层
-   - [数学库架构](./architecture/math-core-architecture.md) - 数学实现
-   - [引擎架构](./architecture/engine-architecture.md) - 引擎设计
+   - [RHI 架构](./architecture/rhi/rhi-architecture.md) - 渲染抽象层
+   - [数学库架构](./architecture/math/math-core-architecture.md) - 数学实现
+   - [引擎架构](./architecture/engine/engine-architecture.md) - 引擎设计
 
 2. **高级特性**:
-   - [WebGL 实现](./architecture/webgl-implementation.md) - 底层细节
+   - [WebGL 实现](./architecture/rhi/webgl-implementation.md) - 底层细节
    - [性能优化](./guides/performance-tuning.md) - 性能调优
    - [USD 系统](./overview/usd-overview.md) - 场景描述
-   - [查询集 API](./reference/webgl-query-set.md) - GPU 查询功能
-   - [Push Constants](./packages/rhi/llmdoc/reference/push-constants.md) - 高效参数传递
-   - [Resource Tracker](./packages/rhi/llmdoc/reference/resource-tracker-api.md) - 资源管理
+   - [查询集 API](./api/webgl-query-set.md) - GPU 查询功能
 
 3. **扩展开发**:
-   - [数学类型参考](./reference/math-type-reference.md) - API 参考
-   - [RHI 接口参考](./reference/rhi-interfaces.md) - 接口文档
-   - [USD 类型参考](./reference/usd-core-types.md) - USD API
-   - [MVP 矩阵实现架构](./architecture/mvp-matrix-implementation.md) - 3D 变换管线
-   - [混合模式 Demo 参考](./packages/rhi/llmdoc/reference/blend-modes-demo.md) - 混合模式完整实现
-  - 7种混合模式实现、纹理加载、交互控制和MVP变换
-- [Demo 工具库](./packages/rhi/llmdoc/guides/demo-development.md) - 增强开发能力
+   - [数学类型参考](./api/math-type-reference.md) - API 参考
+   - [RHI 接口参考](./api/rhi-interfaces.md) - 接口文档
+   - [USD 类型参考](./api/usd-core-types.md) - USD API
+   - [MVP 矩阵实现架构](./architecture/rhi/mvp-matrix-implementation.md) - 3D 变换管线
 
 ### 📋 开发环境配置
 
@@ -322,29 +328,43 @@ pnpm test
 | 类别 | 文档数量 | 完成度 | 更新时间 |
 |------|----------|--------|----------|
 | 概述文档 | 5 | 100% | 2024-12 |
-| 操作指南 | 7 | 100% | 2025-12 (新增引擎特定性能优化) |
-| 架构设计 | 10 | 100% | 2025-12 (引擎架构路径更新) |
-| 参考资料 | 21 | 100% | 2025-12-11 (新增多缓冲区黑屏修复指南) |
-| **核心总计** | **38** | **100%** | **2025-12-11 (多缓冲区黑屏问题修复记录)** |
-| **包内文档** | **21** | **100%** | **2025-12-11 (多缓冲区 Demo 问题修复)** |
-| **总计** | **59** | **100%** | **2025-12-11 (新增多缓冲区黑屏问题调查报告)** |
+| 操作指南 | 16 (含9个Demo) | 100% | 2025-12 |
+| 架构设计 | 10 | 100% | 2025-12 |
+| API参考 | 18 | 100% | 2025-12-13 |
+| 故障排除 | 3 | 100% | 2025-12 |
+| **Agent 文档** | **6** | **100%** | **2025-12** |
+| **总计** | **58** | **100%** | **2025-12-13** |
 
 ## 🤝 贡献指南
 
 欢迎为文档系统贡献内容！请参考以下步骤：
 
-1. **文档格式**: 遵循 [编码约定](./reference/coding-conventions.md) 中的文档规范
+1. **文档格式**: 遵循 [编码约定](./api/coding-conventions.md) 中的文档规范
 2. **内容分类**: 确保文档放置在正确的目录结构中
-3. **版本控制**: 使用清晰的提交消息，遵循 [Git 工作流](./reference/git-conventions.md)
+3. **版本控制**: 使用清晰的提交消息，遵循 [Git 工作流](./api/git-conventions.md)
 4. **质量保证**: 提交前检查文档的准确性和完整性
 
 ### 📁 Agent 目录说明
 
-`/agent/` 目录包含临时性的技术调查报告和分析文档，这些文档通常：
-- 记录开发过程中的问题排查过程
-- 分析特定的技术实现方案
-- 提供临时的解决方案记录
+`/agent/` 目录包含技术调查和策略规划文档（已清理至6个），这些文档：
+- 记录开发过程中的技术研究和方案选择
+- 分析特定的技术实现路径
+- 提供策略性的开发指导
 
-这些文档会在问题解决后，其重要内容被整合到主文档系统的相应目录中。
+主要内容：
+- **demo-toolkit-investigation**: Demo 工具箱技术研究
+- **basic-rendering-demos-investigation**: 基础渲染演示调查
+- **matrix4-api-investigation**: Matrix4 API 调查
+- **texture-2d-demo-research**: 2D 纹理演示研究
+- **texture-wrapping-demo-research**: 纹理包裹演示研究
+- **strategy-multi-textures**: 多纹理策略
+
+### 🔧 故障排除目录说明
+
+`/troubleshooting/` 目录包含问题排查和修复记录（3个文档），用于：
+- 记录开发过程中遇到的具体问题
+- 保存问题排查的详细过程
+- 提供解决方案和修复方法
+- 为类似问题提供参考
 
 如有问题或建议，请通过 Issues 或 Pull Request 联系我们。
