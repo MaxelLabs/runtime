@@ -44,11 +44,26 @@
 
 - **6. 几何体生成:** 新几何体在 `packages/rhi/demo/src/utils/geometry/GeometryGenerator.ts` 中实现，支持 Torus、Cone、Cylinder、Capsule 等类型。
 
-- **7. 测试覆盖:** 所有核心和扩展模块都有完整的测试覆盖，测试文件位于 `packages/math/test/` 目录下。
+- **7. 测试覆盖:** 所有核心和扩展模块都有完整的测试覆盖，测试文件位于 `packages/math/test/` 目录下。注意 Float32Array 精度问题，测试必须使用 `toBeCloseTo(value, 5)` 而非 `toBe()`。
 
 ## 4. Design Rationale
 
 该架构采用了模块化设计模式，通过实现 `Poolable` 接口提供对象池支持。所有数学类型都支持链式调用，便于组合复杂的数学运算。使用 TypeScript 接口确保类型安全，支持 USD 规范集成。通过 Object.freeze 冻结常量对象，减少内存占用并提高性能。MathConfig 系统支持动态配置对象池参数。
+
+## 5. 重要注意事项
+
+### Float32Array 精度限制
+- 所有数学类型使用 `Float32Array` 存储，具有约7位十进制精度限制
+- 测试时必须使用 `toBeCloseTo(value, 5)` 进行近似比较
+- `Object.freeze()` 无法深度冻结 Float32Array 内部缓冲区
+
+### 对象池接口
+- `PoolStats` 接口使用 `currentActive` 而非 `activeObjects`
+- 所有数学类实现 `Poolable` 接口以支持对象池
+
+### 矩阵约定
+- 采用列主序存储约定，与 OpenGL/WebGL 标准一致
+- `toIMatrix4x4()` 方法正确处理列主序到行主序的转换
 </ContentFormat_Architecture>
 
 ## 质量检查清单

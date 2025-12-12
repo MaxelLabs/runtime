@@ -867,10 +867,9 @@ export class Color implements ColorLike, Poolable {
       return 0.0;
     } else if (value < 0.0031308) {
       return 12.92 * value;
-    } else if (value < 1.0) {
-      return 1.055 * Math.pow(value, 0.41666) - 0.055;
     } else {
-      return Math.pow(value, 0.41666);
+      // Use correct sRGB gamma curve for all values >= 0.0031308
+      return 1.055 * Math.pow(value, 1.0 / 2.4) - 0.055;
     }
   }
 

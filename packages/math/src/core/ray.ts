@@ -29,6 +29,11 @@ export class Ray {
     // 注意这里必须拷贝
     this.origin.copyFrom(origin);
     this.direction.copyFrom(direction).normalize();
+
+    // 处理零长度方向向量
+    if (this.direction.getLength() === 0) {
+      this.direction.copyFrom(Vector3.X);
+    }
   }
 
   /**
@@ -40,6 +45,11 @@ export class Ray {
   set(origin: Vector3, direction: Vector3): this {
     this.origin.copyFrom(origin);
     this.direction.copyFrom(direction).normalize();
+
+    // 处理零长度方向向量
+    if (this.direction.getLength() === 0) {
+      this.direction.copyFrom(Vector3.X);
+    }
 
     return this;
   }
@@ -114,10 +124,21 @@ export class Ray {
    * @returns
    */
   intersectBox(box: Box3Like, out?: Vector3): Vector3 | undefined {
+    // 检查包围盒是否有效
+    if (!box.min || !box.max) {
+      return undefined;
+    }
+
     const { x: ox, y: oy, z: oz } = this.origin;
     const { x: dx, y: dy, z: dz } = this.direction;
     const { x: bxmin, y: bymin, z: bzmin } = box.min;
     const { x: bxmax, y: bymax, z: bzmax } = box.max;
+
+    // 检查包围盒是否有效（min <= max）
+    if (bxmin > bxmax || bymin > bymax || bzmin > bzmax) {
+      return undefined;
+    }
+
     let tmin, tmax, tymin, tymax, tzmin, tzmax;
     const invdirx = 1 / dx;
     const invdiry = 1 / dy;
@@ -203,10 +224,9 @@ export class Ray {
       return;
     }
 
-    const t = -(this.origin.dot(normal) + distance) / denominator;
+    const t = -(normal.dot(this.origin) + distance) / denominator;
 
     // Return if the ray never intersects the plane
-
     return t >= 0 ? this.at(t, out) : undefined;
   }
 
@@ -254,8 +274,8 @@ export class Ray {
    * @param [backfaceCulling] - 是否背面剔除
    * @returns
    */
-  intersectTriangle(triangle: TriangleLike, out?: Vector3, backfaceCulling?: boolean): Vector3 | undefined {
-    // FIXME: 交换out和backfaceCulling
+  intersectTriangle(triangle: TriangleLike, backfaceCulling?: boolean, out?: Vector3): Vector3 | undefined {
+    // 修正参数顺序：backfaceCulling 在第二个参数
     // Compute the offset origin, edges, and normal.
 
     // from https://github.com/pmjoniak/GeometricTools/blob/master/GTEngine/Include/Mathematics/GteIntrRay3Triangle3.h
@@ -276,11 +296,12 @@ export class Ray {
     let sign;
 
     if (DdN > 0) {
+      sign = 1;
+    } else if (DdN < 0) {
+      // 如果启用背面剔除，当射线从背面射入时（DdN < 0）返回 undefined
       if (backfaceCulling) {
         return;
       }
-      sign = 1;
-    } else if (DdN < 0) {
       sign = -1;
       DdN = -DdN;
     } else {
