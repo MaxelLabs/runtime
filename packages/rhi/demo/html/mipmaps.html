@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mipmap 生成和使用 - RHI Demo</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .container {
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #J-canvas {
+      display: block;
+      cursor: grab;
+    }
+
+    #J-canvas:active {
+      cursor: grabbing;
+    }
+
+    .info-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      width: 380px;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 20px;
+      color: white;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow-y: auto;
+      max-height: calc(100vh - 40px);
+    }
+
+    .info-panel h3 {
+      margin: 0 0 15px 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #00ff88;
+    }
+
+    .description {
+      margin: 15px 0;
+      line-height: 1.6;
+      color: #e0e0e0;
+      font-size: 14px;
+    }
+
+    .tech-points {
+      margin: 20px 0;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      border-left: 3px solid #00ff88;
+    }
+
+    .tech-points h4 {
+      margin: 0 0 10px 0;
+      font-size: 15px;
+      color: #00ff88;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tech-points ul {
+      margin: 0;
+      padding-left: 20px;
+      list-style: none;
+    }
+
+    .tech-points li {
+      margin: 8px 0;
+      position: relative;
+      font-size: 13px;
+      color: #b0b0b0;
+      line-height: 1.5;
+    }
+
+    .tech-points li:before {
+      content: "▸";
+      position: absolute;
+      left: -18px;
+      color: #00ff88;
+    }
+
+    .controls {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(0, 255, 136, 0.1);
+      border-radius: 8px;
+      border: 1px solid rgba(0, 255, 136, 0.3);
+    }
+
+    .controls p {
+      margin: 0;
+      font-size: 13px;
+      color: #00ff88;
+    }
+
+    .mode-explanation {
+      margin: 15px 0;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      font-size: 13px;
+      color: #d0d0d0;
+    }
+
+    .mode-explanation .mode {
+      display: inline-block;
+      padding: 2px 6px;
+      background: rgba(0, 255, 136, 0.2);
+      border-radius: 4px;
+      margin: 0 2px;
+      font-family: monospace;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+  </div>
+  <div class="info-panel">
+    <h3>🗻 Mipmap 生成和使用</h3>
+    <p class="description">
+      演示 Mipmap（多级渐远纹理）的自动生成和手动 LOD 控制。通过延伸平面展示不同距离下的 Mipmap 切换效果，支持三种过滤模式对比。
+    </p>
+
+    <div class="mode-explanation">
+      <strong>三种过滤模式：</strong><br>
+      <span class="mode">无 Mipmap</span>: 纹理在远处产生闪烁和摩尔纹<br>
+      <span class="mode">双线性</span>: Mipmap 级别之间有硬过渡<br>
+      <span class="mode">三线性</span>: 平滑的 LOD 过渡效果
+    </div>
+
+    <div class="tech-points">
+      <h4>💡 技术要点</h4>
+      <ul>
+        <li>自动生成 Mipmap 链（generateMipmaps）</li>
+        <li>手动 LOD 控制（textureLod + uniform）</li>
+        <li>三种过滤模式对比（LINEAR_MIPMAP_LINEAR）</li>
+        <li>带颜色标记的 LOD 级别可视化</li>
+        <li>延伸平面几何体展示距离效果</li>
+      </ul>
+    </div>
+
+    <div class="tech-points">
+      <h4>🎮 操作说明</h4>
+      <ul>
+        <li>键盘 1-3：切换过滤模式</li>
+        <li>L 键：锁定/解锁 LOD 级别</li>
+        <li>↑/↓ 箭头：调整手动 LOD 值</li>
+        <li>鼠标拖动滑块调整参数</li>
+        <li>开 LOD 颜色标记查看各级别分布</li>
+      </ul>
+    </div>
+
+    <div class="controls">
+      <p>快捷键：1-3 切换过滤模式 | L 锁定 LOD | ↑/↓ 调整 LOD</p>
+    </div>
+  </div>
+  <script type="module">
+    async function init() {
+      await import('../src/mipmaps.ts');
+    }
+    init();
+  </script>
+</body>
+</html>

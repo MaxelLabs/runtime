@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>纹理包裹模式 - RHI Demo</title>
+  <title>多纹理混合 - RHI Demo</title>
   <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
   <style>
     body {
@@ -41,7 +41,7 @@
       padding: 15px 20px;
       border-radius: 8px;
       font-size: 13px;
-      max-width: 380px;
+      max-width: 350px;
       backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.15);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
@@ -83,40 +83,6 @@
       margin: 3px 0;
     }
 
-    .info-panel .controls {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .info-panel .controls h4 {
-      margin: 0 0 8px 0;
-      color: #FF9800;
-      font-size: 13px;
-    }
-
-    .info-panel .controls .control-list {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4px;
-      font-size: 10px;
-      color: #aaa;
-    }
-
-    .info-panel .controls .control-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .info-panel .controls .control-key {
-      background: rgba(255, 255, 255, 0.15);
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-family: monospace;
-      color: #fff;
-    }
-
     .error-message {
       position: fixed;
       top: 50%;
@@ -150,35 +116,30 @@
 
   <!-- 左下角介绍面板 -->
   <div class="info-panel">
-    <h3>🔄 纹理包裹模式</h3>
+    <h3>🎨 多纹理混合演示</h3>
     <p class="description">
-      演示纹理 UV 坐标超出 [0,1] 范围时的 3 种包裹模式：REPEAT（重复平铺）、MIRROR_REPEAT（镜像重复）、CLAMP_TO_EDGE（钳制边缘）。
+      演示如何在单个着色器中同时绑定和采样多个纹理，并通过不同的混合算法实现丰富的视觉效果。
+      支持5种混合模式，可实时调节混合参数，并使用遮罩纹理控制混合区域。
     </p>
 
     <div class="tech-points">
       <h4>💡 技术要点</h4>
       <ul>
-        <li>REPEAT: 纹理重复平铺</li>
-        <li>MIRROR_REPEAT: 镜像重复</li>
-        <li>CLAMP_TO_EDGE: 钳制到边缘</li>
+        <li>3纹理绑定（两个主纹理 + 一个遮罩纹理）</li>
+        <li>5种混合模式（Linear、Multiply、Screen、Overlay、Mask）</li>
+        <li>Uniform块控制混合参数</li>
+        <li>程序化纹理生成（棋盘格、渐变、噪声）</li>
+        <li>SimpleGUI交互面板实时调节</li>
+        <li>快捷键1-5快速切换混合模式</li>
       </ul>
-    </div>
-
-    <div class="controls">
-      <h4>⌨️ 快捷键</h4>
-      <div class="control-list">
-        <div class="control-item"><span class="control-key">1</span> REPEAT</div>
-        <div class="control-item"><span class="control-key">2</span> MIRRORED</div>
-        <div class="control-item"><span class="control-key">3</span> CLAMP</div>
-      </div>
     </div>
   </div>
 
   <div class="loading" id="loading">
-    正在初始化...
+    正在初始化多纹理混合演示...
   </div>
 
-  <script type="module" src="../src/texture-wrapping.ts"></script>
+  <script type="module" src="../src/multi-textures.ts"></script>
 
   <script>
     // 隐藏加载提示
@@ -188,19 +149,20 @@
         if (loading) {
           loading.style.display = 'none';
         }
-      }, 1500);
+      }, 2000);
     });
 
     // 添加一些交互提示
     let hintShown = false;
     document.addEventListener('click', () => {
       if (!hintShown) {
-        console.log('🔄 纹理包裹模式演示');
-        console.log('🎯 UV 坐标范围 [-1, 2] 以展示包裹效果');
-        console.log('🔁 REPEAT: 纹理无限重复平铺');
-        console.log('🪞 MIRRORED: 镜像重复，无缝衔接');
-        console.log('📌 CLAMP: 边缘像素拉伸');
-        console.log('🖱️ 使用鼠标旋转视角观察不同角度的效果');
+        console.log('🎨 这个 Demo 展示了多纹理混合技术！');
+        console.log('🎯 纹理1：棋盘格（红蓝相间）');
+        console.log('🌈 纹理2：对角渐变（黄紫青）');
+        console.log('🔲 遮罩纹理：白噪声');
+        console.log('🔢 按数字键 1-5 切换混合模式');
+        console.log('🎛️ 使用GUI面板调节混合参数');
+        console.log('🖱️ 拖动鼠标旋转视角，滚轮缩放');
         hintShown = true;
       }
     });

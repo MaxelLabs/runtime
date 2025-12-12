@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>纹理包裹模式 - RHI Demo</title>
+  <title>纹理过滤模式 - RHI Demo</title>
   <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
   <style>
     body {
@@ -83,19 +83,19 @@
       margin: 3px 0;
     }
 
-    .info-panel .controls {
+    .info-panel .filter-modes {
       margin-top: 10px;
       padding-top: 10px;
       border-top: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    .info-panel .controls h4 {
+    .info-panel .filter-modes h4 {
       margin: 0 0 8px 0;
       color: #FF9800;
       font-size: 13px;
     }
 
-    .info-panel .controls .control-list {
+    .info-panel .filter-modes .mode-list {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 4px;
@@ -103,13 +103,13 @@
       color: #aaa;
     }
 
-    .info-panel .controls .control-item {
+    .info-panel .filter-modes .mode-item {
       display: flex;
       align-items: center;
       gap: 4px;
     }
 
-    .info-panel .controls .control-key {
+    .info-panel .filter-modes .mode-key {
       background: rgba(255, 255, 255, 0.15);
       padding: 2px 6px;
       border-radius: 3px;
@@ -150,26 +150,32 @@
 
   <!-- 左下角介绍面板 -->
   <div class="info-panel">
-    <h3>🔄 纹理包裹模式</h3>
+    <h3>🔍 纹理过滤模式对比</h3>
     <p class="description">
-      演示纹理 UV 坐标超出 [0,1] 范围时的 3 种包裹模式：REPEAT（重复平铺）、MIRROR_REPEAT（镜像重复）、CLAMP_TO_EDGE（钳制边缘）。
+      演示不同纹理过滤模式的视觉效果差异。使用倾斜的棋盘格纹理，
+      可以清晰观察到各种过滤方式在远近距离和倾斜视角下的表现差异。
     </p>
 
     <div class="tech-points">
       <h4>💡 技术要点</h4>
       <ul>
-        <li>REPEAT: 纹理重复平铺</li>
-        <li>MIRROR_REPEAT: 镜像重复</li>
-        <li>CLAMP_TO_EDGE: 钳制到边缘</li>
+        <li>NEAREST：最近邻过滤，像素化效果</li>
+        <li>LINEAR：线性插值，平滑过渡</li>
+        <li>BILINEAR：双线性 + Mipmap 采样</li>
+        <li>TRILINEAR：三线性过滤，消除 LOD 接缝</li>
+        <li>ANISOTROPIC：各向异性过滤，倾斜视角最佳</li>
       </ul>
     </div>
 
-    <div class="controls">
+    <div class="filter-modes">
       <h4>⌨️ 快捷键</h4>
-      <div class="control-list">
-        <div class="control-item"><span class="control-key">1</span> REPEAT</div>
-        <div class="control-item"><span class="control-key">2</span> MIRRORED</div>
-        <div class="control-item"><span class="control-key">3</span> CLAMP</div>
+      <div class="mode-list">
+        <div class="mode-item"><span class="mode-key">1</span> NEAREST</div>
+        <div class="mode-item"><span class="mode-key">2</span> LINEAR</div>
+        <div class="mode-item"><span class="mode-key">3</span> BILINEAR</div>
+        <div class="mode-item"><span class="mode-key">4</span> TRILINEAR</div>
+        <div class="mode-item"><span class="mode-key">5</span> ANISO x4</div>
+        <div class="mode-item"><span class="mode-key">6</span> ANISO x16</div>
       </div>
     </div>
   </div>
@@ -178,7 +184,7 @@
     正在初始化...
   </div>
 
-  <script type="module" src="../src/texture-wrapping.ts"></script>
+  <script type="module" src="../src/texture-filtering.ts"></script>
 
   <script>
     // 隐藏加载提示
@@ -195,11 +201,11 @@
     let hintShown = false;
     document.addEventListener('click', () => {
       if (!hintShown) {
-        console.log('🔄 纹理包裹模式演示');
-        console.log('🎯 UV 坐标范围 [-1, 2] 以展示包裹效果');
-        console.log('🔁 REPEAT: 纹理无限重复平铺');
-        console.log('🪞 MIRRORED: 镜像重复，无缝衔接');
-        console.log('📌 CLAMP: 边缘像素拉伸');
+        console.log('🔍 纹理过滤模式演示');
+        console.log('📐 倾斜平面能更好展示过滤效果差异');
+        console.log('🎯 NEAREST: 像素化，适合像素艺术');
+        console.log('🌊 LINEAR: 平滑，通用选择');
+        console.log('⚡ ANISOTROPIC: 倾斜视角最佳质量');
         console.log('🖱️ 使用鼠标旋转视角观察不同角度的效果');
         hintShown = true;
       }

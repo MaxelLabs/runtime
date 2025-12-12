@@ -4,6 +4,40 @@
 
 ## 最近更新
 
+### 2025-12-12 完成多纹理 Demo
+
+- **multi-textures**: 多纹理绑定和混合模式演示，展示5种混合模式（Linear/Multiply/Screen/Overlay/Mask）和程序化纹理生成（已完成）
+  - 文档索引：`/packages/rhi/llmdoc/reference/multi-textures-demo.md`（已创建）
+  - 技术要点：多纹理绑定、Uniform块控制、程序化纹理、遮罩混合、实时参数调节
+
+### 2025-12-12 完成 Mipmap Demo
+
+- **mipmaps**: Mipmap 生成和使用演示，展示自动生成、手动 LOD 控制和三种过滤模式（已完成）
+  - 文档索引：`/packages/rhi/llmdoc/reference/mipmaps-demo.md`（已创建）
+  - 技术要点：textureLod、generateMipmaps、LINEAR_MIPMAP_LINEAR、LOD 级别可视化
+
+### 2025-12-12 完成纹理包裹模式 Demo
+
+第二层纹理系统 Demo 继续开发：
+
+- **texture-wrapping**: 纹理包裹模式演示，展示 3 种包裹模式的视觉效果差异（已完成）
+  - 文档索引：`/packages/rhi/llmdoc/reference/texture-wrapping-demo.md`（已创建）
+  - 技术要点：REPEAT/MIRROR_REPEAT/CLAMP_TO_EDGE、addressMode、UV 超出范围处理
+
+### 2025-12-12 完成纹理过滤 Demo
+
+- **texture-filtering**: 纹理过滤模式演示，展示 6 种过滤模式的视觉效果差异
+  - 文档索引：`/packages/rhi/llmdoc/reference/texture-filtering-demo.md`（已创建）
+  - 技术要点：NEAREST/LINEAR/BILINEAR/TRILINEAR/各向异性过滤、Mipmap 采样、倾斜平面展示
+
+### 2025-12-12 文档同步完成
+
+**文档同步完成**：
+- 创建 3 个纹理系统 Demo 参考文档：texture-filtering-demo.md、texture-wrapping-demo.md、mipmaps-demo.md
+- 更新 `/llmdoc/index.md` 添加新 Demo 文档索引
+- 修正 demo-development.md 中 Demo 完成状态标记（从"待创建"改为"已创建"）
+- 所有文档与代码实现保持同步，确保 LLM 检索地图准确性
+
 ### 2025-12-11 开始第二层纹理系统 Demo
 
 RHI Demo 系统开始开发第二层纹理系统 Demo：
@@ -187,6 +221,7 @@ runner.start((dt) => {
 - `isCompressedFormat(url)` - 检测 KTX/KTX2/DDS 压缩纹理格式
 
 选项支持：
+
 - `flipY` - Y 轴翻转（符合 WebGL 坐标系），默认 `true`
 - `generateMipmaps` - 自动生成 Mipmap 链，默认 `false`
 - `premultiplyAlpha` - 预乘 Alpha 处理，默认 `false`
@@ -200,10 +235,7 @@ const texture = await TextureLoader.load('path/to/image.jpg', {
 });
 
 // 批量加载
-const textures = await TextureLoader.loadAll([
-  'texture1.jpg',
-  'texture2.jpg',
-]);
+const textures = await TextureLoader.loadAll(['texture1.jpg', 'texture2.jpg']);
 ```
 
 ### CubemapGenerator (立方体贴图 - 新增)
@@ -219,9 +251,9 @@ const textures = await TextureLoader.loadAll([
 ```typescript
 // 创建天空渐变立方体贴图
 const cubemap = CubemapGenerator.skyGradient({
-  topColor: [135, 206, 250, 255],    // 天空蓝
+  topColor: [135, 206, 250, 255], // 天空蓝
   horizonColor: [176, 196, 222, 255], // 淡蓝
-  bottomColor: [139, 69, 19, 255],   // 地面棕
+  bottomColor: [139, 69, 19, 255], // 地面棕
   size: 256,
 });
 
@@ -229,10 +261,7 @@ const cubemap = CubemapGenerator.skyGradient({
 const debug = CubemapGenerator.debug({ size: 256, showLabels: true });
 
 // 从全景图加载
-const cubemapFromPanorama = await CubemapGenerator.fromEquirectangular(
-  'panorama.jpg',
-  512
-);
+const cubemapFromPanorama = await CubemapGenerator.fromEquirectangular('panorama.jpg', 512);
 ```
 
 ### RenderTarget (渲染目标 - 新增)
@@ -245,6 +274,7 @@ const cubemapFromPanorama = await CubemapGenerator.fromEquirectangular(
 - 动态调整大小
 
 主要方法：
+
 - `getRenderPassDescriptor(clearColor?, depthClearValue?)` - 获取渲染通道描述符
 - `getColorView(index)` - 获取颜色附件纹理视图
 - `getColorTexture(index)` - 获取颜色附件纹理
@@ -258,7 +288,7 @@ const renderTarget = runner.track(
   new RenderTarget(runner.device, {
     width: 800,
     height: 600,
-    colorAttachmentCount: 2,  // MRT with 2 targets
+    colorAttachmentCount: 2, // MRT with 2 targets
     depthFormat: RHITextureFormat.DEPTH24_UNORM_STENCIL8,
   })
 );
@@ -275,21 +305,25 @@ const colorTexture = renderTarget.getColorView(0);
 生成和管理着色器代码：
 
 **Uniform 块工具：**
+
 - `generateUniformBlock(definition)` - 生成 Uniform 块 GLSL 代码（std140 布局）
 - `calculateUniformBlockSize(fields)` - 计算 std140 布局大小（字节）
 - `calculateUniformBlockLayout(fields)` - 获取详细布局信息（字段偏移）
 
 **标准 Uniform 块：**
+
 - `getTransformsBlock(binding)` - MVP 矩阵块（uModelMatrix, uViewMatrix, uProjectionMatrix）
 - `getLightingBlock(binding)` - 光照参数块（uLightPosition, uLightColor, uAmbientColor）
 - `getMaterialBlock(binding)` - 材质参数块（uAmbientColor, uDiffuseColor, uSpecularColor, uShininess）
 
 **着色器模板：**
+
 - `basicVertexShader(options)` - 基础顶点着色器（支持法线、UV、顶点颜色）
 - `basicFragmentShader(options)` - 基础片段着色器（支持纯色、顶点颜色、纹理、光照）
 - `phongShaders()` - 完整的 Phong 光照着色器对（顶点 + 片段）
 
 **着色器片段库：**
+
 - `getLightingSnippet()` - Phong 光照计算代码片段
 - `getNormalTransformSnippet()` - 法线变换代码片段
 - `getTextureSamplingSnippet()` - 纹理采样代码片段
@@ -402,23 +436,27 @@ runner.start((dt) => {
 
 ## 四、已完成 Demo
 
-| #   | 名称             | 文件                | 功能点                               |
-| --- | ---------------- | ------------------- | ------------------------------------ |
-| 01  | triangle         | triangle.ts         | 最小化渲染流程，MVP 矩阵变换基础实现 |
-| 02  | colored-triangle | colored-triangle.ts | 顶点颜色属性，红绿蓝渐变插值效果     |
-| 03  | rotating-cube    | rotating-cube.ts    | 3D变换、纹理、光照、GUI、相机控制    |
-| 04  | quad-indexed     | quad-indexed.ts     | 索引缓冲区绘制，顶点复用             |
-| 05  | primitive-types  | primitive-types.ts  | 图元拓扑类型（点/线/三角形）         |
-| 06  | viewport-scissor | viewport-scissor.ts | 视口和裁剪矩形，多视口渲染           |
-| 07  | depth-test       | depth-test.ts       | 深度测试功能，多个重叠几何体遮挡     |
-| 08  | blend-modes      | blend-modes.ts      | 各种混合模式，支持纹理和MVP变换      |
-| 09  | multiple-buffers | multiple-buffers.ts | 多顶点缓冲区，位置/颜色/法线分离     |
-| 10  | dynamic-buffer   | dynamic-buffer.ts   | 缓冲区动态更新，波浪动画效果         |
-| 11  | vertex-formats   | vertex-formats.ts   | 顶点格式对比，内存优化演示           |
-| 12  | stencil-test     | stencil-test.ts     | 模板测试，轮廓效果（Outline）        |
-| 13  | texture-2d       | texture-2d.ts       | 基础2D纹理，TextureLoader + ProceduralTexture | ✅ 新增 |
+| #   | 名称             | 文件                | 功能点                                        |
+| --- | ---------------- | ------------------- | --------------------------------------------- | ------- |
+| 01  | triangle         | triangle.ts         | 最小化渲染流程，MVP 矩阵变换基础实现          |
+| 02  | colored-triangle | colored-triangle.ts | 顶点颜色属性，红绿蓝渐变插值效果              |
+| 03  | rotating-cube    | rotating-cube.ts    | 3D变换、纹理、光照、GUI、相机控制             |
+| 04  | quad-indexed     | quad-indexed.ts     | 索引缓冲区绘制，顶点复用                      |
+| 05  | primitive-types  | primitive-types.ts  | 图元拓扑类型（点/线/三角形）                  |
+| 06  | viewport-scissor | viewport-scissor.ts | 视口和裁剪矩形，多视口渲染                    |
+| 07  | depth-test       | depth-test.ts       | 深度测试功能，多个重叠几何体遮挡              |
+| 08  | blend-modes      | blend-modes.ts      | 各种混合模式，支持纹理和MVP变换               |
+| 09  | multiple-buffers | multiple-buffers.ts | 多顶点缓冲区，位置/颜色/法线分离              |
+| 10  | dynamic-buffer   | dynamic-buffer.ts   | 缓冲区动态更新，波浪动画效果                  |
+| 11  | vertex-formats   | vertex-formats.ts   | 顶点格式对比，内存优化演示                    |
+| 12  | stencil-test     | stencil-test.ts     | 模板测试，轮廓效果（Outline）                 |
+| 13  | texture-2d       | texture-2d.ts       | 基础2D纹理，TextureLoader + ProceduralTexture |
+| 14  | texture-filtering | texture-filtering.ts | 纹理过滤模式对比（NEAREST/LINEAR/各向异性） |
+| 15  | texture-wrapping | texture-wrapping.ts | 纹理包裹模式（REPEAT/MIRROR_REPEAT/CLAMP）   |
+| 16  | mipmaps          | mipmaps.ts          | Mipmap 生成和使用（textureLod + LOD 控制）   |         |
+| 17  | multi-textures   | multi-textures.ts   | 多纹理绑定和5种混合模式（Linear/Multiply等） | ✅ 新增 |
 
-**注意**：所有 Demo 均已集成 Stats 性能监控、OrbitController 相机控制和完整的 MVP 矩阵变换管线。**第一层基础渲染 12 个 Demo 已全部完成（2025-12-10）。第二层纹理系统开始开发（2025-12-11）。**
+**注意**：所有 Demo 均已集成 Stats 性能监控、OrbitController 相机控制和完整的 MVP 矩阵变换管线。**第一层基础渲染 12 个 Demo 已全部完成（2025-12-10）。第二层纹理系统已开发 5 个（2025-12-12）。**
 
 ---
 
@@ -426,30 +464,30 @@ runner.start((dt) => {
 
 ### 第一层：基础渲染 (12 demos)
 
-| #   | 名称             | 验证功能点       | 状态     |
-| --- | ---------------- | ---------------- | -------- |
-| 01  | triangle         | 最小化渲染流程   | ✅ 完成  |
-| 02  | colored-triangle | 顶点颜色属性     | ✅ 完成  |
-| 03  | quad-indexed     | 索引缓冲区绘制   | ✅ 完成  |
-| 04  | rotating-cube    | 3D 变换矩阵      | ✅ 完成  |
-| 05  | multiple-buffers | 多顶点缓冲区     | ✅ 完成  |
-| 06  | dynamic-buffer   | 缓冲区动态更新   | ✅ 完成  |
-| 07  | vertex-formats   | 各种顶点格式     | ✅ 完成  |
-| 08  | primitive-types  | 点/线/三角形拓扑 | ✅ 完成  |
-| 09  | viewport-scissor | 视口和裁剪矩形   | ✅ 完成  |
-| 10  | depth-test       | 深度测试         | ✅ 完成  |
-| 11  | stencil-test     | 模板测试         | ✅ 完成  |
-| 12  | blend-modes      | 混合模式         | ✅ 完成  |
+| #   | 名称             | 验证功能点       | 状态    |
+| --- | ---------------- | ---------------- | ------- |
+| 01  | triangle         | 最小化渲染流程   | ✅ 完成 |
+| 02  | colored-triangle | 顶点颜色属性     | ✅ 完成 |
+| 03  | quad-indexed     | 索引缓冲区绘制   | ✅ 完成 |
+| 04  | rotating-cube    | 3D 变换矩阵      | ✅ 完成 |
+| 05  | multiple-buffers | 多顶点缓冲区     | ✅ 完成 |
+| 06  | dynamic-buffer   | 缓冲区动态更新   | ✅ 完成 |
+| 07  | vertex-formats   | 各种顶点格式     | ✅ 完成 |
+| 08  | primitive-types  | 点/线/三角形拓扑 | ✅ 完成 |
+| 09  | viewport-scissor | 视口和裁剪矩形   | ✅ 完成 |
+| 10  | depth-test       | 深度测试         | ✅ 完成 |
+| 11  | stencil-test     | 模板测试         | ✅ 完成 |
+| 12  | blend-modes      | 混合模式         | ✅ 完成 |
 
 ### 第二层：纹理系统 (10 demos)
 
 | #   | 名称               | 验证功能点         | 状态     |
 | --- | ------------------ | ------------------ | -------- |
 | 13  | texture-2d         | 基础 2D 纹理采样   | ✅ 完成  |
-| 14  | texture-wrapping   | 重复/镜像/钳制模式 | 待实现   |
-| 15  | texture-filtering  | 线性/最近邻过滤    | 待实现   |
-| 16  | mipmaps            | Mipmap 生成和使用  | 待实现   |
-| 17  | multi-textures     | 多纹理混合         | 待实现   |
+| 14  | texture-wrapping   | 重复/镜像/钳制模式 | ✅ 完成  |
+| 15  | texture-filtering  | 线性/最近邻过滤    | ✅ 完成  |
+| 16  | mipmaps            | Mipmap 生成和使用  | ✅ 完成  |
+| 17  | multi-textures     | 多纹理混合         | ✅ 完成  |
 | 18  | cubemap-skybox     | 立方体贴图天空盒   | 待实现   |
 | 19  | render-to-texture  | 渲染到纹理         | 待实现   |
 | 20  | texture-array      | 纹理数组 (WebGL2)  | 待实现   |
@@ -606,6 +644,8 @@ runner.onKey('Escape', () => {
 
 #### 左下角：Demo 介绍面板
 
+**⚠️ 重要**: 介绍面板必须位于左下角，不能放在其他位置。
+
 ```css
 .info-panel {
   position: absolute;
@@ -623,7 +663,65 @@ runner.onKey('Escape', () => {
 }
 ```
 
-HTML 结构：
+#### Canvas 容器布局（必需）
+
+**⚠️ 重要**: Canvas 必须使用 `.container` 容器包裹，**不能**直接对 Canvas 设置 `width: 100%; height: 100%` 的 CSS 样式，否则会导致渲染黑屏。
+
+正确的 HTML 结构：
+
+```html
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+  </div>
+  <div class="info-panel">...</div>
+</body>
+```
+
+正确的 CSS 样式：
+
+```css
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.container {
+  width: 100vw;
+  height: 100vh;
+  background-color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#J-canvas {
+  display: block;
+  cursor: grab;
+}
+
+#J-canvas:active {
+  cursor: grabbing;
+}
+```
+
+**错误示例（会导致黑屏）**：
+
+```css
+/* ❌ 错误：不要直接对 Canvas 设置 100% 尺寸 */
+#J-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+```
+
+原因：DemoRunner 通过 `window.innerWidth/Height` 动态设置 Canvas 的实际渲染尺寸（`canvas.width/height` 属性），而 CSS 的 `width: 100%` 会创建一个与实际渲染buffer尺寸不匹配的显示尺寸，导致渲染内容不可见。
+
+#### 介绍面板 HTML 结构
 
 ```html
 <div class="info-panel">
@@ -689,6 +787,134 @@ import {
   Stats, // 必需
 } from './utils';
 ```
+
+### 6. 在 index.html 中注册 Demo 入口
+
+所有 RHI Demo **必须**在 `packages/rhi/demo/index.html` 中注册入口，确保可以从 Demo Gallery 首页直接访问。
+
+#### 6.1 入口卡片结构要求
+
+- 每个 Demo 对应一个 `.demo-card` 卡片
+- 按分类（基础功能 / 纹理系统 / 高级渲染等）归入对应的 `category` 区块
+- 卡片内部包含：
+  - 标题行：Emoji + Demo 名称 + 难度标签
+  - 一段简短描述（1~3 句话）
+  - 技术要点标签列表 `.tech-tags`
+  - 运行入口链接 `.demo-link`
+
+示例（纹理系统 Demo 卡片）：
+
+```html
+<!-- 纹理系统Demo -->
+<div class="category">
+  <h2>🖼️ 纹理系统Demo</h2>
+</div>
+
+<div class="demo-card">
+  <h3>🎨 基础 2D 纹理 <span class="difficulty intermediate">中级</span></h3>
+  <p>
+    演示纹理加载和采样的基础功能。展示 TextureLoader 加载外部图片、ProceduralTexture
+    生成程序化纹理，以及多纹理对比显示。
+  </p>
+  <div class="tech-tags">
+    <span class="tech-tag">TextureLoader</span>
+    <span class="tech-tag">sampler2D</span>
+    <span class="tech-tag">UV映射</span>
+    <span class="tech-tag">程序化纹理</span>
+  </div>
+  <a class="demo-link" href="html/texture-2d.html">🎮 运行Demo</a>
+</div>
+```
+
+#### 6.2 入口链接路径规范
+
+- 所有 Demo 的运行页面必须放在：`packages/rhi/demo/html/` 目录下
+- 入口链接统一使用相对路径：
+  - `href="html/<demo-name>.html"`
+  - 例如：
+    - `triangle` → `html/triangle.html`
+    - `texture-2d` → `html/texture-2d.html`
+    - `texture-wrapping` → `html/texture-wrapping.html`
+- 不允许直接链接到 `.ts` 源码文件
+
+#### 6.3 添加新 Demo 的标准流程
+
+当你完成一个新的 Demo（例如 `texture-wrapping`）时，必须按以下顺序完成注册：
+
+1. 在 `packages/rhi/demo/html/` 下创建对应的 HTML 页面（例如 `texture-wrapping.html`），并在其中：
+   - 创建 `<canvas id="J-canvas"></canvas>` 作为渲染容器
+   - 使用 `<script type="module">` 引入对应的 TypeScript 模块，例如：
+
+```html
+<script type="module">
+  async function init() {
+    await import('../src/texture-wrapping.ts');
+  }
+
+  init();
+</script>
+```
+
+2. 打开 `packages/rhi/demo/index.html`，在合适的分类下添加新的 `.demo-card`：
+
+   - 纹理相关 Demo 放在「🖼️ 纹理系统Demo」分类内
+   - 基础渲染 Demo 放在「🎯 基础功能Demo」分类内
+   - 高级渲染 / 查询优化 Demo 按规划表选择对应分组
+
+3. 保持标题和描述风格与现有卡片一致：
+   - 标题使用 Emoji 前缀，例如 `🔁 纹理包裹模式`
+   - 难度标签使用现有的 `difficulty beginner` / `difficulty intermediate` / `difficulty advanced` 类
+   - 技术要点标签简洁概括主要 API 或概念
+
+#### 6.4 验证步骤与预期结果
+
+完成入口注册后，必须按以下步骤自检：
+
+1. 在仓库根目录启动 RHI Demo 开发服务器：
+
+```bash
+pnpm --filter @maxellabs/rhi dev
+```
+
+2. 在浏览器中打开首页：
+
+```text
+http://<本机或局域网IP>:3001/demo/index.html
+```
+
+3. 在页面中找到新添加的 Demo 卡片，检查：
+
+   - 卡片样式与其他 Demo 一致
+   - 描述和技术标签显示正常，没有排版错乱
+
+4. 点击「🎮 运行Demo」：
+   - 浏览器跳转到对应的 `html/<demo-name>.html` 页面
+   - 加载过程中无 404 / 500 等资源错误（在 DevTools Network 面板中确认）
+   - Demo 自动初始化并开始渲染（控制台输出初始化日志）
+   - 所有键盘/鼠标交互按各自 Demo 文档说明正常工作
+
+#### 6.5 常见问题与排查建议
+
+- **问题：点击首页卡片后出现 404 页面**
+
+  - 检查 `href` 是否指向正确的 `html/<demo-name>.html`
+  - 确认对应 HTML 文件已经存在于 `packages/rhi/demo/html/` 目录中
+
+- **问题：页面打开但画面一片黑 / 没有渲染**
+
+  - **首先检查 Canvas 布局**：确认 HTML 中使用了 `.container` 容器包裹 Canvas，而不是直接对 Canvas 设置 `width: 100%; height: 100%` 的 CSS 样式（这是最常见的黑屏原因）
+  - 确认 HTML 中的 `canvas` 元素 id 是否与 DemoRunner 配置一致（通常是 `J-canvas`）
+  - 检查 `<script type="module">` 中的 `import` 路径是否正确（`../src/<demo-name>.ts`）
+  - 在浏览器控制台查看是否有 WebGL 初始化错误或未捕获异常
+
+- **问题：首页能看到卡片，但样式错乱**
+
+  - 确认新卡片的 HTML 结构与示例保持一致（`demo-card`、`tech-tags`、`demo-link` 等类名不要修改）
+  - 避免在卡片内部引入额外的布局容器破坏现有 CSS 网格结构
+
+- **问题：新增 Demo 没有出现在首页**
+  - 确认修改的是 `packages/rhi/demo/index.html` 而不是其他同名文件
+  - 使用浏览器强制刷新（建议开启 DevTools 并勾选「Disable cache」）
 
 ---
 

@@ -1,15 +1,24 @@
 /**
- * texture-wrapping.ts
- * 纹理包裹模式演示 Demo
+ * texture-filtering.ts
+ * 纹理过滤模式演示 Demo
  *
  * 功能演示：
- * - REPEAT: 重复平铺纹理
- * - MIRROR_REPEAT: 镜像重复纹理
- * - CLAMP_TO_EDGE: 钳制到边缘像素
+ * - 最近邻过滤 (NEAREST) - 像素化效果，适合像素艺术
+ * - 线性过滤 (LINEAR) - 平滑效果，适合照片
+ * - 各向异性过滤 (Anisotropic) - 倾斜视角高质量过滤
+ * - Mipmap 过滤模式对比
  */
 
 import { MSpec, MMath } from '@maxellabs/core';
-import { DemoRunner, OrbitController, Stats, GeometryGenerator, ProceduralTexture, SimpleGUI } from './utils';
+import {
+  DemoRunner,
+  OrbitController,
+  Stats,
+  TextureLoader,
+  GeometryGenerator,
+  ProceduralTexture,
+  SimpleGUI,
+} from './utils';
 
 // ==================== 着色器源码 ====================
 
@@ -48,29 +57,65 @@ void main() {
 }
 `;
 
-// ==================== 包裹模式配置 ====================
+// ==================== 过滤模式配置 ====================
 
-interface WrappingConfig {
+interface FilterConfig {
   name: string;
   description: string;
-  mode: MSpec.RHIAddressMode;
+  minFilter: MSpec.RHIFilterMode;
+  magFilter: MSpec.RHIFilterMode;
+  mipmapFilter: MSpec.RHIFilterMode;
+  maxAnisotropy: number;
 }
 
-const WRAPPING_CONFIGS: WrappingConfig[] = [
+const FILTER_CONFIGS: FilterConfig[] = [
   {
-    name: 'REPEAT',
-    description: '重复 (Repeat)',
-    mode: MSpec.RHIAddressMode.REPEAT,
+    name: 'NEAREST',
+    description: '最近邻过滤 - 像素化效果',
+    minFilter: MSpec.RHIFilterMode.NEAREST,
+    magFilter: MSpec.RHIFilterMode.NEAREST,
+    mipmapFilter: MSpec.RHIFilterMode.NEAREST,
+    maxAnisotropy: 1,
   },
   {
-    name: 'MIRROR_REPEAT',
-    description: '镜像重复 (Mirrored)',
-    mode: MSpec.RHIAddressMode.MIRROR_REPEAT,
+    name: 'LINEAR',
+    description: '线性过滤 - 平滑效果',
+    minFilter: MSpec.RHIFilterMode.LINEAR,
+    magFilter: MSpec.RHIFilterMode.LINEAR,
+    mipmapFilter: MSpec.RHIFilterMode.NEAREST,
+    maxAnisotropy: 1,
   },
   {
-    name: 'CLAMP_TO_EDGE',
-    description: '钳制边缘 (Clamp)',
-    mode: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
+    name: 'BILINEAR',
+    description: '双线性过滤 + Mipmap',
+    minFilter: MSpec.RHIFilterMode.LINEAR_MIPMAP_NEAREST,
+    magFilter: MSpec.RHIFilterMode.LINEAR,
+    mipmapFilter: MSpec.RHIFilterMode.NEAREST,
+    maxAnisotropy: 1,
+  },
+  {
+    name: 'TRILINEAR',
+    description: '三线性过滤 - 高质量',
+    minFilter: MSpec.RHIFilterMode.LINEAR_MIPMAP_LINEAR,
+    magFilter: MSpec.RHIFilterMode.LINEAR,
+    mipmapFilter: MSpec.RHIFilterMode.LINEAR,
+    maxAnisotropy: 1,
+  },
+  {
+    name: 'ANISOTROPIC x4',
+    description: '各向异性过滤 x4',
+    minFilter: MSpec.RHIFilterMode.LINEAR_MIPMAP_LINEAR,
+    magFilter: MSpec.RHIFilterMode.LINEAR,
+    mipmapFilter: MSpec.RHIFilterMode.LINEAR,
+    maxAnisotropy: 4,
+  },
+  {
+    name: 'ANISOTROPIC x16',
+    description: '各向异性过滤 x16 - 最高质量',
+    minFilter: MSpec.RHIFilterMode.LINEAR_MIPMAP_LINEAR,
+    magFilter: MSpec.RHIFilterMode.LINEAR,
+    mipmapFilter: MSpec.RHIFilterMode.LINEAR,
+    maxAnisotropy: 16,
   },
 ];
 
@@ -81,7 +126,7 @@ const WRAPPING_CONFIGS: WrappingConfig[] = [
     // 1. 初始化 DemoRunner
     const runner = new DemoRunner({
       canvasId: 'J-canvas',
-      name: 'Texture Wrapping Demo',
+      name: 'Texture Filtering Demo',
       clearColor: [0.08, 0.08, 0.12, 1.0],
     });
 
@@ -94,34 +139,27 @@ const WRAPPING_CONFIGS: WrappingConfig[] = [
       target: [0, 0, 0],
       enableDamping: true,
       autoRotate: false,
+      // 允许更大的倾斜角度以观察各向异性过滤效果
+      minElevation: -Math.PI * 0.4,
+      maxElevation: Math.PI * 0.4,
     });
 
-    // 3. 创建倾斜平面几何体（UV 范围 [-1, 2] 以展示包裹效果）
+    // 3. 创建倾斜平面几何体（更好地展示过滤效果）
+    // 使用一个较大的平面，展示远近不同距离的过滤效果
     const planeGeometry = GeometryGenerator.quad({
       width: 4,
       height: 4,
       uvs: true,
     });
 
-    // 手动调整 UV 坐标到 [-1, 2] 范围
-    // quad 数据布局: position (3 floats) + uv (2 floats) = 5 floats per vertex, 4 vertices total
-    const vertices = new Float32Array(planeGeometry.vertices);
-    const floatsPerVertex = 5; // position(3) + uv(2)
-    for (let i = 0; i < 4; i++) {
-      const uvXIndex = i * floatsPerVertex + 3; // UV x index (after position)
-      const uvYIndex = i * floatsPerVertex + 4; // UV y index
-      vertices[uvXIndex] = vertices[uvXIndex] * 3 - 1; // [0,1] -> [-1,2]
-      vertices[uvYIndex] = vertices[uvYIndex] * 3 - 1; // [0,1] -> [-1,2]
-    }
-
     // 4. 创建顶点缓冲区
     const vertexBuffer = runner.track(
       runner.device.createBuffer({
-        size: vertices.byteLength,
+        size: planeGeometry.vertices.byteLength,
         usage: MSpec.RHIBufferUsage.VERTEX,
         hint: 'static',
-        initialData: vertices as BufferSource,
-        label: 'Wrapping Plane Vertex Buffer',
+        initialData: planeGeometry.vertices as BufferSource,
+        label: 'Filtering Plane Vertex Buffer',
       })
     );
 
@@ -135,41 +173,51 @@ const WRAPPING_CONFIGS: WrappingConfig[] = [
       })
     );
 
-    // 6. 创建棋盘格纹理
+    // 6. 创建测试纹理（棋盘格最能体现过滤效果差异）
     // eslint-disable-next-line no-console
-    console.log('[Texture Wrapping Demo] Creating checkerboard texture...');
+    console.log('[Texture Filtering Demo] Creating test texture...');
 
+    // 使用高分辨率棋盘格以更好展示过滤效果
     const checkerData = ProceduralTexture.checkerboard({
-      width: 256,
-      height: 256,
-      cellSize: 16,
-      colorA: [255, 100, 100, 255], // 红色
-      colorB: [100, 100, 255, 255], // 蓝色
+      width: 512,
+      height: 512,
+      cellSize: 8, // 小格子更能体现过滤差异
+      colorA: [255, 255, 255, 255],
+      colorB: [32, 32, 32, 255],
     });
 
-    // 创建纹理
+    // 创建带 Mipmap 的纹理
     const texture = runner.track(
       runner.device.createTexture({
         width: checkerData.width,
         height: checkerData.height,
         format: MSpec.RHITextureFormat.RGBA8_UNORM,
         usage: MSpec.RHITextureUsage.TEXTURE_BINDING,
-        label: 'Checkerboard Texture',
+        mipLevelCount: Math.floor(Math.log2(Math.max(checkerData.width, checkerData.height))) + 1,
+        label: 'Checkerboard Texture with Mipmaps',
       })
     );
     texture.update(checkerData.data as BufferSource);
 
-    // eslint-disable-next-line no-console
-    console.log(`[Texture Wrapping Demo] Created ${checkerData.width}x${checkerData.height} texture`);
+    // 生成 Mipmap
+    const mipmapLevels = TextureLoader.generateMipmaps(checkerData.data, checkerData.width, checkerData.height);
+    for (let level = 0; level < mipmapLevels.length; level++) {
+      texture.update(mipmapLevels[level] as BufferSource, 0, 0, 0, undefined, undefined, undefined, level + 1);
+    }
 
-    // 7. 为每种包裹模式创建采样器
-    const samplers = WRAPPING_CONFIGS.map((config) =>
+    // eslint-disable-next-line no-console
+    console.log(`[Texture Filtering Demo] Created texture with ${mipmapLevels.length + 1} mip levels`);
+
+    // 7. 为每种过滤模式创建采样器
+    const samplers = FILTER_CONFIGS.map((config) =>
       runner.track(
         runner.device.createSampler({
-          magFilter: MSpec.RHIFilterMode.LINEAR,
-          minFilter: MSpec.RHIFilterMode.LINEAR,
-          addressModeU: config.mode,
-          addressModeV: config.mode,
+          magFilter: config.magFilter,
+          minFilter: config.minFilter,
+          mipmapFilter: config.mipmapFilter,
+          addressModeU: MSpec.RHIAddressMode.REPEAT,
+          addressModeV: MSpec.RHIAddressMode.REPEAT,
+          maxAnisotropy: config.maxAnisotropy,
           label: `Sampler: ${config.name}`,
         })
       )
@@ -181,7 +229,7 @@ const WRAPPING_CONFIGS: WrappingConfig[] = [
         code: vertexShaderSource,
         language: 'glsl',
         stage: MSpec.RHIShaderStage.VERTEX,
-        label: 'Wrapping Vertex Shader',
+        label: 'Filtering Vertex Shader',
       })
     );
 
@@ -190,7 +238,7 @@ const WRAPPING_CONFIGS: WrappingConfig[] = [
         code: fragmentShaderSource,
         language: 'glsl',
         stage: MSpec.RHIShaderStage.FRAGMENT,
-        label: 'Wrapping Fragment Shader',
+        label: 'Filtering Fragment Shader',
       })
     );
 
@@ -220,7 +268,7 @@ const WRAPPING_CONFIGS: WrappingConfig[] = [
 
     // 10. 创建管线布局
     const pipelineLayout = runner.track(
-      runner.device.createPipelineLayout([bindGroupLayout], 'Wrapping Pipeline Layout')
+      runner.device.createPipelineLayout([bindGroupLayout], 'Filtering Pipeline Layout')
     );
 
     // 11. 顶点布局
@@ -246,14 +294,14 @@ const WRAPPING_CONFIGS: WrappingConfig[] = [
         vertexLayout,
         primitiveTopology: MSpec.RHIPrimitiveTopology.TRIANGLE_LIST,
         layout: pipelineLayout,
-        label: 'Wrapping Pipeline',
+        label: 'Filtering Pipeline',
       })
     );
 
     // 13. 获取纹理视图
     const textureView = texture.createView();
 
-    // 14. 为每种包裹模式创建绑定组
+    // 14. 为每种过滤模式创建绑定组
     const bindGroups = samplers.map((sampler) =>
       runner.track(
         runner.device.createBindGroup(bindGroupLayout, [
@@ -264,34 +312,33 @@ const WRAPPING_CONFIGS: WrappingConfig[] = [
       )
     );
 
-    // 当前选中的包裹模式索引
-    let currentWrappingIndex = 0; // 默认选中 REPEAT
+    // 当前选中的过滤模式索引
+    let currentFilterIndex = 1; // 默认选中 LINEAR
 
-    // 模型矩阵
+    // 模型矩阵（将平面倾斜以更好展示过滤效果）
     const modelMatrix = new MMath.Matrix4();
+    // 绕 X 轴旋转 -60 度，使平面倾斜
+    modelMatrix.rotateX(-Math.PI / 3);
 
-    // UV 缩放因子
-    let uvScale = 1.0;
-
-    // 平面倾斜角度
-    let tiltAngle = 45;
+    // UV 缩放因子（控制纹理重复次数）
+    let uvScale = 4;
 
     // ==================== GUI 控制 ====================
     const gui = new SimpleGUI();
-    gui.addSeparator('Wrapping Mode');
+    gui.addSeparator('Filter Mode');
 
-    // 添加包裹模式选择下拉框
-    const wrappingNames = WRAPPING_CONFIGS.map((c) => c.description);
-    gui.add('Mode', {
-      value: wrappingNames[currentWrappingIndex],
-      options: wrappingNames,
+    // 添加过滤模式选择下拉框
+    const filterNames = FILTER_CONFIGS.map((c) => c.name);
+    gui.add('Filter', {
+      value: filterNames[currentFilterIndex],
+      options: filterNames,
       onChange: (value) => {
-        const desc = value as string;
-        const index = WRAPPING_CONFIGS.findIndex((c) => c.description === desc);
+        const name = value as string;
+        const index = FILTER_CONFIGS.findIndex((c) => c.name === name);
         if (index !== -1) {
-          currentWrappingIndex = index;
+          currentFilterIndex = index;
           // eslint-disable-next-line no-console
-          console.log(`[Texture Wrapping Demo] Switched to: ${WRAPPING_CONFIGS[index].name}`);
+          console.log(`[Texture Filtering Demo] Switched to: ${FILTER_CONFIGS[index].description}`);
         }
       },
     });
@@ -301,19 +348,20 @@ const WRAPPING_CONFIGS: WrappingConfig[] = [
     // UV 缩放滑块
     gui.add('UV Scale', {
       value: uvScale,
-      min: 0.5,
-      max: 3.0,
-      step: 0.1,
+      min: 1,
+      max: 16,
+      step: 1,
       onChange: (value) => {
         uvScale = value as number;
       },
     });
 
     // 倾斜角度滑块
+    let tiltAngle = -60;
     gui.add('Tilt Angle', {
       value: tiltAngle,
-      min: 0,
-      max: 90,
+      min: -85,
+      max: 0,
       step: 5,
       onChange: (value) => {
         tiltAngle = value as number;
@@ -321,9 +369,6 @@ const WRAPPING_CONFIGS: WrappingConfig[] = [
         modelMatrix.rotateX((tiltAngle * Math.PI) / 180);
       },
     });
-
-    // 初始化模型矩阵
-    modelMatrix.rotateX((tiltAngle * Math.PI) / 180);
 
     // ==================== 渲染循环 ====================
 
@@ -335,12 +380,13 @@ const WRAPPING_CONFIGS: WrappingConfig[] = [
       const viewMatrix = orbit.getViewMatrix();
       const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
 
-      // 更新变换矩阵
+      // 更新变换矩阵（包含 UV 缩放信息）
       const transformData = new Float32Array(64);
       transformData.set(modelMatrix.toArray(), 0);
       transformData.set(viewMatrix, 16);
       transformData.set(projMatrix, 32);
-      transformData[48] = uvScale; // 第四个矩阵位置存储 UV 缩放
+      // 第四个矩阵位置存储额外数据（UV 缩放）
+      transformData[48] = uvScale;
       transformBuffer.update(transformData, 0);
 
       const { encoder, passDescriptor } = runner.beginFrame();
@@ -349,8 +395,8 @@ const WRAPPING_CONFIGS: WrappingConfig[] = [
       renderPass.setPipeline(pipeline);
       renderPass.setVertexBuffer(0, vertexBuffer);
 
-      // 绑定当前选中的包裹模式对应的绑定组
-      renderPass.setBindGroup(0, bindGroups[currentWrappingIndex]);
+      // 绑定当前选中的过滤模式对应的绑定组
+      renderPass.setBindGroup(0, bindGroups[currentFilterIndex]);
 
       // 绘制
       renderPass.draw(planeGeometry.vertexCount, 1, 0, 0);
@@ -366,34 +412,34 @@ const WRAPPING_CONFIGS: WrappingConfig[] = [
     DemoRunner.showHelp([
       'ESC: 退出 Demo',
       'F11: 切换全屏',
-      '1-3: 切换包裹模式',
+      '1-6: 切换过滤模式',
       '鼠标左键拖动: 旋转视角',
       '鼠标滚轮: 缩放',
       '鼠标右键拖动: 平移',
     ]);
 
-    // 注册包裹模式切换快捷键
-    WRAPPING_CONFIGS.forEach((config, index) => {
+    // 注册过滤模式切换快捷键
+    FILTER_CONFIGS.forEach((config, index) => {
       const key = (index + 1).toString();
       runner.onKey(key, () => {
-        currentWrappingIndex = index;
-        gui.set('Mode', config.description);
+        currentFilterIndex = index;
+        gui.set('Filter', config.name);
         // eslint-disable-next-line no-console
-        console.log(`[Texture Wrapping Demo] Switched to: ${config.name}`);
+        console.log(`[Texture Filtering Demo] Switched to: ${config.description}`);
       });
     });
 
     // 0 键重置视角
     runner.onKey('0', () => {
       // eslint-disable-next-line no-console
-      console.log('[Texture Wrapping Demo] Reset view');
+      console.log('[Texture Filtering Demo] Reset view');
       orbit.setTarget(0, 0, 0);
       orbit.setDistance(4);
     });
 
     runner.onKey('Escape', () => {
       // eslint-disable-next-line no-console
-      console.log('[Texture Wrapping Demo] Exiting...');
+      console.log('[Texture Filtering Demo] Exiting...');
       stats.destroy();
       orbit.destroy();
       gui.destroy();
@@ -410,15 +456,15 @@ const WRAPPING_CONFIGS: WrappingConfig[] = [
     });
 
     // eslint-disable-next-line no-console
-    console.log('[Texture Wrapping Demo] Initialized successfully!');
+    console.log('[Texture Filtering Demo] Initialized successfully!');
     // eslint-disable-next-line no-console
-    console.log('[Texture Wrapping Demo] Available wrapping modes:');
-    WRAPPING_CONFIGS.forEach((config, i) => {
+    console.log('[Texture Filtering Demo] Available filter modes:');
+    FILTER_CONFIGS.forEach((config, i) => {
       // eslint-disable-next-line no-console
       console.log(`  ${i + 1}. ${config.name} - ${config.description}`);
     });
   } catch (error) {
-    console.error('[Texture Wrapping Demo] Error:', error);
+    console.error('[Texture Filtering Demo] Error:', error);
     throw error;
   }
 })();
