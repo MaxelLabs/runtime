@@ -8,6 +8,7 @@ import { Vector3 } from '../../src/core/vector3';
 import { Matrix4 } from '../../src/core/matrix4';
 import { MathConfig } from '../../src/config/mathConfig';
 import { performanceTest, TestData } from '../setup';
+import { expect } from '@jest/globals';
 
 describe('Quaternion', () => {
   describe('构造函数和基础属性', () => {
@@ -42,7 +43,7 @@ describe('Quaternion', () => {
 
   describe('常量验证', () => {
     test('应该有正确的单位四元数常量', () => {
-      expect(Quaternion.IDENTITY).toEqualQuaternion({ x: 0, y: 0, z: 0, w: 1 });
+      (expect(Quaternion.IDENTITY) as any).toEqualQuaternion({ x: 0, y: 0, z: 0, w: 1 });
     });
 
     test('常量应该是不可变的', () => {
@@ -94,19 +95,19 @@ describe('Quaternion', () => {
 
     test('set() 应该设置所有分量', () => {
       q.set(0.1, 0.2, 0.3, 0.4);
-      expect(q).toEqualQuaternion({ x: 0.1, y: 0.2, z: 0.3, w: 0.4 });
+      (expect(q) as any).toEqualQuaternion({ x: 0.1, y: 0.2, z: 0.3, w: 0.4 });
     });
 
     test('identity() 应该设置为单位四元数', () => {
       q.set(0.1, 0.2, 0.3, 0.4);
       q.identity();
-      expect(q).toEqualQuaternion({ x: 0, y: 0, z: 0, w: 1 });
+      (expect(q) as any).toEqualQuaternion({ x: 0, y: 0, z: 0, w: 1 });
     });
 
     test('copyFrom() 应该从其他四元数复制', () => {
       const source = new Quaternion(0.5, 0.6, 0.7, 0.8);
       q.copyFrom(source);
-      expect(q).toEqualQuaternion({ x: 0.5, y: 0.6, z: 0.7, w: 0.8 });
+      (expect(q) as any).toEqualQuaternion({ x: 0.5, y: 0.6, z: 0.7, w: 0.8 });
     });
 
     test('clone() 应该创建四元数副本', () => {
@@ -114,7 +115,7 @@ describe('Quaternion', () => {
       const cloned = q.clone();
 
       expect(cloned).not.toBe(q);
-      expect(cloned).toEqualQuaternion({ x: 0.1, y: 0.2, z: 0.3, w: 0.4 });
+      (expect(cloned) as any).toEqualQuaternion({ x: 0.1, y: 0.2, z: 0.3, w: 0.4 });
     });
   });
 
@@ -190,7 +191,7 @@ describe('Quaternion', () => {
     test('零四元数归一化应该保持不变', () => {
       const q = new Quaternion(0, 0, 0, 0);
       q.normalize();
-      expect(q).toEqualQuaternion({ x: 0, y: 0, z: 0, w: 0 });
+      (expect(q) as any).toEqualQuaternion({ x: 0, y: 0, z: 0, w: 0 });
     });
   });
 
@@ -299,7 +300,7 @@ describe('Quaternion', () => {
       const iQuaternion = { x: 0.5, y: 0.6, z: 0.7, w: 0.8 };
       const q = Quaternion.fromIQuaternion(iQuaternion);
 
-      expect(q).toEqualQuaternion(iQuaternion);
+      (expect(q) as any).toEqualQuaternion(iQuaternion);
     });
   });
 

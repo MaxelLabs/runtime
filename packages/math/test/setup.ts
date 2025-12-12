@@ -4,7 +4,7 @@
  */
 
 import { MathConfig } from '../src/config/mathConfig';
-
+import { beforeAll, afterEach, expect, jest } from '@jest/globals';
 // 设置全局测试配置
 beforeAll(() => {
   // 启用所有性能特性用于测试
@@ -29,7 +29,6 @@ beforeAll(() => {
 
 // 每个测试后清理
 afterEach(() => {
-  // 清理所有对象池
   jest.clearAllMocks();
 });
 
@@ -42,7 +41,8 @@ declare global {
       toEqualVector3(expected: { x: number; y: number; z: number }, precision?: number): R;
       toEqualVector4(expected: { x: number; y: number; z: number; w: number }, precision?: number): R;
       toEqualQuaternion(expected: { x: number; y: number; z: number; w: number }, precision?: number): R;
-      toEqualMatrix4(expected: number[] | Float32Array): R;
+      toEqualMatrix4(expected: number[] | Float32Array, precision?: number): R;
+      toEqualColor(expected: { r: number; g: number; b: number; a: number }, precision?: number): R;
     }
   }
 }
@@ -71,6 +71,26 @@ expect.extend({
       Math.abs(received.x - expected.x) < Math.pow(10, -precision) &&
       Math.abs(received.y - expected.y) < Math.pow(10, -precision) &&
       Math.abs(received.z - expected.z) < Math.pow(10, -precision);
+
+    if (pass) {
+      return {
+        message: () => `期望 ${received} 不等于 ${expected}`,
+        pass: true,
+      };
+    } else {
+      return {
+        message: () => `期望 ${received} 等于 ${expected}`,
+        pass: false,
+      };
+    }
+  },
+
+  toEqualVector4(received: any, expected: { x: number; y: number; z: number; w: number }, precision = 6) {
+    const pass =
+      Math.abs(received.x - expected.x) < Math.pow(10, -precision) &&
+      Math.abs(received.y - expected.y) < Math.pow(10, -precision) &&
+      Math.abs(received.z - expected.z) < Math.pow(10, -precision) &&
+      Math.abs(received.w - expected.w) < Math.pow(10, -precision);
 
     if (pass) {
       return {
@@ -133,6 +153,27 @@ expect.extend({
       };
     }
   },
+
+  toEqualColor(received: any, expected: { r: number; g: number; b: number; a: number }, precision = 6) {
+    const pass =
+      Math.abs(received.r - expected.r) < Math.pow(10, -precision) &&
+      Math.abs(received.g - expected.g) < Math.pow(10, -precision) &&
+      Math.abs(received.b - expected.b) < Math.pow(10, -precision) &&
+      Math.abs(received.a - expected.a) < Math.pow(10, -precision);
+
+    if (pass) {
+      return {
+        message: () => `期望颜色 ${received} 不等于 ${expected}`,
+        pass: true,
+      };
+    } else {
+      return {
+        message: () =>
+          `期望颜色 ${received} 等于 ${expected}\n实际: r=${received.r}, g=${received.g}, b=${received.b}, a=${received.a}\n期望: r=${expected.r}, g=${expected.g}, b=${expected.b}, a=${expected.a}`,
+        pass: false,
+      };
+    }
+  },
 });
 
 // 性能测试辅助函数
@@ -144,7 +185,7 @@ export const performanceTest = (name: string, fn: () => void, iterations = 1000)
   const end = performance.now();
   const duration = end - start;
 
-  console.log(
+  console.info(
     `[性能] ${name}: ${iterations} 次迭代, 总时间: ${duration.toFixed(2)}ms, 平均: ${(duration / iterations).toFixed(4)}ms/次`
   );
 
@@ -169,7 +210,7 @@ export const memoryTest = (name: string, fn: () => void) => {
   const finalMemory = process.memoryUsage();
   const memoryDiff = finalMemory.heapUsed - initialMemory.heapUsed;
 
-  console.log(`[内存] ${name}: 内存变化: ${memoryDiff} bytes (${(memoryDiff / 1024 / 1024).toFixed(2)} MB)`);
+  console.info(`[内存] ${name}: 内存变化: ${memoryDiff} bytes (${(memoryDiff / 1024 / 1024).toFixed(2)} MB)`);
 
   return memoryDiff;
 };
@@ -198,6 +239,14 @@ export class SeededRandom {
 
 // 导出测试用的随机数生成器实例
 export const testRandom = new SeededRandom();
+
+// 导出创建随机Vector4的辅助函数
+export const createRandomVector4 = () => ({
+  x: testRandom.nextFloat(-100, 100),
+  y: testRandom.nextFloat(-100, 100),
+  z: testRandom.nextFloat(-100, 100),
+  w: testRandom.nextFloat(-100, 100),
+});
 
 // 测试数据生成器
 export const TestData = {
@@ -230,10 +279,34 @@ export const TestData = {
     return { x: q.x / len, y: q.y / len, z: q.z / len, w: q.w / len };
   },
 
+  // 生成随机向量
+  randomVector4: () => ({
+    x: testRandom.nextFloat(-100, 100),
+    y: testRandom.nextFloat(-100, 100),
+    z: testRandom.nextFloat(-100, 100),
+    w: testRandom.nextFloat(-100, 100),
+  }),
+
+  // 生成单位向量
+  randomUnitVector4: () => {
+    const v = TestData.randomVector4();
+    const len = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w);
+    return { x: v.x / len, y: v.y / len, z: v.z / len, w: v.w / len };
+  },
+
   // 生成随机矩阵元素
   randomMatrix4Elements: (): number[] => {
     const elements: number[] = [];
     for (let i = 0; i < 16; i++) {
+      elements[i] = testRandom.nextFloat(-10, 10);
+    }
+    return elements;
+  },
+
+  // 生成随机3x3矩阵元素
+  randomMatrix3Elements: (): number[] => {
+    const elements: number[] = [];
+    for (let i = 0; i < 9; i++) {
       elements[i] = testRandom.nextFloat(-10, 10);
     }
     return elements;

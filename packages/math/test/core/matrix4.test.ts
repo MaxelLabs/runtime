@@ -8,6 +8,7 @@ import { Vector3 } from '../../src/core/vector3';
 import { Quaternion } from '../../src/core/quaternion';
 import { MathConfig } from '../../src/config/mathConfig';
 import { performanceTest, TestData } from '../setup';
+import { expect } from '@jest/globals';
 
 describe('Matrix4', () => {
   describe('构造函数和基础属性', () => {
@@ -102,7 +103,7 @@ describe('Matrix4', () => {
       expect(m.isPoolable()).toBe(true);
 
       m.reset();
-      expect(m.getElements()).toEqualMatrix4(Matrix4.IDENTITY.getElements());
+      (expect(m.getElements()) as any).toEqualMatrix4(Matrix4.IDENTITY.getElements());
     });
   });
 
@@ -117,7 +118,7 @@ describe('Matrix4', () => {
       m.set(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
       m.identity();
 
-      expect(m.getElements()).toEqualMatrix4(Matrix4.IDENTITY.getElements());
+      (expect(m.getElements()) as any).toEqualMatrix4(Matrix4.IDENTITY.getElements());
     });
 
     test('copyFrom() 应该从其他矩阵复制', () => {

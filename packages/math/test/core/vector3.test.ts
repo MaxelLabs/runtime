@@ -7,7 +7,8 @@ import { Vector3 } from '../../src/core/vector3';
 import { Matrix4 } from '../../src/core/matrix4';
 import { Quaternion } from '../../src/core/quaternion';
 import { MathConfig } from '../../src/config/mathConfig';
-import { performanceTest, TestData, testRandom } from '../setup';
+import { performanceTest, TestData } from '../setup';
+import { expect, jest } from '@jest/globals';
 
 describe('Vector3', () => {
   describe('构造函数和基础属性', () => {
@@ -38,11 +39,11 @@ describe('Vector3', () => {
 
   describe('常量验证', () => {
     test('应该有正确的常量值', () => {
-      expect(Vector3.X).toEqualVector3({ x: 1, y: 0, z: 0 });
-      expect(Vector3.Y).toEqualVector3({ x: 0, y: 1, z: 0 });
-      expect(Vector3.Z).toEqualVector3({ x: 0, y: 0, z: 1 });
-      expect(Vector3.ONE).toEqualVector3({ x: 1, y: 1, z: 1 });
-      expect(Vector3.ZERO).toEqualVector3({ x: 0, y: 0, z: 0 });
+      (expect(Vector3.X) as any).toEqualVector3({ x: 1, y: 0, z: 0 });
+      (expect(Vector3.Y) as any).toEqualVector3({ x: 0, y: 1, z: 0 });
+      (expect(Vector3.Z) as any).toEqualVector3({ x: 0, y: 0, z: 1 });
+      (expect(Vector3.ONE) as any).toEqualVector3({ x: 1, y: 1, z: 1 });
+      (expect(Vector3.ZERO) as any).toEqualVector3({ x: 0, y: 0, z: 0 });
     });
 
     test('常量应该是不可变的', () => {
@@ -110,42 +111,42 @@ describe('Vector3', () => {
 
     test('set() 应该设置所有分量', () => {
       v.set(1, 2, 3);
-      expect(v).toEqualVector3({ x: 1, y: 2, z: 3 });
+      (expect(v) as any).toEqualVector3({ x: 1, y: 2, z: 3 });
     });
 
     test('setZero() 应该设置为零向量', () => {
       v.set(5, 6, 7);
       v.setZero();
-      expect(v).toEqualVector3({ x: 0, y: 0, z: 0 });
+      (expect(v) as any).toEqualVector3({ x: 0, y: 0, z: 0 });
     });
 
     test('setFromNumber() 应该设置为相同的标量值', () => {
       v.setFromNumber(5);
-      expect(v).toEqualVector3({ x: 5, y: 5, z: 5 });
+      (expect(v) as any).toEqualVector3({ x: 5, y: 5, z: 5 });
     });
 
     test('setFromArray() 应该从数组设置', () => {
       v.setFromArray([1, 2, 3]);
-      expect(v).toEqualVector3({ x: 1, y: 2, z: 3 });
+      (expect(v) as any).toEqualVector3({ x: 1, y: 2, z: 3 });
 
       // 测试偏移量
       v.setFromArray([0, 1, 2, 3, 4], 2);
-      expect(v).toEqualVector3({ x: 2, y: 3, z: 4 });
+      (expect(v) as any).toEqualVector3({ x: 2, y: 3, z: 4 });
 
       // 测试数组长度不足的情况
       v.setFromArray([1, 2]);
-      expect(v).toEqualVector3({ x: 1, y: 2, z: 0 });
+      (expect(v) as any).toEqualVector3({ x: 1, y: 2, z: 0 });
     });
 
     test('copyFrom() 应该从其他向量复制', () => {
       const source = new Vector3(10, 20, 30);
       v.copyFrom(source);
-      expect(v).toEqualVector3({ x: 10, y: 20, z: 30 });
+      (expect(v) as any).toEqualVector3({ x: 10, y: 20, z: 30 });
 
       // 测试链式调用
       const result = v.copyFrom(Vector3.X);
       expect(result).toBe(v);
-      expect(v).toEqualVector3({ x: 1, y: 0, z: 0 });
+      (expect(v) as any).toEqualVector3({ x: 1, y: 0, z: 0 });
     });
   });
 
@@ -178,8 +179,7 @@ describe('Vector3', () => {
     });
 
     test('访问无效索引应该处理错误', () => {
-      // 模拟 console.error
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
       expect(v.getElement(3)).toBe(0);
       expect(consoleSpy).toHaveBeenCalledWith('index is out of range: 3');
@@ -203,82 +203,82 @@ describe('Vector3', () => {
     test('add() 支持多种参数类型', () => {
       // 向量加法
       v1.add(v2);
-      expect(v1).toEqualVector3({ x: 5, y: 7, z: 9 });
+      (expect(v1) as any).toEqualVector3({ x: 5, y: 7, z: 9 });
 
       // 标量加法
       v1.set(1, 2, 3);
       v1.add(10);
-      expect(v1).toEqualVector3({ x: 11, y: 12, z: 13 });
+      (expect(v1) as any).toEqualVector3({ x: 11, y: 12, z: 13 });
 
       // 数组加法
       v1.set(1, 2, 3);
       v1.add([10, 20, 30]);
-      expect(v1).toEqualVector3({ x: 11, y: 22, z: 33 });
+      (expect(v1) as any).toEqualVector3({ x: 11, y: 22, z: 33 });
     });
 
     test('addVectors() 应该相加两个向量', () => {
       const result = new Vector3();
       result.addVectors(v1, v2);
-      expect(result).toEqualVector3({ x: 5, y: 7, z: 9 });
+      (expect(result) as any).toEqualVector3({ x: 5, y: 7, z: 9 });
 
       // 测试链式调用
       const chainResult = result.addVectors(new Vector3(1, 0, 0), new Vector3(0, 1, 0));
       expect(chainResult).toBe(result);
-      expect(result).toEqualVector3({ x: 1, y: 1, z: 0 });
+      (expect(result) as any).toEqualVector3({ x: 1, y: 1, z: 0 });
     });
 
     test('addScaledVector() 应该相加缩放后的向量', () => {
       v1.addScaledVector(v2, 2);
-      expect(v1).toEqualVector3({ x: 9, y: 12, z: 15 });
+      (expect(v1) as any).toEqualVector3({ x: 9, y: 12, z: 15 });
 
       // 测试负缩放
       v1.set(1, 2, 3);
       v1.addScaledVector(v2, -0.5);
-      expect(v1).toEqualVector3({ x: -1, y: -0.5, z: 0 });
+      (expect(v1) as any).toEqualVector3({ x: -1, y: -0.5, z: 0 });
     });
 
     test('subtract() 支持多种参数类型', () => {
       // 向量减法
       v1.subtract(v2);
-      expect(v1).toEqualVector3({ x: -3, y: -3, z: -3 });
+      (expect(v1) as any).toEqualVector3({ x: -3, y: -3, z: -3 });
 
       // 标量减法
       v1.set(10, 20, 30);
       v1.subtract(5);
-      expect(v1).toEqualVector3({ x: 5, y: 15, z: 25 });
+      (expect(v1) as any).toEqualVector3({ x: 5, y: 15, z: 25 });
 
       // 数组减法
       v1.set(10, 20, 30);
       v1.subtract([1, 2, 3]);
-      expect(v1).toEqualVector3({ x: 9, y: 18, z: 27 });
+      (expect(v1) as any).toEqualVector3({ x: 9, y: 18, z: 27 });
     });
 
     test('subtractVectors() 应该相减两个向量', () => {
       const result = new Vector3();
       result.subtractVectors(v2, v1);
-      expect(result).toEqualVector3({ x: 3, y: 3, z: 3 });
+      (expect(result) as any).toEqualVector3({ x: 3, y: 3, z: 3 });
     });
 
     test('multiply() 支持多种参数类型', () => {
       // 向量乘法
       v1.multiply(v2);
-      expect(v1).toEqualVector3({ x: 4, y: 10, z: 18 });
+      (expect(v1) as any).toEqualVector3({ x: 4, y: 10, z: 18 });
 
       // 标量乘法
       v1.set(2, 3, 4);
       v1.multiply(2);
-      expect(v1).toEqualVector3({ x: 4, y: 6, z: 8 });
+      (expect(v1) as any).toEqualVector3({ x: 4, y: 6, z: 8 });
 
       // 数组乘法
       v1.set(2, 3, 4);
       v1.multiply([2, 3, 4]);
-      expect(v1).toEqualVector3({ x: 4, y: 9, z: 16 });
+      (expect(v1) as any).toEqualVector3({ x: 4, y: 9, z: 16 });
     });
 
     test('multiplyVectors() 应该相乘两个向量', () => {
       const result = new Vector3();
       result.multiplyVectors(v1, v2);
-      expect(result).toEqualVector3({ x: 4, y: 10, z: 18 });
+      (expect(result) as any).toEqualVector3({ x: 4, y: 10, z: 18 });
     });
   });
 
@@ -313,13 +313,13 @@ describe('Vector3', () => {
     test('零向量归一化应该保持不变', () => {
       const v = new Vector3(0, 0, 0);
       v.normalize();
-      expect(v).toEqualVector3({ x: 0, y: 0, z: 0 });
+      (expect(v) as any).toEqualVector3({ x: 0, y: 0, z: 0 });
     });
 
     test('单位向量归一化应该保持不变', () => {
       const v = new Vector3(1, 0, 0);
       v.normalize();
-      expect(v).toEqualVector3({ x: 1, y: 0, z: 0 });
+      (expect(v) as any).toEqualVector3({ x: 1, y: 0, z: 0 });
     });
 
     test('应该返回自身支持链式调用', () => {
@@ -349,7 +349,7 @@ describe('Vector3', () => {
       const v2 = new Vector3(0, 1, 0);
 
       v1.cross(v2);
-      expect(v1).toEqualVector3({ x: 0, y: 0, z: 1 });
+      (expect(v1) as any).toEqualVector3({ x: 0, y: 0, z: 1 });
     });
 
     test('crossVectors() 应该计算两个向量的叉积', () => {
@@ -358,7 +358,7 @@ describe('Vector3', () => {
       const v2 = new Vector3(0, 1, 0);
 
       result.crossVectors(v1, v2);
-      expect(result).toEqualVector3({ x: 0, y: 0, z: 1 });
+      (expect(result) as any).toEqualVector3({ x: 0, y: 0, z: 1 });
     });
 
     test('叉积的反交换律', () => {
@@ -403,16 +403,16 @@ describe('Vector3', () => {
       const v2 = new Vector3(10, 20, 30);
 
       v1.lerp(v2, 0.5);
-      expect(v1).toEqualVector3({ x: 5, y: 10, z: 15 });
+      (expect(v1) as any).toEqualVector3({ x: 5, y: 10, z: 15 });
 
       // 测试边界值
       v1.set(0, 0, 0);
       v1.lerp(v2, 0);
-      expect(v1).toEqualVector3({ x: 0, y: 0, z: 0 });
+      (expect(v1) as any).toEqualVector3({ x: 0, y: 0, z: 0 });
 
       v1.set(0, 0, 0);
       v1.lerp(v2, 1);
-      expect(v1).toEqualVector3({ x: 10, y: 20, z: 30 });
+      (expect(v1) as any).toEqualVector3({ x: 10, y: 20, z: 30 });
     });
 
     test('Vector3.lerp() 静态方法', () => {
@@ -420,7 +420,7 @@ describe('Vector3', () => {
       const v2 = new Vector3(10, 20, 30);
       const result = Vector3.lerp(v1, v2, 0.3);
 
-      expect(result).toEqualVector3({ x: 3, y: 6, z: 9 });
+      (expect(result) as any).toEqualVector3({ x: 3, y: 6, z: 9 });
     });
 
     test('lerpVectors() 应该在两个向量间插值', () => {
@@ -429,7 +429,7 @@ describe('Vector3', () => {
       const v2 = new Vector3(10, 20, 30);
 
       result.lerpVectors(v1, v2, 0.25);
-      expect(result).toEqualVector3({ x: -5, y: -10, z: -15 });
+      (expect(result) as any).toEqualVector3({ x: -5, y: -10, z: -15 });
     });
   });
 
@@ -460,37 +460,37 @@ describe('Vector3', () => {
       const v2 = v1.clone();
 
       expect(v2).not.toBe(v1);
-      expect(v2).toEqualVector3({ x: 1, y: 2, z: 3 });
+      (expect(v2) as any).toEqualVector3({ x: 1, y: 2, z: 3 });
     });
 
     test('negate() 应该取反向量', () => {
       const v = new Vector3(1, -2, 3);
       v.negate();
-      expect(v).toEqualVector3({ x: -1, y: 2, z: -3 });
+      (expect(v) as any).toEqualVector3({ x: -1, y: 2, z: -3 });
     });
 
     test('abs() 应该取绝对值', () => {
       const v = new Vector3(-1, -2, -3);
       v.abs();
-      expect(v).toEqualVector3({ x: 1, y: 2, z: 3 });
+      (expect(v) as any).toEqualVector3({ x: 1, y: 2, z: 3 });
     });
 
     test('floor() 应该向下取整', () => {
       const v = new Vector3(1.7, 2.3, -1.8);
       v.floor();
-      expect(v).toEqualVector3({ x: 1, y: 2, z: -2 });
+      (expect(v) as any).toEqualVector3({ x: 1, y: 2, z: -2 });
     });
 
     test('ceil() 应该向上取整', () => {
       const v = new Vector3(1.3, 2.7, -1.2);
       v.ceil();
-      expect(v).toEqualVector3({ x: 2, y: 3, z: -1 });
+      (expect(v) as any).toEqualVector3({ x: 2, y: 3, z: -1 });
     });
 
     test('round() 应该四舍五入', () => {
       const v = new Vector3(1.4, 2.6, -1.5);
       v.round();
-      expect(v).toEqualVector3({ x: 1, y: 3, z: -1 });
+      (expect(v) as any).toEqualVector3({ x: 1, y: 3, z: -1 });
     });
 
     test('min() 应该取最小值', () => {
@@ -498,7 +498,7 @@ describe('Vector3', () => {
       const v2 = new Vector3(2, 3, 4);
 
       v1.min(v2);
-      expect(v1).toEqualVector3({ x: 1, y: 3, z: 3 });
+      (expect(v1) as any).toEqualVector3({ x: 1, y: 3, z: 3 });
     });
 
     test('max() 应该取最大值', () => {
@@ -506,7 +506,7 @@ describe('Vector3', () => {
       const v2 = new Vector3(2, 3, 4);
 
       v1.max(v2);
-      expect(v1).toEqualVector3({ x: 2, y: 5, z: 4 });
+      (expect(v1) as any).toEqualVector3({ x: 2, y: 5, z: 4 });
     });
 
     test('clamp() 应该限制在范围内', () => {
@@ -515,13 +515,13 @@ describe('Vector3', () => {
       const max = new Vector3(2, 1, 10);
 
       v.clamp(min, max);
-      expect(v).toEqualVector3({ x: -2, y: 0, z: 10 });
+      (expect(v) as any).toEqualVector3({ x: -2, y: 0, z: 10 });
     });
 
     test('scale() 应该缩放向量', () => {
       const v = new Vector3(2, 3, 4);
       v.scale(2.5);
-      expect(v).toEqualVector3({ x: 5, y: 7.5, z: 10 });
+      (expect(v) as any).toEqualVector3({ x: 5, y: 7.5, z: 10 });
     });
 
     test('setLength() 应该设置向量长度', () => {
@@ -594,7 +594,7 @@ describe('Vector3', () => {
       const scaled = v.multiplyScalar(2.5);
 
       expect(scaled).not.toBe(v);
-      expect(scaled).toEqualVector3({ x: 2.5, y: 5, z: 7.5 });
+      (expect(scaled) as any).toEqualVector3({ x: 2.5, y: 5, z: 7.5 });
     });
 
     test('divideScalar() 应该返回新的除法向量', () => {
@@ -602,16 +602,16 @@ describe('Vector3', () => {
       const divided = v.divideScalar(3);
 
       expect(divided).not.toBe(v);
-      expect(divided).toEqualVector3({ x: 2, y: 3, z: 4 });
+      (expect(divided) as any).toEqualVector3({ x: 2, y: 3, z: 4 });
     });
 
     test('divideScalar() 应该处理零除数', () => {
       const v = new Vector3(1, 2, 3);
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
       const result = v.divideScalar(0);
       expect(consoleSpy).toHaveBeenCalledWith('Vector3.divideScalar: scalar is too close to zero');
-      expect(result).toEqualVector3({ x: 0, y: 0, z: 0 });
+      (expect(result) as any).toEqualVector3({ x: 0, y: 0, z: 0 });
 
       consoleSpy.mockRestore();
     });
@@ -629,7 +629,7 @@ describe('Vector3', () => {
       const iVector = { x: 5, y: 10, z: 15 };
       const v = Vector3.fromIVector3(iVector);
 
-      expect(v).toEqualVector3(iVector);
+      (expect(v) as any).toEqualVector3(iVector);
     });
 
     test('应该设置IVector3接口值', () => {
@@ -637,7 +637,7 @@ describe('Vector3', () => {
       const iVector = { x: 7, y: 14, z: 21 };
 
       v.fromIVector3(iVector);
-      expect(v).toEqualVector3(iVector);
+      (expect(v) as any).toEqualVector3(iVector);
     });
   });
 
@@ -657,7 +657,7 @@ describe('Vector3', () => {
       };
 
       const v = Vector3.fromUsdValue(usdValue);
-      expect(v).toEqualVector3({ x: 2.1, y: 3.2, z: 4.3 });
+      (expect(v) as any).toEqualVector3({ x: 2.1, y: 3.2, z: 4.3 });
     });
   });
 

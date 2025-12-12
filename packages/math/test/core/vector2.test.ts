@@ -5,7 +5,8 @@
 
 import { Vector2 } from '../../src/core/vector2';
 import { MathConfig } from '../../src/config/mathConfig';
-import { performanceTest, TestData } from '../setup';
+import { performanceTest } from '../setup';
+import { expect, jest } from '@jest/globals';
 
 describe('Vector2', () => {
   describe('构造函数和基础属性', () => {
@@ -36,12 +37,12 @@ describe('Vector2', () => {
 
   describe('常量验证', () => {
     test('应该有正确的常量值', () => {
-      expect(Vector2.ZERO).toEqualVector2({ x: 0, y: 0 });
-      expect(Vector2.ONE).toEqualVector2({ x: 1, y: 1 });
-      expect(Vector2.X).toEqualVector2({ x: 1, y: 0 });
-      expect(Vector2.Y).toEqualVector2({ x: 0, y: 1 });
-      expect(Vector2.NEGATIVE_X).toEqualVector2({ x: -1, y: 0 });
-      expect(Vector2.NEGATIVE_Y).toEqualVector2({ x: 0, y: -1 });
+      (expect(Vector2.ZERO) as any).toEqualVector2({ x: 0, y: 0 });
+      (expect(Vector2.ONE) as any).toEqualVector2({ x: 1, y: 1 });
+      (expect(Vector2.X) as any).toEqualVector2({ x: 1, y: 0 });
+      (expect(Vector2.Y) as any).toEqualVector2({ x: 0, y: 1 });
+      (expect(Vector2.NEGATIVE_X) as any).toEqualVector2({ x: -1, y: 0 });
+      (expect(Vector2.NEGATIVE_Y) as any).toEqualVector2({ x: 0, y: -1 });
     });
 
     test('常量应该是不可变的', () => {
@@ -107,7 +108,7 @@ describe('Vector2', () => {
     test('setZero() 应该设置为零向量', () => {
       v.set(1, 2);
       v.setZero();
-      expect(v).toEqualVector2(Vector2.ZERO);
+      (expect(v) as any).toEqualVector2(Vector2.ZERO);
     });
 
     test('setFromNumber() 应该用标量设置', () => {
@@ -131,7 +132,7 @@ describe('Vector2', () => {
     test('copyFrom() 应该从其他向量复制', () => {
       const source = new Vector2(3, 4);
       v.copyFrom(source);
-      expect(v).toEqualVector2(source);
+      (expect(v) as any).toEqualVector2(source);
     });
 
     test('clone() 应该创建向量副本', () => {
@@ -139,7 +140,7 @@ describe('Vector2', () => {
       const cloned = v.clone();
 
       expect(cloned).not.toBe(v);
-      expect(cloned).toEqualVector2(v);
+      (expect(cloned) as any).toEqualVector2(v);
     });
 
     test('setElement() 应该按索引设置元素', () => {
@@ -435,7 +436,7 @@ describe('Vector2', () => {
 
     test('toArray() 应该支持指定数组和偏移', () => {
       const v = new Vector2(1, 2);
-      const array = [0, 0, 0, 0];
+      // const array = [0, 0, 0, 0];
 
       // toArray方法不支持传入数组和偏移参数
       const result = v.toArray();

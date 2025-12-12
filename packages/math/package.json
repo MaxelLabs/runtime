@@ -42,8 +42,9 @@
   },
   "devDependencies": {
     "@maxellabs/specification": "workspace:*",
-    "@types/jest": "^29.5.14",
-    "jest": "^29.7.0",
+    "@jest/globals": "^30.2.0",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.2.0",
     "ts-jest": "^29.3.1"
   }
 }
