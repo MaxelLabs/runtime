@@ -5,13 +5,14 @@
  * 功能演示：
  * - 多纹理同时绑定和采样
  * - 5 种混合模式：Linear、Multiply、Screen、Overlay、Mask
- * - 使用 ProceduralTexture 生成程序化纹理
+ * - 使用 TextureLoader 加载外部纹理图片
+ * - 立方体几何体展示多纹理效果
  * - Uniform 块控制混合参数
  * - 实时参数调节和快捷键切换
  */
 
 import { MSpec, MMath } from '@maxellabs/core';
-import { DemoRunner, OrbitController, Stats, GeometryGenerator, ProceduralTexture, SimpleGUI } from './utils';
+import { DemoRunner, OrbitController, Stats, GeometryGenerator, SimpleGUI, TextureLoader } from './utils';
 
 // ==================== 着色器源码 ====================
 
@@ -41,12 +42,12 @@ precision mediump float;
 
 uniform sampler2D uTexture1;
 uniform sampler2D uTexture2;
-uniform sampler2D uMaskTexture;
 
 uniform BlendParams {
   float uMixFactor;
-  int uBlendMode;
+  float uBlendMode; // Changed from int to float for easier buffer management
   float uMaskThreshold;
+  float uTime;
 };
 
 in vec2 vTexCoord;
@@ -75,15 +76,21 @@ vec3 blendOverlay(vec3 base, vec3 blend) {
   );
 }
 
+float getProceduralMask(vec2 uv) {
+  vec2 center = vec2(0.5 + 0.3 * sin(uTime), 0.5 + 0.3 * cos(uTime));
+  float dist = distance(uv, center);
+  return 1.0 - smoothstep(0.1, 0.2, dist); // Spotlight effect
+}
+
 void main() {
   vec4 color1 = texture(uTexture1, vTexCoord);
   vec4 color2 = texture(uTexture2, vTexCoord);
-  vec4 maskColor = texture(uMaskTexture, vTexCoord);
 
   vec3 result = color1.rgb;
 
   // 根据混合模式计算结果
-  switch (uBlendMode) {
+  int blendMode = int(uBlendMode);
+  switch (blendMode) {
     case BLEND_LINEAR:
       result = mix(color1.rgb, color2.rgb, uMixFactor);
       break;
@@ -101,9 +108,9 @@ void main() {
       break;
 
     case BLEND_MASK:
-      // 使用遮罩纹理控制混合
-      float mask = (maskColor.r + maskColor.g + maskColor.b) / 3.0;
-      float blend = step(uMaskThreshold, mask) * uMixFactor;
+      // 使用程序化遮罩控制混合
+      float maskVal = getProceduralMask(vTexCoord);
+      float blend = smoothstep(uMaskThreshold - 0.05, uMaskThreshold + 0.05, maskVal) * uMixFactor;
       result = mix(color1.rgb, color2.rgb, blend);
       break;
 
@@ -147,50 +154,69 @@ const BLEND_MODES: BlendMode[] = [
   },
   {
     name: 'Mask',
-    description: '遮罩混合（基于遮罩纹理）',
+    description: '遮罩混合（动态聚光灯效果）',
     id: 4,
   },
 ];
+// 创建深度纹理
+let depthTexture: MSpec.IRHITexture;
+// 1. 初始化 DemoRunner
+const runner = new DemoRunner({
+  canvasId: 'J-canvas',
+  name: 'Multi-Textures Demo',
+  clearColor: [0.1, 0.1, 0.15, 1.0],
+});
+
+const updateDepthTexture = () => {
+  if (depthTexture) {
+    depthTexture.destroy();
+  }
+  depthTexture = runner.device.createTexture({
+    width: runner.width,
+    height: runner.height,
+    format: MSpec.RHITextureFormat.DEPTH24_UNORM_STENCIL8,
+    usage: MSpec.RHITextureUsage.RENDER_ATTACHMENT,
+    label: 'Depth Texture',
+  });
+};
 
 // ==================== 主程序 ====================
 
 (async function main() {
   try {
-    // 1. 初始化 DemoRunner
-    const runner = new DemoRunner({
-      canvasId: 'J-canvas',
-      name: 'Multi-Textures Demo',
-      clearColor: [0.1, 0.1, 0.15, 1.0],
-    });
-
     await runner.init();
 
     // 2. 初始化性能监控和相机控制
     const stats = new Stats({ position: 'top-left', show: ['fps', 'ms'] });
     const orbit = new OrbitController(runner.canvas, {
-      distance: 3,
+      distance: 5,
       target: [0, 0, 0],
       enableDamping: true,
       autoRotate: false,
     });
 
-    // 3. 创建平面几何体
-    const planeGeometry = GeometryGenerator.plane({
-      width: 3,
-      height: 3,
-      widthSegments: 1,
-      heightSegments: 1,
+    updateDepthTexture();
+
+    runner.onResize(() => {
+      updateDepthTexture();
+    });
+
+    // 3. 创建立方体几何体
+    const cubeGeometry = GeometryGenerator.cube({
+      width: 2,
+      height: 2,
+      depth: 2,
       uvs: true,
     });
 
     // 4. 创建顶点缓冲区
     const vertexBuffer = runner.track(
       runner.device.createBuffer({
-        size: planeGeometry.vertices.byteLength,
+        size: cubeGeometry.vertices.byteLength,
         usage: MSpec.RHIBufferUsage.VERTEX,
         hint: 'static',
-        initialData: planeGeometry.vertices as BufferSource,
-        label: 'Multi-Textures Plane Vertex Buffer',
+        initialData: cubeGeometry.vertices as BufferSource,
+        label: 'Multi-Textures Cube Vertex Buffer',
       })
     );
 
@@ -207,81 +233,44 @@ const BLEND_MODES: BlendMode[] = [
     // 6. 创建混合参数 Uniform 缓冲区
     const blendParamsBuffer = runner.track(
       runner.device.createBuffer({
-        size: 16, // float + int + float + padding
+        size: 16, // 4 floats * 4 bytes = 16 bytes
         usage: MSpec.RHIBufferUsage.UNIFORM,
         hint: 'dynamic',
         label: 'Blend Params Uniform Buffer',
       })
     );
 
-    // 7. 创建程序化纹理
-    // eslint-disable-next-line no-console
-    console.log('[Multi-Textures Demo] Creating procedural textures...');
+    // 7. 加载纹理
 
-    // 纹理 1：棋盘格
-    const checkerData = ProceduralTexture.checkerboard({
-      width: 512,
-      height: 512,
-      cellSize: 32,
-      colorA: [255, 100, 100, 255], // 红色
-      colorB: [100, 100, 255, 255], // 蓝色
-    });
+    // 纹理 1：Jade
+    const jadeTexture = await TextureLoader.load('../assets/texture/jade.jpg');
 
     const texture1 = runner.track(
       runner.device.createTexture({
-        width: checkerData.width,
-        height: checkerData.height,
+        width: jadeTexture.width,
+        height: jadeTexture.height,
         format: MSpec.RHITextureFormat.RGBA8_UNORM,
         usage: MSpec.RHITextureUsage.TEXTURE_BINDING,
-        label: 'Checkerboard Texture',
+        label: 'Jade Texture',
       })
     );
-    texture1.update(checkerData.data as BufferSource);
+    texture1.update(jadeTexture.data as BufferSource);
 
-    // 纹理 2：渐变
-    const gradientData = ProceduralTexture.gradient({
-      width: 512,
-      height: 512,
-      direction: 'diagonal',
-      colors: [
-        { position: 0.0, color: [255, 200, 0, 255] }, // 黄色
-        { position: 0.5, color: [255, 0, 200, 255] }, // 紫色
-        { position: 1.0, color: [0, 200, 255, 255] }, // 青色
-      ],
+    // 纹理 2：Fruits
+    const fruitsTexture = await TextureLoader.load('../assets/texture/758px-Canestra_di_frutta_(Caravaggio).jpg', {
+      flipY: true,
     });
 
     const texture2 = runner.track(
       runner.device.createTexture({
-        width: gradientData.width,
-        height: gradientData.height,
+        width: fruitsTexture.width,
+        height: fruitsTexture.height,
         format: MSpec.RHITextureFormat.RGBA8_UNORM,
         usage: MSpec.RHITextureUsage.TEXTURE_BINDING,
-        label: 'Gradient Texture',
+        label: 'Fruits Texture',
       })
     );
-    texture2.update(gradientData.data as BufferSource);
-
-    // 遮罩纹理：噪声
-    const noiseData = ProceduralTexture.noise({
-      width: 512,
-      height: 512,
-      type: 'white',
-      scale: 0.02,
-    });
-
-    const maskTexture = runner.track(
-      runner.device.createTexture({
-        width: noiseData.width,
-        height: noiseData.height,
-        format: MSpec.RHITextureFormat.RGBA8_UNORM,
-        usage: MSpec.RHITextureUsage.TEXTURE_BINDING,
-        label: 'Noise Mask Texture',
-      })
-    );
-    maskTexture.update(noiseData.data as BufferSource);
-
-    // eslint-disable-next-line no-console
-    console.log('[Multi-Textures Demo] Created 3 procedural textures');
+    texture2.update(fruitsTexture.data as BufferSource);
 
     // 8. 创建采样器
     const sampler = runner.track(
@@ -353,18 +342,6 @@ const BLEND_MODES: BlendMode[] = [
           sampler: { type: 'filtering' },
           name: 'uSampler2',
         },
-        {
-          binding: 6,
-          visibility: MSpec.RHIShaderStage.FRAGMENT,
-          texture: { sampleType: 'float', viewDimension: '2d' },
-          name: 'uMaskTexture',
-        },
-        {
-          binding: 7,
-          visibility: MSpec.RHIShaderStage.FRAGMENT,
-          sampler: { type: 'filtering' },
-          name: 'uMaskSampler',
-        },
       ])
     );
 
@@ -396,6 +373,14 @@ const BLEND_MODES: BlendMode[] = [
         vertexLayout,
         primitiveTopology: MSpec.RHIPrimitiveTopology.TRIANGLE_LIST,
         layout: pipelineLayout,
+        rasterizationState: {
+          cullMode: MSpec.RHICullMode.BACK,
+        },
+        depthStencilState: {
+          depthWriteEnabled: true,
+          depthCompare: MSpec.RHICompareFunction.LESS,
+          format: MSpec.RHITextureFormat.DEPTH24_UNORM_STENCIL8,
+        },
         label: 'Multi-Textures Pipeline',
       })
     );
@@ -409,13 +394,12 @@ const BLEND_MODES: BlendMode[] = [
         { binding: 3, resource: sampler },
         { binding: 4, resource: texture2.createView() },
         { binding: 5, resource: sampler },
-        { binding: 6, resource: maskTexture.createView() },
-        { binding: 7, resource: sampler },
       ])
     );
 
     // 15. 模型矩阵
     const modelMatrix = new MMath.Matrix4();
+    let time = 0;
 
     // 16. 混合参数初始值
     let mixFactor = 0.5;
@@ -436,8 +420,6 @@ const BLEND_MODES: BlendMode[] = [
         const index = BLEND_MODES.findIndex((m) => m.name === name);
         if (index !== -1) {
           blendMode = index;
-          // eslint-disable-next-line no-console
-          console.log(`[Multi-Textures Demo] Switched to: ${BLEND_MODES[index].description}`);
         }
       },
     });
@@ -472,6 +454,12 @@ const BLEND_MODES: BlendMode[] = [
       orbit.update(dt);
       stats.begin();
 
+      // 更新时间并旋转立方体
+      time += dt * 0.001;
+      modelMatrix.identity();
+      modelMatrix.rotateY(time * 0.5);
+      modelMatrix.rotateX(time * 0.2);
+
       // 获取视图和投影矩阵
       const viewMatrix = orbit.getViewMatrix();
       const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
@@ -488,9 +476,22 @@ const BLEND_MODES: BlendMode[] = [
       blendParamsData[0] = mixFactor;
       blendParamsData[1] = blendMode;
       blendParamsData[2] = maskThreshold;
+      blendParamsData[3] = time; // 添加时间参数
       blendParamsBuffer.update(blendParamsData, 0);
 
       const { encoder, passDescriptor } = runner.beginFrame();
+
+      // 添加深度附件
+      passDescriptor.depthStencilAttachment = {
+        view: depthTexture.createView(),
+        depthLoadOp: 'clear',
+        depthStoreOp: 'store',
+        depthClearValue: 1.0,
+        stencilLoadOp: 'clear',
+        stencilStoreOp: 'store',
+        stencilClearValue: 0,
+      };
+
       const renderPass = encoder.beginRenderPass(passDescriptor);
 
       renderPass.setPipeline(pipeline);
@@ -498,7 +499,7 @@ const BLEND_MODES: BlendMode[] = [
       renderPass.setBindGroup(0, bindGroup);
 
       // 绘制
-      renderPass.draw(planeGeometry.vertexCount, 1, 0, 0);
+      renderPass.draw(cubeGeometry.vertexCount, 1, 0, 0);
 
       renderPass.end();
       runner.endFrame(encoder);
@@ -523,22 +524,19 @@ const BLEND_MODES: BlendMode[] = [
       runner.onKey(key, () => {
         blendMode = mode.id;
         gui.set('Blend Mode', mode.name);
-        // eslint-disable-next-line no-console
-        console.log(`[Multi-Textures Demo] Switched to: ${mode.description}`);
       });
     });
 
     // 0 键重置视角
     runner.onKey('0', () => {
-      // eslint-disable-next-line no-console
-      console.log('[Multi-Textures Demo] Reset view');
       orbit.setTarget(0, 0, 0);
-      orbit.setDistance(3);
+      orbit.setDistance(5);
     });
 
     runner.onKey('Escape', () => {
-      // eslint-disable-next-line no-console
-      console.log('[Multi-Textures Demo] Exiting...');
+      if (depthTexture) {
+        depthTexture.destroy();
+      }
       stats.destroy();
       orbit.destroy();
       gui.destroy();
@@ -552,15 +550,6 @@ const BLEND_MODES: BlendMode[] = [
       } else {
         runner.canvas.requestFullscreen();
       }
-    });
-
-    // eslint-disable-next-line no-console
-    console.log('[Multi-Textures Demo] Initialized successfully!');
-    // eslint-disable-next-line no-console
-    console.log('[Multi-Textures Demo] Available blend modes:');
-    BLEND_MODES.forEach((mode, i) => {
-      // eslint-disable-next-line no-console
-      console.log(`  ${i + 1}. ${mode.name} - ${mode.description}`);
     });
   } catch (error) {
     console.error('[Multi-Textures Demo] Error:', error);

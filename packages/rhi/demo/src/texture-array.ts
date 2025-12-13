@@ -313,401 +313,395 @@ function generateMixedPattern(width: number, height: number): Uint8Array {
 // ==================== 主程序 ====================
 
 (async function main() {
-  try {
-    // 1. 初始化 DemoRunner
-    const runner = new DemoRunner({
-      canvasId: 'J-canvas',
-      name: 'Texture Array Demo',
-      clearColor: [0.05, 0.05, 0.1, 1.0],
-    });
+  // 1. 初始化 DemoRunner
+  const runner = new DemoRunner({
+    canvasId: 'J-canvas',
+    name: 'Texture Array Demo',
+    clearColor: [0.05, 0.05, 0.1, 1.0],
+  });
 
-    await runner.init();
+  await runner.init();
 
-    // 2. 检查 WebGL2 支持
-    // WebGL2 是纹理数组功能的必要条件
-    // 注意：实际检测应根据具体的设备 API 进行
+  // 2. 检查 WebGL2 支持
+  // WebGL2 是纹理数组功能的必要条件
+  // 注意：实际检测应根据具体的设备 API 进行
 
-    // 3. 初始化性能监控和相机控制
-    const stats = new Stats({ position: 'top-left', show: ['fps', 'ms'] });
-    const orbit = new OrbitController(runner.canvas, {
-      distance: 6,
-      target: [0, 0, 0],
-      enableDamping: true,
-      autoRotate: false,
-      minElevation: Math.PI * 0.1,
-      maxElevation: Math.PI * 0.8,
-    });
+  // 3. 初始化性能监控和相机控制
+  const stats = new Stats({ position: 'top-left', show: ['fps', 'ms'] });
+  const orbit = new OrbitController(runner.canvas, {
+    distance: 6,
+    target: [0, 0, 0],
+    enableDamping: true,
+    autoRotate: false,
+    minElevation: Math.PI * 0.1,
+    maxElevation: Math.PI * 0.8,
+  });
 
-    // 4. 状态变量
-    let currentLayer = 0;
-    const layerCount = 8;
-    let uvScale = 2.0;
+  // 4. 状态变量
+  let currentLayer = 0;
+  const layerCount = 8;
+  let uvScale = 2.0;
 
-    // 5. 创建四边形几何体
-    let quadGeometry = createQuad(4.0, uvScale);
+  // 5. 创建四边形几何体
+  let quadGeometry = createQuad(4.0, uvScale);
 
-    // 6. 创建顶点缓冲区
-    const vertexBuffer = runner.track(
-      runner.device.createBuffer({
-        size: quadGeometry.vertices.byteLength,
-        usage: MSpec.RHIBufferUsage.VERTEX,
-        hint: 'dynamic',
-        initialData: quadGeometry.vertices as BufferSource,
-        label: 'Quad Vertex Buffer',
-      })
-    );
+  // 6. 创建顶点缓冲区
+  const vertexBuffer = runner.track(
+    runner.device.createBuffer({
+      size: quadGeometry.vertices.byteLength,
+      usage: MSpec.RHIBufferUsage.VERTEX,
+      hint: 'dynamic',
+      initialData: quadGeometry.vertices as BufferSource,
+      label: 'Quad Vertex Buffer',
+    })
+  );
 
-    // 7. 创建变换矩阵 Uniform 缓冲区
-    const transformBuffer = runner.track(
-      runner.device.createBuffer({
-        size: 256,
-        usage: MSpec.RHIBufferUsage.UNIFORM,
-        hint: 'dynamic',
-        label: 'Transform Uniform Buffer',
-      })
-    );
+  // 7. 创建变换矩阵 Uniform 缓冲区
+  const transformBuffer = runner.track(
+    runner.device.createBuffer({
+      size: 256,
+      usage: MSpec.RHIBufferUsage.UNIFORM,
+      hint: 'dynamic',
+      label: 'Transform Uniform Buffer',
+    })
+  );
 
-    // 8. 创建层控制 Uniform 缓冲区
-    const layerBuffer = runner.track(
-      runner.device.createBuffer({
-        size: 16, // 对齐到 16 字节
-        usage: MSpec.RHIBufferUsage.UNIFORM,
-        hint: 'dynamic',
-        label: 'Layer Control Uniform Buffer',
-      })
-    );
+  // 8. 创建层控制 Uniform 缓冲区
+  const layerBuffer = runner.track(
+    runner.device.createBuffer({
+      size: 16, // 对齐到 16 字节
+      usage: MSpec.RHIBufferUsage.UNIFORM,
+      hint: 'dynamic',
+      label: 'Layer Control Uniform Buffer',
+    })
+  );
 
-    // 9. 创建纹理数组
+  // 9. 创建纹理数组
 
-    const textureSize = 256;
-    const arrayTexture = runner.track(
-      runner.device.createTexture({
+  const textureSize = 256;
+  const arrayTexture = runner.track(
+    runner.device.createTexture({
+      width: textureSize,
+      height: textureSize,
+      depthOrArrayLayers: layerCount,
+      dimension: MSpec.RHITextureType.TEXTURE_2D_ARRAY,
+      format: MSpec.RHITextureFormat.RGBA8_UNORM,
+      usage: MSpec.RHITextureUsage.TEXTURE_BINDING | MSpec.RHITextureUsage.COPY_DST,
+      label: 'Demo Texture Array',
+    })
+  );
+
+  // 10. 生成并更新每一层的纹理
+  const layerGenerators = [
+    // Layer 0: 棋盘格
+    () =>
+      ProceduralTexture.checkerboard({
         width: textureSize,
         height: textureSize,
-        depthOrArrayLayers: layerCount,
-        dimension: MSpec.RHITextureType.TEXTURE_2D_ARRAY,
-        format: MSpec.RHITextureFormat.RGBA8_UNORM,
-        usage: MSpec.RHITextureUsage.TEXTURE_BINDING | MSpec.RHITextureUsage.COPY_DST,
-        label: 'Demo Texture Array',
-      })
-    );
+        cellSize: 16,
+        colorA: [255, 255, 255, 255],
+        colorB: [64, 64, 64, 255],
+      }).data,
 
-    // 10. 生成并更新每一层的纹理
-    const layerGenerators = [
-      // Layer 0: 棋盘格
-      () =>
-        ProceduralTexture.checkerboard({
-          width: textureSize,
-          height: textureSize,
-          cellSize: 16,
-          colorA: [255, 255, 255, 255],
-          colorB: [64, 64, 64, 255],
-        }).data,
+    // Layer 1: 渐变
+    () =>
+      ProceduralTexture.gradient({
+        width: textureSize,
+        height: textureSize,
+        direction: 'diagonal',
+        startColor: [255, 0, 0, 255],
+        endColor: [0, 0, 255, 255],
+      }).data,
 
-      // Layer 1: 渐变
-      () =>
-        ProceduralTexture.gradient({
-          width: textureSize,
-          height: textureSize,
-          direction: 'diagonal',
-          startColor: [255, 0, 0, 255],
-          endColor: [0, 0, 255, 255],
-        }).data,
+    // Layer 2: 噪声
+    () =>
+      ProceduralTexture.noise({
+        width: textureSize,
+        height: textureSize,
+        frequency: 0.05,
+        octaves: 4,
+      }).data,
 
-      // Layer 2: 噪声
-      () =>
-        ProceduralTexture.noise({
-          width: textureSize,
-          height: textureSize,
-          frequency: 0.05,
-          octaves: 4,
-        }).data,
+    // Layer 3: 圆形图案
+    () => generateCircles(textureSize, textureSize),
 
-      // Layer 3: 圆形图案
-      () => generateCircles(textureSize, textureSize),
+    // Layer 4: 条纹
+    () => generateStripes(textureSize, textureSize),
 
-      // Layer 4: 条纹
-      () => generateStripes(textureSize, textureSize),
+    // Layer 5: 随机像素
+    () => generateRandomPixels(textureSize, textureSize),
 
-      // Layer 5: 随机像素
-      () => generateRandomPixels(textureSize, textureSize),
+    // Layer 6: 波浪
+    () => generateWaves(textureSize, textureSize),
 
-      // Layer 6: 波浪
-      () => generateWaves(textureSize, textureSize),
+    // Layer 7: 混合图案
+    () => generateMixedPattern(textureSize, textureSize),
+  ];
 
-      // Layer 7: 混合图案
-      () => generateMixedPattern(textureSize, textureSize),
-    ];
+  const layerNames = [
+    'Checkerboard',
+    'Gradient',
+    'Noise',
+    'Circles',
+    'Stripes',
+    'Random Pixels',
+    'Waves',
+    'Mixed Pattern',
+  ];
 
-    const layerNames = [
-      'Checkerboard',
-      'Gradient',
-      'Noise',
-      'Circles',
-      'Stripes',
-      'Random Pixels',
-      'Waves',
-      'Mixed Pattern',
-    ];
+  // 更新每一层
+  for (let layer = 0; layer < layerCount; layer++) {
+    const layerData = layerGenerators[layer]();
+    arrayTexture.update(layerData as BufferSource, 0, 0, layer);
+  }
 
-    // 更新每一层
-    for (let layer = 0; layer < layerCount; layer++) {
-      const layerData = layerGenerators[layer]();
-      arrayTexture.update(layerData as BufferSource, 0, 0, layer);
-    }
+  // 11. 创建采样器
+  const sampler = runner.track(
+    runner.device.createSampler({
+      magFilter: MSpec.RHIFilterMode.LINEAR,
+      minFilter: MSpec.RHIFilterMode.LINEAR,
+      addressModeU: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
+      addressModeV: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
+      label: 'Texture Array Sampler',
+    })
+  );
 
-    
-    // 11. 创建采样器
-    const sampler = runner.track(
-      runner.device.createSampler({
-        magFilter: MSpec.RHIFilterMode.LINEAR,
-        minFilter: MSpec.RHIFilterMode.LINEAR,
-        addressModeU: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
-        addressModeV: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
-        label: 'Texture Array Sampler',
-      })
-    );
+  // 12. 创建着色器
+  const vertexShader = runner.track(
+    runner.device.createShaderModule({
+      code: vertexShaderSource,
+      language: 'glsl',
+      stage: MSpec.RHIShaderStage.VERTEX,
+      label: 'Texture Array Vertex Shader',
+    })
+  );
 
-    // 12. 创建着色器
-    const vertexShader = runner.track(
-      runner.device.createShaderModule({
-        code: vertexShaderSource,
-        language: 'glsl',
-        stage: MSpec.RHIShaderStage.VERTEX,
-        label: 'Texture Array Vertex Shader',
-      })
-    );
+  const fragmentShader = runner.track(
+    runner.device.createShaderModule({
+      code: fragmentShaderSource,
+      language: 'glsl',
+      stage: MSpec.RHIShaderStage.FRAGMENT,
+      label: 'Texture Array Fragment Shader',
+    })
+  );
 
-    const fragmentShader = runner.track(
-      runner.device.createShaderModule({
-        code: fragmentShaderSource,
-        language: 'glsl',
-        stage: MSpec.RHIShaderStage.FRAGMENT,
-        label: 'Texture Array Fragment Shader',
-      })
-    );
-
-    // 13. 创建绑定组布局
-    const bindGroupLayout = runner.track(
-      runner.device.createBindGroupLayout([
-        {
-          binding: 0,
-          visibility: MSpec.RHIShaderStage.VERTEX,
-          buffer: { type: 'uniform' },
-          name: 'Transforms',
-        },
-        {
-          binding: 1,
-          visibility: MSpec.RHIShaderStage.FRAGMENT,
-          buffer: { type: 'uniform' },
-          name: 'LayerControl',
-        },
-        {
-          binding: 2,
-          visibility: MSpec.RHIShaderStage.FRAGMENT,
-          texture: { sampleType: 'float', viewDimension: '2d-array' },
-          name: 'uTextureArray',
-        },
-        {
-          binding: 3,
-          visibility: MSpec.RHIShaderStage.FRAGMENT,
-          sampler: { type: 'filtering' },
-          name: 'uSampler',
-        },
-      ])
-    );
-
-    // 14. 创建管线布局
-    const pipelineLayout = runner.track(
-      runner.device.createPipelineLayout([bindGroupLayout], 'Texture Array Pipeline Layout')
-    );
-
-    // 15. 顶点布局
-    const vertexLayout: MSpec.RHIVertexLayout = {
-      buffers: [
-        {
-          index: 0,
-          stride: 20, // 3 * 4 (position) + 2 * 4 (uv)
-          stepMode: 'vertex',
-          attributes: [
-            { name: 'aPosition', format: MSpec.RHIVertexFormat.FLOAT32x3, offset: 0, shaderLocation: 0 },
-            { name: 'aTexCoord', format: MSpec.RHIVertexFormat.FLOAT32x2, offset: 12, shaderLocation: 1 },
-          ],
-        },
-      ],
-    };
-
-    // 16. 创建渲染管线
-    const pipeline = runner.track(
-      runner.device.createRenderPipeline({
-        vertexShader,
-        fragmentShader,
-        vertexLayout,
-        primitiveTopology: MSpec.RHIPrimitiveTopology.TRIANGLE_LIST,
-        layout: pipelineLayout,
-        label: 'Texture Array Pipeline',
-      })
-    );
-
-    // 17. 创建绑定组
-    const textureView = arrayTexture.createView();
-    const bindGroup = runner.track(
-      runner.device.createBindGroup(bindGroupLayout, [
-        { binding: 0, resource: { buffer: transformBuffer } },
-        { binding: 1, resource: { buffer: layerBuffer } },
-        { binding: 2, resource: textureView },
-        { binding: 3, resource: sampler },
-      ])
-    );
-
-    // 18. 模型矩阵
-    const modelMatrix = new MMath.Matrix4();
-    modelMatrix.rotateX((-Math.PI / 2) * 0.6);
-
-    // 19. 更新函数
-    const updateLayerBuffer = () => {
-      const layerData = new Float32Array([currentLayer, layerCount, 0, 0]);
-      layerBuffer.update(layerData, 0);
-    };
-    updateLayerBuffer();
-
-    const updateVertexBuffer = () => {
-      quadGeometry = createQuad(4.0, uvScale);
-      vertexBuffer.update(quadGeometry.vertices as BufferSource, 0);
-    };
-
-    // ==================== GUI 控制 ====================
-
-    const gui = new SimpleGUI();
-
-    gui.addSeparator('Texture Array Control');
-
-    gui.add('Layer Index', {
-      value: currentLayer,
-      min: 0,
-      max: layerCount - 1,
-      step: 1,
-      onChange: (value) => {
-        currentLayer = value as number;
-        updateLayerBuffer();
+  // 13. 创建绑定组布局
+  const bindGroupLayout = runner.track(
+    runner.device.createBindGroupLayout([
+      {
+        binding: 0,
+        visibility: MSpec.RHIShaderStage.VERTEX,
+        buffer: { type: 'uniform' },
+        name: 'Transforms',
       },
-    });
-
-    gui.add('Layer Name', {
-      value: layerNames[currentLayer],
-      options: layerNames,
-      onChange: (value) => {
-        const index = layerNames.indexOf(value as string);
-        if (index !== -1) {
-          currentLayer = index;
-          updateLayerBuffer();
-          gui.set('Layer Index', currentLayer);
-        }
+      {
+        binding: 1,
+        visibility: MSpec.RHIShaderStage.FRAGMENT,
+        buffer: { type: 'uniform' },
+        name: 'LayerControl',
       },
-    });
-
-    gui.addSeparator('Display');
-
-    gui.add('UV Scale', {
-      value: uvScale,
-      min: 0.5,
-      max: 4,
-      step: 0.5,
-      onChange: (value) => {
-        uvScale = value as number;
-        updateVertexBuffer();
+      {
+        binding: 2,
+        visibility: MSpec.RHIShaderStage.FRAGMENT,
+        texture: { sampleType: 'float', viewDimension: '2d-array' },
+        name: 'uTextureArray',
       },
-    });
+      {
+        binding: 3,
+        visibility: MSpec.RHIShaderStage.FRAGMENT,
+        sampler: { type: 'filtering' },
+        name: 'uSampler',
+      },
+    ])
+  );
 
-    gui.addSeparator('Texture Info');
-    // 注意：SimpleGUI 可能不支持 addInfo，使用 separator 代替
+  // 14. 创建管线布局
+  const pipelineLayout = runner.track(
+    runner.device.createPipelineLayout([bindGroupLayout], 'Texture Array Pipeline Layout')
+  );
 
-    // ==================== 渲染循环 ====================
+  // 15. 顶点布局
+  const vertexLayout: MSpec.RHIVertexLayout = {
+    buffers: [
+      {
+        index: 0,
+        stride: 20, // 3 * 4 (position) + 2 * 4 (uv)
+        stepMode: 'vertex',
+        attributes: [
+          { name: 'aPosition', format: MSpec.RHIVertexFormat.FLOAT32x3, offset: 0, shaderLocation: 0 },
+          { name: 'aTexCoord', format: MSpec.RHIVertexFormat.FLOAT32x2, offset: 12, shaderLocation: 1 },
+        ],
+      },
+    ],
+  };
 
-    runner.start((_dt) => {
-      orbit.update(_dt);
-      stats.begin();
+  // 16. 创建渲染管线
+  const pipeline = runner.track(
+    runner.device.createRenderPipeline({
+      vertexShader,
+      fragmentShader,
+      vertexLayout,
+      primitiveTopology: MSpec.RHIPrimitiveTopology.TRIANGLE_LIST,
+      layout: pipelineLayout,
+      label: 'Texture Array Pipeline',
+    })
+  );
 
-      // 获取视图和投影矩阵
-      const viewMatrix = orbit.getViewMatrix();
-      const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
+  // 17. 创建绑定组
+  const textureView = arrayTexture.createView();
+  const bindGroup = runner.track(
+    runner.device.createBindGroup(bindGroupLayout, [
+      { binding: 0, resource: { buffer: transformBuffer } },
+      { binding: 1, resource: { buffer: layerBuffer } },
+      { binding: 2, resource: textureView },
+      { binding: 3, resource: sampler },
+    ])
+  );
 
-      // 更新变换矩阵
-      const transformData = new Float32Array(64);
-      transformData.set(modelMatrix.toArray(), 0);
-      transformData.set(viewMatrix, 16);
-      transformData.set(projMatrix, 32);
-      transformBuffer.update(transformData, 0);
+  // 18. 模型矩阵
+  const modelMatrix = new MMath.Matrix4();
+  modelMatrix.rotateX((-Math.PI / 2) * 0.6);
 
-      const { encoder, passDescriptor } = runner.beginFrame();
-      const renderPass = encoder.beginRenderPass(passDescriptor);
+  // 19. 更新函数
+  const updateLayerBuffer = () => {
+    const layerData = new Float32Array([currentLayer, layerCount, 0, 0]);
+    layerBuffer.update(layerData, 0);
+  };
+  updateLayerBuffer();
 
-      renderPass.setPipeline(pipeline);
-      renderPass.setVertexBuffer(0, vertexBuffer);
-      renderPass.setBindGroup(0, bindGroup);
+  const updateVertexBuffer = () => {
+    quadGeometry = createQuad(4.0, uvScale);
+    vertexBuffer.update(quadGeometry.vertices as BufferSource, 0);
+  };
 
-      // 绘制
-      renderPass.draw(quadGeometry.vertexCount, 1, 0, 0);
+  // ==================== GUI 控制 ====================
 
-      renderPass.end();
-      runner.endFrame(encoder);
+  const gui = new SimpleGUI();
 
-      stats.end();
-    });
+  gui.addSeparator('Texture Array Control');
 
-    // ==================== 事件处理 ====================
-
-    DemoRunner.showHelp([
-      'ESC: 退出 Demo',
-      'F11: 切换全屏',
-      '←/→: 切换纹理层',
-      '1-8: 快速跳转到特定层',
-      '鼠标左键拖动: 旋转视角',
-      '鼠标滚轮: 缩放',
-    ]);
-
-    // 方向键切换层
-    runner.onKey('ArrowLeft', () => {
-      currentLayer = Math.max(0, currentLayer - 1);
+  gui.add('Layer Index', {
+    value: currentLayer,
+    min: 0,
+    max: layerCount - 1,
+    step: 1,
+    onChange: (value) => {
+      currentLayer = value as number;
       updateLayerBuffer();
-      gui.set('Layer Index', currentLayer);
-      gui.set('Layer Name', layerNames[currentLayer]);
-    });
+    },
+  });
 
-    runner.onKey('ArrowRight', () => {
-      currentLayer = Math.min(layerCount - 1, currentLayer + 1);
-      updateLayerBuffer();
-      gui.set('Layer Index', currentLayer);
-      gui.set('Layer Name', layerNames[currentLayer]);
-    });
-
-    // 数字键快速跳转
-    for (let i = 1; i <= layerCount; i++) {
-      runner.onKey(i.toString(), () => {
-        currentLayer = i - 1;
+  gui.add('Layer Name', {
+    value: layerNames[currentLayer],
+    options: layerNames,
+    onChange: (value) => {
+      const index = layerNames.indexOf(value as string);
+      if (index !== -1) {
+        currentLayer = index;
         updateLayerBuffer();
         gui.set('Layer Index', currentLayer);
-        gui.set('Layer Name', layerNames[currentLayer]);
-      });
-    }
-
-    runner.onKey('Escape', () => {
-      stats.destroy();
-      orbit.destroy();
-      gui.destroy();
-      runner.destroy();
-    });
-
-    runner.onKey('F11', (_, event) => {
-      event.preventDefault();
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      } else {
-        runner.canvas.requestFullscreen();
       }
-    });
+    },
+  });
 
-  } catch (error) {
-    throw error;
+  gui.addSeparator('Display');
+
+  gui.add('UV Scale', {
+    value: uvScale,
+    min: 0.5,
+    max: 4,
+    step: 0.5,
+    onChange: (value) => {
+      uvScale = value as number;
+      updateVertexBuffer();
+    },
+  });
+
+  gui.addSeparator('Texture Info');
+  // 注意：SimpleGUI 可能不支持 addInfo，使用 separator 代替
+
+  // ==================== 渲染循环 ====================
+
+  runner.start((_dt) => {
+    orbit.update(_dt);
+    stats.begin();
+
+    // 获取视图和投影矩阵
+    const viewMatrix = orbit.getViewMatrix();
+    const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
+
+    // 更新变换矩阵
+    const transformData = new Float32Array(64);
+    transformData.set(modelMatrix.toArray(), 0);
+    transformData.set(viewMatrix, 16);
+    transformData.set(projMatrix, 32);
+    transformBuffer.update(transformData, 0);
+
+    const { encoder, passDescriptor } = runner.beginFrame();
+    const renderPass = encoder.beginRenderPass(passDescriptor);
+
+    renderPass.setPipeline(pipeline);
+    renderPass.setVertexBuffer(0, vertexBuffer);
+    renderPass.setBindGroup(0, bindGroup);
+
+    // 绘制
+    renderPass.draw(quadGeometry.vertexCount, 1, 0, 0);
+
+    renderPass.end();
+    runner.endFrame(encoder);
+
+    stats.end();
+  });
+
+  // ==================== 事件处理 ====================
+
+  DemoRunner.showHelp([
+    'ESC: 退出 Demo',
+    'F11: 切换全屏',
+    '←/→: 切换纹理层',
+    '1-8: 快速跳转到特定层',
+    '鼠标左键拖动: 旋转视角',
+    '鼠标滚轮: 缩放',
+  ]);
+
+  // 方向键切换层
+  runner.onKey('ArrowLeft', () => {
+    currentLayer = Math.max(0, currentLayer - 1);
+    updateLayerBuffer();
+    gui.set('Layer Index', currentLayer);
+    gui.set('Layer Name', layerNames[currentLayer]);
+  });
+
+  runner.onKey('ArrowRight', () => {
+    currentLayer = Math.min(layerCount - 1, currentLayer + 1);
+    updateLayerBuffer();
+    gui.set('Layer Index', currentLayer);
+    gui.set('Layer Name', layerNames[currentLayer]);
+  });
+
+  // 数字键快速跳转
+  for (let i = 1; i <= layerCount; i++) {
+    runner.onKey(i.toString(), () => {
+      currentLayer = i - 1;
+      updateLayerBuffer();
+      gui.set('Layer Index', currentLayer);
+      gui.set('Layer Name', layerNames[currentLayer]);
+    });
   }
+
+  runner.onKey('Escape', () => {
+    stats.destroy();
+    orbit.destroy();
+    gui.destroy();
+    runner.destroy();
+  });
+
+  runner.onKey('F11', (_, event) => {
+    event.preventDefault();
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      runner.canvas.requestFullscreen();
+    }
+  });
 })();

@@ -304,17 +304,20 @@ const compressionFormats = [
         for (let y = 0; y < format.size; y++) {
           for (let x = 0; x < format.size; x++) {
             const i = (y * format.size + x) * 4;
-            const checker = ((Math.floor(x / 32) + Math.floor(y / 32)) % 2) === 0;
+            const checker = (Math.floor(x / 32) + Math.floor(y / 32)) % 2 === 0;
 
-            if (seed === 0) { // BC1 - 棋盘格
+            if (seed === 0) {
+              // BC1 - 棋盘格
               pattern[i] = checker ? 255 : 0;
               pattern[i + 1] = checker ? 128 : 0;
               pattern[i + 2] = checker ? 64 : 0;
-            } else if (seed === 1) { // BC3 - 渐变
+            } else if (seed === 1) {
+              // BC3 - 渐变
               pattern[i] = Math.floor((x / format.size) * 255);
               pattern[i + 1] = Math.floor((y / format.size) * 255);
               pattern[i + 2] = 128;
-            } else if (seed === 2) { // BC7 - 圆形
+            } else if (seed === 2) {
+              // BC7 - 圆形
               const cx = format.size / 2;
               const cy = format.size / 2;
               const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
@@ -322,7 +325,8 @@ const compressionFormats = [
               pattern[i] = dist < radius ? 255 : 64;
               pattern[i + 1] = dist < radius ? 200 : 64;
               pattern[i + 2] = dist < radius ? 150 : 64;
-            } else { // 其他格式 - 条纹
+            } else {
+              // 其他格式 - 条纹
               const stripe = Math.floor(x / 16) % 2 === 0;
               pattern[i] = stripe ? 200 : 100;
               pattern[i + 1] = stripe ? 150 : 50;
@@ -375,20 +379,20 @@ const compressionFormats = [
     if (selectedIndex >= 0) {
       gui.add('Selected Format', {
         value: compressionFormats[0].name,
-        options: compressionFormats.map(f => f.name),
+        options: compressionFormats.map((f) => f.name),
         onChange: (value) => {
-          selectedIndex = compressionFormats.findIndex(f => f.name === value);
+          selectedIndex = compressionFormats.findIndex((f) => f.name === value);
           updateSelection();
         },
       });
     }
 
     // 更新选择状态
-    function updateSelection() {
+    const updateSelection = () => {
       for (let i = 0; i < selectedStates.length; i++) {
-        selectedStates[i] = (selectedIndex === -1 || selectedIndex === i) ? 1.0 : 0.0;
+        selectedStates[i] = selectedIndex === -1 || selectedIndex === i ? 1.0 : 0.0;
       }
-    }
+    };
 
     // ==================== 渲染循环 ====================
 

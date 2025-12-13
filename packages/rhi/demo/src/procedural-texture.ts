@@ -58,7 +58,6 @@ void main() {
 
 // ==================== 主程序 ====================
 
-
 const runner = new DemoRunner({
   canvasId: 'J-canvas',
   name: 'Procedural Texture Demo',
@@ -67,14 +66,7 @@ const runner = new DemoRunner({
 
 runner.init().then(() => {
   // 纹理类型名称
-  const textureNames = [
-    'Checkerboard',
-    'Gradient',
-    'Noise',
-    'Solid Color',
-    'UV Debug',
-    'Normal Map',
-  ];
+  const textureNames = ['Checkerboard', 'Gradient', 'Noise', 'Solid Color', 'UV Debug', 'Normal Map'];
 
   // 创建所有纹理
   const textures: MSpec.IRHITexture[] = [];
@@ -431,11 +423,7 @@ runner.init().then(() => {
   const projectionMatrix = new MMath.Matrix4();
 
   // 设置相机
-  viewMatrix.lookAt(
-    new MMath.Vector3(0, 0, 3),
-    new MMath.Vector3(0, 0, 0),
-    new MMath.Vector3(0, 1, 0)
-  );
+  viewMatrix.lookAt(new MMath.Vector3(0, 0, 3), new MMath.Vector3(0, 0, 0), new MMath.Vector3(0, 1, 0));
 
   // 设置GUI
   const gui = new SimpleGUI();
@@ -597,4 +585,3 @@ runner.init().then(() => {
   // 启动渲染循环
   runner.start(render);
 });
-

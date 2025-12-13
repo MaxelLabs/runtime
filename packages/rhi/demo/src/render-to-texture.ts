@@ -11,7 +11,15 @@
  */
 
 import { MSpec, MMath } from '@maxellabs/core';
-import { DemoRunner, GeometryGenerator, OrbitController, ProceduralTexture, RenderTarget, SimpleGUI, Stats } from './utils';
+import {
+  DemoRunner,
+  GeometryGenerator,
+  OrbitController,
+  ProceduralTexture,
+  RenderTarget,
+  SimpleGUI,
+  Stats,
+} from './utils';
 
 // ==================== 着色器源码 ====================
 
@@ -516,7 +524,7 @@ async function main(): Promise<void> {
       ])
     );
 
-    let secondPassBindGroup = runner.track(
+    const secondPassBindGroup = runner.track(
       runner.device.createBindGroup(secondPassBindGroupLayout, [
         { binding: 0, resource: secondPassUniformBuffer },
         { binding: 1, resource: renderTarget.getColorView(0) },
