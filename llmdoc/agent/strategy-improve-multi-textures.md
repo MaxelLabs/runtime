@@ -1,4 +1,17 @@
-# Strategy: Improve Multi-Textures Demo
+# Strategy: Improve Multi-Textures Demo (COMPLETED)
+
+## Status
+- ✅ **Implemented**: 程序化遮罩纹理已成功实现
+- ✅ **Fixed Issues**:
+  - 添加了时间 uniform 参数 (uTime)
+  - 实现了动态聚光灯遮罩效果
+  - 修改了片段着色器使用程序化遮罩替代噪声纹理
+
+## Side Quest Fixes
+- ✅ **Fixed compressed-texture.ts**:
+  - 修复了字符串枚举 `RHITextureUsage` 的无效位运算问题
+  - 将 `MSpec.RHITextureUsage.TEXTURE_BINDING | MSpec.RHITextureUsage.COPY_DST` 改为 `MSpec.RHITextureUsage.TEXTURE_BINDING`
+  - TypeScript 类型检查通过
 
 ## 1. Analysis
 * **Context**: 当前多纹理混合演示使用随机噪声作为遮罩纹理，导致遮罩模式看起来像"杂乱的覆盖层"，与叠加模式（Overlay）的视觉效果差异不够明显。遮罩模式应该展示基于几何形状的可见性控制，而叠加模式应该展示颜色/光线的交互效果。

@@ -253,7 +253,7 @@ const compressionFormats = [
         width: 512,
         height: 512,
         format: MSpec.RHITextureFormat.RGBA8_UNORM,
-        usage: MSpec.RHITextureUsage.TEXTURE_BINDING | MSpec.RHITextureUsage.COPY_DST,
+        usage: MSpec.RHITextureUsage.TEXTURE_BINDING,
         label: 'Reference Texture',
       })
     );
@@ -292,7 +292,7 @@ const compressionFormats = [
             width: format.size,
             height: format.size,
             format: MSpec.RHITextureFormat.RGBA8_UNORM, // 简化：使用RGBA格式
-            usage: MSpec.RHITextureUsage.TEXTURE_BINDING | MSpec.RHITextureUsage.COPY_DST,
+            usage: MSpec.RHITextureUsage.TEXTURE_BINDING,
             label: `${format.name} Texture`,
           })
         );
