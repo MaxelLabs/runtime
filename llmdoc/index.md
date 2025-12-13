@@ -61,6 +61,8 @@
   - NEAREST、LINEAR、MIPMAP 过滤效果
 
 ### 📋 参考文档 (reference)
+- **[Graphics Bible](./reference/graphics-bible.md)** - 图形系统宪法文档 ⭐
+  - 坐标系统、矩阵运算、颜色空间、采样算法等核心规范
 - [立方体贴图天空盒 Demo](./reference/cubemap-skybox-demo.md) - 立方体贴图和环境映射演示
   - CubemapGenerator、天空渐变、反射效果
 - [渲染到纹理 Demo](./reference/render-to-texture-demo.md) - 离屏渲染和后期处理
@@ -175,6 +177,7 @@
 #### MVP 矩阵变换
 - **概念**: Model-View-Projection 矩阵变换管线，实现 3D 空间的完整变换流程
 - **相关文档**:
+  - [Graphics Bible](./reference/graphics-bible.md) - 图形系统宪法，包含MVP变换的数学规范 ⭐
   - [MVP 矩阵实现架构](./architecture/rhi/mvp-matrix-implementation.md) - 实现架构和组件设计
   - [MVP 矩阵更新指南](./api/mvp-matrix-update-guide.md) - 迁移指南和技术细节
 
