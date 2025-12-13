@@ -548,8 +548,17 @@ export class DemoRunner {
   /** 更新画布大小 */
   private updateCanvasSize(): void {
     if (this._canvas) {
-      this._canvas.width = window.innerWidth;
-      this._canvas.height = window.innerHeight;
+      const dpr = window.devicePixelRatio || 1;
+      const displayWidth = window.innerWidth;
+      const displayHeight = window.innerHeight;
+
+      // 设置canvas实际像素尺寸 (考虑设备像素比)
+      this._canvas.width = Math.floor(displayWidth * dpr);
+      this._canvas.height = Math.floor(displayHeight * dpr);
+
+      // 设置CSS显示尺寸
+      this._canvas.style.width = displayWidth + 'px';
+      this._canvas.style.height = displayHeight + 'px';
     }
   }
 

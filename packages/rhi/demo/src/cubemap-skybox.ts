@@ -20,6 +20,8 @@ const vertexShaderSource = `#version 300 es
 precision highp float;
 
 layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec2 aUv;
 
 layout(std140) uniform Transforms {
   mat4 uModelMatrix;
@@ -140,7 +142,18 @@ void main() {
     })
   );
 
-  // 5. 创建变换矩阵 Uniform 缓冲区
+  // 5. 创建索引缓冲区
+  const indexBuffer = runner.track(
+    runner.device.createBuffer({
+      size: cubeGeometry.indices!.byteLength,
+      usage: MSpec.RHIBufferUsage.INDEX,
+      hint: 'static',
+      initialData: cubeGeometry.indices as BufferSource,
+      label: 'Skybox Index Buffer',
+    })
+  );
+
+  // 6. 创建变换矩阵 Uniform 缓冲区
   const transformBuffer = runner.track(
     runner.device.createBuffer({
       size: 192, // 3 matrices * 64 bytes
@@ -150,7 +163,7 @@ void main() {
     })
   );
 
-  // 6. 创建参数 Uniform 缓冲区
+  // 7. 创建参数 Uniform 缓冲区
   const paramsBuffer = runner.track(
     runner.device.createBuffer({
       size: 16, // intensity + rotationSpeed + time + padding
@@ -160,7 +173,7 @@ void main() {
     })
   );
 
-  // 7. 加载 Bridge2 立方体贴图
+  // 8. 加载 Bridge2 立方体贴图
 
   const cubemapUrls = {
     posX: '../assets/cube/Bridge2/posx.jpg',
@@ -189,17 +202,10 @@ void main() {
   const faceOrder: (keyof typeof cubemapData.faces)[] = ['posX', 'negX', 'posY', 'negY', 'posZ', 'negZ'];
   for (let i = 0; i < 6; i++) {
     const face = faceOrder[i];
-    cubeTexture.update(cubemapData.faces[face] as BufferSource, {
-      originX: 0,
-      originY: 0,
-      originZ: i,
-      width: cubemapData.size,
-      height: cubemapData.size,
-      depthOrArrayLayers: 1,
-    });
+    cubeTexture.update(cubemapData.faces[face] as BufferSource, 0, 0, 0, cubemapData.size, cubemapData.size, 1, 0, i);
   }
 
-  // 8. 创建立方体贴图采样器
+  // 9. 创建立方体贴图采样器
   const sampler = runner.track(
     runner.device.createSampler({
       magFilter: MSpec.RHIFilterMode.LINEAR,
@@ -209,10 +215,10 @@ void main() {
       addressModeV: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
       addressModeW: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
       label: 'Skybox Cubemap Sampler',
-    } as MSpec.RHISamplerDescriptor)
+    })
   );
 
-  // 9. 创建着色器
+  // 10. 创建着色器
   const vertexShader = runner.track(
     runner.device.createShaderModule({
       code: vertexShaderSource,
@@ -231,7 +237,7 @@ void main() {
     })
   );
 
-  // 10. 创建绑定组布局
+  // 11. 创建绑定组布局
   const bindGroupLayout = runner.track(
     runner.device.createBindGroupLayout([
       {
@@ -261,22 +267,26 @@ void main() {
     ])
   );
 
-  // 11. 创建管线布局
+  // 12. 创建管线布局
   const pipelineLayout = runner.track(runner.device.createPipelineLayout([bindGroupLayout], 'Skybox Pipeline Layout'));
 
-  // 12. 顶点布局
+  // 13. 顶点布局
   const vertexLayout: MSpec.RHIVertexLayout = {
     buffers: [
       {
         index: 0,
-        stride: 12, // 3 floats (position) = 12 bytes
+        stride: 32,
         stepMode: 'vertex',
-        attributes: [{ name: 'aPosition', format: MSpec.RHIVertexFormat.FLOAT32x3, offset: 0, shaderLocation: 0 }],
+        attributes: [
+          { name: 'aPosition', format: MSpec.RHIVertexFormat.FLOAT32x3, offset: 0, shaderLocation: 0 },
+          { name: 'aNormal', format: MSpec.RHIVertexFormat.FLOAT32x3, offset: 12, shaderLocation: 1 },
+          { name: 'aUv', format: MSpec.RHIVertexFormat.FLOAT32x2, offset: 24, shaderLocation: 2 },
+        ],
       },
     ],
   };
 
-  // 13. 创建渲染管线
+  // 14. 创建渲染管线
   const pipeline = runner.track(
     runner.device.createRenderPipeline({
       vertexShader,
@@ -284,24 +294,27 @@ void main() {
       vertexLayout,
       primitiveTopology: MSpec.RHIPrimitiveTopology.TRIANGLE_LIST,
       layout: pipelineLayout,
+      rasterizationState: {
+        cullMode: MSpec.RHICullMode.FRONT_AND_BACK,
+      },
       label: 'Skybox Pipeline',
     })
   );
 
-  // 14. 创建绑定组
+  // 15. 创建绑定组
   const bindGroup = runner.track(
     runner.device.createBindGroup(bindGroupLayout, [
       { binding: 0, resource: { buffer: transformBuffer } },
       { binding: 1, resource: { buffer: paramsBuffer } },
-      { binding: 2, resource: cubeTexture.createView({ dimension: 'cube' }) },
+      { binding: 2, resource: cubeTexture.createView() },
       { binding: 3, resource: sampler },
     ])
   );
 
-  // 15. 模型矩阵
+  // 16. 模型矩阵
   const modelMatrix = new MMath.Matrix4();
 
-  // 16. 天空盒参数初始值
+  // 17. 天空盒参数初始值
   let intensity = 1.0;
   let rotationSpeed = 0.0;
 
@@ -363,10 +376,11 @@ void main() {
 
     renderPass.setPipeline(pipeline);
     renderPass.setVertexBuffer(0, vertexBuffer);
+    renderPass.setIndexBuffer(indexBuffer, MSpec.RHIIndexFormat.UINT16);
     renderPass.setBindGroup(0, bindGroup);
 
     // 绘制立方体（天空盒）
-    renderPass.draw(cubeGeometry.vertexCount, 1, 0, 0);
+    renderPass.drawIndexed(cubeGeometry.indexCount!, 1, 0, 0, 0);
 
     renderPass.end();
     runner.endFrame(encoder);

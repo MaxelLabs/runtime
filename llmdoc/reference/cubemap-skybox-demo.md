@@ -159,6 +159,20 @@ const bindGroupLayout = device.createBindGroupLayout([
 
 ## 已知问题和解决方案
 
+### 顶点数据格式不匹配错误
+**问题：** "WebGL: INVALID_OPERATION: drawArrays: no buffer is bound to enabled attribute"
+**原因：** `GeometryGenerator.cube()` 生成的顶点数据包含 Position + Normal + UV（stride=32 字节），但 `vertexLayout` 只定义了 Position 属性（stride=12 字节），导致 WebGL 无法正确解析顶点缓冲区
+**解决方案：**
+1. 在顶点着色器中新增 `aNormal` 和 `aUv` 属性声明：
+   ```glsl
+   layout(location = 0) in vec3 aPosition;
+   layout(location = 1) in vec3 aNormal;
+   layout(location = 2) in vec2 aUv;
+   ```
+2. 更新 `vertexLayout` 的 stride 为 32 字节
+3. 添加 Normal（offset: 12）和 UV（offset: 24）的属性配置
+4. 确保属性顺序遵循 Position → Normal → UV 的标准规范
+
 ### Shader 精度匹配错误
 **问题：** "Precisions of uniform block members must match across shaders"
 **原因：** Uniform Block 在顶点着色器和片段着色器中使用了不同的精度

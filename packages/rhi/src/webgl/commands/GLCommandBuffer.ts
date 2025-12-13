@@ -651,6 +651,10 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
     // 绑定到默认帧缓冲区（画布）
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
+    // 重置viewport到完整canvas尺寸（修复三分屏等场景的viewport污染）
+    const canvas = gl.canvas as HTMLCanvasElement;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+
     // 禁用深度测试，确保全屏四边形能够绘制
     gl.disable(gl.DEPTH_TEST);
 

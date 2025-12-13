@@ -116,9 +116,9 @@ in vec2 aTexCoord;
 
 // Uniform
 uniform SecondPassUniforms {
-  vec2 uResolution;
-  float uSplitMode;
-  int uEffect;
+  highp vec2 uResolution;
+  highp float uSplitMode;
+  highp int uEffect;
 };
 
 // 输出到片元着色器
@@ -141,9 +141,9 @@ in vec2 vScreenCoord;
 
 // Uniform
 uniform SecondPassUniforms {
-  vec2 uResolution;
-  float uSplitMode;
-  int uEffect;
+  highp vec2 uResolution;
+  highp float uSplitMode;
+  highp int uEffect;
 };
 uniform sampler2D uRTTexture;  // 渲染到纹理的结果
 
@@ -319,7 +319,18 @@ async function main(): Promise<void> {
       })
     );
 
-    // 11. 创建 Uniform 缓冲区
+    // 11. 创建四边形索引缓冲区（第二遍使用索引绘制，避免只绘制半个屏幕）
+    const quadIndexBuffer = runner.track(
+      runner.device.createBuffer({
+        size: quadGeometry.indices!.byteLength,
+        usage: MSpec.RHIBufferUsage.INDEX,
+        hint: 'static',
+        initialData: quadGeometry.indices as BufferSource,
+        label: 'Quad Index Buffer',
+      })
+    );
+
+    // 12. 创建 Uniform 缓冲区
     // Transform uniform: 4 个 mat4 = 256 bytes
     const transformBuffer = runner.track(
       runner.device.createBuffer({
@@ -360,7 +371,7 @@ async function main(): Promise<void> {
       })
     );
 
-    // 12. 生成程序化纹理
+    // 13. 生成程序化纹理
     const textures: Record<string, ReturnType<typeof ProceduralTexture.gradient>> = {
       gradient: ProceduralTexture.gradient({
         width: 256,
@@ -397,7 +408,7 @@ async function main(): Promise<void> {
     );
     currentTexture.update(textures.gradient.data as BufferSource);
 
-    // 13. 创建采样器
+    // 14. 创建采样器
     const sampler = runner.track(
       runner.device.createSampler({
         magFilter: MSpec.RHIFilterMode.LINEAR,
@@ -409,7 +420,7 @@ async function main(): Promise<void> {
       })
     );
 
-    // 14. 创建第一遍着色器
+    // 15. 创建第一遍着色器
     const firstPassVertexShaderModule = runner.track(
       runner.device.createShaderModule({
         code: firstPassVertexShader,
@@ -428,7 +439,7 @@ async function main(): Promise<void> {
       })
     );
 
-    // 15. 创建第二遍着色器
+    // 16. 创建第二遍着色器
     const secondPassVertexShaderModule = runner.track(
       runner.device.createShaderModule({
         code: secondPassVertexShader,
@@ -447,7 +458,7 @@ async function main(): Promise<void> {
       })
     );
 
-    // 16. 创建绑定组布局（第一遍）
+    // 17. 创建绑定组布局（第一遍）
     const firstPassBindGroupLayout = runner.track(
       runner.device.createBindGroupLayout(
         [
@@ -486,7 +497,7 @@ async function main(): Promise<void> {
       )
     );
 
-    // 17. 创建绑定组布局（第二遍）
+    // 18. 创建绑定组布局（第二遍）
     const secondPassBindGroupLayout = runner.track(
       runner.device.createBindGroupLayout(
         [
@@ -513,7 +524,7 @@ async function main(): Promise<void> {
       )
     );
 
-    // 18. 创建绑定组
+    // 19. 创建绑定组
     let firstPassBindGroup = runner.track(
       runner.device.createBindGroup(firstPassBindGroupLayout, [
         { binding: 0, resource: transformBuffer },
@@ -532,7 +543,7 @@ async function main(): Promise<void> {
       ])
     );
 
-    // 19. 创建管线
+    // 20. 创建管线
     const firstPassPipelineLayout = runner.track(
       runner.device.createPipelineLayout([firstPassBindGroupLayout], 'First Pass Pipeline Layout')
     );
@@ -568,7 +579,7 @@ async function main(): Promise<void> {
       })
     );
 
-    // 20. 创建 GUI
+    // 21. 创建 GUI
     const gui = new SimpleGUI();
 
     gui
@@ -647,15 +658,15 @@ async function main(): Promise<void> {
         },
       });
 
-    // 21. 旋转状态
+    // 22. 旋转状态
     let rotationY = 0;
     let rotationX = 0;
 
-    // 22. 矩阵
+    // 23. 矩阵
     const modelMatrix = new MMath.Matrix4();
     const normalMatrix = new MMath.Matrix4();
 
-    // 23. 键盘事件
+    // 24. 键盘事件
     runner.onKey('Escape', () => {
       gui.destroy();
       stats.destroy();
@@ -677,7 +688,7 @@ async function main(): Promise<void> {
       gui.set('autoRotate', params.autoRotate);
     });
 
-    // 24. 启动渲染循环
+    // 25. 启动渲染循环
     runner.start((dt) => {
       stats.begin();
 
@@ -751,7 +762,7 @@ async function main(): Promise<void> {
       if (params.splitMode !== 2) {
         const rttPassDescriptor = renderTarget.getRenderPassDescriptor([0.1, 0.1, 0.2, 1.0]);
         const firstPass = encoder.beginRenderPass({
-          colorAttachments: rttPassDescriptor.colorAttachments,
+          colorAttachments: rttPassDescriptor.colorAttachments!,
           depthStencilAttachment: rttPassDescriptor.depthStencilAttachment,
         });
         firstPass.setPipeline(firstPassPipeline);
@@ -764,12 +775,13 @@ async function main(): Promise<void> {
 
       // 第二遍：渲染到屏幕
       const secondPass = encoder.beginRenderPass({
-        colorAttachments: passDescriptor.colorAttachments,
+        colorAttachments: passDescriptor.colorAttachments!,
       });
       secondPass.setPipeline(secondPassPipeline);
       secondPass.setBindGroup(0, secondPassBindGroup);
       secondPass.setVertexBuffer(0, quadVertexBuffer);
-      secondPass.draw(quadGeometry.vertexCount);
+      secondPass.setIndexBuffer(quadIndexBuffer, MSpec.RHIIndexFormat.UINT16);
+      secondPass.drawIndexed(quadGeometry.indexCount!);
       secondPass.end();
 
       runner.endFrame(encoder);

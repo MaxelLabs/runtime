@@ -1,16 +1,26 @@
 /**
  * mipmaps.ts
- * Mipmap 生成和使用演示 Demo
+ * Mipmap 三分屏对比演示 Demo
  *
  * 功能演示：
- * - 自动生成 Mipmap 链
+ * - 三分屏并排对比渲染（左/中/右）
+ * - 左侧：无 Mipmap（远处摩尔纹）
+ * - 中间：双线性 Mipmap（级别跳跃）
+ * - 右侧：三线性 Mipmap（平滑过渡）
  * - 手动 LOD 控制（textureLod）
- * - 三种过滤模式对比（无 Mipmap / 双线性 / 三线性）
  * - 带颜色标记的 LOD 级别可视化
  */
 
 import { MSpec, MMath } from '@maxellabs/core';
-import { DemoRunner, OrbitController, Stats, TextureLoader, ProceduralTexture, SimpleGUI } from './utils';
+import {
+  DemoRunner,
+  OrbitController,
+  Stats,
+  TextureLoader,
+  ProceduralTexture,
+  SimpleGUI,
+  GeometryGenerator,
+} from './utils';
 
 // ==================== 着色器源码 ====================
 
@@ -18,9 +28,10 @@ const vertexShaderSource = /* glsl */ `#version 300 es
 precision highp float;
 
 layout(location = 0) in vec3 aPosition;
-layout(location = 1) in vec2 aTexCoord;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec2 aTexCoord;
 
-uniform Transforms {
+layout(std140) uniform Transforms {
   mat4 uModelMatrix;
   mat4 uViewMatrix;
   mat4 uProjectionMatrix;
@@ -39,7 +50,7 @@ const fragmentShaderSource = /* glsl */ `#version 300 es
 precision highp float;
 
 uniform sampler2D uTexture;
-uniform LodControl {
+layout(std140) uniform LodControl {
   float uForcedLod; // -1.0 = 自动, 0.0-8.0 = 手动指定 LOD 级别
 };
 
@@ -58,40 +69,6 @@ void main() {
   fragColor = texColor;
 }
 `;
-
-// ==================== Mipmap 模式配置 ====================
-
-interface MipmapConfig {
-  name: string;
-  description: string;
-  minFilter: MSpec.RHIFilterMode;
-  magFilter: MSpec.RHIFilterMode;
-  mipmapFilter: MSpec.RHIFilterMode;
-}
-
-const MIPMAP_CONFIGS: MipmapConfig[] = [
-  {
-    name: 'noMipmap',
-    description: '无 Mipmap - 远处会出现摩尔纹',
-    minFilter: MSpec.RHIFilterMode.LINEAR,
-    magFilter: MSpec.RHIFilterMode.LINEAR,
-    mipmapFilter: MSpec.RHIFilterMode.NEAREST,
-  },
-  {
-    name: 'bilinear',
-    description: '双线性 Mipmap - 级别间跳跃',
-    minFilter: MSpec.RHIFilterMode.LINEAR_MIPMAP_NEAREST,
-    magFilter: MSpec.RHIFilterMode.LINEAR,
-    mipmapFilter: MSpec.RHIFilterMode.NEAREST,
-  },
-  {
-    name: 'trilinear',
-    description: '三线性 Mipmap - 平滑过渡',
-    minFilter: MSpec.RHIFilterMode.LINEAR_MIPMAP_LINEAR,
-    magFilter: MSpec.RHIFilterMode.LINEAR,
-    mipmapFilter: MSpec.RHIFilterMode.LINEAR,
-  },
-];
 
 // ==================== 带颜色标记的 Mipmap 生成 ====================
 
@@ -167,56 +144,6 @@ function generateColoredMipmapLevel(size: number, level: number, maxLevels: numb
   return data;
 }
 
-// ==================== 延伸平面几何体 ====================
-
-interface PlaneGeometry {
-  vertices: Float32Array;
-  vertexCount: number;
-}
-
-/**
- * 创建延伸平面几何体（用于展示远近距离的 Mipmap 效果）
- */
-function createExtendedPlane(
-  width: number,
-  height: number,
-  widthSegments: number,
-  heightSegments: number,
-  uvScale: number = 4.0
-): PlaneGeometry {
-  const vertices: number[] = [];
-
-  // 每个顶点包含：位置 (3) + UV (2) = 5 个浮点数
-  for (let y = 0; y < heightSegments; y++) {
-    for (let x = 0; x < widthSegments; x++) {
-      const u0 = x / widthSegments;
-      const u1 = (x + 1) / widthSegments;
-      const v0 = y / heightSegments;
-      const v1 = (y + 1) / heightSegments;
-
-      const x0 = (u0 - 0.5) * width;
-      const x1 = (u1 - 0.5) * width;
-      const z0 = (v0 - 0.5) * height;
-      const z1 = (v1 - 0.5) * height;
-
-      // 第一个三角形
-      vertices.push(x0, 0, z0, u0 * uvScale, v0 * uvScale);
-      vertices.push(x0, 0, z1, u0 * uvScale, v1 * uvScale);
-      vertices.push(x1, 0, z1, u1 * uvScale, v1 * uvScale);
-
-      // 第二个三角形
-      vertices.push(x0, 0, z0, u0 * uvScale, v0 * uvScale);
-      vertices.push(x1, 0, z1, u1 * uvScale, v1 * uvScale);
-      vertices.push(x1, 0, z0, u1 * uvScale, v0 * uvScale);
-    }
-  }
-
-  return {
-    vertices: new Float32Array(vertices),
-    vertexCount: widthSegments * heightSegments * 6,
-  };
-}
-
 // ==================== 主程序 ====================
 
 (async function main() {
@@ -224,7 +151,7 @@ function createExtendedPlane(
     // 1. 初始化 DemoRunner
     const runner = new DemoRunner({
       canvasId: 'J-canvas',
-      name: 'Mipmap Demo',
+      name: 'Mipmap 三分屏对比 Demo',
       clearColor: [0.06, 0.06, 0.1, 1.0],
     });
 
@@ -233,36 +160,57 @@ function createExtendedPlane(
     // 2. 初始化性能监控和相机控制
     const stats = new Stats({ position: 'top-left', show: ['fps', 'ms'] });
     const orbit = new OrbitController(runner.canvas, {
-      distance: 8,
-      target: [0, 0, -5],
+      distance: 25,
+      target: [0, 0, -50],
+      azimuth: 0,
+      elevation: MMath.degToRad(45), // 45° 俯视角
       enableDamping: true,
-      autoRotate: false,
-      minElevation: 0.1,
-      maxElevation: Math.PI * 0.45,
+      autoRotate: true, // 自动旋转
+      autoRotateSpeed: 0.5,
     });
 
     // 3. 状态变量
-    let currentModeIndex = 2; // 默认三线性
     let forcedLod = -1.0; // -1 = 自动
-    let uvScale = 4.0;
-    let tiltAngle = 60;
     let showLodColors = false;
 
-    // 4. 创建延伸平面几何体
-    let planeGeometry = createExtendedPlane(40, 40, 20, 20, uvScale);
+    // 4. 创建跑道平面几何体
+    const geometry = GeometryGenerator.plane({
+      width: 20,
+      height: 200,
+      widthSegments: 1,
+      heightSegments: 20,
+      normals: true,
+      uvs: true,
+    });
 
-    // 5. 创建顶点缓冲区
+    // 5. 手动缩放 UV（4x 重复）
+    const floatsPerVertex = 8; // Position(3) + Normal(3) + UV(2)
+    for (let i = 0; i < geometry.vertexCount; i++) {
+      const baseIndex = i * floatsPerVertex;
+      geometry.vertices[baseIndex + 6] *= 4.0; // U
+      geometry.vertices[baseIndex + 7] *= 4.0; // V
+    }
+
+    // 6. 创建顶点缓冲区和索引缓冲区
     const vertexBuffer = runner.track(
       runner.device.createBuffer({
-        size: planeGeometry.vertices.byteLength,
+        size: geometry.vertices.byteLength,
         usage: MSpec.RHIBufferUsage.VERTEX,
-        hint: 'dynamic',
-        initialData: planeGeometry.vertices as BufferSource,
-        label: 'Mipmap Plane Vertex Buffer',
+        initialData: geometry.vertices as BufferSource,
+        label: 'Runway Vertex Buffer',
       })
     );
 
-    // 6. 创建变换矩阵 Uniform 缓冲区
+    const indexBuffer = runner.track(
+      runner.device.createBuffer({
+        size: geometry.indices!.byteLength,
+        usage: MSpec.RHIBufferUsage.INDEX,
+        initialData: geometry.indices as BufferSource,
+        label: 'Runway Index Buffer',
+      })
+    );
+
+    // 7. 创建变换矩阵 Uniform 缓冲区
     const transformBuffer = runner.track(
       runner.device.createBuffer({
         size: 256,
@@ -272,7 +220,7 @@ function createExtendedPlane(
       })
     );
 
-    // 7. 创建 LOD 控制 Uniform 缓冲区
+    // 8. 创建 LOD 控制 Uniform 缓冲区
     const lodBuffer = runner.track(
       runner.device.createBuffer({
         size: 16, // 对齐到 16 字节
@@ -282,14 +230,14 @@ function createExtendedPlane(
       })
     );
 
-    // 8. 创建普通棋盘格纹理（带 Mipmap）
+    // 9. 创建纹理
     // eslint-disable-next-line no-console
     console.log('[Mipmap Demo] Creating textures...');
 
     const baseSize = 256;
     const maxMipLevels = Math.floor(Math.log2(baseSize)) + 1; // 9 levels: 256->1
 
-    // 普通棋盘格纹理
+    // 普通棋盘格纹理数据
     const checkerData = ProceduralTexture.checkerboard({
       width: baseSize,
       height: baseSize,
@@ -298,32 +246,57 @@ function createExtendedPlane(
       colorB: [64, 64, 64, 255],
     });
 
-    const normalTexture = runner.track(
+    // 9.1 无 Mipmap 纹理
+    const texture_no_mips = runner.track(
       runner.device.createTexture({
         width: baseSize,
         height: baseSize,
+        mipLevelCount: 1, // 只有 Level 0
         format: MSpec.RHITextureFormat.RGBA8_UNORM,
         usage: MSpec.RHITextureUsage.TEXTURE_BINDING,
-        mipLevelCount: maxMipLevels,
-        label: 'Normal Checkerboard Texture',
+        label: 'Texture No Mipmaps',
       })
     );
-    normalTexture.update(checkerData.data as BufferSource);
+    texture_no_mips.update(checkerData.data as BufferSource);
+
+    // 9.2 有 Mipmap 纹理（普通）
+    const texture_with_mips = runner.track(
+      runner.device.createTexture({
+        width: baseSize,
+        height: baseSize,
+        mipLevelCount: maxMipLevels,
+        format: MSpec.RHITextureFormat.RGBA8_UNORM,
+        usage: MSpec.RHITextureUsage.TEXTURE_BINDING,
+        label: 'Texture With Mipmaps',
+      })
+    );
+    texture_with_mips.update(checkerData.data as BufferSource);
 
     // 生成 Mipmap
     const mipmapLevels = TextureLoader.generateMipmaps(checkerData.data, baseSize, baseSize);
     for (let level = 0; level < mipmapLevels.length; level++) {
-      normalTexture.update(mipmapLevels[level] as BufferSource, 0, 0, 0, undefined, undefined, undefined, level + 1);
+      const levelWidth = Math.max(1, baseSize >> (level + 1));
+      const levelHeight = Math.max(1, baseSize >> (level + 1));
+      texture_with_mips.update(
+        mipmapLevels[level] as BufferSource,
+        0,
+        0,
+        0,
+        levelWidth,
+        levelHeight,
+        undefined,
+        level + 1
+      );
     }
 
-    // 9. 创建带颜色标记的纹理
-    const coloredTexture = runner.track(
+    // 9.3 有 Mipmap 纹理（彩色标记）
+    const texture_colored = runner.track(
       runner.device.createTexture({
         width: baseSize,
         height: baseSize,
+        mipLevelCount: maxMipLevels,
         format: MSpec.RHITextureFormat.RGBA8_UNORM,
         usage: MSpec.RHITextureUsage.TEXTURE_BINDING,
-        mipLevelCount: maxMipLevels,
         label: 'Colored Mipmap Texture',
       })
     );
@@ -332,24 +305,44 @@ function createExtendedPlane(
     for (let level = 0; level < maxMipLevels; level++) {
       const levelSize = Math.max(1, baseSize >> level);
       const levelData = generateColoredMipmapLevel(levelSize, level, maxMipLevels);
-      coloredTexture.update(levelData as BufferSource, 0, 0, 0, undefined, undefined, undefined, level);
+      texture_colored.update(levelData as BufferSource, 0, 0, 0, levelSize, levelSize, undefined, level);
     }
 
     // eslint-disable-next-line no-console
     console.log(`[Mipmap Demo] Created textures with ${maxMipLevels} mip levels`);
 
-    // 10. 为每种模式创建采样器
-    const samplers = MIPMAP_CONFIGS.map((config) =>
-      runner.track(
-        runner.device.createSampler({
-          magFilter: config.magFilter,
-          minFilter: config.minFilter,
-          mipmapFilter: config.mipmapFilter,
-          addressModeU: MSpec.RHIAddressMode.REPEAT,
-          addressModeV: MSpec.RHIAddressMode.REPEAT,
-          label: `Sampler: ${config.name}`,
-        })
-      )
+    // 10. 创建三个采样器
+    const sampler_no_mip = runner.track(
+      runner.device.createSampler({
+        minFilter: MSpec.RHIFilterMode.LINEAR,
+        magFilter: MSpec.RHIFilterMode.LINEAR,
+        mipmapFilter: MSpec.RHIFilterMode.NEAREST,
+        addressModeU: MSpec.RHIAddressMode.REPEAT,
+        addressModeV: MSpec.RHIAddressMode.REPEAT,
+        label: 'Sampler No Mipmap',
+      })
+    );
+
+    const sampler_bilinear = runner.track(
+      runner.device.createSampler({
+        minFilter: MSpec.RHIFilterMode.LINEAR_MIPMAP_NEAREST,
+        magFilter: MSpec.RHIFilterMode.LINEAR,
+        mipmapFilter: MSpec.RHIFilterMode.NEAREST,
+        addressModeU: MSpec.RHIAddressMode.REPEAT,
+        addressModeV: MSpec.RHIAddressMode.REPEAT,
+        label: 'Sampler Bilinear',
+      })
+    );
+
+    const sampler_trilinear = runner.track(
+      runner.device.createSampler({
+        minFilter: MSpec.RHIFilterMode.LINEAR_MIPMAP_LINEAR,
+        magFilter: MSpec.RHIFilterMode.LINEAR,
+        mipmapFilter: MSpec.RHIFilterMode.LINEAR,
+        addressModeU: MSpec.RHIAddressMode.REPEAT,
+        addressModeV: MSpec.RHIAddressMode.REPEAT,
+        label: 'Sampler Trilinear',
+      })
     );
 
     // 11. 创建着色器
@@ -406,95 +399,73 @@ function createExtendedPlane(
       runner.device.createPipelineLayout([bindGroupLayout], 'Mipmap Pipeline Layout')
     );
 
-    // 14. 顶点布局
-    const vertexLayout: MSpec.RHIVertexLayout = {
-      buffers: [
-        {
-          index: 0,
-          stride: 20, // 3 * 4 (position) + 2 * 4 (uv)
-          stepMode: 'vertex',
-          attributes: [
-            { name: 'aPosition', format: MSpec.RHIVertexFormat.FLOAT32x3, offset: 0, shaderLocation: 0 },
-            { name: 'aTexCoord', format: MSpec.RHIVertexFormat.FLOAT32x2, offset: 12, shaderLocation: 1 },
-          ],
-        },
-      ],
-    };
-
-    // 15. 创建渲染管线
+    // 14. 创建渲染管线
     const pipeline = runner.track(
       runner.device.createRenderPipeline({
         vertexShader,
         fragmentShader,
-        vertexLayout,
+        vertexLayout: geometry.layout,
         primitiveTopology: MSpec.RHIPrimitiveTopology.TRIANGLE_LIST,
         layout: pipelineLayout,
         label: 'Mipmap Pipeline',
       })
     );
 
-    // 16. 创建绑定组（每个模式 x 两种纹理）
-    const normalTextureView = normalTexture.createView();
-    const coloredTextureView = coloredTexture.createView();
+    // 15. 创建纹理视图
+    const view_no_mips = runner.track(texture_no_mips.createView());
+    const view_with_mips = runner.track(texture_with_mips.createView());
+    const view_colored = runner.track(texture_colored.createView());
 
-    const createBindGroup = (samplerIndex: number, useColoredTexture: boolean) => {
-      return runner.device.createBindGroup(bindGroupLayout, [
-        { binding: 0, resource: { buffer: transformBuffer } },
-        { binding: 1, resource: { buffer: lodBuffer } },
-        { binding: 2, resource: useColoredTexture ? coloredTextureView : normalTextureView },
-        { binding: 3, resource: samplers[samplerIndex] },
-      ]);
+    // 16. 创建 BindGroup（3 种采样器 × 2 种纹理）
+    const createBindGroups = (useColoredTexture: boolean) => {
+      const normalView = useColoredTexture ? view_colored : view_with_mips;
+
+      return [
+        // 左侧：无 Mipmap
+        runner.track(
+          runner.device.createBindGroup(bindGroupLayout, [
+            { binding: 0, resource: { buffer: transformBuffer } },
+            { binding: 1, resource: { buffer: lodBuffer } },
+            { binding: 2, resource: view_no_mips },
+            { binding: 3, resource: sampler_no_mip },
+          ])
+        ),
+        // 中间：双线性
+        runner.track(
+          runner.device.createBindGroup(bindGroupLayout, [
+            { binding: 0, resource: { buffer: transformBuffer } },
+            { binding: 1, resource: { buffer: lodBuffer } },
+            { binding: 2, resource: normalView },
+            { binding: 3, resource: sampler_bilinear },
+          ])
+        ),
+        // 右侧：三线性
+        runner.track(
+          runner.device.createBindGroup(bindGroupLayout, [
+            { binding: 0, resource: { buffer: transformBuffer } },
+            { binding: 1, resource: { buffer: lodBuffer } },
+            { binding: 2, resource: normalView },
+            { binding: 3, resource: sampler_trilinear },
+          ])
+        ),
+      ];
     };
 
-    let currentBindGroup = runner.track(createBindGroup(currentModeIndex, showLodColors));
+    let bindGroups = createBindGroups(false);
 
-    // 17. 模型矩阵
+    // 17. 模型矩阵（保持单位矩阵）
     const modelMatrix = new MMath.Matrix4();
 
-    const updateModelMatrix = () => {
-      modelMatrix.identity();
-      modelMatrix.rotateX((-tiltAngle * Math.PI) / 180);
-      const translation = new MMath.Vector3(0, 0, -10);
-      modelMatrix.translate(translation);
-    };
-    updateModelMatrix();
-
-    // 18. 更新函数
-    const updateBindGroup = () => {
-      currentBindGroup = runner.track(createBindGroup(currentModeIndex, showLodColors));
-    };
-
+    // 18. 更新 LOD 缓冲区
     const updateLodBuffer = () => {
       const lodData = new Float32Array([forcedLod, 0, 0, 0]);
       lodBuffer.update(lodData, 0);
     };
     updateLodBuffer();
 
-    const updateVertexBuffer = () => {
-      planeGeometry = createExtendedPlane(40, 40, 20, 20, uvScale);
-      vertexBuffer.update(planeGeometry.vertices as BufferSource, 0);
-    };
-
     // ==================== GUI 控制 ====================
 
     const gui = new SimpleGUI();
-
-    gui.addSeparator('Mipmap Mode');
-
-    const modeNames = MIPMAP_CONFIGS.map((c) => c.name);
-    gui.add('Mode', {
-      value: modeNames[currentModeIndex],
-      options: modeNames,
-      onChange: (value) => {
-        const index = MIPMAP_CONFIGS.findIndex((c) => c.name === value);
-        if (index !== -1) {
-          currentModeIndex = index;
-          updateBindGroup();
-          // eslint-disable-next-line no-console
-          console.log(`[Mipmap Demo] Switched to: ${MIPMAP_CONFIGS[index].description}`);
-        }
-      },
-    });
 
     gui.addSeparator('LOD Control');
 
@@ -513,31 +484,7 @@ function createExtendedPlane(
       value: showLodColors,
       onChange: (value) => {
         showLodColors = value as boolean;
-        updateBindGroup();
-      },
-    });
-
-    gui.addSeparator('Scene');
-
-    gui.add('UV Scale', {
-      value: uvScale,
-      min: 1,
-      max: 10,
-      step: 0.5,
-      onChange: (value) => {
-        uvScale = value as number;
-        updateVertexBuffer();
-      },
-    });
-
-    gui.add('Tilt Angle', {
-      value: tiltAngle,
-      min: 0,
-      max: 90,
-      step: 5,
-      onChange: (value) => {
-        tiltAngle = value as number;
-        updateModelMatrix();
+        bindGroups = createBindGroups(showLodColors);
       },
     });
 
@@ -547,11 +494,12 @@ function createExtendedPlane(
       orbit.update(_dt);
       stats.begin();
 
-      // 获取视图和投影矩阵
+      // 计算宽高比（三分屏调整）
       const viewMatrix = orbit.getViewMatrix();
-      const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
+      const aspectRatio = runner.width / runner.height / 3;
+      const projMatrix = orbit.getProjectionMatrix(aspectRatio);
 
-      // 更新变换矩阵
+      // 更新 Transform Uniform
       const transformData = new Float32Array(64);
       transformData.set(modelMatrix.toArray(), 0);
       transformData.set(viewMatrix, 16);
@@ -563,10 +511,25 @@ function createExtendedPlane(
 
       renderPass.setPipeline(pipeline);
       renderPass.setVertexBuffer(0, vertexBuffer);
-      renderPass.setBindGroup(0, currentBindGroup);
+      renderPass.setIndexBuffer(indexBuffer, MSpec.RHIIndexFormat.UINT16);
 
-      // 绘制
-      renderPass.draw(planeGeometry.vertexCount, 1, 0, 0);
+      const viewportWidth = runner.width / 3;
+      const viewportHeight = runner.height;
+
+      // 左侧视口：无 Mipmap
+      renderPass.setViewport(0, 0, viewportWidth, viewportHeight);
+      renderPass.setBindGroup(0, bindGroups[0]);
+      renderPass.drawIndexed(geometry.indexCount!, 1, 0, 0, 0);
+
+      // 中间视口：双线性
+      renderPass.setViewport(viewportWidth, 0, viewportWidth, viewportHeight);
+      renderPass.setBindGroup(0, bindGroups[1]);
+      renderPass.drawIndexed(geometry.indexCount!, 1, 0, 0, 0);
+
+      // 右侧视口：三线性
+      renderPass.setViewport(viewportWidth * 2, 0, viewportWidth, viewportHeight);
+      renderPass.setBindGroup(0, bindGroups[2]);
+      renderPass.drawIndexed(geometry.indexCount!, 1, 0, 0, 0);
 
       renderPass.end();
       runner.endFrame(encoder);
@@ -579,25 +542,14 @@ function createExtendedPlane(
     DemoRunner.showHelp([
       'ESC: 退出 Demo',
       'F11: 切换全屏',
-      '1-3: 切换 Mipmap 模式',
-      'L: 锁定/解锁 LOD',
+      'L: 锁定/解锁 LOD（快速切换自动/手动）',
       '↑/↓: 调整 LOD 级别',
       'C: 切换 LOD 颜色显示',
       '鼠标左键拖动: 旋转视角',
       '鼠标滚轮: 缩放',
+      '',
+      '左侧 = 无 Mipmap | 中间 = 双线性 | 右侧 = 三线性',
     ]);
-
-    // 快捷键 1-3 切换模式
-    MIPMAP_CONFIGS.forEach((config, index) => {
-      const key = (index + 1).toString();
-      runner.onKey(key, () => {
-        currentModeIndex = index;
-        updateBindGroup();
-        gui.set('Mode', config.name);
-        // eslint-disable-next-line no-console
-        console.log(`[Mipmap Demo] Switched to: ${config.description}`);
-      });
-    });
 
     // L 键锁定/解锁 LOD
     runner.onKey('l', () => {
@@ -637,7 +589,7 @@ function createExtendedPlane(
     // C 键切换 LOD 颜色显示
     runner.onKey('c', () => {
       showLodColors = !showLodColors;
-      updateBindGroup();
+      bindGroups = createBindGroups(showLodColors);
       gui.set('Show LOD Colors', showLodColors);
       // eslint-disable-next-line no-console
       console.log(`[Mipmap Demo] LOD colors: ${showLodColors ? 'ON' : 'OFF'}`);
@@ -664,11 +616,7 @@ function createExtendedPlane(
     // eslint-disable-next-line no-console
     console.log('[Mipmap Demo] Initialized successfully!');
     // eslint-disable-next-line no-console
-    console.log('[Mipmap Demo] Available modes:');
-    MIPMAP_CONFIGS.forEach((config, i) => {
-      // eslint-disable-next-line no-console
-      console.log(`  ${i + 1}. ${config.name} - ${config.description}`);
-    });
+    console.log('[Mipmap Demo] Three-panel comparison: No Mipmap | Bilinear | Trilinear');
   } catch (error) {
     console.error('[Mipmap Demo] Error:', error);
     throw error;

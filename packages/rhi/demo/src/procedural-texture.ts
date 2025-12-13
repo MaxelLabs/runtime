@@ -18,8 +18,7 @@ const vertexShaderSource = `#version 300 es
 precision highp float;
 
 layout(location = 0) in vec3 aPosition;
-layout(location = 1) in vec3 aNormal;
-layout(location = 2) in vec2 aTexCoord;
+layout(location = 1) in vec2 aTexCoord;
 
 uniform Transforms {
   mat4 uModelMatrix;
@@ -318,7 +317,7 @@ runner.init().then(() => {
     height: 1.0,
     widthSegments: 1,
     heightSegments: 1,
-    normals: true,
+    normals: false,
     uvs: true,
   });
 
@@ -331,18 +330,18 @@ runner.init().then(() => {
       label: 'Vertex Buffer',
     })
   );
-  vertexBuffer.update(geometry.vertices);
+  vertexBuffer.update(geometry.vertices as BufferSource, 0);
 
   // 创建索引缓冲区
   const indexBuffer = runner.track(
     runner.device.createBuffer({
-      size: geometry.indices.byteLength,
+      size: geometry.indices!.byteLength,
       usage: MSpec.RHIBufferUsage.INDEX,
       hint: 'static',
       label: 'Index Buffer',
     })
   );
-  indexBuffer.update(geometry.indices);
+  indexBuffer.update(geometry.indices as BufferSource, 0);
 
   // 创建变换矩阵缓冲区
   const transformBuffer = runner.track(
@@ -356,11 +355,21 @@ runner.init().then(() => {
 
   // 创建着色器
   const vertexShader = runner.track(
-    runner.device.createShaderModule(vertexShaderSource, 'Procedural Texture Vertex Shader')
+    runner.device.createShaderModule({
+      code: vertexShaderSource,
+      language: 'glsl',
+      stage: MSpec.RHIShaderStage.VERTEX,
+      label: 'Procedural Texture Vertex Shader',
+    })
   );
 
   const fragmentShader = runner.track(
-    runner.device.createShaderModule(fragmentShaderSource, 'Procedural Texture Fragment Shader')
+    runner.device.createShaderModule({
+      code: fragmentShaderSource,
+      language: 'glsl',
+      stage: MSpec.RHIShaderStage.FRAGMENT,
+      label: 'Procedural Texture Fragment Shader',
+    })
   );
 
   // 创建绑定组布局
@@ -368,9 +377,9 @@ runner.init().then(() => {
     runner.device.createBindGroupLayout([
       {
         binding: 0,
-        visibility: MSpec.RHIShaderStage.VERTEX | MSpec.RHIShaderStage.FRAGMENT,
+        visibility: MSpec.RHIShaderStage.VERTEX,
         buffer: { type: 'uniform' },
-        name: 'uTransforms',
+        name: 'Transforms',
       },
       {
         binding: 1,
@@ -535,7 +544,7 @@ runner.init().then(() => {
 
     renderPass.setPipeline(pipeline);
     renderPass.setVertexBuffer(0, vertexBuffer);
-    renderPass.setIndexBuffer(indexBuffer, 'uint16');
+    renderPass.setIndexBuffer(indexBuffer, MSpec.RHIIndexFormat.UINT16);
 
     // 更新变换矩阵数据
     const transformData = new Float32Array(48); // 3 matrices
@@ -543,16 +552,15 @@ runner.init().then(() => {
     if (textureParams.selectedTexture >= 0 && textureParams.selectedTexture < 6) {
       // 单纹理模式 - 居中显示一个大的纹理
       modelMatrix.identity();
-      modelMatrix.translate(new MMath.Vector3(0, 0, 0));
       modelMatrix.scale(new MMath.Vector3(1.5, 1.5, 1));
 
       modelMatrix.toArray(transformData, 0);
       viewMatrix.toArray(transformData, 16);
       projectionMatrix.toArray(transformData, 32);
-      transformBuffer.update(transformData);
+      transformBuffer.update(transformData, 0);
 
       renderPass.setBindGroup(0, bindGroups[textureParams.selectedTexture]);
-      renderPass.drawIndexed(geometry.indexCount);
+      renderPass.drawIndexed(geometry.indexCount!);
     } else {
       // 多纹理网格模式 (3x2)
       for (let i = 0; i < 6; i++) {
@@ -569,10 +577,10 @@ runner.init().then(() => {
         modelMatrix.toArray(transformData, 0);
         viewMatrix.toArray(transformData, 16);
         projectionMatrix.toArray(transformData, 32);
-        transformBuffer.update(transformData);
+        transformBuffer.update(transformData, 0);
 
         renderPass.setBindGroup(0, bindGroups[i]);
-        renderPass.drawIndexed(geometry.indexCount);
+        renderPass.drawIndexed(geometry.indexCount!);
       }
     }
 

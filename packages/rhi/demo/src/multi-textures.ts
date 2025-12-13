@@ -206,6 +206,7 @@ const updateDepthTexture = () => {
       width: 2,
       height: 2,
       depth: 2,
+      normals: false,
       uvs: true,
     });
 
@@ -220,7 +221,18 @@ const updateDepthTexture = () => {
       })
     );
 
-    // 5. 创建变换矩阵 Uniform 缓冲区
+    // 5. 创建索引缓冲区
+    const indexBuffer = runner.track(
+      runner.device.createBuffer({
+        size: cubeGeometry.indices!.byteLength,
+        usage: MSpec.RHIBufferUsage.INDEX,
+        hint: 'static',
+        initialData: cubeGeometry.indices as BufferSource,
+        label: 'Multi-Textures Cube Index Buffer',
+      })
+    );
+
+    // 6. 创建变换矩阵 Uniform 缓冲区
     const transformBuffer = runner.track(
       runner.device.createBuffer({
         size: 256, // 4 matrices * 64 bytes
@@ -230,7 +242,7 @@ const updateDepthTexture = () => {
       })
     );
 
-    // 6. 创建混合参数 Uniform 缓冲区
+    // 7. 创建混合参数 Uniform 缓冲区
     const blendParamsBuffer = runner.track(
       runner.device.createBuffer({
         size: 16, // 4 floats * 4 bytes = 16 bytes
@@ -240,7 +252,7 @@ const updateDepthTexture = () => {
       })
     );
 
-    // 7. 加载纹理
+    // 8. 加载纹理
 
     // 纹理 1：Jade
     const jadeTexture = await TextureLoader.load('../assets/texture/jade.jpg');
@@ -272,7 +284,7 @@ const updateDepthTexture = () => {
     );
     texture2.update(fruitsTexture.data as BufferSource);
 
-    // 8. 创建采样器
+    // 9. 创建采样器
     const sampler = runner.track(
       runner.device.createSampler({
         magFilter: MSpec.RHIFilterMode.LINEAR,
@@ -284,7 +296,7 @@ const updateDepthTexture = () => {
       })
     );
 
-    // 9. 创建着色器
+    // 10. 创建着色器
     const vertexShader = runner.track(
       runner.device.createShaderModule({
         code: vertexShaderSource,
@@ -303,7 +315,7 @@ const updateDepthTexture = () => {
       })
     );
 
-    // 10. 创建绑定组布局（3 个纹理 + 3 个采样器）
+    // 11. 创建绑定组布局（3 个纹理 + 3 个采样器）
     const bindGroupLayout = runner.track(
       runner.device.createBindGroupLayout([
         {
@@ -345,12 +357,12 @@ const updateDepthTexture = () => {
       ])
     );
 
-    // 11. 创建管线布局
+    // 12. 创建管线布局
     const pipelineLayout = runner.track(
       runner.device.createPipelineLayout([bindGroupLayout], 'Multi-Textures Pipeline Layout')
     );
 
-    // 12. 顶点布局
+    // 13. 顶点布局
     const vertexLayout: MSpec.RHIVertexLayout = {
       buffers: [
         {
@@ -365,7 +377,7 @@ const updateDepthTexture = () => {
       ],
     };
 
-    // 13. 创建渲染管线
+    // 14. 创建渲染管线
     const pipeline = runner.track(
       runner.device.createRenderPipeline({
         vertexShader,
@@ -385,7 +397,7 @@ const updateDepthTexture = () => {
       })
     );
 
-    // 14. 创建绑定组
+    // 15. 创建绑定组
     const bindGroup = runner.track(
       runner.device.createBindGroup(bindGroupLayout, [
         { binding: 0, resource: { buffer: transformBuffer } },
@@ -397,11 +409,11 @@ const updateDepthTexture = () => {
       ])
     );
 
-    // 15. 模型矩阵
+    // 16. 模型矩阵
     const modelMatrix = new MMath.Matrix4();
     let time = 0;
 
-    // 16. 混合参数初始值
+    // 17. 混合参数初始值
     let mixFactor = 0.5;
     let blendMode = 0; // Linear
     let maskThreshold = 0.5;
@@ -498,8 +510,10 @@ const updateDepthTexture = () => {
       renderPass.setVertexBuffer(0, vertexBuffer);
       renderPass.setBindGroup(0, bindGroup);
 
+      renderPass.setIndexBuffer(indexBuffer, MSpec.RHIIndexFormat.UINT16);
+
       // 绘制
-      renderPass.draw(cubeGeometry.vertexCount, 1, 0, 0);
+      renderPass.drawIndexed(cubeGeometry.indexCount!, 1, 0, 0, 0);
 
       renderPass.end();
       runner.endFrame(encoder);

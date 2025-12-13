@@ -218,7 +218,7 @@
     </style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
+    <canvas id="J-canvas"></canvas>
 
     <div class="info-panel">
         <h2>🔍 压缩纹理格式支持检测</h2>
@@ -363,25 +363,25 @@
         <div>Frame Time: <span id="frameTime">0</span>ms</div>
     </div>
 
-    <script type="module">
-        import { DemoRunner } from '../../src/utils/demo-runner.js';
-        import { CompressedTextureDemo } from '../../src/compressed-texture.js';
+    <div class="loading" id="loading">
+        正在初始化压缩纹理演示...
+    </div>
 
-        // 初始化演示
-        const demo = new CompressedTextureDemo();
-        const runner = new DemoRunner(demo, document.getElementById('canvas'));
+    <script type="module" src="../src/compressed-texture.ts"></script>
 
-        // 等待演示初始化后更新UI
-        runner.init().then(() => {
-            // 这里可以访问演示实例的检测结果
-            updateSupportStatus();
+    <script>
+        // 隐藏加载提示
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loading = document.getElementById('loading');
+                if (loading) {
+                    loading.style.display = 'none';
+                }
+            }, 2000);
         });
 
-        // 更新支持状态显示
+        // 模拟更新支持状态显示
         function updateSupportStatus() {
-            // 模拟检测结果（实际应该从demo实例获取）
-            const isWebGL2 = runner.isWebGL2();
-
             // WebGL2通常支持ETC2
             document.getElementById('support-etc2').className = 'support-status yes';
             document.getElementById('support-etc2').textContent = '✅ 支持';
@@ -397,13 +397,16 @@
             }
 
             // ASTC支持检测
-            const gl = runner.device?.gl;
-            if (gl && gl.getExtension('WEBGL_compressed_texture_astc')) {
-                document.getElementById('support-astc').className = 'support-status yes';
-                document.getElementById('support-astc').textContent = '✅ 支持';
-            } else {
-                document.getElementById('support-astc').className = 'support-status no';
-                document.getElementById('support-astc').textContent = '❌ 不支持';
+            const canvas = document.getElementById('J-canvas');
+            if (canvas) {
+                const gl = canvas.getContext('webgl2');
+                if (gl && gl.getExtension('WEBGL_compressed_texture_astc')) {
+                    document.getElementById('support-astc').className = 'support-status yes';
+                    document.getElementById('support-astc').textContent = '✅ 支持';
+                } else {
+                    document.getElementById('support-astc').className = 'support-status no';
+                    document.getElementById('support-astc').textContent = '❌ 不支持';
+                }
             }
 
             // PVRTC主要是iOS
@@ -420,18 +423,21 @@
             document.getElementById('support-bptc').textContent = '❌ 不支持';
         }
 
+        // 页面加载后更新状态
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(updateSupportStatus, 1000);
+        });
+
         // 按钮事件
-        document.getElementById('btn-detect').addEventListener('click', () => {
-            updateSupportStatus();
-        });
+        setTimeout(() => {
+            document.getElementById('btn-detect')?.addEventListener('click', () => {
+                updateSupportStatus();
+            });
 
-        document.getElementById('btn-comparison').addEventListener('click', (e) => {
-            e.target.classList.toggle('active');
-            // 切换对比模式
-        });
-
-        // 开始渲染循环
-        runner.start();
+            document.getElementById('btn-comparison')?.addEventListener('click', (e) => {
+                e.target.classList.toggle('active');
+            });
+        }, 500);
     </script>
 </body>
 </html>
