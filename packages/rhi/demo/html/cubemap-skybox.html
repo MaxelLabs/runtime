@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>立方体贴图天空盒 - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+      width: 100vw;
+      height: 100vh;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #J-canvas {
+      display: block;
+      cursor: grab;
+    }
+
+    #J-canvas:active {
+      cursor: grabbing;
+    }
+
+    /* 左下角介绍面板 */
+    .info-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      max-width: 350px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .info-panel h3 {
+      margin: 0 0 10px 0;
+      color: #FF9800;
+      font-size: 16px;
+    }
+
+    .info-panel .description {
+      color: #ddd;
+      font-size: 12px;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    .info-panel .tech-points {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .info-panel .tech-points h4 {
+      margin: 0 0 5px 0;
+      color: #2196F3;
+      font-size: 13px;
+    }
+
+    .info-panel .tech-points ul {
+      margin: 5px 0;
+      padding-left: 20px;
+      color: #aaa;
+      font-size: 11px;
+    }
+
+    .info-panel .tech-points li {
+      margin: 3px 0;
+    }
+
+    .error-message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 0, 0, 0.9);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      font-family: monospace;
+      z-index: 1000;
+      max-width: 80%;
+      text-align: center;
+    }
+
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 18px;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+  </div>
+
+  <!-- 左下角介绍面板 -->
+  <div class="info-panel">
+    <h3>🌅 立方体贴图天空盒演示</h3>
+    <p class="description">
+      演示如何使用立方体贴图实现逼真的天空盒效果。通过 CubemapGenerator 生成天空渐变纹理，
+      使用反转的立方体几何体渲染无限远的天空，并通过 gl_Position.xyww 技巧确保天空盒始终在最远渲染。
+    </p>
+
+    <div class="tech-points">
+      <h4>💡 技术要点</h4>
+      <ul>
+        <li>CubemapGenerator 生成天空渐变立方体贴图</li>
+        <li>samplerCube 着色器采样立方体贴图</li>
+        <li>反转立方体几何体用于内部渲染</li>
+        <li>gl_Position.xyww 深度技巧实现无限远效果</li>
+        <li>移除视图矩阵位移让天空盒跟随相机</li>
+        <li>SimpleGUI 实时调节天空颜色渐变</li>
+        <li>支持旋转动画模拟天空变化</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    正在初始化立方体贴图天空盒演示...
+  </div>
+
+  <script type="module" src="../src/cubemap-skybox.ts"></script>
+
+  <script>
+    // 隐藏加载提示
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const loading = document.getElementById('loading');
+        if (loading) {
+          loading.style.display = 'none';
+        }
+      }, 2000);
+    });
+
+    // 添加一些交互提示
+    let hintShown = false;
+    document.addEventListener('click', () => {
+      if (!hintShown) {
+        console.log('🌅 这个 Demo 展示了立方体贴图天空盒技术！');
+        console.log('🎨 使用 GUI 面板调节天空颜色');
+        console.log('🔄 旋转速度控制天空动画');
+        console.log('📐 使用立方体贴图实现全景天空');
+        console.log('♾️ gl_Position.xyww 技巧确保无限深度');
+        console.log('🎯 Space 键重置天空颜色');
+        console.log('🖱️ 拖动鼠标旋转视角，滚轮缩放');
+        hintShown = true;
+      }
+    });
+
+    // 监听错误
+    window.addEventListener('error', (event) => {
+      console.error('Demo Error:', event.error);
+    });
+  </script>
+</body>
+</html>

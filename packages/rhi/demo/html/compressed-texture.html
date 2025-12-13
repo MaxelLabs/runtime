@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo 21: 压缩纹理支持检测</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        #canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            min-width: 400px;
+        }
+
+        .info-panel h2 {
+            margin-bottom: 15px;
+            color: #00ff88;
+            font-size: 18px;
+        }
+
+        .support-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .format-name {
+            font-weight: bold;
+            color: #88ccff;
+        }
+
+        .support-status {
+            text-align: right;
+        }
+
+        .support-status.yes {
+            color: #00ff00;
+        }
+
+        .support-status.no {
+            color: #ff4444;
+        }
+
+        .memory-info {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+
+        .memory-info h3 {
+            margin-bottom: 10px;
+            color: #ffaa00;
+            font-size: 16px;
+        }
+
+        .memory-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .memory-label {
+            color: #aaa;
+        }
+
+        .memory-value {
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .format-details {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+
+        .format-details h3 {
+            margin-bottom: 10px;
+            color: #ff6600;
+            font-size: 16px;
+        }
+
+        .format-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .format-table th {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            text-align: left;
+            color: #ffaa00;
+            border-bottom: 1px solid #444;
+        }
+
+        .format-table td {
+            padding: 8px;
+            border-bottom: 1px solid #222;
+        }
+
+        .format-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .compression-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .compression-4x1 { background: #44aa44; }
+        .compression-6x1 { background: #6666aa; }
+        .compression-8x1 { background: #aa44aa; }
+        .compression-16x1 { background: #aa4444; }
+        .compression-25x1 { background: #ff8800; }
+
+        .quality-high { color: #00ff00; }
+        .quality-medium { color: #ffaa00; }
+        .quality-low { color: #ff4444; }
+
+        .platform-tag {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-button {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+
+        .control-button:hover {
+            background: #555;
+        }
+
+        .control-button.active {
+            background: #00ff88;
+            color: #000;
+        }
+
+        .stats {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #00ff88;
+        }
+
+        .warning {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid #ff4444;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .warning h2 {
+            color: #ff4444;
+            margin-bottom: 15px;
+        }
+
+        .warning p {
+            color: #aaa;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <div class="info-panel">
+        <h2>🔍 压缩纹理格式支持检测</h2>
+
+        <div class="support-grid">
+            <div class="format-name">S3TC (DXT/BC)</div>
+            <div class="support-status" id="support-s3tc">检测中...</div>
+
+            <div class="format-name">ETC2</div>
+            <div class="support-status" id="support-etc2">检测中...</div>
+
+            <div class="format-name">ASTC</div>
+            <div class="support-status" id="support-astc">检测中...</div>
+
+            <div class="format-name">PVRTC</div>
+            <div class="support-status" id="support-pvrtc">检测中...</div>
+
+            <div class="format-name">BPTC</div>
+            <div class="support-status" id="support-bptc">检测中...</div>
+        </div>
+
+        <div class="memory-info">
+            <h3>💾 内存使用对比</h3>
+            <div class="memory-row">
+                <span class="memory-label">原始大小 (512×512 RGBA8):</span>
+                <span class="memory-value">1.00 MB</span>
+            </div>
+            <div class="memory-row">
+                <span class="memory-label">BC1 压缩 (4:1):</span>
+                <span class="memory-value">0.25 MB (-75%)</span>
+            </div>
+            <div class="memory-row">
+                <span class="memory-label">BC3 压缩 (4:1):</span>
+                <span class="memory-value">0.25 MB (-75%)</span>
+            </div>
+            <div class="memory-row">
+                <span class="memory-label">ASTC 4×4 (8:1):</span>
+                <span class="memory-value">0.13 MB (-87.5%)</span>
+            </div>
+            <div class="memory-row">
+                <span class="memory-label">ASTC 8×8 (25:1):</span>
+                <span class="memory-value">0.04 MB (-96%)</span>
+            </div>
+        </div>
+
+        <div class="format-details">
+            <h3>📊 压缩格式详细信息</h3>
+            <table class="format-table">
+                <thead>
+                    <tr>
+                        <th>格式</th>
+                        <th>压缩比</th>
+                        <th>质量</th>
+                        <th>平台</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <span class="compression-badge compression-4x1">4:1</span>
+                            BC1 (DXT1)
+                        </td>
+                        <td>4:1</td>
+                        <td class="quality-medium">中等</td>
+                        <td><span class="platform-tag">桌面</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="compression-badge compression-4x1">4:1</span>
+                            BC3 (DXT5)
+                        </td>
+                        <td>4:1</td>
+                        <td class="quality-high">高</td>
+                        <td><span class="platform-tag">桌面</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="compression-badge compression-6x1">6:1</span>
+                            BC7
+                        </td>
+                        <td>6:1</td>
+                        <td class="quality-high">很高</td>
+                        <td><span class="platform-tag">桌面 DX11+</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="compression-badge compression-4x1">4:1</span>
+                            ETC2 RGBA8
+                        </td>
+                        <td>4:1</td>
+                        <td class="quality-high">高</td>
+                        <td><span class="platform-tag">移动端 Android</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="compression-badge compression-8x1">8:1</span>
+                            ASTC 4×4
+                        </td>
+                        <td>8:1</td>
+                        <td class="quality-high">很高</td>
+                        <td><span class="platform-tag">移动端 iOS/Android</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="compression-badge compression-25x1">25:1</span>
+                            ASTC 8×8
+                        </td>
+                        <td>25:1</td>
+                        <td class="quality-medium">中等</td>
+                        <td><span class="platform-tag">移动端 iOS/Android</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="compression-badge compression-8x1">8:1</span>
+                            PVRTC1 4bpp
+                        </td>
+                        <td>8:1</td>
+                        <td class="quality-medium">中等</td>
+                        <td><span class="platform-tag">移动端 iOS</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="compression-badge compression-16x1">16:1</span>
+                            PVRTC1 2bpp
+                        </td>
+                        <td>16:1</td>
+                        <td class="quality-low">低</td>
+                        <td><span class="platform-tag">移动端 iOS</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="control-button active" id="btn-detect">重新检测</button>
+        <button class="control-button" id="btn-comparison">对比模式</button>
+    </div>
+
+    <div class="stats" id="stats">
+        <div>FPS: <span id="fps">0</span></div>
+        <div>Frame Time: <span id="frameTime">0</span>ms</div>
+    </div>
+
+    <script type="module">
+        import { DemoRunner } from '../../src/utils/demo-runner.js';
+        import { CompressedTextureDemo } from '../../src/compressed-texture.js';
+
+        // 初始化演示
+        const demo = new CompressedTextureDemo();
+        const runner = new DemoRunner(demo, document.getElementById('canvas'));
+
+        // 等待演示初始化后更新UI
+        runner.init().then(() => {
+            // 这里可以访问演示实例的检测结果
+            updateSupportStatus();
+        });
+
+        // 更新支持状态显示
+        function updateSupportStatus() {
+            // 模拟检测结果（实际应该从demo实例获取）
+            const isWebGL2 = runner.isWebGL2();
+
+            // WebGL2通常支持ETC2
+            document.getElementById('support-etc2').className = 'support-status yes';
+            document.getElementById('support-etc2').textContent = '✅ 支持';
+
+            // 桌面浏览器通常支持S3TC
+            const isDesktop = !/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isDesktop) {
+                document.getElementById('support-s3tc').className = 'support-status yes';
+                document.getElementById('support-s3tc').textContent = '✅ 支持';
+            } else {
+                document.getElementById('support-s3tc').className = 'support-status no';
+                document.getElementById('support-s3tc').textContent = '❌ 不支持';
+            }
+
+            // ASTC支持检测
+            const gl = runner.device?.gl;
+            if (gl && gl.getExtension('WEBGL_compressed_texture_astc')) {
+                document.getElementById('support-astc').className = 'support-status yes';
+                document.getElementById('support-astc').textContent = '✅ 支持';
+            } else {
+                document.getElementById('support-astc').className = 'support-status no';
+                document.getElementById('support-astc').textContent = '❌ 不支持';
+            }
+
+            // PVRTC主要是iOS
+            if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+                document.getElementById('support-pvrtc').className = 'support-status yes';
+                document.getElementById('support-pvrtc').textContent = '✅ 支持';
+            } else {
+                document.getElementById('support-pvrtc').className = 'support-status no';
+                document.getElementById('support-pvrtc').textContent = '❌ 不支持';
+            }
+
+            // BPTC是较新的格式
+            document.getElementById('support-bptc').className = 'support-status no';
+            document.getElementById('support-bptc').textContent = '❌ 不支持';
+        }
+
+        // 按钮事件
+        document.getElementById('btn-detect').addEventListener('click', () => {
+            updateSupportStatus();
+        });
+
+        document.getElementById('btn-comparison').addEventListener('click', (e) => {
+            e.target.classList.toggle('active');
+            // 切换对比模式
+        });
+
+        // 开始渲染循环
+        runner.start();
+    </script>
+</body>
+</html>

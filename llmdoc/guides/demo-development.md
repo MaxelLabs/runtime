@@ -4,6 +4,34 @@
 
 ## 最近更新
 
+### 2025-12-13 完成第二层纹理系统全部 Demo
+
+**5 个纹理系统高级 Demo 已全部完成**：
+
+- **cubemap-skybox**: 立方体贴图天空盒演示，展示天空渐变生成和反射环境映射（已完成）
+  - 文档索引：`/packages/rhi/llmdoc/reference/cubemap-skybox-demo.md`（已创建）
+  - 技术要点：CubemapGenerator、天空渐变、环境映射、MVP矩阵变换
+
+- **render-to-texture**: 渲染到纹理演示，展示离屏渲染和后期处理基础（已完成）
+  - 文档索引：`/packages/rhi/llmdoc/reference/render-to-texture-demo.md`（已创建）
+  - 技术要点：RenderTarget、离屏渲染、纹理采样、FBO管理
+
+- **texture-array**: 纹理数组演示，展示WebGL2的TEXTURE_2D_ARRAY支持（已完成）
+  - 文档索引：`/packages/rhi/llmdoc/reference/texture-array-demo.md`（已创建）
+  - 技术要点：TEXTURE_2D_ARRAY、层级选择、批量纹理管理
+
+- **compressed-texture**: 压缩纹理演示，展示KTX/DDS格式加载（已完成）
+  - 文档索引：`/packages/rhi/llmdoc/reference/compressed-texture-demo.md`（已创建）
+  - 技术要点：KTX/DDS格式、压缩纹理检测、GPU内存优化
+
+- **procedural-texture**: 程序化纹理生成演示，展示多种算法纹理（已完成）
+  - 文档索引：`/packages/rhi/llmdoc/reference/procedural-texture-demo.md`（已创建）
+  - 技术要点：Perlin噪声、分形布朗运动、波形函数、渐变算法
+
+**代码更新**：
+- `packages/rhi/src/webgl/resources/GLTexture.ts`: 添加 TEXTURE_2D_ARRAY 支持
+- `packages/rhi/demo/index.html`: 添加 5 个 Demo 导航卡片
+
 ### 2025-12-12 完成多纹理 Demo
 
 - **multi-textures**: 多纹理绑定和混合模式演示，展示5种混合模式（Linear/Multiply/Screen/Overlay/Mask）和程序化纹理生成（已完成）
@@ -453,10 +481,15 @@ runner.start((dt) => {
 | 13  | texture-2d       | texture-2d.ts       | 基础2D纹理，TextureLoader + ProceduralTexture |
 | 14  | texture-filtering | texture-filtering.ts | 纹理过滤模式对比（NEAREST/LINEAR/各向异性） |
 | 15  | texture-wrapping | texture-wrapping.ts | 纹理包裹模式（REPEAT/MIRROR_REPEAT/CLAMP）   |
-| 16  | mipmaps          | mipmaps.ts          | Mipmap 生成和使用（textureLod + LOD 控制）   |         |
-| 17  | multi-textures   | multi-textures.ts   | 多纹理绑定和5种混合模式（Linear/Multiply等） | ✅ 新增 |
+| 16  | mipmaps          | mipmaps.ts          | Mipmap 生成和使用（textureLod + LOD 控制）   | ✅ 完成 |
+| 17  | multi-textures   | multi-textures.ts   | 多纹理绑定和5种混合模式（Linear/Multiply等） | ✅ 完成 |
+| 18  | cubemap-skybox   | cubemap-skybox.ts   | 立方体贴图天空盒和环境映射                 | ✅ 新增 |
+| 19  | render-to-texture| render-to-texture.ts| 渲染到纹理和离屏渲染                      | ✅ 新增 |
+| 20  | texture-array    | texture-array.ts    | 纹理数组(TEXTURE_2D_ARRAY)演示            | ✅ 新增 |
+| 21  | compressed-texture| compressed-texture.ts| 压缩纹理KTX/DDS加载                     | ✅ 新增 |
+| 22  | procedural-texture| procedural-texture.ts| 程序化纹理生成（噪声/分形/波形）          | ✅ 新增 |
 
-**注意**：所有 Demo 均已集成 Stats 性能监控、OrbitController 相机控制和完整的 MVP 矩阵变换管线。**第一层基础渲染 12 个 Demo 已全部完成（2025-12-10）。第二层纹理系统已开发 5 个（2025-12-12）。**
+**注意**：所有 Demo 均已集成 Stats 性能监控、OrbitController 相机控制和完整的 MVP 矩阵变换管线。**第一层基础渲染 12 个 Demo 已全部完成（2025-12-10）。第二层纹理系统 10 个 Demo 已全部完成（2025-12-13）。**
 
 ---
 
@@ -488,11 +521,11 @@ runner.start((dt) => {
 | 15  | texture-filtering  | 线性/最近邻过滤    | ✅ 完成  |
 | 16  | mipmaps            | Mipmap 生成和使用  | ✅ 完成  |
 | 17  | multi-textures     | 多纹理混合         | ✅ 完成  |
-| 18  | cubemap-skybox     | 立方体贴图天空盒   | 待实现   |
-| 19  | render-to-texture  | 渲染到纹理         | 待实现   |
-| 20  | texture-array      | 纹理数组 (WebGL2)  | 待实现   |
-| 21  | compressed-texture | 压缩纹理格式       | 待实现   |
-| 22  | procedural-texture | 程序化纹理生成     | 部分完成 |
+| 18  | cubemap-skybox     | 立方体贴图天空盒   | ✅ 完成  |
+| 19  | render-to-texture  | 渲染到纹理         | ✅ 完成  |
+| 20  | texture-array      | 纹理数组 (WebGL2)  | ✅ 完成  |
+| 21  | compressed-texture | 压缩纹理格式       | ✅ 完成  |
+| 22  | procedural-texture | 程序化纹理生成     | ✅ 完成  |
 
 ### 第三层：光照与材质 (10 demos)
 

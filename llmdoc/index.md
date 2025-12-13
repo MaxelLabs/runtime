@@ -60,6 +60,18 @@
 - [纹理过滤演示](./guides/demos/texture-filtering-demo.md) - 纹理过滤模式
   - NEAREST、LINEAR、MIPMAP 过滤效果
 
+### 📋 参考文档 (reference)
+- [立方体贴图天空盒 Demo](./reference/cubemap-skybox-demo.md) - 立方体贴图和环境映射演示
+  - CubemapGenerator、天空渐变、反射效果
+- [渲染到纹理 Demo](./reference/render-to-texture-demo.md) - 离屏渲染和后期处理
+  - RenderTarget、FBO管理、纹理采样
+- [纹理数组 Demo](./reference/texture-array-demo.md) - WebGL2 TEXTURE_2D_ARRAY 支持
+  - 批量纹理管理、层级选择
+- [压缩纹理 Demo](./reference/compressed-texture-demo.md) - KTX/DDS 格式加载
+  - 压缩纹理检测、GPU内存优化
+- [程序化纹理 Demo](./reference/procedural-texture-demo.md) - 算法生成纹理
+  - Perlin噪声、分形布朗运动、波形函数
+
 ### 🏗️ 架构设计 (architecture)
 - [RHI 抽象层架构](./architecture/rhi/rhi-architecture.md) - RHI 抽象层设计原理和核心组件
   - 硬件渲染器接口、平台资源、执行流程
@@ -195,6 +207,11 @@
   - [多纹理混合演示](./guides/demos/multi-textures-demo.md) - 多纹理技术
   - [Mipmap 演示](./guides/demos/mipmaps-demo.md) - Mipmap 优化
   - [纹理过滤演示](./guides/demos/texture-filtering-demo.md) - 过滤模式
+  - [立方体贴图天空盒 Demo](./reference/cubemap-skybox-demo.md) - 立方体贴图和环境映射
+  - [渲染到纹理 Demo](./reference/render-to-texture-demo.md) - 离屏渲染
+  - [纹理数组 Demo](./reference/texture-array-demo.md) - WebGL2 纹理数组
+  - [压缩纹理 Demo](./reference/compressed-texture-demo.md) - KTX/DDS 格式
+  - [程序化纹理 Demo](./reference/procedural-texture-demo.md) - 算法生成纹理
 
 ### 🧮 数学系统
 
@@ -334,9 +351,10 @@ pnpm test
 | 操作指南 | 17 (含9个Demo) | 100% | 2025-12-13 |
 | 架构设计 | 10 | 100% | 2025-12 |
 | API参考 | 18 | 100% | 2025-12-13 |
+| 参考文档 | 5 | 100% | 2025-12-13 |
 | 故障排除 | 3 | 100% | 2025-12 |
 | **Agent 文档** | **6** | **100%** | **2025-12** |
-| **总计** | **59** | **100%** | **2025-12-13** |
+| **总计** | **64** | **100%** | **2025-12-13** |
 
 ## 🤝 贡献指南
 

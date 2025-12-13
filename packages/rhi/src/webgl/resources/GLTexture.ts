@@ -46,7 +46,8 @@ export class GLTexture implements MSpec.IRHITexture {
    */
   constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, descriptor: MSpec.RHITextureDescriptor) {
     this.gl = gl;
-    this.extension = descriptor.extension || {};
+    // 使用 config 替代已弃用的 extension 字段
+    this.extension = (descriptor as any).config || descriptor.extension || {};
 
     this.utils = new WebGLUtils(gl);
     this.width = descriptor.width;
@@ -215,6 +216,25 @@ export class GLTexture implements MSpec.IRHITexture {
           null
         );
       }
+    } else if (this.dimension === '2d-array') {
+      // 2D数组纹理仅WebGL2支持
+      if (gl instanceof WebGL2RenderingContext) {
+        gl.texImage3D(
+          this.target,
+          0,
+          this.glInternalFormat,
+          this.width,
+          this.height,
+          this.depthOrArrayLayers,
+          0,
+          this.glFormat,
+          this.glType,
+          null
+        );
+      } else {
+        // 这个分支理论上不应该被执行到，因为在 getGLTextureTarget 中应该已经抛出错误
+        throw new Error('WebGL1 不支持 2D 纹理数组 (TEXTURE_2D_ARRAY)，请使用 WebGL2 上下文');
+      }
     } else {
       // 2D纹理
       gl.texImage2D(
@@ -290,6 +310,43 @@ export class GLTexture implements MSpec.IRHITexture {
           compressedFormat.data
         );
       }
+    } else if (this.dimension === '2d-array') {
+      // 2D数组压缩纹理（仅WebGL2支持）
+      if (gl instanceof WebGL2RenderingContext) {
+        if (compressedFormat.data) {
+          // 对于数组纹理，data 应该包含所有层数据
+          const arrayData =
+            compressedFormat.data instanceof Uint8Array ? compressedFormat.data : compressedFormat.data[0];
+          gl.compressedTexImage3D(
+            this.target,
+            0,
+            this.glInternalFormat,
+            this.width,
+            this.height,
+            this.depthOrArrayLayers,
+            0,
+            arrayData
+          );
+        } else {
+          // 创建空的压缩数组纹理
+          const blockSize = this.getCompressedBlockSize(this.glInternalFormat);
+          const dataSize = Math.ceil(this.width / 4) * Math.ceil(this.height / 4) * this.depthOrArrayLayers * blockSize;
+          const emptyData = new Uint8Array(dataSize);
+          gl.compressedTexImage3D(
+            this.target,
+            0,
+            this.glInternalFormat,
+            this.width,
+            this.height,
+            this.depthOrArrayLayers,
+            0,
+            emptyData
+          );
+        }
+      } else {
+        // 这个分支理论上不应该被执行到，因为在 getGLTextureTarget 中应该已经抛出错误
+        throw new Error('WebGL1 不支持 2D 纹理数组 (TEXTURE_2D_ARRAY)，请使用 WebGL2 上下文');
+      }
     } else {
       // 2D压缩纹理
       if (compressedFormat.data) {
@@ -338,7 +395,7 @@ export class GLTexture implements MSpec.IRHITexture {
       'WEBGL_compressed_texture_astc',
       'WEBGL_compressed_texture_etc',
       'WEBGL_compressed_texture_etc1',
-      'WEBGL_compressed_texture_pvrtc',
+      'WEBGL_compressed_texture_pvrtc', // PVRTC = PowerVR Texture Compression
     ];
 
     // WebGL2原生支持一些格式
@@ -428,6 +485,13 @@ export class GLTexture implements MSpec.IRHITexture {
         return gl instanceof WebGL2RenderingContext ? gl.TEXTURE_3D : gl.TEXTURE_2D;
       case MSpec.RHITextureType.TEXTURE_CUBE:
         return gl.TEXTURE_CUBE_MAP;
+      case MSpec.RHITextureType.TEXTURE_2D_ARRAY:
+        // TEXTURE_2D_ARRAY 是 WebGL2 特性，需要检查支持
+        if (gl instanceof WebGL2RenderingContext) {
+          return gl.TEXTURE_2D_ARRAY;
+        } else {
+          throw new Error('WebGL1 不支持 2D 纹理数组 (TEXTURE_2D_ARRAY)，请使用 WebGL2 上下文');
+        }
       default:
         return gl.TEXTURE_2D;
     }
@@ -551,6 +615,53 @@ export class GLTexture implements MSpec.IRHITexture {
         // 则在构造函数中应该已经设置了is3DDowngradedTo2D标志
         console.error('遇到意外情况：在WebGL1环境中处理3D纹理但未标记为降级');
         throw new Error('WebGL1不支持3D纹理更新');
+      }
+    } else if (this.dimension === '2d-array') {
+      // 更新2D数组纹理（仅WebGL2支持）
+      if (gl instanceof WebGL2RenderingContext) {
+        const actualWidth = width ?? this.width - x;
+        const actualHeight = height ?? this.height - y;
+        const actualDepth = depth ?? 1; // 对于数组纹理，depth 通常为 1 表示更新特定层
+
+        if (
+          data instanceof HTMLImageElement ||
+          data instanceof HTMLCanvasElement ||
+          data instanceof HTMLVideoElement ||
+          data instanceof ImageBitmap ||
+          data instanceof ImageData
+        ) {
+          // 使用 texSubImage3D 更新数组纹理的特定层
+          gl.texSubImage3D(
+            this.target,
+            mipLevel,
+            x,
+            y,
+            arrayLayer, // 使用 arrayLayer 作为 z 坐标
+            actualWidth,
+            actualHeight,
+            actualDepth,
+            this.glFormat,
+            this.glType,
+            data
+          );
+        } else {
+          gl.texSubImage3D(
+            this.target,
+            mipLevel,
+            x,
+            y,
+            arrayLayer, // 使用 arrayLayer 作为 z 坐标
+            actualWidth,
+            actualHeight,
+            actualDepth,
+            this.glFormat,
+            this.glType,
+            data as ArrayBufferView
+          );
+        }
+      } else {
+        // 这个分支理论上不应该被执行到，因为在 getGLTextureTarget 中应该已经抛出错误
+        throw new Error('WebGL1 不支持 2D 纹理数组 (TEXTURE_2D_ARRAY)，请使用 WebGL2 上下文');
       }
     } else {
       // 更新2D纹理

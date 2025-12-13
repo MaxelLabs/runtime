@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>程序化纹理生成器 - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #000;
+    }
+
+    .container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #J-canvas {
+      display: block;
+      cursor: grab;
+    }
+
+    #J-canvas:active {
+      cursor: grabbing;
+    }
+
+    /* 左下角介绍面板 */
+    .info-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      max-width: 380px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .info-panel h3 {
+      margin: 0 0 10px 0;
+      color: #4CAF50;
+      font-size: 16px;
+    }
+
+    .info-panel .description {
+      color: #ddd;
+      font-size: 12px;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    .info-panel .tech-points {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .info-panel .tech-points h4 {
+      margin: 0 0 5px 0;
+      color: #2196F3;
+      font-size: 13px;
+    }
+
+    .info-panel .tech-points ul {
+      margin: 5px 0;
+      padding-left: 20px;
+      color: #aaa;
+      font-size: 11px;
+    }
+
+    .info-panel .tech-points li {
+      margin: 3px 0;
+    }
+
+    .error-message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 0, 0, 0.9);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      font-family: monospace;
+      z-index: 1000;
+      max-width: 80%;
+      text-align: center;
+    }
+
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 18px;
+      z-index: 999;
+    }
+
+    /* 纹理标签 */
+    .texture-labels {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 0;
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0;
+      animation: fadeIn 1s ease-in-out 0.5s forwards;
+    }
+
+    .texture-label {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      text-align: center;
+      margin: 20px;
+    }
+
+    /* 纹理类型提示 */
+    .texture-hint {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: none;
+    }
+
+    /* 统计信息 */
+    .stats {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 12px;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* 网格线 */
+    .grid-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90vmin;
+      height: 60vmin;
+      pointer-events: none;
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      display: none;
+    }
+
+    .grid-overlay::before,
+    .grid-overlay::after {
+      content: '';
+      position: absolute;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .grid-overlay::before {
+      left: 33.33%;
+      top: 0;
+      width: 1px;
+      height: 100%;
+    }
+
+    .grid-overlay::after {
+      left: 66.66%;
+      top: 0;
+      width: 1px;
+      height: 100%;
+    }
+
+    /* GUI 样式覆盖 */
+    .simple-gui {
+      position: fixed !important;
+      top: 20px !important;
+      right: 20px !important;
+      background: rgba(0, 0, 0, 0.85) !important;
+      backdrop-filter: blur(10px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .info-panel {
+        max-width: 250px;
+        font-size: 11px;
+      }
+
+      .info-panel h3 {
+        font-size: 14px;
+      }
+
+      .texture-labels {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr 1fr;
+      }
+
+      .texture-label {
+        font-size: 9px;
+        margin: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+  </div>
+
+  <!-- 纹理标签 -->
+  <div class="texture-labels" id="textureLabels">
+    <div class="texture-label">Checkerboard</div>
+    <div class="texture-label">Gradient</div>
+    <div class="texture-label">Noise</div>
+    <div class="texture-label">Solid Color</div>
+    <div class="texture-label">UV Debug</div>
+    <div class="texture-label">Normal Map</div>
+  </div>
+
+  <!-- 当前查看纹理提示 -->
+  <div class="texture-hint" id="textureHint">
+    Viewing: <span id="currentTextureName">All Textures</span>
+  </div>
+
+  <!-- 网格线 -->
+  <div class="grid-overlay" id="gridOverlay">
+    <div style="position: absolute; left: 0; top: 50%; width: 100%; height: 1px; background: rgba(255, 255, 255, 0.1);"></div>
+  </div>
+
+  <!-- 左下角介绍面板 -->
+  <div class="info-panel">
+    <h3>🎨 程序化纹理生成器</h3>
+    <p class="description">
+      展示了6种不同的程序化纹理生成技术。可以在网格视图中查看所有纹理，
+      或选择特定纹理进行参数调整和实时预览。
+    </p>
+
+    <div class="tech-points">
+      <h4>💡 技术要点</h4>
+      <ul>
+        <li>ProceduralTexture 类生成各种纹理</li>
+        <li>实时参数调整和纹理更新</li>
+        <li>实例化渲染显示多个纹理</li>
+        <li>GPU纹理数据动态更新</li>
+        <li>支持纹理导出功能</li>
+      </ul>
+    </div>
+
+    <div class="tech-points">
+      <h4>🎮 操作说明</h4>
+      <ul>
+        <li>鼠标拖动：旋转视角</li>
+        <li>滚轮：缩放视图</li>
+        <li>右侧面板：调整纹理参数</li>
+        <li>View Mode：切换查看模式</li>
+        <li>Export Selected：导出当前纹理</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    正在初始化程序化纹理生成器...
+  </div>
+
+  <script type="module" src="../src/procedural-texture.ts"></script>
+
+  <script>
+    // 隐藏加载提示
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const loading = document.getElementById('loading');
+        if (loading) {
+          loading.style.display = 'none';
+        }
+      }, 2000);
+    });
+
+    // 监听纹理选择变化
+    let currentViewMode = 'All Textures';
+    const updateTextureHint = (mode) => {
+      currentViewMode = mode;
+      const hint = document.getElementById('textureHint');
+      const nameSpan = document.getElementById('currentTextureName');
+      const labels = document.getElementById('textureLabels');
+      const grid = document.getElementById('gridOverlay');
+
+      if (mode === 'All Textures') {
+        hint.style.display = 'none';
+        labels.style.opacity = '1';
+        grid.style.display = 'block';
+      } else {
+        hint.style.display = 'block';
+        nameSpan.textContent = mode;
+        labels.style.opacity = '0';
+        grid.style.display = 'none';
+      }
+    };
+
+    // 添加交互提示
+    let hintShown = false;
+    document.addEventListener('click', () => {
+      if (!hintShown) {
+        console.log('🎨 程序化纹理生成器 Demo 已启动！');
+        console.log('📋 支持的纹理类型：');
+        console.log('   1. Checkerboard - 棋盘格图案');
+        console.log('   2. Gradient - 渐变色');
+        console.log('   3. Noise - 噪声纹理');
+        console.log('   4. Solid Color - 纯色');
+        console.log('   5. UV Debug - UV坐标调试');
+        console.log('   6. Normal Map - 法线贴图');
+        console.log('⚙️  使用右侧GUI调整参数');
+        console.log('💾 可以导出生成的纹理图片');
+        console.log('🖱️ 拖动鼠标旋转视角查看纹理');
+        hintShown = true;
+      }
+    });
+
+    // 监听错误
+    window.addEventListener('error', (event) => {
+      console.error('Demo Error:', event.error);
+      const errorMsg = document.createElement('div');
+      errorMsg.className = 'error-message';
+      errorMsg.textContent = `Error: ${event.error?.message || '未知错误'}`;
+      document.body.appendChild(errorMsg);
+      setTimeout(() => {
+        errorMsg.remove();
+      }, 5000);
+    });
+
+    // 添加键盘快捷键
+    document.addEventListener('keydown', (e) => {
+      // 数字键1-6切换纹理视图
+      if (e.key >= '1' && e.key <= '6') {
+        const textureNames = [
+          'Checkerboard',
+          'Gradient',
+          'Noise',
+          'Solid Color',
+          'UV Debug',
+          'Normal Map'
+        ];
+        const index = parseInt(e.key) - 1;
+        updateTextureHint(textureNames[index]);
+      }
+      // 0键显示所有纹理
+      else if (e.key === '0') {
+        updateTextureHint('All Textures');
+      }
+      // E键导出当前纹理
+      else if (e.key === 'e' || e.key === 'E') {
+        console.log('导出当前纹理...');
+      }
+    });
+
+    // 性能监控
+    let frameCount = 0;
+    let lastTime = performance.now();
+    const updateStats = () => {
+      frameCount++;
+      const currentTime = performance.now();
+      if (currentTime >= lastTime + 1000) {
+        const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+
+        // 创建或更新FPS显示
+        let stats = document.querySelector('.stats');
+        if (!stats) {
+          stats = document.createElement('div');
+          stats.className = 'stats';
+          document.body.appendChild(stats);
+        }
+        stats.innerHTML = `FPS: ${fps}<br>Textures: 6`;
+
+        frameCount = 0;
+        lastTime = currentTime;
+      }
+      requestAnimationFrame(updateStats);
+    };
+    updateStats();
+  </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Texture Array Demo - 2D 纹理数组演示</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+      color: #fff;
+      font-family: monospace;
+      overflow: hidden;
+    }
+
+    #J-canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .demo-title {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 18px;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      pointer-events: none;
+      opacity: 0.9;
+    }
+
+    .demo-info {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      font-size: 12px;
+      line-height: 1.5;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 4px;
+      max-width: 300px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="J-canvas"></canvas>
+  <div class="demo-title">Texture Array Demo - 2D 纹理数组</div>
+  <div class="demo-info">
+    <strong>WebGL2 特性演示</strong><br>
+    展示 2D 纹理数组技术<br>
+    8 层不同程序化纹理<br>
+    使用方向键或数字键切换层
+  </div>
+
+  <script type="module" src="../src/texture-array.ts"></script>
+</body>
+</html>
