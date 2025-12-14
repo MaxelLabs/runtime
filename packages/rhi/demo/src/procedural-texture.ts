@@ -343,15 +343,8 @@ runner.init().then(() => {
   );
   indexBuffer.update(geometry.indices as BufferSource, 0);
 
-  // 创建变换矩阵缓冲区
-  const transformBuffer = runner.track(
-    runner.device.createBuffer({
-      size: 256, // 4 matrices * 64 bytes
-      usage: MSpec.RHIBufferUsage.UNIFORM,
-      hint: 'dynamic',
-      label: 'Transform Uniform Buffer',
-    })
-  );
+  // 创建变换矩阵缓冲区数组
+  const transformBuffers: MSpec.IRHIBuffer[] = [];
 
   // 创建着色器
   const vertexShader = runner.track(
@@ -413,12 +406,23 @@ runner.init().then(() => {
     })
   );
 
-  // 为每个纹理创建绑定组
+  // 为每个纹理创建绑定组和对应的变换缓冲区
   const bindGroups: MSpec.IRHIBindGroup[] = [];
   for (let i = 0; i < 6; i++) {
+    // 为每个对象创建一个独立的变换缓冲区
+    const tBuffer = runner.track(
+      runner.device.createBuffer({
+        size: 256,
+        usage: MSpec.RHIBufferUsage.UNIFORM,
+        hint: 'dynamic',
+        label: `Transform Buffer ${i}`,
+      })
+    );
+    transformBuffers.push(tBuffer);
+
     const bindGroup = runner.track(
       runner.device.createBindGroup(bindGroupLayout, [
-        { binding: 0, resource: { buffer: transformBuffer } },
+        { binding: 0, resource: { buffer: tBuffer } },
         { binding: 1, resource: textures[i].createView() },
         { binding: 2, resource: sampler },
       ])
@@ -532,61 +536,67 @@ runner.init().then(() => {
 
   // 渲染函数
   function render() {
-    // 更新投影矩阵
+    // 1. 更新投影矩阵（注意：这里的 45 是“度”）
     const aspect = runner.width / runner.height;
-    projectionMatrix.perspective(Math.PI / 4, aspect, 0.1, 100);
+    projectionMatrix.perspective(45, aspect, 0.1, 100);
 
-    // 使用 beginFrame/endFrame 模式
+    // 2. 开始一帧
     const { encoder, passDescriptor } = runner.beginFrame();
-
-    // 开始渲染通道
     const renderPass = encoder.beginRenderPass(passDescriptor);
 
     renderPass.setPipeline(pipeline);
     renderPass.setVertexBuffer(0, vertexBuffer);
     renderPass.setIndexBuffer(indexBuffer, MSpec.RHIIndexFormat.UINT16);
 
-    // 更新变换矩阵数据
-    const transformData = new Float32Array(48); // 3 matrices
-
+    // 3. 统一的变换数据缓冲
+    const transformData = new Float32Array(48); // model(16) + view(16) + proj(16)
     if (textureParams.selectedTexture >= 0 && textureParams.selectedTexture < 6) {
       // 单纹理模式 - 居中显示一个大的纹理
       modelMatrix.identity();
+      modelMatrix.translate(new MMath.Vector3(0, 0, -1.5));
+      // 旋转 90 度使平面面向相机 (XZ -> XY)
+      modelMatrix.rotateX(Math.PI / 2);
       modelMatrix.scale(new MMath.Vector3(1.5, 1.5, 1));
 
-      modelMatrix.toArray(transformData, 0);
-      viewMatrix.toArray(transformData, 16);
-      projectionMatrix.toArray(transformData, 32);
-      transformBuffer.update(transformData, 0);
+      modelMatrix.fill(transformData, 0);
+      viewMatrix.fill(transformData, 16);
+      projectionMatrix.fill(transformData, 32);
+      transformBuffers[textureParams.selectedTexture].update(transformData, 0);
 
       renderPass.setBindGroup(0, bindGroups[textureParams.selectedTexture]);
       renderPass.drawIndexed(geometry.indexCount!);
     } else {
       // 多纹理网格模式 (3x2)
+      // 4. 不再判断 selectedTexture，强制绘制 6 个纹理
       for (let i = 0; i < 6; i++) {
         const col = i % 3;
         const row = Math.floor(i / 3);
 
-        const x = (col - 1) * 1.1;
-        const y = row === 0 ? 0.55 : -0.55;
+        // 3×2 网格：水平 -0.8, 0, 0.8；垂直 -0.4 / 0.4
+        // 调整布局以确保所有内容都在视野内
+        const x = (col - 1) * 0.4;
+        // 交换上下行，并将 Y 轴间距缩小，确保都在视野中心附近
+        const y = row === 0 ? -0.4 : 0.4;
 
         modelMatrix.identity();
         modelMatrix.translate(new MMath.Vector3(x, y, 0));
-        modelMatrix.scale(new MMath.Vector3(0.35, 0.35, 1));
+        // 旋转 90 度使平面面向相机 (XZ -> XY)
+        modelMatrix.rotateX(Math.PI / 2);
+        // 缩小一点尺寸
+        modelMatrix.scale(new MMath.Vector3(0.25, 0.25, 1));
 
-        modelMatrix.toArray(transformData, 0);
-        viewMatrix.toArray(transformData, 16);
-        projectionMatrix.toArray(transformData, 32);
-        transformBuffer.update(transformData, 0);
+        modelMatrix.fill(transformData, 0);
+        viewMatrix.fill(transformData, 16);
+        projectionMatrix.fill(transformData, 32);
+        transformBuffers[i].update(transformData, 0);
 
         renderPass.setBindGroup(0, bindGroups[i]);
         renderPass.drawIndexed(geometry.indexCount!);
       }
     }
 
+    // 5. 结束帧
     renderPass.end();
-
-    // 结束帧
     runner.endFrame(encoder);
   }
 

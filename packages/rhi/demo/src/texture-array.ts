@@ -20,7 +20,7 @@ precision highp float;
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec2 aTexCoord;
 
-uniform Transforms {
+layout(std140) uniform Transforms {
   mat4 uModelMatrix;
   mat4 uViewMatrix;
   mat4 uProjectionMatrix;
@@ -37,11 +37,11 @@ void main() {
 
 const fragmentShaderSource = /* glsl */ `#version 300 es
 precision highp float;
+precision highp sampler2DArray;
 
 uniform sampler2DArray uTextureArray;
-uniform LayerControl {
-  float uLayerIndex;
-  float uLayerCount;
+layout(std140) uniform LayerControl {
+  vec2 uLayerData; // x = layerIndex, y = layerCount
 };
 
 in vec2 vTexCoord;
@@ -49,6 +49,8 @@ out vec4 fragColor;
 
 void main() {
   // 使用 layer 索引采样特定层
+  float uLayerIndex = uLayerData.x;
+  float uLayerCount = uLayerData.y;
   vec3 texCoord = vec3(vTexCoord, uLayerIndex);
   vec4 color = texture(uTextureArray, texCoord);
 
@@ -369,7 +371,7 @@ function generateMixedPattern(width: number, height: number): Uint8Array {
   // 8. 创建层控制 Uniform 缓冲区
   const layerBuffer = runner.track(
     runner.device.createBuffer({
-      size: 16, // 对齐到 16 字节
+      size: 16, // vec2 对齐: 2 个 float，占用 16 字节
       usage: MSpec.RHIBufferUsage.UNIFORM,
       hint: 'dynamic',
       label: 'Layer Control Uniform Buffer',
@@ -386,7 +388,7 @@ function generateMixedPattern(width: number, height: number): Uint8Array {
       depthOrArrayLayers: layerCount,
       dimension: MSpec.RHITextureType.TEXTURE_2D_ARRAY,
       format: MSpec.RHITextureFormat.RGBA8_UNORM,
-      usage: MSpec.RHITextureUsage.TEXTURE_BINDING | MSpec.RHITextureUsage.COPY_DST,
+      usage: MSpec.RHITextureUsage.TEXTURE_BINDING,
       label: 'Demo Texture Array',
     })
   );
@@ -450,10 +452,27 @@ function generateMixedPattern(width: number, height: number): Uint8Array {
   ];
 
   // 更新每一层
+  console.info(`[Texture Array] Uploading ${layerCount} layers...`);
   for (let layer = 0; layer < layerCount; layer++) {
     const layerData = layerGenerators[layer]();
-    arrayTexture.update(layerData as BufferSource, 0, 0, layer);
+
+    // 正确的纹理数组更新调用
+    // 参数顺序: data, x, y, z, width, height, depth, mipLevel, arrayLayer
+    arrayTexture.update(
+      layerData as BufferSource, // 纹理数据
+      0, // x 偏移
+      0, // y 偏移
+      0, // z 偏移（数组纹理不使用）
+      textureSize, // 宽度
+      textureSize, // 高度
+      1, // 深度（单层）
+      0, // mip 级别
+      layer // 数组层索引 ✅
+    );
+
+    console.info(`  ✓ Layer ${layer} (${layerNames[layer]}) uploaded`);
   }
+  console.info(`[Texture Array] All layers uploaded successfully`);
 
   // 11. 创建采样器
   const sampler = runner.track(
@@ -560,10 +579,11 @@ function generateMixedPattern(width: number, height: number): Uint8Array {
 
   // 18. 模型矩阵
   const modelMatrix = new MMath.Matrix4();
-  modelMatrix.rotateX((-Math.PI / 2) * 0.6);
+  modelMatrix.rotateX(Math.PI / 2);
 
   // 19. 更新函数
   const updateLayerBuffer = () => {
+    // vec2 布局: [currentLayer, layerCount, padding, padding]
     const layerData = new Float32Array([currentLayer, layerCount, 0, 0]);
     layerBuffer.update(layerData, 0);
   };
