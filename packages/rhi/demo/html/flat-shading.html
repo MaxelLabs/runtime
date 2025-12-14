@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>平面着色 - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <link rel="stylesheet" href="../css/demo-styles.css" />
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+    <div class="info-panel">
+      <h2>🔆 Flat Shading (平面着色)</h2>
+      <p>演示 Flat Shading 着色模型，展示每个三角形使用统一法线的面片效果。通过 GLSL 的 flat 关键字禁用法线插值，创造独特的低多边形风格。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">Flat Shading</span>
+        <span class="tech-tag">Lambert 漫反射</span>
+        <span class="tech-tag">flat 关键字</span>
+        <span class="tech-tag">UBO (std140)</span>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="../src/flat-shading.ts"></script>
+</body>
+</html>

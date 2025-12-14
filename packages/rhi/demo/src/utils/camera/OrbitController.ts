@@ -61,6 +61,12 @@ export class OrbitController {
   private lastMouseX: number = 0;
   private lastMouseY: number = 0;
 
+  // 初始状态（用于 reset）
+  private initialTarget: MMath.Vector3;
+  private initialDistance: number;
+  private initialAzimuth: number;
+  private initialElevation: number;
+
   // 阻尼状态
   private targetAzimuth: number;
   private targetElevation: number;
@@ -108,6 +114,12 @@ export class OrbitController {
     this.fov = 45; // 45度（角度值，perspective 方法内部会转换为弧度）
     this.near = 0.1;
     this.far = 1000;
+
+    // 保存初始状态（用于 reset）
+    this.initialTarget = this.target.clone();
+    this.initialDistance = this.distance;
+    this.initialAzimuth = this.azimuth;
+    this.initialElevation = this.elevation;
 
     // 初始化阻尼目标
     this.targetAzimuth = this.azimuth;
@@ -205,6 +217,25 @@ export class OrbitController {
   /** 设置自动旋转速度 */
   setAutoRotateSpeed(speed: number): void {
     this.autoRotateSpeed = speed;
+  }
+
+  /**
+   * 重置相机到初始状态
+   */
+  reset(): void {
+    this.targetCenter.copyFrom(this.initialTarget);
+    this.targetDistance = this.initialDistance;
+    this.targetAzimuth = this.initialAzimuth;
+    this.targetElevation = this.initialElevation;
+
+    // 如果没有启用阻尼，立即应用
+    if (!this.enableDamping) {
+      this.target.copyFrom(this.initialTarget);
+      this.distance = this.initialDistance;
+      this.azimuth = this.initialAzimuth;
+      this.elevation = this.initialElevation;
+      this.updateMatrices();
+    }
   }
 
   // ==================== 矩阵获取 ====================

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gouraud 着色 - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <link rel="stylesheet" href="../css/demo-styles.css" />
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+    <div class="info-panel">
+      <h2>🎨 Gouraud Shading (顶点着色)</h2>
+      <p>此 Demo 演示了 <strong>Gouraud Shading</strong>，在顶点着色器中计算光照，片元着色器进行颜色插值。展示顶点级光照的特点和性能优势。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">Gouraud Shading</span>
+        <span class="tech-tag">Vertex Lighting</span>
+        <span class="tech-tag">Lambert Model</span>
+        <span class="tech-tag">Color Interpolation</span>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="../src/gouraud-shading.ts"></script>
+</body>
+</html>

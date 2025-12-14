@@ -531,9 +531,9 @@ runner.start((dt) => {
 
 | #   | 名称                | 验证功能点       | 状态                 |
 | --- | ------------------- | ---------------- | -------------------- |
-| 23  | flat-shading        | 平面着色         | 待实现               |
-| 24  | gouraud-shading     | Gouraud 着色     | 待实现               |
-| 25  | phong-lighting      | Phong 光照模型   | 待实现               |
+| 23  | flat-shading        | 平面着色         | ✅ 完成              |
+| 24  | gouraud-shading     | Gouraud 着色     | ✅ 完成              |
+| 25  | phong-lighting      | Phong 光照模型   | ✅ 完成              |
 | 26  | blinn-phong         | Blinn-Phong 高光 | rotating-cube 已演示 |
 | 27  | directional-light   | 平行光源         | 待实现               |
 | 28  | point-lights        | 多点光源         | 待实现               |

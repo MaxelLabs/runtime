@@ -63,6 +63,8 @@
 ### 📋 参考文档 (reference)
 - **[Graphics Bible](./reference/graphics-bible.md)** - 图形系统宪法文档 ⭐
   - 坐标系统、矩阵运算、颜色空间、采样算法等核心规范
+- **[RHI Demo Constitution](./reference/rhi-demo-constitution.md)** - RHI Demo 实现宪法 ⭐
+  - UI 布局规则、几何体标准、纹理指南、着色器约定、资源管理等实现规范
 - [立方体贴图天空盒 Demo](./reference/cubemap-skybox-demo.md) - 立方体贴图和环境映射演示
   - CubemapGenerator、天空渐变、反射效果
 - [渲染到纹理 Demo](./reference/render-to-texture-demo.md) - 离屏渲染和后期处理
@@ -73,6 +75,12 @@
   - 压缩纹理检测、GPU内存优化
 - [程序化纹理 Demo](./reference/procedural-texture-demo.md) - 算法生成纹理
   - Perlin噪声、分形布朗运动、波形函数
+- [平面着色 Demo](./reference/flat-shading-demo.md) - Flat Shading 光照模型
+  - flat 关键字、Lambert 漫反射、面片效果
+- [Gouraud 着色 Demo](./reference/gouraud-shading-demo.md) - 顶点着色光照
+  - 顶点光照计算、颜色插值、性能优化
+- [Phong 光照 Demo](./reference/phong-lighting-demo.md) - 片元着色光照
+  - 逐像素光照、镜面反射、完整 Phong 模型
 
 ### 🏗️ 架构设计 (architecture)
 - [RHI 抽象层架构](./architecture/rhi/rhi-architecture.md) - RHI 抽象层设计原理和核心组件
