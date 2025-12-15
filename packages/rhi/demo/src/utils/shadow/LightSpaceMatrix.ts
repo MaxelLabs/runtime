@@ -129,7 +129,7 @@ export class LightSpaceMatrix {
     this.projMatrix.orthographic(-orthoSize, orthoSize, -orthoSize, orthoSize, near, far);
 
     // 合并视图投影矩阵
-    this.vpMatrix.multiply(this.projMatrix, this.viewMatrix);
+    this.vpMatrix.copyFrom(this.projMatrix).multiply(this.viewMatrix);
   }
 
   /**
@@ -182,7 +182,7 @@ export class LightSpaceMatrix {
     this.projMatrix.perspective(Math.PI / 2, 1, near, far);
 
     // 合并视图投影矩阵
-    this.vpMatrix.multiply(this.projMatrix, this.viewMatrix);
+    this.vpMatrix.copyFrom(this.projMatrix).multiply(this.viewMatrix);
   }
 
   /**

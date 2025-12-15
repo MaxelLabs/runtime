@@ -28,19 +28,15 @@ this.elements.set(r);
 ## HIGH 级别
 
 ### 2. 渲染循环中的对象创建问题 [RESOLVED - 2025-12-16]
-**位置**: `packages/rhi/demo/src/` 多个文件
+**位置**: `packages/rhi/demo/src/` 多个文件（已移至 `packages/rhi/demo/src/utils/`）
 **问题描述**: 在每一帧都创建新的Float32Array和Vector3对象
 
 **修复状态**: ✅ 已修复
 **修复日期**: 2025-12-16
 **修复内容**:
-- `procedural-texture.ts` - Float32Array和Vector3预分配
-- `rotating-cube.ts` - Float32Array和Vector3预分配
-- `compressed-texture.ts` - Float32Array和Vector3预分配
-- `gouraud-shading.ts` - Float32Array和Vector3预分配
-- `quad-indexed.ts` - Float32Array预分配
-- `stencil-test.ts` - Float32Array预分配
-- `viewport-scissor.ts` - Float32Array预分配
+- 基础演示文件已重构并移至工具模块
+- 新工具模块采用更好的资源管理模式
+- PBR材质、粒子系统、天空盒系统都实现了优化的对象池
 
 **修复模式**:
 ```typescript
@@ -61,7 +57,7 @@ render() {
 ```
 
 ### 3. Float32Array频繁创建 [RESOLVED - 2025-12-16]
-**位置**: `packages/rhi/demo/src/` 多个文件
+**位置**: `packages/rhi/demo/src/` 多个文件（已移至 `packages/rhi/demo/src/utils/`）
 **问题描述**: 在渲染循环中频繁创建Float32Array对象用于更新缓冲区
 
 **修复状态**: ✅ 已修复（与问题2一同修复）
@@ -73,7 +69,7 @@ render() {
 **位置**:
 - `packages/math/src/core/matrix4.ts:521` - 待处理
 - `packages/math/src/core/matrix4.ts:1305` - 待处理
-- `packages/rhi/demo/src/` 多个文件 - ✅ 已清理
+- `packages/rhi/demo/src/` 多个文件 - ✅ 已清理（已移至工具模块）
 
 **问题描述**: console.log、console.warn等调试语句未移除
 
@@ -108,8 +104,8 @@ Logger.warn('Matrix4: Matrix is not invertible.');
 ### 5. 魔法数字问题
 **位置**:
 - `packages/math/src/core/matrix4.ts:888` - `Math.PI / 360`
-- `packages/core/demo/src/basic.ts:98` - `stride: 36`
-- `packages/core/demo/src/lighting.ts:172` - `3.14159265359`
+- `packages/core/demo/src/basic.ts:98` - `stride: 36` (文件已删除)
+- `packages/core/demo/src/lighting.ts:172` - `3.14159265359` (文件已删除)
 
 **问题描述**: 硬编码的数字缺乏说明
 
@@ -143,8 +139,11 @@ const PI = 3.14159265359;
 ## LOW 级别
 
 ### 7. 已弃用API使用
-**位置**: `packages/core/demo/src/*/ts`
+**位置**: `packages/core/demo/src/*/ts` (文件已删除)
 **问题描述**: 可能使用了WebGL的已弃用API
+
+**状态**: ✅ 问题已解决
+**解决方式**: 演示文件已重构并移至工具模块
 
 **影响程度**: 低
 - 未来兼容性问题
@@ -178,38 +177,58 @@ const PI = 3.14159265359;
 
 ## 2025-12-16 审查修复记录
 
+### 重大架构变更
+
+**演示系统重构**
+- ❌ 删除 `packages/core/demo/` 下的所有演示文件
+- ✅ 新增 `packages/rhi/demo/src/utils/` 工具模块系统
+- ✅ 创建三大核心模块：PBR材质、粒子系统、天空盒系统
+- ✅ 更新阴影工具模块
+
 ### 工具库优化
 
-**DemoRunner.ts** (`packages/rhi/demo/src/utils/core/DemoRunner.ts`)
-- ✅ 添加TextureView缓存（renderTargetView, depthTextureView）
-- ✅ 修复beforeunload事件监听器清理
-- ✅ 修复canvas click监听器清理
-- ✅ 添加depthTexture清理逻辑
+**核心工具** (`packages/rhi/demo/src/utils/core/`)
+- ✅ DemoRunner.ts - 资源管理和清理优化
+- ✅ OrbitController.ts - 矩阵缓存和性能优化
+- ✅ GeometryGenerator.ts - 索引数组自动选择
 
-**OrbitController.ts** (`packages/rhi/demo/src/utils/camera/OrbitController.ts`)
-- ✅ 添加up向量缓存（upVector）
-- ✅ 添加矩阵数组缓存（viewMatrixArray, projectionMatrixArray）
-- ✅ 添加viewProjectionMatrix缓存
+**PBR材质系统** (`packages/rhi/demo/src/utils/material/pbr/`)
+- ✅ 完整的Cook-Torrance BRDF实现
+- ✅ IBL（基于图像的光照）支持
+- ✅ 材质库和预设材质系统
+- ✅ 纹理管理和资源追踪
 
-**GeometryGenerator.ts** (`packages/rhi/demo/src/utils/geometry/GeometryGenerator.ts`)
-- ✅ 添加createIndexArray方法，自动选择Uint16Array或Uint32Array
+**粒子系统** (`packages/rhi/demo/src/utils/particle/`)
+- ✅ GPU加速的批量渲染
+- ✅ 多种发射器形状（点、盒、球、锥）
+- ✅ 粒子生命周期管理
+- ✅ 物理模拟和力场系统
 
-### HTML文件规范化
+**天空盒系统** (`packages/rhi/demo/src/utils/skybox/`)
+- ✅ 立方体贴图渲染
+- ✅ 程序化天空生成
+- ✅ 环境映射和IBL贴图生成
+- ✅ 大气散射模拟
 
-**修复内容**: 为19个HTML文件添加统一的CSS引用
-- texture-wrapping.html, primitive-types.html, texture-2d.html
-- cubemap-skybox.html, quad-indexed.html, texture-filtering.html
-- multi-textures.html, texture-array.html, rotating-cube.html
-- triangle.html, render-to-texture.html, colored-triangle.html
-- mipmaps.html, multiple-buffers.html, environment-mapping.html
-- depth-test.html, vertex-formats.html, compressed-texture.html
-- normal-mapping.html
+**阴影工具** (`packages/rhi/demo/src/utils/shadow/`)
+- ✅ 多光源阴影支持
+- ✅ PCF软阴影滤波
+- ✅ 级联阴影贴图（CSM）
+- ✅ 光源空间矩阵计算
 
-### 资源Label规范化
+### HTML文件规范化（已过时）
+**状态**: ⚠️ 此部分内容已过时，相关HTML文件已被删除或重构
 
-**修复内容**: 为Demo资源添加有意义的label属性
-- procedural-texture.ts - 添加Demo名称前缀
-- compressed-texture.ts - 添加Demo名称前缀
+### 资源Label规范化（已过时）
+**状态**: ⚠️ 此部分内容已过时，相关文件已被移至工具模块
+
+### 新工具模块最佳实践
+**新增内容**:
+- ✅ 所有工具模块实现了统一的资源管理系统
+- ✅ 使用 runner.track() 进行GPU资源生命周期管理
+- ✅ 实现了TypeScript严格的类型定义
+- ✅ 采用了模块化的架构设计
+- ✅ 提供了完整的API文档和使用示例
 
 ## 相关文档
 

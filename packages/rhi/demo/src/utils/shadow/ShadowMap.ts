@@ -131,7 +131,6 @@ export class ShadowMap {
       addressModeU: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
       addressModeV: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
       addressModeW: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
-      compare: MSpec.RHICompareFunction.LESS,
       label: `${this.label} Compare Sampler`,
     });
   }
@@ -145,7 +144,7 @@ export class ShadowMap {
    * @param clearDepth 深度清除值，默认1.0
    * @returns 渲染通道描述符（只有深度附件，无颜色附件）
    */
-  getRenderPassDescriptor(clearDepth: number = 1.0): MSpec.RHIRenderPassDescriptor {
+  getRenderPassDescriptor(clearDepth: number = 1.0) {
     if (!this._depthView) {
       throw new Error(`[${this.label}] 深度视图未初始化，无法创建渲染通道描述符`);
     }

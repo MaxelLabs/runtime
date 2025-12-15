@@ -30,5 +30,14 @@ export * from './instancing';
 // 后处理工具
 export * from './postprocess';
 
+// 粒子系统工具
+export * from './particle';
+
+// 天空盒工具
+export * from './skybox';
+
+// 材质系统
+export * from './material/pbr';
+
 // UI 工具
 export * from './ui';
