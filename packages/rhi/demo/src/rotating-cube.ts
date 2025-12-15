@@ -461,6 +461,12 @@ async function main(): Promise<void> {
     const modelMatrix = new MMath.Matrix4();
     const normalMatrix = new MMath.Matrix4();
 
+    // 预分配渲染循环中使用的数组和对象（避免每帧创建）
+    const transformData = new Float32Array(64); // 4 * 16
+    const lightingData = new Float32Array(12); // 48 bytes
+    const cameraData = new Float32Array(4);
+    const lightDir = new MMath.Vector3();
+
     // 19. 键盘事件
     runner.onKey('Escape', () => {
       gui.destroy();
@@ -511,20 +517,18 @@ async function main(): Promise<void> {
       const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
       const cameraPos = orbit.getPosition();
 
-      // 更新 Transform Uniform
-      const transformData = new Float32Array(64); // 4 * 16
+      // 更新 Transform Uniform（使用预分配的transformData）
       transformData.set(modelMatrix.toArray(), 0);
       transformData.set(viewMatrix, 16);
       transformData.set(projMatrix, 32);
       transformData.set(normalMatrix.toArray(), 48);
       transformBuffer.update(transformData, 0);
 
-      // 更新 Lighting Uniform
+      // 更新 Lighting Uniform（使用预分配的lightDir和lightingData）
       // GPU std140 布局: uLightDirection(0-11), uLightColor(16-27), uAmbientColor(32-43), uSpecularIntensity(44-47)
       // 总大小: 48 bytes = 12 floats
-      const lightDir = new MMath.Vector3(params.lightX, params.lightY, params.lightZ);
+      lightDir.set(params.lightX, params.lightY, params.lightZ);
       lightDir.normalize();
-      const lightingData = new Float32Array(12); // 48 bytes
       lightingData[0] = lightDir.x; // offset 0
       lightingData[1] = lightDir.y; // offset 4
       lightingData[2] = lightDir.z; // offset 8
@@ -539,8 +543,7 @@ async function main(): Promise<void> {
       lightingData[11] = params.specularIntensity; // uSpecularIntensity, offset 44
       lightingBuffer.update(lightingData, 0);
 
-      // 更新 Camera Uniform
-      const cameraData = new Float32Array(4);
+      // 更新 Camera Uniform（使用预分配的cameraData）
       cameraData[0] = cameraPos.x;
       cameraData[1] = cameraPos.y;
       cameraData[2] = cameraPos.z;

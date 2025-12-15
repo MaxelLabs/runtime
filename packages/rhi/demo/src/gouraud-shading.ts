@@ -275,6 +275,11 @@ async function main(): Promise<void> {
     const normalMatrix = new MMath.Matrix4();
     let rotationY = 0;
 
+    // 预分配渲染循环中使用的数组，避免GC压力
+    const transformData = new Float32Array(64);
+    const lightingData = new Float32Array(8); // 32 bytes
+    const lightDir = new MMath.Vector3();
+
     // 键盘事件
     runner.onKey('Escape', () => {
       gui.destroy();
@@ -304,18 +309,16 @@ async function main(): Promise<void> {
       const viewMatrix = orbit.getViewMatrix();
       const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
 
-      // 更新 Transform Uniform
-      const transformData = new Float32Array(64);
+      // 更新 Transform Uniform（复用预分配的数组）
       transformData.set(modelMatrix.toArray(), 0);
       transformData.set(viewMatrix, 16);
       transformData.set(projMatrix, 32);
       transformData.set(normalMatrix.toArray(), 48);
       transformBuffer.update(transformData, 0);
 
-      // 更新 Lighting Uniform
-      const lightDir = new MMath.Vector3(params.lightX, params.lightY, params.lightZ);
+      // 更新 Lighting Uniform（复用预分配的对象）
+      lightDir.set(params.lightX, params.lightY, params.lightZ);
       lightDir.normalize();
-      const lightingData = new Float32Array(8); // 32 bytes
       lightingData[0] = lightDir.x;
       lightingData[1] = lightDir.y;
       lightingData[2] = lightDir.z;

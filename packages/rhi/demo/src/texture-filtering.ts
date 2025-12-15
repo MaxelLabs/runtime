@@ -174,9 +174,6 @@ const FILTER_CONFIGS: FilterConfig[] = [
     );
 
     // 6. 创建测试纹理（棋盘格最能体现过滤效果差异）
-    // eslint-disable-next-line no-console
-    console.log('[Texture Filtering Demo] Creating test texture...');
-
     // 使用高分辨率棋盘格以更好展示过滤效果
     const checkerData = ProceduralTexture.checkerboard({
       width: 512,
@@ -204,9 +201,6 @@ const FILTER_CONFIGS: FilterConfig[] = [
     for (let level = 0; level < mipmapLevels.length; level++) {
       texture.update(mipmapLevels[level] as BufferSource, 0, 0, 0, undefined, undefined, undefined, level + 1);
     }
-
-    // eslint-disable-next-line no-console
-    console.log(`[Texture Filtering Demo] Created texture with ${mipmapLevels.length + 1} mip levels`);
 
     // 7. 为每种过滤模式创建采样器
     const samplers = FILTER_CONFIGS.map((config) =>
@@ -337,8 +331,6 @@ const FILTER_CONFIGS: FilterConfig[] = [
         const index = FILTER_CONFIGS.findIndex((c) => c.name === name);
         if (index !== -1) {
           currentFilterIndex = index;
-          // eslint-disable-next-line no-console
-          console.log(`[Texture Filtering Demo] Switched to: ${FILTER_CONFIGS[index].description}`);
         }
       },
     });
@@ -424,22 +416,16 @@ const FILTER_CONFIGS: FilterConfig[] = [
       runner.onKey(key, () => {
         currentFilterIndex = index;
         gui.set('Filter', config.name);
-        // eslint-disable-next-line no-console
-        console.log(`[Texture Filtering Demo] Switched to: ${config.description}`);
       });
     });
 
     // 0 键重置视角
     runner.onKey('0', () => {
-      // eslint-disable-next-line no-console
-      console.log('[Texture Filtering Demo] Reset view');
       orbit.setTarget(0, 0, 0);
       orbit.setDistance(4);
     });
 
     runner.onKey('Escape', () => {
-      // eslint-disable-next-line no-console
-      console.log('[Texture Filtering Demo] Exiting...');
       stats.destroy();
       orbit.destroy();
       gui.destroy();
@@ -453,15 +439,6 @@ const FILTER_CONFIGS: FilterConfig[] = [
       } else {
         runner.canvas.requestFullscreen();
       }
-    });
-
-    // eslint-disable-next-line no-console
-    console.log('[Texture Filtering Demo] Initialized successfully!');
-    // eslint-disable-next-line no-console
-    console.log('[Texture Filtering Demo] Available filter modes:');
-    FILTER_CONFIGS.forEach((config, i) => {
-      // eslint-disable-next-line no-console
-      console.log(`  ${i + 1}. ${config.name} - ${config.description}`);
     });
   } catch (error) {
     console.error('[Texture Filtering Demo] Error:', error);

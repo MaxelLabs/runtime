@@ -606,7 +606,7 @@ export class GeometryGenerator {
 
     return {
       vertices: new Float32Array(vertexData),
-      indices: new Uint16Array(indexData),
+      indices: this.createIndexArray(indexData, vertexCount),
       vertexCount,
       indexCount,
       vertexStride: stride,
@@ -717,7 +717,7 @@ export class GeometryGenerator {
 
     return {
       vertices: new Float32Array(vertexData),
-      indices: new Uint16Array(indexData),
+      indices: this.createIndexArray(indexData, vertexCount),
       vertexCount,
       indexCount,
       vertexStride: stride,
@@ -867,7 +867,7 @@ export class GeometryGenerator {
 
     return {
       vertices: new Float32Array(vertexData),
-      indices: new Uint16Array(indexData),
+      indices: this.createIndexArray(indexData, vertexCount),
       vertexCount,
       indexCount,
       vertexStride: stride,
@@ -1050,7 +1050,7 @@ export class GeometryGenerator {
 
     return {
       vertices: new Float32Array(vertexData),
-      indices: new Uint16Array(indexData),
+      indices: this.createIndexArray(indexData, vertexCount),
       vertexCount,
       indexCount,
       vertexStride: stride,
@@ -1251,7 +1251,7 @@ export class GeometryGenerator {
 
     return {
       vertices: new Float32Array(vertexData),
-      indices: new Uint16Array(indexData),
+      indices: this.createIndexArray(indexData, vertexCount),
       vertexCount,
       indexCount,
       vertexStride: stride,
@@ -1261,6 +1261,20 @@ export class GeometryGenerator {
   }
 
   // ==================== 工具方法 ====================
+
+  /**
+   * 根据顶点数量选择合适的索引数组类型
+   * @param indexData 索引数据
+   * @param vertexCount 顶点数量
+   * @returns Uint16Array 或 Uint32Array
+   */
+  private static createIndexArray(indexData: number[], vertexCount: number): Uint16Array | Uint32Array {
+    // 如果顶点数超过 65535，使用 Uint32Array
+    if (vertexCount > 65535) {
+      return new Uint32Array(indexData);
+    }
+    return new Uint16Array(indexData);
+  }
 
   /**
    * 构建顶点布局

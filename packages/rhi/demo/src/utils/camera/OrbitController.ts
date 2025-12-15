@@ -78,6 +78,15 @@ export class OrbitController {
   private projectionMatrix: MMath.Matrix4;
   private position: MMath.Vector3;
 
+  // 常量向量缓存（避免每帧创建）
+  private readonly upVector: MMath.Vector3;
+
+  // 输出数组缓存（避免每帧创建）
+  private viewMatrixArray: Float32Array;
+  private projectionMatrixArray: Float32Array;
+  private viewProjectionMatrix: MMath.Matrix4;
+  private viewProjectionMatrixArray: Float32Array;
+
   // 事件监听器引用
   private boundOnMouseDown: (e: MouseEvent) => void;
   private boundOnMouseMove: (e: MouseEvent) => void;
@@ -131,6 +140,15 @@ export class OrbitController {
     this.viewMatrix = new MMath.Matrix4();
     this.projectionMatrix = new MMath.Matrix4();
     this.position = new MMath.Vector3();
+
+    // 初始化常量向量
+    this.upVector = new MMath.Vector3(0, 1, 0);
+
+    // 初始化输出数组缓存
+    this.viewMatrixArray = new Float32Array(16);
+    this.projectionMatrixArray = new Float32Array(16);
+    this.viewProjectionMatrix = new MMath.Matrix4();
+    this.viewProjectionMatrixArray = new Float32Array(16);
 
     // 绑定事件处理器
     this.boundOnMouseDown = this.onMouseDown.bind(this);
@@ -242,32 +260,43 @@ export class OrbitController {
 
   /**
    * 获取视图矩阵
-   * @returns 视图矩阵的 Float32Array
+   * @returns 视图矩阵的 Float32Array（内部缓存，请勿修改）
    */
   getViewMatrix(): Float32Array {
-    return new Float32Array(this.viewMatrix.toArray());
+    const arr = this.viewMatrix.toArray();
+    for (let i = 0; i < 16; i++) {
+      this.viewMatrixArray[i] = arr[i];
+    }
+    return this.viewMatrixArray;
   }
 
   /**
    * 获取投影矩阵
    * @param aspect 宽高比
-   * @returns 投影矩阵的 Float32Array
+   * @returns 投影矩阵的 Float32Array（内部缓存，请勿修改）
    */
   getProjectionMatrix(aspect: number): Float32Array {
     this.projectionMatrix.perspective(this.fov, aspect, this.near, this.far);
-    return new Float32Array(this.projectionMatrix.toArray());
+    const arr = this.projectionMatrix.toArray();
+    for (let i = 0; i < 16; i++) {
+      this.projectionMatrixArray[i] = arr[i];
+    }
+    return this.projectionMatrixArray;
   }
 
   /**
    * 获取视图投影矩阵
    * @param aspect 宽高比
-   * @returns 视图投影矩阵的 Float32Array
+   * @returns 视图投影矩阵的 Float32Array（内部缓存，请勿修改）
    */
   getViewProjectionMatrix(aspect: number): Float32Array {
-    const vp = new MMath.Matrix4();
-    vp.perspective(this.fov, aspect, this.near, this.far);
-    vp.multiply(this.viewMatrix);
-    return new Float32Array(vp.toArray());
+    this.viewProjectionMatrix.perspective(this.fov, aspect, this.near, this.far);
+    this.viewProjectionMatrix.multiply(this.viewMatrix);
+    const arr = this.viewProjectionMatrix.toArray();
+    for (let i = 0; i < 16; i++) {
+      this.viewProjectionMatrixArray[i] = arr[i];
+    }
+    return this.viewProjectionMatrixArray;
   }
 
   // ==================== 更新 ====================
@@ -327,9 +356,8 @@ export class OrbitController {
       this.target.z + this.distance * cosElevation * cosAzimuth
     );
 
-    // 构建视图矩阵
-    const up = new MMath.Vector3(0, 1, 0);
-    this.viewMatrix.lookAt(this.position, this.target, up);
+    // 构建视图矩阵（使用缓存的 up 向量）
+    this.viewMatrix.lookAt(this.position, this.target, this.upVector);
   }
 
   /** 设置事件监听 */

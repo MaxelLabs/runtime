@@ -365,7 +365,6 @@ const lightParams = [
       negZ: '../assets/cube/Bridge2/negz.jpg',
     };
 
-    console.info('Loading environment map...');
     const cubemapData = await CubemapGenerator.loadFromUrls(cubemapUrls);
 
     const envTexture = runner.track(
@@ -528,10 +527,14 @@ const lightParams = [
       },
     });
 
+    // 预分配缓冲区数据数组（避免在渲染循环中创建）
+    const materialData = new Float32Array(8);
+    const lightsData = new Float32Array(28);
+    const lightCountData = new Int32Array(lightsData.buffer, 96, 1);
+
     // 更新Uniform函数
     const updateMaterialUniforms = () => {
       // PBRMaterial Buffer (32 bytes)
-      const materialData = new Float32Array(8);
       materialData[0] = materialParams.albedo[0];
       materialData[1] = materialParams.albedo[1];
       materialData[2] = materialParams.albedo[2];
@@ -544,8 +547,7 @@ const lightParams = [
     };
 
     const updateLightsUniforms = () => {
-      // PointLights Buffer (112 bytes)
-      const lightsData = new Float32Array(28); // 112/4 = 28
+      // PointLights Buffer (112 bytes) - 重用预分配的lightsData
 
       // Light 0
       lightsData[0] = lightParams[0].position[0];
@@ -575,8 +577,7 @@ const lightParams = [
       lightsData[22] = lightParams[1].quadratic;
       // [23] padding
 
-      // Light count
-      const lightCountData = new Int32Array(lightsData.buffer, 96, 1);
+      // Light count - 重用预分配的lightCountData
       lightCountData[0] = 2;
 
       lightsBuffer.update(lightsData, 0);
@@ -589,6 +590,10 @@ const lightParams = [
     // 矩阵
     const modelMatrix = new MMath.Matrix4();
     const normalMatrix = new MMath.Matrix4();
+
+    // 预分配变换和相机数据数组（避免在渲染循环中创建）
+    const transformData = new Float32Array(64);
+    const cameraData = new Float32Array(4);
 
     // 渲染循环
     runner.start((dt) => {
@@ -613,15 +618,14 @@ const lightParams = [
       const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
       const cameraPos = orbit.getPosition();
 
-      const transformData = new Float32Array(64);
+      // 重用预分配的transformData
       transformData.set(modelMatrix.toArray(), 0);
       transformData.set(viewMatrix, 16);
       transformData.set(projMatrix, 32);
       transformData.set(normalMatrix.toArray(), 48);
       transformBuffer.update(transformData, 0);
 
-      // Camera Uniform
-      const cameraData = new Float32Array(4);
+      // Camera Uniform - 重用预分配的cameraData
       cameraData[0] = cameraPos.x;
       cameraData[1] = cameraPos.y;
       cameraData[2] = cameraPos.z;

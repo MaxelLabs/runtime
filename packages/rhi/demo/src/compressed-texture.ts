@@ -145,7 +145,7 @@ const compressionFormats = [
         usage: MSpec.RHIBufferUsage.VERTEX,
         hint: 'static',
         initialData: planeGeometry.vertices as BufferSource,
-        label: 'Vertex Buffer',
+        label: 'Compressed Texture Vertex Buffer',
       })
     );
 
@@ -394,6 +394,12 @@ const compressionFormats = [
       }
     };
 
+    // 预分配渲染循环中使用的数组（避免每帧创建）
+    const transformData = new Float32Array(48); // 3 matrices * 16 floats
+    const selectionData = new Float32Array(1);
+    const tempTranslateVec = new MMath.Vector3();
+    const tempScaleVec = new MMath.Vector3();
+
     // ==================== 渲染循环 ====================
 
     runner.start((dt) => {
@@ -410,8 +416,7 @@ const compressionFormats = [
       renderPass.setPipeline(pipeline);
       renderPass.setVertexBuffer(0, vertexBuffer);
 
-      // 更新变换矩阵
-      const transformData = new Float32Array(48); // 3 matrices * 16 floats
+      // 使用预分配的变换数据数组（避免每帧创建）
 
       if (selectedIndex === -1) {
         // 显示所有格式 - 网格布局
@@ -428,16 +433,19 @@ const compressionFormats = [
           const y = (rows / 2 - row - 0.5) * spacing;
 
           modelMatrix.identity();
-          modelMatrix.translate(new MMath.Vector3(x, y, 0));
-          modelMatrix.scale(new MMath.Vector3(scale, scale, 1));
+          tempTranslateVec.set(x, y, 0);
+          modelMatrix.translate(tempTranslateVec);
+          tempScaleVec.set(scale, scale, 1);
+          modelMatrix.scale(tempScaleVec);
 
           transformData.set(modelMatrix.toArray(), 0);
           transformData.set(viewMatrix, 16);
           transformData.set(projMatrix, 32);
           transformBuffer.update(transformData, 0);
 
-          // 更新选择状态
-          selectionBuffer.update(new Float32Array([selectedStates[i]]), 0);
+          // 更新选择状态（使用预分配的selectionData）
+          selectionData[0] = selectedStates[i];
+          selectionBuffer.update(selectionData, 0);
 
           renderPass.setBindGroup(0, bindGroups[i]);
           renderPass.draw(planeGeometry.vertexCount);
@@ -445,14 +453,16 @@ const compressionFormats = [
       } else {
         // 显示单个格式
         modelMatrix.identity();
-        modelMatrix.scale(new MMath.Vector3(2, 2, 1));
+        tempScaleVec.set(2, 2, 1);
+        modelMatrix.scale(tempScaleVec);
 
         transformData.set(modelMatrix.toArray(), 0);
         transformData.set(viewMatrix, 16);
         transformData.set(projMatrix, 32);
         transformBuffer.update(transformData, 0);
 
-        selectionBuffer.update(new Float32Array([1.0]), 0);
+        selectionData[0] = 1.0;
+        selectionBuffer.update(selectionData, 0);
 
         renderPass.setBindGroup(0, bindGroups[selectedIndex]);
         renderPass.draw(planeGeometry.vertexCount);

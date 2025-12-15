@@ -301,10 +301,14 @@ async function main(): Promise<void> {
     // 14. 创建模型矩阵
     const modelMatrix = new MMath.Matrix4();
 
+    // 预分配渲染循环中使用的数组，避免GC压力
+    const uniformData = new Float32Array(4);
+    const transformData = new Float32Array(64);
+
     // 15. 渲染函数
     const renderTriangle = (renderPass: MSpec.IRHIRenderPass, rotationAngle: number): void => {
-      // 更新 Uniform
-      const uniformData = new Float32Array([rotationAngle, 0, 0, 0]);
+      // 更新 Uniform（复用预分配的数组）
+      uniformData[0] = rotationAngle;
       uniformBuffer.update(uniformData, 0);
 
       renderPass.setPipeline(pipeline);
@@ -323,7 +327,7 @@ async function main(): Promise<void> {
       const viewMatrix = orbit.getViewMatrix();
       const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
 
-      const transformData = new Float32Array(64);
+      // 复用预分配的数组
       transformData.set(modelMatrix.toArray(), 0);
       transformData.set(viewMatrix, 16);
       transformData.set(projMatrix, 32);
@@ -408,10 +412,6 @@ async function main(): Promise<void> {
     ]);
 
     // 18. 输出技术信息
-    console.info('📐 Viewport & Scissor Demo');
-    console.info('API 演示:');
-    console.info('  • setViewport(x, y, w, h, minDepth, maxDepth)');
-    console.info('  • setScissorRect(x, y, w, h)');
   } catch (error) {
     console.error('Demo 初始化失败:', error);
     DemoRunner.showError(`Demo 初始化失败: ${(error as Error).message}`);

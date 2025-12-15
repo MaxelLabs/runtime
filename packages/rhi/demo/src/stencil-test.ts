@@ -390,6 +390,13 @@ async function main(): Promise<void> {
     const modelMatrix = new MMath.Matrix4();
     let rotationY = 0;
 
+    // 预分配渲染循环中使用的数组，避免GC压力
+    const transformData = new Float32Array(64);
+    const scaleData = new Float32Array(4);
+    const colorData = new Float32Array(4);
+    const outlineScaleData = new Float32Array(4);
+    const outlineColorData = new Float32Array(4);
+
     // 18. 键盘事件
     runner.onKey('Escape', () => {
       gui.destroy();
@@ -449,20 +456,17 @@ async function main(): Promise<void> {
       renderPass.setPipeline(normalPipeline);
       renderPass.setBindGroup(0, normalBindGroup);
 
-      // 更新 Transform Uniform
-      const transformData = new Float32Array(64);
+      // 更新 Transform Uniform（复用预分配的数组）
       transformData.set(modelMatrix.toArray(), 0);
       transformData.set(viewMatrix, 16);
       transformData.set(projMatrix, 32);
       transformBuffer.update(transformData, 0);
 
-      // 更新 Scale Uniform（第一遍缩放为 1.0）
-      const scaleData = new Float32Array(4);
+      // 更新 Scale Uniform（第一遍缩放为 1.0，复用预分配的数组）
       scaleData[0] = 1.0;
       scaleParamsBuffer.update(scaleData, 0);
 
-      // 更新 Color Uniform（主体颜色）
-      const colorData = new Float32Array(4);
+      // 更新 Color Uniform（主体颜色，复用预分配的数组）
       colorData[0] = params.mainColor[0];
       colorData[1] = params.mainColor[1];
       colorData[2] = params.mainColor[2];
@@ -478,13 +482,11 @@ async function main(): Promise<void> {
         renderPass.setPipeline(outlinePipeline);
         renderPass.setBindGroup(0, normalBindGroup);
 
-        // 更新 Scale Uniform（轮廓放大）
-        const outlineScaleData = new Float32Array(4);
+        // 更新 Scale Uniform（轮廓放大，复用预分配的数组）
         outlineScaleData[0] = params.outlineScale;
         scaleParamsBuffer.update(outlineScaleData, 0);
 
-        // 更新 Color Uniform（轮廓颜色）
-        const outlineColorData = new Float32Array(4);
+        // 更新 Color Uniform（轮廓颜色，复用预分配的数组）
         outlineColorData[0] = params.outlineColor[0];
         outlineColorData[1] = params.outlineColor[1];
         outlineColorData[2] = params.outlineColor[2];

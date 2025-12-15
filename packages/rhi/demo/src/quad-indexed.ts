@@ -176,6 +176,9 @@ async function main(): Promise<void> {
     // 10. 创建模型矩阵
     const modelMatrix = new MMath.Matrix4();
 
+    // 预分配渲染循环中使用的数组，避免GC压力
+    const transformData = new Float32Array(64);
+
     // 11. 启动渲染循环
     runner.start((dt) => {
       orbit.update(dt);
@@ -183,7 +186,7 @@ async function main(): Promise<void> {
       const viewMatrix = orbit.getViewMatrix();
       const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
 
-      const transformData = new Float32Array(64);
+      // 复用预分配的数组
       transformData.set(modelMatrix.toArray(), 0);
       transformData.set(viewMatrix, 16);
       transformData.set(projMatrix, 32);
@@ -222,14 +225,6 @@ async function main(): Promise<void> {
       '• 顶点复用减少内存',
       '• drawIndexed 绘制',
     ]);
-
-    // 13. 输出技术信息
-    console.info('📐 Quad Indexed Demo');
-    console.info(`  顶点数: ${geometry.vertexCount}`);
-    console.info(`  索引数: ${geometry.indexCount}`);
-    console.info(`  索引格式: UINT16`);
-    console.info(`  顶点缓冲区大小: ${geometry.vertices.byteLength} bytes`);
-    console.info(`  索引缓冲区大小: ${geometry.indices!.byteLength} bytes`);
   } catch (error) {
     console.error('Demo 初始化失败:', error);
     DemoRunner.showError(`Demo 初始化失败: ${(error as Error).message}`);

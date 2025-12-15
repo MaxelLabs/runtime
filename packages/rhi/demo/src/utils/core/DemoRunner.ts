@@ -92,6 +92,12 @@ export class DemoRunner {
   /** 事件监听器引用（用于清理） */
   private boundHandleResize: () => void;
   private boundHandleKeyDown: (e: KeyboardEvent) => void;
+  private boundHandleBeforeUnload: () => void;
+  private boundHandleCanvasFocus: () => void;
+
+  /** 渲染目标视图缓存（避免每帧创建） */
+  private renderTargetView: MSpec.IRHITextureView | null = null;
+  private depthTextureView: MSpec.IRHITextureView | null = null;
 
   /**
    * 创建 Demo 运行器
@@ -110,6 +116,8 @@ export class DemoRunner {
     // 绑定事件处理器
     this.boundHandleResize = this.handleResize.bind(this);
     this.boundHandleKeyDown = this.handleKeyDown.bind(this);
+    this.boundHandleBeforeUnload = () => this.destroy();
+    this.boundHandleCanvasFocus = () => this._canvas?.focus();
   }
 
   // ==================== 公开属性 ====================
@@ -181,7 +189,7 @@ export class DemoRunner {
     this._canvas.tabIndex = 1;
     this._canvas.style.outline = 'none';
     this._canvas.focus();
-    this._canvas.addEventListener('click', () => this._canvas?.focus());
+    this._canvas.addEventListener('click', this.boundHandleCanvasFocus);
 
     // 2. 设置画布大小
     this.updateCanvasSize();
@@ -319,10 +327,16 @@ export class DemoRunner {
     }
     this.trackedResources = [];
 
-    // 4. 销毁渲染目标
+    // 4. 销毁渲染目标和视图
+    this.renderTargetView = null;
+    this.depthTextureView = null;
     if (this.renderTargetTexture) {
       this.renderTargetTexture.destroy();
       this.renderTargetTexture = null;
+    }
+    if (this.depthTexture) {
+      this.depthTexture.destroy();
+      this.depthTexture = null;
     }
 
     // 5. 移除事件监听
@@ -398,6 +412,10 @@ export class DemoRunner {
       };
     };
   } {
+    if (!this.renderTargetView) {
+      throw new Error(`[${this.config.name}] 渲染目标视图未初始化`);
+    }
+
     const encoder = this.device.createCommandEncoder(label || `${this.config.name} Frame`);
 
     const passDescriptor: {
@@ -419,7 +437,7 @@ export class DemoRunner {
     } = {
       colorAttachments: [
         {
-          view: this.renderTarget.createView(),
+          view: this.renderTargetView,
           loadOp: 'clear' as const,
           storeOp: 'store' as const,
           clearColor: this.config.clearColor,
@@ -428,9 +446,9 @@ export class DemoRunner {
     };
 
     // 添加深度缓冲区附件
-    if (this.depthTexture) {
+    if (this.depthTextureView) {
       passDescriptor.depthStencilAttachment = {
-        view: this.depthTexture.createView(),
+        view: this.depthTextureView,
         depthLoadOp: 'clear' as const,
         depthStoreOp: 'store' as const,
         depthClearValue: 1.0,
@@ -448,9 +466,13 @@ export class DemoRunner {
    * @param encoder 命令编码器
    */
   endFrame(encoder: MSpec.IRHICommandEncoder): void {
+    if (!this.renderTargetView) {
+      throw new Error(`[${this.config.name}] 渲染目标视图未初始化`);
+    }
+
     // 复制到画布
     encoder.copyTextureToCanvas({
-      source: this.renderTarget.createView(),
+      source: this.renderTargetView,
       destination: this.canvas,
     });
 
@@ -463,7 +485,13 @@ export class DemoRunner {
    * @param config 渲染目标配置
    */
   createRenderTarget(config?: RenderTargetConfig): MSpec.IRHITexture {
-    // 销毁旧的渲染目标
+    // 销毁旧的渲染目标和视图
+    if (this.renderTargetView) {
+      this.renderTargetView = null;
+    }
+    if (this.depthTextureView) {
+      this.depthTextureView = null;
+    }
     if (this.renderTargetTexture) {
       this.renderTargetTexture.destroy();
     }
@@ -494,6 +522,10 @@ export class DemoRunner {
       dimension: MSpec.RHITextureType.TEXTURE_2D,
       label: `${this.config.name} DepthBuffer`,
     });
+
+    // 创建并缓存视图（避免每帧创建）
+    this.renderTargetView = this.renderTargetTexture.createView();
+    this.depthTextureView = this.depthTexture.createView();
 
     return this.renderTargetTexture;
   }
@@ -570,13 +602,17 @@ export class DemoRunner {
     window.addEventListener('keydown', this.boundHandleKeyDown);
 
     // 页面卸载时清理
-    window.addEventListener('beforeunload', () => this.destroy());
+    window.addEventListener('beforeunload', this.boundHandleBeforeUnload);
   }
 
   /** 移除事件监听器 */
   private removeEventListeners(): void {
     window.removeEventListener('resize', this.boundHandleResize);
     window.removeEventListener('keydown', this.boundHandleKeyDown);
+    window.removeEventListener('beforeunload', this.boundHandleBeforeUnload);
+    if (this._canvas) {
+      this._canvas.removeEventListener('click', this.boundHandleCanvasFocus);
+    }
   }
 
   /** 处理窗口大小变化 */

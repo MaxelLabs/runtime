@@ -40,25 +40,44 @@
 - [Demo 开发指南](./guides/demo-development.md) - 演示系统开发方法
   - Demo 框架使用、调试技巧、最佳实践
 
-#### 🎮 Demo 演示集合 (guides/demos)
-- [混合模式演示](./guides/demos/blend-modes-demo.md) - 展示不同的混合模式效果
-  - Alpha 混合、加法混合、乘法混合等视觉效果
-- [动态缓冲区演示](./guides/demos/dynamic-buffer-demo.md) - 实时更新缓冲区数据
-  - 顶点动画、变形效果、动态几何体
-- [顶点格式演示](./guides/demos/vertex-formats-demo.md) - 不同顶点数据格式的使用
-  - FLOAT32、UNORM8x4、FLOAT16、SNORM16 格式优化
-- [多缓冲区演示](./guides/demos/multiple-buffers-demo.md) - 多顶点缓冲区渲染
-  - 分离顶点属性、灵活的数据管理
-- [2D 纹理演示](./guides/demos/texture-2d-demo.md) - 基础纹理加载和采样
-  - 纹理创建、UV 映射、纹理采样
-- [纹理包裹演示](./guides/demos/texture-wrapping-demo.md) - 纹理包裹模式展示
-  - REPEAT、CLAMP_TO_EDGE、MIRRORED_REPEAT 模式
-- [多纹理混合演示](./guides/demos/multi-textures-demo.md) - 多纹理混合技术
-  - 纹理单元管理、纹理混合算法
-- [Mipmap 演示](./guides/demos/mipmaps-demo.md) - Mipmap 生成和使用
-  - LOD 控制、纹理优化、抗锯齿效果
-- [纹理过滤演示](./guides/demos/texture-filtering-demo.md) - 纹理过滤模式
-  - NEAREST、LINEAR、MIPMAP 过滤效果
+#### 🎮 RHI Demo 演示集合 (32个)
+
+##### 基础功能 Demo (12个)
+- **triangle** - 三角形渲染，最基础的RHI渲染示例
+- **colored-triangle** - 顶点颜色插值，展示重心坐标插值
+- **depth-test** - 深度测试，3D深度缓冲区演示
+- **quad-indexed** - 索引缓冲区绘制，顶点复用技术
+- **primitive-types** - 图元拓扑类型，5种图元类型演示
+- **viewport-scissor** - 视口和裁剪，setViewport和setScissorRect
+- [混合模式演示](./guides/demos/blend-modes-demo.md) - Alpha、加法、乘法等混合模式
+- **rotating-cube** - 旋转立方体，完整3D渲染示例
+- [多缓冲区演示](./guides/demos/multiple-buffers-demo.md) - 分离式顶点属性管理
+- [动态缓冲区演示](./guides/demos/dynamic-buffer-demo.md) - 实时波浪动画
+- [顶点格式演示](./guides/demos/vertex-formats-demo.md) - FLOAT32/UNORM8x4/FLOAT16/SNORM16格式
+- **stencil-test** - 模板测试，轮廓效果演示
+
+##### 纹理系统 Demo (10个)
+- [2D 纹理演示](./guides/demos/texture-2d-demo.md) - 纹理加载和采样
+- [纹理包裹演示](./guides/demos/texture-wrapping-demo.md) - REPEAT/MIRROR/CLAMP模式
+- [纹理过滤演示](./guides/demos/texture-filtering-demo.md) - NEAREST/LINEAR/ANISOTROPIC
+- [Mipmap 演示](./guides/demos/mipmaps-demo.md) - 多级渐远纹理
+- [多纹理混合演示](./guides/demos/multi-textures-demo.md) - 多纹理绑定和混合
+- [立方体贴图天空盒 Demo](./reference/cubemap-skybox-demo.md) - 3D环境映射
+- [渲染到纹理 Demo](./reference/render-to-texture-demo.md) - RTT镜子效果
+- [程序化纹理 Demo](./reference/procedural-texture-demo.md) - 算法纹理生成
+- [纹理数组 Demo](./reference/texture-array-demo.md) - WebGL2高级特性
+- [压缩纹理 Demo](./reference/compressed-texture-demo.md) - DXT/ETC/PVRTC格式
+
+##### 光照系统 Demo (10个)
+- [平面着色 Demo](./reference/flat-shading-demo.md) - Flat Shading模型
+- [Gouraud 着色 Demo](./reference/gouraud-shading-demo.md) - 顶点光照模型
+- [Phong 光照 Demo](./reference/phong-lighting-demo.md) - 片元光照模型
+- [平行光 Demo](./reference/directional-light-demo.md) - 太阳光模拟
+- [多点光源 Demo](./reference/point-lights-demo.md) - 多光源系统
+- [聚光灯 Demo](./reference/spotlight-demo.md) - 锥形光束效果
+- **normal-mapping** - 法线贴图，TBN矩阵变换
+- **environment-mapping** - 环境映射，立方体反射
+- **pbr-material** - PBR材质系统，Cook-Torrance BRDF
 
 ### 📋 参考文档 (reference)
 - **[Graphics Bible](./reference/graphics-bible.md)** - 图形系统宪法文档 ⭐
@@ -75,6 +94,8 @@
   - 压缩纹理检测、GPU内存优化
 - [程序化纹理 Demo](./reference/procedural-texture-demo.md) - 算法生成纹理
   - Perlin噪声、分形布朗运动、波形函数
+- [实例化渲染 Demo](./reference/instancing-demo.md) - GPU实例化渲染技术
+  - drawIndexedInstanced、实例缓冲区、性能优化
 - [平面着色 Demo](./reference/flat-shading-demo.md) - Flat Shading 光照模型
   - flat 关键字、Lambert 漫反射、面片效果
 - [Gouraud 着色 Demo](./reference/gouraud-shading-demo.md) - 顶点着色光照

@@ -327,7 +327,7 @@ runner.init().then(() => {
       size: geometry.vertices.byteLength,
       usage: MSpec.RHIBufferUsage.VERTEX,
       hint: 'static',
-      label: 'Vertex Buffer',
+      label: 'Procedural Texture Vertex Buffer',
     })
   );
   vertexBuffer.update(geometry.vertices as BufferSource, 0);
@@ -338,7 +338,7 @@ runner.init().then(() => {
       size: geometry.indices!.byteLength,
       usage: MSpec.RHIBufferUsage.INDEX,
       hint: 'static',
-      label: 'Index Buffer',
+      label: 'Procedural Texture Index Buffer',
     })
   );
   indexBuffer.update(geometry.indices as BufferSource, 0);
@@ -434,6 +434,11 @@ runner.init().then(() => {
   const modelMatrix = new MMath.Matrix4();
   const viewMatrix = new MMath.Matrix4();
   const projectionMatrix = new MMath.Matrix4();
+
+  // 预分配渲染循环中使用的对象（避免每帧创建）
+  const transformData = new Float32Array(48); // model(16) + view(16) + proj(16)
+  const tempTranslateVec = new MMath.Vector3();
+  const tempScaleVec = new MMath.Vector3();
 
   // 设置相机
   viewMatrix.lookAt(new MMath.Vector3(0, 0, 3), new MMath.Vector3(0, 0, 0), new MMath.Vector3(0, 1, 0));
@@ -548,15 +553,16 @@ runner.init().then(() => {
     renderPass.setVertexBuffer(0, vertexBuffer);
     renderPass.setIndexBuffer(indexBuffer, MSpec.RHIIndexFormat.UINT16);
 
-    // 3. 统一的变换数据缓冲
-    const transformData = new Float32Array(48); // model(16) + view(16) + proj(16)
+    // 3. 使用预分配的变换数据缓冲（避免每帧创建）
     if (textureParams.selectedTexture >= 0 && textureParams.selectedTexture < 6) {
       // 单纹理模式 - 居中显示一个大的纹理
       modelMatrix.identity();
-      modelMatrix.translate(new MMath.Vector3(0, 0, -1.5));
+      tempTranslateVec.set(0, 0, -1.5);
+      modelMatrix.translate(tempTranslateVec);
       // 旋转 90 度使平面面向相机 (XZ -> XY)
       modelMatrix.rotateX(Math.PI / 2);
-      modelMatrix.scale(new MMath.Vector3(1.5, 1.5, 1));
+      tempScaleVec.set(1.5, 1.5, 1);
+      modelMatrix.scale(tempScaleVec);
 
       modelMatrix.fill(transformData, 0);
       viewMatrix.fill(transformData, 16);
@@ -579,11 +585,13 @@ runner.init().then(() => {
         const y = row === 0 ? -0.4 : 0.4;
 
         modelMatrix.identity();
-        modelMatrix.translate(new MMath.Vector3(x, y, 0));
+        tempTranslateVec.set(x, y, 0);
+        modelMatrix.translate(tempTranslateVec);
         // 旋转 90 度使平面面向相机 (XZ -> XY)
         modelMatrix.rotateX(Math.PI / 2);
         // 缩小一点尺寸
-        modelMatrix.scale(new MMath.Vector3(0.25, 0.25, 1));
+        tempScaleVec.set(0.25, 0.25, 1);
+        modelMatrix.scale(tempScaleVec);
 
         modelMatrix.fill(transformData, 0);
         viewMatrix.fill(transformData, 16);
