@@ -211,6 +211,23 @@ demo/src/utils/
 │   ├── ShaderUtils.ts          # 着色器工具类
 │   ├── types.ts                # 着色器类型
 │   └── index.ts                # 导出
+├── shadow/                     # 阴影工具（2025-12-16新增）
+│   ├── ShadowMap.ts            # 阴影贴图管理器
+│   ├── LightSpaceMatrix.ts     # 光源空间矩阵计算
+│   ├── PCFFilter.ts            # PCF软阴影滤波器
+│   ├── ShadowShaders.ts        # 阴影着色器代码生成
+│   ├── types.ts                # 阴影类型定义
+│   └── index.ts                # 导出
+├── postprocess/                # 后处理工具（2025-12-16新增）
+│   ├── PostProcessManager.ts   # 后处理管道管理器
+│   ├── PostProcessEffect.ts    # 后处理效果基类
+│   ├── effects/                # 内置效果
+│   │   ├── BrightnessContrast.ts  # 亮度/对比度
+│   │   ├── GaussianBlur.ts        # 高斯模糊
+│   │   ├── ToneMapping.ts         # 色调映射
+│   │   └── FXAA.ts                # 快速抗锯齿
+│   ├── types.ts                # 后处理类型定义
+│   └── index.ts                # 导出
 ├── camera/                     # 相机系统
 │   ├── OrbitController.ts      # 轨道控制器
 │   └── types.ts                # 相机类型
@@ -420,6 +437,318 @@ const fs = ShaderUtils.basicFragmentShader({
 const { vertex, fragment } = ShaderUtils.phongShaders();
 ```
 
+### ShadowMap (阴影贴图 - 2025-12-16新增)
+
+阴影贴图管理器，封装深度纹理创建和管理：
+
+- `getRenderPassDescriptor()` - 获取阴影Pass渲染通道描述符
+- `resize(resolution)` - 动态调整分辨率
+- `depthTexture` / `depthView` - 深度纹理和视图
+- `sampler` - 比较采样器（用于PCF）
+
+```typescript
+import { ShadowMap, LightSpaceMatrix, PCFFilter } from './utils';
+
+// 创建阴影贴图
+const shadowMap = runner.track(new ShadowMap(runner.device, {
+  resolution: 1024,
+  label: 'Main Shadow Map',
+}));
+
+// 计算光源矩阵
+const lightMatrix = new LightSpaceMatrix();
+lightMatrix.updateDirectional({
+  direction: [0.5, -1, 0.3],
+  orthoSize: 15,
+  near: 1,
+  far: 50,
+});
+
+// 阴影Pass
+const shadowPassDesc = shadowMap.getRenderPassDescriptor();
+const shadowPass = encoder.beginRenderPass(shadowPassDesc);
+// ... 渲染阴影投射物
+shadowPass.end();
+
+// 场景Pass中使用阴影贴图
+bindGroup.setTexture(shadowMap.depthView);
+bindGroup.setSampler(shadowMap.sampler);
+```
+
+### PCFFilter (PCF软阴影 - 2025-12-16新增)
+
+PCF软阴影滤波器，生成阴影采样着色器代码：
+
+- `getShaderSnippet(options)` - 获取PCF着色器代码片段
+- `getShadowUniformBlock(binding)` - 获取阴影Uniform Block声明
+- `getSampleCount(mode)` - 获取采样次数
+
+支持的采样模式：
+- `1x1` - 硬阴影（1次采样）
+- `2x2` - 基础软阴影（4次采样）
+- `3x3` - 高质量软阴影（9次采样）
+- `5x5` - 超高质量软阴影（25次采样）
+
+```typescript
+// 获取PCF着色器代码
+const pcfCode = PCFFilter.getShaderSnippet({
+  sampleMode: '3x3',
+  bias: 0.005,
+});
+
+// 在片元着色器中使用
+const fragmentShader = `
+  ${PCFFilter.getUniformDeclaration()}
+  ${pcfCode}
+
+  void main() {
+    float shadow = calculateShadow(vLightSpacePos, uShadowMap);
+    vec3 color = (1.0 - shadow) * diffuse + ambient;
+    fragColor = vec4(color, 1.0);
+  }
+`;
+```
+
+### ShadowShaders (阴影着色器 - 2025-12-16新增)
+
+阴影着色器代码生成器：
+
+- `getDepthVertexShader()` - 深度Pass顶点着色器
+- `getDepthFragmentShader()` - 深度Pass片元着色器
+- `getSceneVertexShader(options)` - 场景Pass顶点着色器（带阴影）
+- `getSceneFragmentShader(options)` - 场景Pass片元着色器（带阴影）
+
+```typescript
+import { ShadowShaders } from './utils';
+
+// 深度Pass着色器
+const depthVS = ShadowShaders.getDepthVertexShader();
+const depthFS = ShadowShaders.getDepthFragmentShader();
+
+// 场景Pass着色器（带阴影支持）
+const sceneVS = ShadowShaders.getSceneVertexShader({ hasNormals: true });
+const sceneFS = ShadowShaders.getSceneFragmentShader({
+  hasNormals: true,
+  pcfMode: '3x3',
+  shadowBias: 0.005,
+});
+```
+
+### InstanceBuffer (实例缓冲区管理器 - 2025-12-16新增)
+
+实例化渲染的数据缓冲区管理器，负责 GPU 缓冲区和数据更新：
+
+**核心特性**：
+- 预分配 CPU 和 GPU 缓冲区，避免渲染循环中的内存分配
+- 支持单个实例和批量实例的高效更新
+- 动态扩容支持（resize）
+- 详细的统计信息（内存使用、实例数等）
+
+**标准数据布局（80 bytes per instance）**：
+```
+[0-63]   mat4 modelMatrix  (64 bytes)
+[64-79]  vec4 color        (16 bytes)
+```
+
+**API 方法**：
+- `updateInstance(index, data)` - 更新单个实例
+- `updateInstances(startIndex, data, count)` - 批量更新（推荐）
+- `updateAll(data, count)` - 更新全部实例
+- `resize(newMaxInstances)` - 动态扩容
+- `getBuffer()` - 获取 GPU 缓冲区
+- `getStats()` - 获取统计信息
+
+**使用示例**：
+```typescript
+import { InstanceBuffer, getStandardInstanceLayout } from './utils';
+
+// 1. 创建实例缓冲区
+const instanceBuffer = runner.track(new InstanceBuffer(runner.device, {
+  maxInstances: 10000,
+  instanceLayout: getStandardInstanceLayout(2), // location 2-6
+  dynamic: true,
+  label: 'MyInstanceBuffer',
+}));
+
+// 2. 更新单个实例数据
+const instanceData = new Float32Array(20); // 80 bytes = 20 floats
+// [0-15]: mat4 modelMatrix (16 floats)
+MMath.Matrix4.identity().toArray(instanceData, 0);
+// [16-19]: vec4 color (4 floats)
+instanceData.set([1.0, 0.0, 0.0, 1.0], 16);
+instanceBuffer.updateInstance(0, instanceData);
+
+// 3. 批量更新（更高效）
+const batchData = new Float32Array(100 * 20); // 100 instances
+for (let i = 0; i < 100; i++) {
+  const offset = i * 20;
+  // 设置变换矩阵
+  const matrix = MMath.Matrix4.translation(i * 2, 0, 0);
+  matrix.toArray(batchData, offset);
+  // 设置颜色
+  batchData.set([Math.random(), Math.random(), Math.random(), 1.0], offset + 16);
+}
+instanceBuffer.updateInstances(0, batchData, 100);
+
+// 4. 获取统计信息
+const stats = instanceBuffer.getStats();
+console.log(`Using ${stats.usage * 100}% of buffer capacity`);
+console.log(`Buffer size: ${stats.bufferSize / 1024} KB`);
+```
+
+### InstancedRenderer (实例化渲染器 - 2025-12-16新增)
+
+封装实例化渲染的核心逻辑，简化实例化 Draw Call 的使用：
+
+**核心特性**：
+- 自动组合基础几何和实例属性的顶点布局
+- 支持索引和非索引渲染
+- 封装 drawIndexed() / draw() 调用
+- 提供顶点布局查询接口（用于创建渲染管线）
+
+**API 方法**：
+- `draw(renderPass, instanceCount)` - 执行实例化渲染
+- `getVertexBufferLayouts(baseStride?)` - 获取顶点布局（标准）
+- `getVertexBufferLayoutsExtended(baseAttributes)` - 获取顶点布局（扩展）
+- `updateGeometry(newGeometry)` - 运行时切换几何体
+
+**使用示例**：
+```typescript
+import {
+  InstanceBuffer,
+  InstancedRenderer,
+  getStandardInstanceLayout,
+  GeometryGenerator,
+} from './utils';
+
+// 1. 创建实例缓冲区
+const instanceBuffer = runner.track(new InstanceBuffer(runner.device, {
+  maxInstances: 10000,
+  instanceLayout: getStandardInstanceLayout(2),
+}));
+
+// 2. 创建基础几何体
+const cubeGeometry = GeometryGenerator.createCube({ size: 1.0 });
+const vertexBuffer = runner.createVertexBuffer(
+  cubeGeometry.vertices,
+  'CubeVertices'
+);
+const indexBuffer = runner.createIndexBuffer(
+  cubeGeometry.indices,
+  'CubeIndices'
+);
+
+// 3. 创建实例化渲染器
+const renderer = runner.track(new InstancedRenderer(runner.device, instanceBuffer, {
+  vertexBuffer,
+  indexBuffer,
+  vertexCount: cubeGeometry.vertexCount,
+  indexCount: cubeGeometry.indexCount,
+  indexFormat: 'uint16',
+}));
+
+// 4. 创建渲染管线（使用自动生成的顶点布局）
+const vertexBufferLayouts = renderer.getVertexBufferLayouts(24); // 24 = vec3 pos + vec3 normal
+const pipeline = runner.device.createRenderPipeline({
+  label: 'InstancedPipeline',
+  vertex: {
+    module: vertexShader,
+    entryPoint: 'main',
+    buffers: vertexBufferLayouts,
+  },
+  fragment: {
+    module: fragmentShader,
+    entryPoint: 'main',
+    targets: [{ format: runner.format }],
+  },
+  primitive: { topology: 'triangle-list' },
+  depthStencil: {
+    format: 'depth24-unorm',
+    depthWriteEnabled: true,
+    depthCompare: 'less',
+  },
+});
+
+// 5. 更新实例数据（每帧或按需）
+const instanceData = new Float32Array(10000 * 20);
+for (let i = 0; i < 10000; i++) {
+  const offset = i * 20;
+  // 计算位置（10x10x100 网格）
+  const x = (i % 100) * 2 - 100;
+  const y = Math.floor((i / 100) % 100) * 2 - 100;
+  const z = Math.floor(i / 10000) * 2;
+
+  const matrix = MMath.Matrix4.translation(x, y, z);
+  matrix.toArray(instanceData, offset);
+
+  // 随机颜色
+  instanceData.set([Math.random(), Math.random(), Math.random(), 1.0], offset + 16);
+}
+instanceBuffer.updateAll(instanceData, 10000);
+
+// 6. 渲染
+renderPass.setPipeline(pipeline);
+renderer.draw(renderPass, instanceBuffer.getInstanceCount());
+```
+
+**着色器示例（顶点着色器）**：
+```glsl
+#version 300 es
+precision highp float;
+
+// Per-vertex attributes
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec3 aNormal;
+
+// Per-instance attributes
+layout(location = 2) in vec4 aInstanceMatrixRow0;
+layout(location = 3) in vec4 aInstanceMatrixRow1;
+layout(location = 4) in vec4 aInstanceMatrixRow2;
+layout(location = 5) in vec4 aInstanceMatrixRow3;
+layout(location = 6) in vec4 aInstanceColor;
+
+// Uniforms
+layout(std140, binding = 0) uniform Camera {
+  mat4 uViewMatrix;
+  mat4 uProjectionMatrix;
+};
+
+// Outputs
+out vec3 vWorldNormal;
+out vec4 vInstanceColor;
+
+void main() {
+  // 重建实例模型矩阵
+  mat4 instanceMatrix = mat4(
+    aInstanceMatrixRow0,
+    aInstanceMatrixRow1,
+    aInstanceMatrixRow2,
+    aInstanceMatrixRow3
+  );
+
+  vec4 worldPos = instanceMatrix * vec4(aPosition, 1.0);
+  mat3 normalMatrix = transpose(inverse(mat3(instanceMatrix)));
+  vWorldNormal = normalize(normalMatrix * aNormal);
+  vInstanceColor = aInstanceColor;
+
+  gl_Position = uProjectionMatrix * uViewMatrix * worldPos;
+}
+```
+
+**性能优化建议**：
+1. **批量更新优先**：使用 `updateInstances()` 而非多次 `updateInstance()`
+2. **预分配容量**：根据最大实例数预分配缓冲区，避免运行时扩容
+3. **动态更新策略**：只更新变化的实例，减少 GPU 数据传输
+4. **实例数控制**：通过 `setInstanceCount()` 灵活控制渲染的实例数量
+5. **LOD 支持**：根据距离动态调整实例数和几何体细节
+
+**适用场景**：
+- 植被渲染（草、树木、灌木）
+- 粒子系统（烟雾、火花、雨雪）
+- 建筑阵列（城市、街区）
+- 大量重复对象（岩石、障碍物）
+- 性能测试（压力测试、渲染基准）
+
 ### ProceduralTexture (程序化纹理)
 
 支持的纹理类型：
@@ -430,6 +759,161 @@ const { vertex, fragment } = ShaderUtils.phongShaders();
 - `solidColor(config)` - 纯色
 - `uvDebug(config)` - UV 调试
 - `normalMap(config)` - 法线贴图
+
+### PostProcessManager (后处理管道 - 2025-12-16新增)
+
+后处理管道管理器，支持多效果链式执行和Ping-Pong缓冲区管理：
+
+**核心功能**：
+- 管理多个后处理效果的链式执行
+- Ping-Pong缓冲区自动管理（避免读写冲突）
+- 支持HDR/LDR格式切换
+- 自动资源追踪和清理
+
+**内置后处理效果**：
+- **BrightnessContrast** - 亮度/对比度调整
+- **GaussianBlur** - 高斯模糊（5-tap优化）
+- **ToneMapping** - 色调映射（Reinhard/ACES/Uncharted2/Filmic）
+- **FXAA** - 快速抗锯齿
+
+**使用示例**：
+```typescript
+import {
+  PostProcessManager,
+  ToneMapping,
+  FXAA,
+  BrightnessContrast,
+} from './utils';
+
+// 1. 创建后处理管理器
+const postProcess = runner.track(new PostProcessManager(runner.device, {
+  width: runner.width,
+  height: runner.height,
+  useHDR: false,
+}));
+
+// 2. 添加效果链（按顺序执行）
+postProcess.addEffect(new ToneMapping(runner.device, {
+  mode: 'aces',
+  exposure: 1.0,
+  gamma: 2.2,
+}));
+
+postProcess.addEffect(new BrightnessContrast(runner.device, {
+  brightness: 0.1,
+  contrast: 1.1,
+}));
+
+postProcess.addEffect(new FXAA(runner.device, {
+  subpixelQuality: 0.75,
+  edgeThreshold: 0.166,
+}));
+
+// 3. 渲染循环中应用后处理
+runner.start((dt) => {
+  const { encoder, passDescriptor } = runner.beginFrame();
+
+  // 第一步：渲染场景到离屏纹理
+  const sceneTarget = runner.track(new RenderTarget(runner.device, {
+    width: runner.width,
+    height: runner.height,
+    depthFormat: 'depth24-unorm',
+  }));
+
+  const scenePass = encoder.beginRenderPass(
+    sceneTarget.getRenderPassDescriptor([0.1, 0.1, 0.1, 1.0])
+  );
+  // ... 渲染场景 ...
+  scenePass.end();
+
+  // 第二步：应用后处理链
+  const finalTexture = postProcess.process(encoder, sceneTarget.getColorView(0));
+
+  // 第三步：输出到屏幕
+  const screenPass = encoder.beginRenderPass(passDescriptor);
+  // ... 将finalTexture绘制到屏幕 ...
+  screenPass.end();
+
+  runner.endFrame(encoder);
+});
+
+// 4. 动态调整效果参数
+const toneMappingEffect = postProcess.getEffectByName('ToneMapping');
+toneMappingEffect?.setParameters({ exposure: 1.5 });
+
+// 5. 启用/禁用特定效果
+const fxaaEffect = postProcess.getEffectByName('FXAA');
+if (fxaaEffect) fxaaEffect.enabled = false;
+
+// 6. 获取统计信息
+const stats = postProcess.getStats();
+console.log(`Effects: ${stats.enabledEffectCount}/${stats.effectCount}`);
+console.log(`Memory: ${(stats.totalMemoryUsage / 1024 / 1024).toFixed(2)} MB`);
+```
+
+**自定义后处理效果**：
+```typescript
+import { PostProcessEffect } from './utils';
+
+class CustomEffect extends PostProcessEffect {
+  protected createPipeline(): void {
+    // 创建渲染管线
+    const vertexShader = this.device.createShaderModule({
+      code: this.getFullscreenVertexShader(), // 基类提供全屏顶点着色器
+    });
+
+    const fragmentShader = this.device.createShaderModule({
+      code: this.getFragmentShader(),
+    });
+
+    // ... 创建管线 ...
+  }
+
+  protected createBindGroup(inputTexture: MSpec.IRHITextureView): void {
+    // 创建绑定组
+  }
+
+  protected updateUniforms(): void {
+    // 更新Uniform参数
+  }
+
+  public setParameters(params: Record<string, any>): void {
+    // 处理参数更新
+  }
+
+  private getFragmentShader(): string {
+    return `#version 300 es
+precision mediump float;
+
+in vec2 vUV;
+out vec4 fragColor;
+
+uniform sampler2D uTexture;
+
+void main() {
+  vec4 color = texture(uTexture, vUV);
+  // 自定义效果处理
+  fragColor = color;
+}`;
+  }
+}
+
+// 使用自定义效果
+postProcess.addEffect(new CustomEffect(runner.device));
+```
+
+**性能优化建议**：
+1. **Ping-Pong优化**：Manager自动管理2个RenderTarget，避免手动创建
+2. **效果顺序**：先执行计算密集型效果（Blur），后执行轻量级效果（FXAA）
+3. **按需启用**：使用`effect.enabled`动态控制效果开关
+4. **分辨率控制**：后处理可使用低分辨率渲染，最后upscale到屏幕
+5. **批量参数更新**：避免每帧调用`setParameters()`
+
+**适用场景**：
+- HDR渲染管线（ToneMapping必需）
+- 视觉增强（亮度/对比度/色调调整）
+- 抗锯齿（FXAA性能优于MSAA）
+- 特效合成（模糊、辉光、景深）
 
 ### OrbitController (轨道相机)
 

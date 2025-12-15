@@ -21,5 +21,14 @@ export * from './rendering';
 // 着色器工具
 export * from './shader';
 
+// 阴影工具
+export * from './shadow';
+
+// 实例化渲染工具
+export * from './instancing';
+
+// 后处理工具
+export * from './postprocess';
+
 // UI 工具
 export * from './ui';
