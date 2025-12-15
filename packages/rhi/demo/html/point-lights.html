@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>点光源 - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <link rel="stylesheet" href="../css/demo-styles.css" />
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+    <div class="info-panel">
+      <h2>💡 Point Lights (点光源)</h2>
+      <p>演示多个点光源照明效果，支持最多 4 个点光源同时工作。每个光源具有独立的位置、颜色和距离衰减参数。光照强度随距离衰减，模拟真实的灯泡、火把等点光源效果。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">Point Light</span>
+        <span class="tech-tag">Distance Attenuation</span>
+        <span class="tech-tag">Multi-Light</span>
+        <span class="tech-tag">Per-Pixel Lighting</span>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="../src/point-lights.ts"></script>
+</body>
+</html>

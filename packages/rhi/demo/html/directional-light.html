@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>平行光 - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <link rel="stylesheet" href="../css/demo-styles.css" />
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+    <div class="info-panel">
+      <h2>☀️ Directional Light (平行光)</h2>
+      <p>演示平行光照明效果。光线平行传播，只有方向无位置，无距离衰减。模拟太阳光、月光等远距离光源的照明特性。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">Directional Light</span>
+        <span class="tech-tag">Phong Lighting</span>
+        <span class="tech-tag">No Attenuation</span>
+        <span class="tech-tag">Per-Pixel</span>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="../src/directional-light.ts"></script>
+</body>
+</html>

@@ -489,6 +489,45 @@
         </div>
         <a class="demo-link" href="html/phong-lighting.html">🎮 运行Demo</a>
       </div>
+
+      <div class="demo-card">
+        <h3>☀️ 平行光源 <span class="difficulty intermediate">中级</span></h3>
+        <p>演示 Directional Light（平行光）的光照特性。光线平行，只有方向无位置，无距离衰减，模拟太阳光、月光等无限远光源的照明效果。</p>
+        <div class="tech-tags">
+          <span class="tech-tag">Directional Light</span>
+          <span class="tech-tag">无衰减</span>
+          <span class="tech-tag">Lambert 漫反射</span>
+          <span class="tech-tag">Phong 镜面反射</span>
+          <span class="tech-tag">std140 UBO</span>
+        </div>
+        <a class="demo-link" href="html/directional-light.html">🎮 运行Demo</a>
+      </div>
+
+      <div class="demo-card">
+        <h3>💡 点光源 <span class="difficulty advanced">高级</span></h3>
+        <p>演示 Point Lights（点光源）的多光源照明系统。支持最多4个点光源，具有距离衰减效果，每个光源有独立的位置、颜色和衰减参数控制。</p>
+        <div class="tech-tags">
+          <span class="tech-tag">多光源支持</span>
+          <span class="tech-tag">距离衰减</span>
+          <span class="tech-tag">Point Light 数组</span>
+          <span class="tech-tag">动态光源数量</span>
+          <span class="tech-tag">颜色混合</span>
+        </div>
+        <a class="demo-link" href="html/point-lights.html">🎮 运行Demo</a>
+      </div>
+
+      <div class="demo-card">
+        <h3>🔦 聚光灯 <span class="difficulty advanced">高级</span></h3>
+        <p>演示 Spotlight（聚光灯）的锥形光束效果，具有内外锥角的平滑过渡。结合了点光源的位置衰减和方向约束，创造逼真的聚光照明。</p>
+        <div class="tech-tags">
+          <span class="tech-tag">锥形光束</span>
+          <span class="tech-tag">平滑边缘</span>
+          <span class="tech-tag">内外锥角</span>
+          <span class="tech-tag">角度-余弦转换</span>
+          <span class="tech-tag">距离衰减</span>
+        </div>
+        <a class="demo-link" href="html/spotlight.html">🎮 运行Demo</a>
+      </div>
     </div>
 
     <div class="footer">

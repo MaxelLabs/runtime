@@ -4,6 +4,34 @@
 
 ## 最近更新
 
+### 2025-12-15 完成第三层光照系统 3 个光源 Demo
+
+**3 个光源类型 Demo 已全部完成**：
+
+- **directional-light**: 平行光演示，展示无位置、无衰减的平行光照效果（已完成）
+  - 文档索引：`llmdoc/reference/directional-light-demo.md`（已创建）
+  - 技术要点：方向向量、Lambert 漫反射、Phong 镜面反射、std140 对齐
+
+- **point-lights**: 多点光源演示，支持最多 4 个点光源同时工作（已完成）
+  - 文档索引：`llmdoc/reference/point-lights-demo.md`（已创建）
+  - 技术要点：距离衰减公式、多光源累加、独立颜色和衰减参数、208字节 Uniform Buffer
+
+- **spotlight**: 聚光灯演示，展示锥形光束和平滑边缘过渡（已完成）
+  - 文档索引：`llmdoc/reference/spotlight-demo.md`（已创建）
+  - 技术要点：位置+方向向量、内外锥角、角度转余弦、距离衰减、边缘平滑
+
+**代码质量提升**：
+- Critic 审查发现并修复了 API 不一致问题
+- 统一所有光源 Demo 使用 `@maxellabs/core` API
+- 标准化 HTML 文件（移除内嵌样式、统一语言为 zh-CN）
+- 添加完整的键盘事件处理（ESC/F11/R）
+- 所有资源使用 `runner.track()` 追踪
+
+**战略文档**：
+- 创建 `llmdoc/agent/strategy-light-sources-campaign.md` 详细规划
+- 使用 Campaign Mode 并行开发 3 个 Demo
+- 完整的 Constitution 合规性检查
+
 ### 2025-12-13 完成第二层纹理系统全部 Demo
 
 **5 个纹理系统高级 Demo 已全部完成**：
@@ -535,9 +563,9 @@ runner.start((dt) => {
 | 24  | gouraud-shading     | Gouraud 着色     | ✅ 完成              |
 | 25  | phong-lighting      | Phong 光照模型   | ✅ 完成              |
 | 26  | blinn-phong         | Blinn-Phong 高光 | rotating-cube 已演示 |
-| 27  | directional-light   | 平行光源         | 待实现               |
-| 28  | point-lights        | 多点光源         | 待实现               |
-| 29  | spotlight           | 聚光灯效果       | 待实现               |
+| 27  | directional-light   | 平行光源         | ✅ 完成              |
+| 28  | point-lights        | 多点光源         | ✅ 完成              |
+| 29  | spotlight           | 聚光灯效果       | ✅ 完成              |
 | 30  | normal-mapping      | 法线贴图         | 待实现               |
 | 31  | environment-mapping | 环境反射         | 待实现               |
 | 32  | pbr-material        | PBR 材质基础     | 待实现               |

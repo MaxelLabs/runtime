@@ -81,6 +81,12 @@
   - 顶点光照计算、颜色插值、性能优化
 - [Phong 光照 Demo](./reference/phong-lighting-demo.md) - 片元着色光照
   - 逐像素光照、镜面反射、完整 Phong 模型
+- [平行光 Demo](./reference/directional-light-demo.md) - Directional Light 平行光源
+  - 方向向量、无位置无衰减、太阳光模拟
+- [多点光源 Demo](./reference/point-lights-demo.md) - Multiple Point Lights 多点光源
+  - 距离衰减、多光源累加、最多4个光源
+- [聚光灯 Demo](./reference/spotlight-demo.md) - Spotlight 锥形光束
+  - 位置+方向、内外锥角、边缘平滑过渡
 
 ### 🏗️ 架构设计 (architecture)
 - [RHI 抽象层架构](./architecture/rhi/rhi-architecture.md) - RHI 抽象层设计原理和核心组件
