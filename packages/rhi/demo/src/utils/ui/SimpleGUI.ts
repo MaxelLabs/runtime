@@ -55,6 +55,16 @@ export class SimpleGUI {
   }
 
   /**
+   * 添加颜色选择器
+   * @param name 参数名称
+   * @param config 参数配置
+   * @returns this (链式调用)
+   */
+  addColorPicker(name: string, config: GUIParamConfig): SimpleGUI {
+    return this.add(name, config);
+  }
+
+  /**
    * 获取参数值
    * @param name 参数名称
    * @returns 参数值

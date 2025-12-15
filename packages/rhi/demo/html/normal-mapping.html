@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>法线贴图 - Normal Mapping Demo</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        color: #fff;
+        overflow: hidden;
+      }
+
+      .container {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+      }
+
+      #J-canvas {
+        display: block;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        border-radius: 8px;
+        max-width: 100%;
+        max-height: 100%;
+      }
+
+      /* 介绍面板 */
+      .info-panel {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(10px);
+        padding: 16px 20px;
+        border-radius: 8px;
+        border-left: 3px solid #00d4ff;
+        max-width: 400px;
+        z-index: 10;
+      }
+
+      .info-panel h2 {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #00d4ff;
+      }
+
+      .info-panel p {
+        margin: 4px 0;
+        font-size: 13px;
+        line-height: 1.5;
+        color: #ccc;
+      }
+
+      .tech-badges {
+        display: flex;
+        gap: 6px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
+
+      .badge {
+        background: rgba(0, 212, 255, 0.15);
+        color: #00d4ff;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+        border: 1px solid rgba(0, 212, 255, 0.3);
+      }
+
+      /* 加载动画 */
+      .loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        z-index: 100;
+      }
+
+      .loading-spinner {
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top: 3px solid #00d4ff;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 16px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .loading-text {
+        color: #ccc;
+        font-size: 14px;
+      }
+
+      /* 错误提示 */
+      .error-message {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(255, 50, 50, 0.9);
+        color: #fff;
+        padding: 20px 30px;
+        border-radius: 8px;
+        text-align: center;
+        max-width: 80%;
+        z-index: 100;
+      }
+
+      .error-message h3 {
+        margin: 0 0 10px 0;
+        font-size: 18px;
+      }
+
+      .error-message p {
+        margin: 0;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <canvas id="J-canvas"></canvas>
+
+      <!-- 介绍面板 -->
+      <div class="info-panel">
+        <h2>法线贴图 (Normal Mapping)</h2>
+        <p>通过法线贴图在低模表面模拟高模细节</p>
+        <p>技术要点:</p>
+        <p>• 切线空间变换 (TBN 矩阵)</p>
+        <p>• Gram-Schmidt 正交化</p>
+        <p>• 程序化法线贴图生成</p>
+        <div class="tech-badges">
+          <span class="badge">切线空间</span>
+          <span class="badge">TBN矩阵</span>
+          <span class="badge">法线映射</span>
+          <span class="badge">Phong光照</span>
+        </div>
+      </div>
+
+      <!-- 加载动画 -->
+      <div class="loading" id="J-loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">正在初始化渲染器...</div>
+      </div>
+    </div>
+
+    <script type="module" src="../src/normal-mapping.ts"></script>
+
+    <script>
+      // 隐藏加载动画
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          const loading = document.getElementById('J-loading');
+          if (loading) {
+            loading.style.opacity = '0';
+            loading.style.transition = 'opacity 0.5s';
+            setTimeout(() => {
+              loading.style.display = 'none';
+            }, 500);
+          }
+        }, 1000);
+      });
+
+      // 全局错误处理
+      window.addEventListener('error', (event) => {
+        console.error('渲染错误:', event.error);
+        const loading = document.getElementById('J-loading');
+        if (loading) {
+          loading.style.display = 'none';
+        }
+
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.innerHTML = `
+          <h3>初始化失败</h3>
+          <p>${event.error?.message || '未知错误'}</p>
+          <p style="margin-top: 10px; font-size: 12px; opacity: 0.8;">请检查浏览器是否支持 WebGL 2.0</p>
+        `;
+        document.body.appendChild(errorDiv);
+      });
+    </script>
+  </body>
+</html>

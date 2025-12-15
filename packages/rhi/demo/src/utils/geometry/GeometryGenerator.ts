@@ -398,6 +398,7 @@ export class GeometryGenerator {
     const heightSegments = options.heightSegments ?? 1;
     const hasNormals = options.normals ?? true;
     const hasUvs = options.uvs ?? true;
+    const hasTangents = options.tangents ?? false;
 
     // 属性配置
     const attributes: VertexAttributeConfig[] = [
@@ -477,7 +478,7 @@ export class GeometryGenerator {
     const vertexCount = (widthSegments + 1) * (heightSegments + 1);
     const indexCount = widthSegments * heightSegments * 6;
 
-    return {
+    const result: GeometryData = {
       vertices: new Float32Array(vertexData),
       indices: new Uint16Array(indexData),
       vertexCount,
@@ -486,6 +487,20 @@ export class GeometryGenerator {
       layout: this.buildVertexLayout(attributes, stride),
       attributes,
     };
+
+    // 生成切线（如果需要）
+    if (hasTangents) {
+      const tangents = new Float32Array(vertexCount * 3);
+      // 对于平面，切线固定指向 U 轴正方向（世界空间 +X）
+      for (let i = 0; i < vertexCount; i++) {
+        tangents[i * 3 + 0] = 1.0; // X
+        tangents[i * 3 + 1] = 0.0; // Y
+        tangents[i * 3 + 2] = 0.0; // Z
+      }
+      result.tangents = tangents;
+    }
+
+    return result;
   }
 
   /**

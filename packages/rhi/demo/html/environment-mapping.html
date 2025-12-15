@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Environment Mapping - RHI Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        overflow: hidden;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      #J-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Demo 介绍面板 - 左下角 */
+      .demo-info {
+        position: absolute;
+        left: 20px;
+        bottom: 20px;
+        background: rgba(0, 0, 0, 0.75);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        max-width: 350px;
+        font-size: 14px;
+        line-height: 1.6;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 100;
+      }
+
+      .demo-info h2 {
+        font-size: 18px;
+        margin-bottom: 10px;
+        color: #4fc3f7;
+      }
+
+      .demo-info p {
+        margin-bottom: 8px;
+      }
+
+      .demo-info .tech-list {
+        list-style: none;
+        margin-top: 10px;
+      }
+
+      .demo-info .tech-list li {
+        padding: 4px 0;
+        padding-left: 16px;
+        position: relative;
+      }
+
+      .demo-info .tech-list li:before {
+        content: '▹';
+        position: absolute;
+        left: 0;
+        color: #4fc3f7;
+      }
+
+      /* 返回按钮 */
+      .back-button {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(0, 0, 0, 0.75);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 100;
+      }
+
+      .back-button:hover {
+        background: rgba(79, 195, 247, 0.9);
+        transform: translateY(-2px);
+        text-decoration: none;
+      }
+
+      /* 加载提示 */
+      .loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 18px;
+        text-align: center;
+        z-index: 1000;
+      }
+
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loading" id="loading">
+      <div class="loading-spinner"></div>
+      <p>正在加载环境贴图...</p>
+    </div>
+
+    <a class="back-button" href="../index.html">← 返回首页</a>
+
+    <div class="container">
+      <canvas id="J-canvas"></canvas>
+    </div>
+
+    <div class="demo-info">
+      <h2>🌐 环境映射 Demo</h2>
+      <p><strong>Phase 1: 纯反射效果</strong></p>
+      <p>展示基于立方体贴图的实时环境反射技术。</p>
+      <ul class="tech-list">
+        <li>使用 <code>reflect()</code> 计算反射方向</li>
+        <li><code>samplerCube</code> 采样立方体环境贴图</li>
+        <li>反射强度实时调节</li>
+        <li>相机位置传递到片元着色器</li>
+        <li>模拟 Chrome 金属质感</li>
+      </ul>
+    </div>
+
+    <script type="module" src="../src/environment-mapping.ts"></script>
+
+    <script>
+      // 隐藏加载提示
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          const loading = document.getElementById('loading');
+          if (loading) {
+            loading.style.opacity = '0';
+            loading.style.transition = 'opacity 0.5s ease';
+            setTimeout(() => {
+              loading.style.display = 'none';
+            }, 500);
+          }
+        }, 1000);
+      });
+    </script>
+  </body>
+</html>

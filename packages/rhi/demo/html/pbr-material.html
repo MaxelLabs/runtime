@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PBR 材质系统 - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <link rel="stylesheet" href="../css/demo-styles.css" />
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+    <div class="info-panel">
+      <h2>🎨 PBR Material System</h2>
+      <p>展示基于物理的渲染（PBR）材质系统，使用Cook-Torrance BRDF模型。支持金属度/粗糙度工作流，实现真实感渲染效果。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">Cook-Torrance BRDF</span>
+        <span class="tech-tag">Metallic/Roughness</span>
+        <span class="tech-tag">GGX Distribution</span>
+        <span class="tech-tag">Fresnel Reflection</span>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="../src/pbr-material.ts"></script>
+</body>
+</html>

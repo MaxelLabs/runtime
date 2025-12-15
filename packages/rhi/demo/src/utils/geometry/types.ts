@@ -51,6 +51,9 @@ export interface GeometryData {
 
   /** 顶点属性信息 */
   attributes: VertexAttributeConfig[];
+
+  /** 切线数据（可选，非交错格式） */
+  tangents?: Float32Array;
 }
 
 /**
@@ -82,6 +85,9 @@ export interface PlaneOptions extends GeometryOptions {
 
   /** 高度分段数 */
   heightSegments?: number;
+
+  /** 是否包含切线 */
+  tangents?: boolean;
 }
 
 /**
