@@ -12,7 +12,7 @@
  */
 
 import { MSpec, MMath } from '@maxellabs/core';
-import { DemoRunner, OrbitController, Stats, GeometryGenerator, SimpleGUI } from './utils';
+import { DemoRunner, OrbitController, Stats, GeometryGenerator, SimpleGUI, CubemapGenerator } from './utils';
 
 // ==================== 着色器源码 ====================
 
@@ -76,6 +76,8 @@ layout(std140) uniform PointLights {
 uniform CameraData {
   vec3 uCameraPosition;   // 16 bytes (with padding)
 };
+
+uniform samplerCube uEnvironmentMap;
 
 in vec3 vWorldPosition;
 in vec3 vNormal;
@@ -174,8 +176,23 @@ void main() {
     Lo += (kD * albedo / PI + specular) * radiance * NdotL;
   }
 
-  // 环境光
-  vec3 ambient = vec3(uAmbientStrength) * albedo;
+  // 环境光 (IBL)
+  // 采样环境贴图作为漫反射环境光
+  // 简单的近似：漫反射部分直接采样环境贴图（通常应该使用预计算的 Irradiance Map）
+  vec3 kS_env = fresnelSchlick(max(dot(N, V), 0.0), F0);
+  vec3 kD_env = 1.0 - kS_env;
+  kD_env *= 1.0 - metallic;
+
+  vec3 irradiance = texture(uEnvironmentMap, N).rgb;
+  vec3 diffuse = irradiance * albedo;
+
+  // 采样环境贴图作为镜面反射环境光
+  // 简单的近似：使用反射向量采样（通常应该使用 Prefiltered Environment Map + BRDF LUT）
+  vec3 R = reflect(-V, N);
+  vec3 prefilteredColor = texture(uEnvironmentMap, R).rgb;
+  vec3 specular = prefilteredColor * (F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - max(dot(N, V), 0.0), 0.0, 1.0), 5.0));
+
+  vec3 ambient = (kD_env * diffuse + specular) * uAmbientStrength;
 
   vec3 color = ambient + Lo;
 
@@ -338,6 +355,50 @@ const lightParams = [
       })
     );
 
+    // 加载环境贴图
+    const cubemapUrls = {
+      posX: '../assets/cube/Bridge2/posx.jpg',
+      negX: '../assets/cube/Bridge2/negx.jpg',
+      posY: '../assets/cube/Bridge2/posy.jpg',
+      negY: '../assets/cube/Bridge2/negy.jpg',
+      posZ: '../assets/cube/Bridge2/posz.jpg',
+      negZ: '../assets/cube/Bridge2/negz.jpg',
+    };
+
+    console.info('Loading environment map...');
+    const cubemapData = await CubemapGenerator.loadFromUrls(cubemapUrls);
+
+    const envTexture = runner.track(
+      runner.device.createTexture({
+        width: cubemapData.size,
+        height: cubemapData.size,
+        depthOrArrayLayers: 6,
+        dimension: 'cube' as const,
+        format: MSpec.RHITextureFormat.RGBA8_UNORM,
+        usage: MSpec.RHITextureUsage.TEXTURE_BINDING,
+        label: 'Environment Map',
+      } as MSpec.RHITextureDescriptor)
+    );
+
+    // 上传贴图数据
+    const faceOrder: (keyof typeof cubemapData.faces)[] = ['posX', 'negX', 'posY', 'negY', 'posZ', 'negZ'];
+    for (let i = 0; i < 6; i++) {
+      const face = faceOrder[i];
+      envTexture.update(cubemapData.faces[face] as BufferSource, 0, 0, 0, cubemapData.size, cubemapData.size, 1, 0, i);
+    }
+
+    const envSampler = runner.track(
+      runner.device.createSampler({
+        magFilter: MSpec.RHIFilterMode.LINEAR,
+        minFilter: MSpec.RHIFilterMode.LINEAR,
+        mipmapFilter: MSpec.RHIFilterMode.LINEAR,
+        addressModeU: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
+        addressModeV: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
+        addressModeW: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
+        label: 'Environment Map Sampler',
+      })
+    );
+
     // 创建绑定组布局
     const bindGroupLayout = runner.track(
       runner.device.createBindGroupLayout([
@@ -345,6 +406,18 @@ const lightParams = [
         { binding: 1, visibility: MSpec.RHIShaderStage.FRAGMENT, buffer: { type: 'uniform' }, name: 'PBRMaterial' },
         { binding: 2, visibility: MSpec.RHIShaderStage.FRAGMENT, buffer: { type: 'uniform' }, name: 'PointLights' },
         { binding: 3, visibility: MSpec.RHIShaderStage.FRAGMENT, buffer: { type: 'uniform' }, name: 'CameraData' },
+        {
+          binding: 4,
+          visibility: MSpec.RHIShaderStage.FRAGMENT,
+          texture: { sampleType: 'float', viewDimension: 'cube' },
+          name: 'uEnvironmentMap',
+        },
+        {
+          binding: 5,
+          visibility: MSpec.RHIShaderStage.FRAGMENT,
+          sampler: { type: 'filtering' },
+          name: 'uEnvironmentMapSampler',
+        },
       ])
     );
 
@@ -387,6 +460,8 @@ const lightParams = [
         { binding: 1, resource: materialBuffer },
         { binding: 2, resource: lightsBuffer },
         { binding: 3, resource: cameraBuffer },
+        { binding: 4, resource: envTexture.createView() },
+        { binding: 5, resource: envSampler },
       ])
     );
 
