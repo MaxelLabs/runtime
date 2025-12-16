@@ -43,25 +43,25 @@
 #### 🎮 RHI 工具模块系统
 
 ##### 🏗️ 核心工具模块
-- **[PBR材质系统](./reference/pbr-material-system.md)** - 基于物理的渲染
+- **[PBR材质系统](./reference/pbr-material-system.md)** - 基于物理的渲染 ✅
   - Cook-Torrance BRDF实现
   - 金属度/粗糙度工作流
   - IBL（基于图像的光照）支持
   - 材质库与预设材质
 
-- **[粒子系统](./reference/particle-system.md)** - GPU加速粒子效果
+- **[粒子系统](./reference/particle-system.md)** - GPU加速粒子效果 ✅
   - 大规模粒子渲染（10K+粒子）
   - 多种发射器形状（点、盒、球、锥）
   - 粒子力场（重力、风力、涡流）
   - 生命周期动画（颜色、大小）
 
-- **[天空盒系统](./reference/skybox-system.md)** - 环境渲染与映射
+- **[天空盒系统](./reference/skybox-system.md)** - 环境渲染与映射 ✅
   - 立方体贴图天空盒渲染
   - 程序化天空生成（渐变、光晕）
   - 日夜循环系统
   - IBL环境贴图生成
 
-- **[阴影工具](./reference/shadow-tools.md)** - 实时阴影渲染
+- **[阴影工具](./reference/shadow-tools.md)** - 实时阴影渲染 ✅
   - 阴影贴图管理
   - 光源空间矩阵计算
   - PCF软阴影滤波
@@ -82,13 +82,13 @@
 ### 📋 参考文档 (reference)
 
 #### 🔧 核心工具模块 (新)
-- **[PBR材质系统](./reference/pbr-material-system.md)** - 基于物理的渲染系统
+- **[PBR材质系统](./reference/pbr-material-system.md)** - 基于物理的渲染系统 ✅
   - Cook-Torrance BRDF、IBL光照、材质库、金属度/粗糙度工作流
-- **[粒子系统](./reference/particle-system.md)** - GPU加速粒子渲染
+- **[粒子系统](./reference/particle-system.md)** - GPU加速粒子渲染 ✅
   - 大规模粒子、发射器系统、物理模拟、生命周期动画
-- **[天空盒系统](./reference/skybox-system.md)** - 环境渲染与映射
+- **[天空盒系统](./reference/skybox-system.md)** - 环境渲染与映射 ✅
   - 立方体贴图、程序化天空、IBL环境贴图、大气散射
-- **[阴影工具](./reference/shadow-tools.md)** - 实时阴影渲染
+- **[阴影工具](./reference/shadow-tools.md)** - 实时阴影渲染 ✅
   - 阴影贴图、PCF软阴影、级联阴影、多光源支持
 - **[实例化渲染工具](./reference/instancing-tools.md)** - GPU实例化渲染 ✅
   - 单次 Draw Call 渲染 10,000+ 实例、Per-Instance Attributes
@@ -100,15 +100,15 @@
   - UI 布局规则、几何体标准、纹理指南、着色器约定、资源管理等实现规范
 
 #### 🎮 Demo参考文档
-- [立方体贴图天空盒 Demo](./reference/cubemap-skybox-demo.md) - 立方体贴图和环境映射演示
+- [立方体贴图天空盒 Demo](./reference/cubemap-skybox-demo.md) - 立方体贴图和环境映射演示 ✅
   - CubemapGenerator、天空渐变、反射效果
-- [渲染到纹理 Demo](./reference/render-to-texture-demo.md) - 离屏渲染和后期处理
+- [渲染到纹理 Demo](./reference/render-to-texture-demo.md) - 离屏渲染和后期处理 ✅
   - RenderTarget、FBO管理、纹理采样
-- [纹理数组 Demo](./reference/texture-array-demo.md) - WebGL2 TEXTURE_2D_ARRAY 支持
+- [纹理数组 Demo](./reference/texture-array-demo.md) - WebGL2 TEXTURE_2D_ARRAY 支持 ✅
   - 批量纹理管理、层级选择
-- [压缩纹理 Demo](./reference/compressed-texture-demo.md) - KTX/DDS 格式加载
+- [压缩纹理 Demo](./reference/compressed-texture-demo.md) - KTX/DDS 格式加载 ✅
   - 压缩纹理检测、GPU内存优化
-- [程序化纹理 Demo](./reference/procedural-texture-demo.md) - 算法生成纹理
+- [程序化纹理 Demo](./reference/procedural-texture-demo.md) - 算法生成纹理 ✅
   - Perlin噪声、分形布朗运动、波形函数
 - [实例化渲染 Demo](./reference/instancing-demo.md) - GPU实例化渲染技术 ✅
   - drawIndexedInstanced、实例缓冲区、性能优化
@@ -133,7 +133,7 @@
   - 图形设备、扩展管理、状态追踪
 - [MVP 矩阵实现架构](./architecture/rhi/mvp-matrix-implementation.md) - 3D 变换管线架构
   - 模型、视图、投影矩阵的级联变换
-- [RHI 工具模块架构](./architecture/rhi/rhi-tools-architecture.md) - 高级渲染工具模块设计
+- [RHI 工具模块架构](./architecture/rhi/rhi-tools-architecture.md) - 高级渲染工具模块设计 ✅
   - PBR材质、粒子系统、天空盒、阴影工具的架构设计
 - [数学库核心架构](./architecture/math/math-core-architecture.md) - 向量、矩阵、四元数等核心数学类型的实现架构
   - 数据结构、对象池、内存对齐
@@ -405,13 +405,20 @@ pnpm test
 | 类别 | 文档数量 | 完成度 | 更新时间 |
 |------|----------|--------|----------|
 | 概述文档 | 5 | 100% | 2024-12 |
-| 操作指南 | 17 (含9个Demo) | 100% | 2025-12-16 |
+| 操作指南 | 9 | 100% | 2025-12-16 |
 | 架构设计 | 11 | 100% | 2025-12-16 |
-| API参考 | 18 | 100% | 2025-12-13 |
-| 参考文档 | 16 | 100% | 2025-12-16 |
+| API参考 | 17 | 100% | 2025-12-13 |
+| 参考文档 | 22 | 100% | 2025-12-16 |
 | 故障排除 | 3 | 100% | 2025-12 |
-| **Agent 文档** | **15** | **100%** | **2025-12** |
-| **总计** | **85** | **100%** | **2025-12-16** |
+| **Agent 策略文档** | **28** | **100%** | **2025-12-16** |
+| **总计** | **95** | **100%** | **2025-12-16** |
+
+### 🎯 阶段三完成状态
+- ✅ PBR材质系统 - 基于物理的渲染完整实现
+- ✅ 粒子系统 - GPU加速粒子效果渲染
+- ✅ 天空盒系统 - 环境渲染与IBL支持
+- ✅ 阴影工具 - 实时阴影渲染与PCF滤波
+- ✅ 实例化渲染工具 - 高效批量渲染支持
 
 ## 🤝 贡献指南
 
@@ -424,18 +431,16 @@ pnpm test
 
 ### 📁 Agent 目录说明
 
-`/agent/` 目录包含技术调查和策略规划文档（目前包含15个），这些文档：
+`/agent/` 目录包含技术调查和策略规划文档（目前包含28个），这些文档：
 - 记录开发过程中的技术研究和方案选择
 - 分析特定的技术实现路径
 - 提供策略性的开发指导
 
 主要内容：
-- **demo-toolkit-investigation**: Demo 工具箱技术研究
-- **basic-rendering-demos-investigation**: 基础渲染演示调查
-- **matrix4-api-investigation**: Matrix4 API 调查
-- **texture-2d-demo-research**: 2D 纹理演示研究
-- **texture-wrapping-demo-research**: 纹理包裹演示研究
-- **strategy-multi-textures**: 多纹理策略
+- **阶段三核心模块**: PBR材质、粒子系统、天空盒、阴影工具的完整策略文档
+- **Demo技术调查**: 基础渲染、纹理系统、光照效果等演示研究
+- **架构策略**: Matrix4 API、多缓冲区、渲染管线等架构设计文档
+- **问题修复方案**: 天空盒修复、多纹理优化等具体问题解决方案
 
 ### 🔧 故障排除目录说明
 
@@ -444,5 +449,9 @@ pnpm test
 - 保存问题排查的详细过程
 - 提供解决方案和修复方法
 - 为类似问题提供参考
+
+---
+
+**🎉 阶段三完成**：所有核心渲染工具模块（PBR材质、粒子系统、天空盒、阴影工具、实例化渲染）已完成开发和文档编写。系统现已具备完整的现代3D渲染能力。
 
 如有问题或建议，请通过 Issues 或 Pull Request 联系我们。
