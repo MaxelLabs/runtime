@@ -241,6 +241,7 @@ void main() {
               stepMode: 'vertex' as MSpec.RHIVertexStepMode,
               attributes: [
                 {
+                  name: 'aPosition',
                   shaderLocation: 0,
                   offset: 0,
                   format: MSpec.RHIVertexFormat.FLOAT32x3,

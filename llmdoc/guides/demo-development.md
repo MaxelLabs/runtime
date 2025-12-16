@@ -4,6 +4,35 @@
 
 ## 最近更新
 
+### 2025-12-16 完成实例化渲染工具模块
+
+**实例化渲染工具模块已全部完成**：
+
+- **InstanceBuffer**: 实例缓冲区管理器（已完成）
+  - 支持 10,000+ 实例的高效管理
+  - 每实例 80 bytes（mat4 + vec4）
+  - 批量更新优化，单次 GPU 传输
+
+- **InstancedRenderer**: 实例化渲染器（已完成）
+  - 封装实例化 Draw Call 逻辑
+  - 自动组合顶点布局（基础几何 + 实例属性）
+  - 支持 WebGL2 和 WebGL1 (ANGLE_instanced_arrays)
+
+- **instancing Demo**: GPU 实例化渲染演示（已完成）
+  - 单次 Draw Call 渲染 10,000+ 立方体
+  - 实时调节实例数、颜色模式、动画效果
+  - 完整的键盘交互和性能监控
+
+**技术要点**：
+- Per-Instance Attributes（实例属性）
+- Vertex Buffer Divisor（顶点缓冲区分频器）
+- std140 内存对齐规范
+- 预分配缓冲区策略
+
+**文档更新**：
+- 添加实例化工具模块文档到 `demo-development.md`
+- 更新 Demo 完成状态
+
 ### 2025-12-15 完成第三层光照系统 3 个光源 Demo
 
 **3 个光源类型 Demo 已全部完成**：
@@ -1058,7 +1087,7 @@ runner.start((dt) => {
 
 | #   | 名称                 | 验证功能点          | 状态   |
 | --- | -------------------- | ------------------- | ------ |
-| 33  | instancing           | 实例化渲染          | 待实现 |
+| 33  | instancing           | 实例化渲染          | ✅ 已完成 (2025-12-16) |
 | 34  | indirect-draw        | 间接绘制            | 待实现 |
 | 35  | multi-render-targets | MRT 多渲染目标      | 待实现 |
 | 36  | shadow-mapping       | 基础阴影贴图        | 待实现 |

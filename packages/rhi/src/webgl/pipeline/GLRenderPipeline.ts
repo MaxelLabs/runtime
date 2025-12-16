@@ -180,7 +180,7 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
         );
         continue;
       }
-      const { index, stride, attributes } = bufferLayout;
+      const { index, stride, attributes, stepMode } = bufferLayout;
 
       if (typeof index !== 'number') {
         console.error(
@@ -253,6 +253,7 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
             format: formatInfo,
             index: index,
             shaderLocation: attr.shaderLocation, // 保存shaderLocation
+            stepMode: stepMode, // 保存步进模式
           };
         })
         .filter(Boolean);
@@ -266,6 +267,7 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
             stride: number;
             offset: number;
             format: { type: number; size: number; normalized: boolean };
+            stepMode?: string;
           }[]
         ); // `as any[]` because filter(Boolean) typing can be tricky
         // console.log(`[${this._label || 'WebGLRenderPipeline'}] Prepared attribute layouts for slot ${index}:`, attributeLayouts);
@@ -628,6 +630,33 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
         attrLayout.stride,
         attrLayout.offset + bufferOffsetInBytes
       );
+
+      // 处理实例化渲染的顶点属性分频
+      // 如果是WebGL2，使用vertexAttribDivisor
+      // 如果是WebGL1，尝试使用ANGLE_instanced_arrays扩展
+      const stepMode = (attrLayout as any).stepMode;
+      if (stepMode === 'instance') {
+        if (this.isWebGL2) {
+          (gl as WebGL2RenderingContext).vertexAttribDivisor(location, 1);
+        } else {
+          const ext = gl.getExtension('ANGLE_instanced_arrays');
+          if (ext) {
+            ext.vertexAttribDivisorANGLE(location, 1);
+          } else {
+            console.warn(`[${this._label || 'WebGLRenderPipeline'}] Instancing requested but not supported.`);
+          }
+        }
+      } else {
+        // 确保非实例化属性的divisor为0
+        if (this.isWebGL2) {
+          (gl as WebGL2RenderingContext).vertexAttribDivisor(location, 0);
+        } else {
+          const ext = gl.getExtension('ANGLE_instanced_arrays');
+          if (ext) {
+            ext.vertexAttribDivisorANGLE(location, 0);
+          }
+        }
+      }
     }
   }
 

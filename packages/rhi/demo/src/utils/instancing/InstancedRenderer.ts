@@ -165,16 +165,18 @@ export class InstancedRenderer {
       {
         index: 0,
         stride: baseVertexStride,
-        stepMode: 'vertex' as MSpec.RHIVertexStepMode,
+        stepMode: MSpec.RHIVertexStepMode.VERTEX,
         attributes: [
           {
+            name: 'aPosition',
             shaderLocation: 0,
-            format: 'float32x3' as MSpec.RHIVertexFormat,
+            format: MSpec.RHIVertexFormat.FLOAT32x3,
             offset: 0,
           }, // aPosition
           {
+            name: 'aNormal',
             shaderLocation: 1,
-            format: 'float32x3' as MSpec.RHIVertexFormat,
+            format: MSpec.RHIVertexFormat.FLOAT32x3,
             offset: 12,
           }, // aNormal
         ],
@@ -184,8 +186,9 @@ export class InstancedRenderer {
       {
         index: 1,
         stride: instanceStride,
-        stepMode: 'instance' as MSpec.RHIVertexStepMode,
+        stepMode: MSpec.RHIVertexStepMode.INSTANCE,
         attributes: instanceLayout.map((attr) => ({
+          name: attr.name,
           shaderLocation: attr.location,
           format: attr.format,
           offset: attr.offset,
@@ -215,6 +218,7 @@ export class InstancedRenderer {
   getVertexBufferLayoutsExtended(baseAttributes: {
     stride: number;
     attributes: Array<{
+      name: string;
       location: number;
       format: MSpec.RHIVertexFormat;
       offset: number;
@@ -228,8 +232,9 @@ export class InstancedRenderer {
       {
         index: 0,
         stride: baseAttributes.stride,
-        stepMode: 'vertex' as MSpec.RHIVertexStepMode,
+        stepMode: MSpec.RHIVertexStepMode.VERTEX,
         attributes: baseAttributes.attributes.map((attr) => ({
+          name: attr.name,
           shaderLocation: attr.location,
           format: attr.format,
           offset: attr.offset,
@@ -240,8 +245,9 @@ export class InstancedRenderer {
       {
         index: 1,
         stride: instanceStride,
-        stepMode: 'instance' as MSpec.RHIVertexStepMode,
+        stepMode: MSpec.RHIVertexStepMode.INSTANCE,
         attributes: instanceLayout.map((attr) => ({
+          name: attr.name,
           shaderLocation: attr.location,
           format: attr.format,
           offset: attr.offset,

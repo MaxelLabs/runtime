@@ -80,15 +80,11 @@ export class InstanceBuffer {
     this.cpuBuffer = new Float32Array(totalFloats);
 
     // 创建 GPU 缓冲区
-    const usage = this.dynamic
-      ? (((MSpec.RHIBufferUsage.VERTEX as unknown as number) |
-          (MSpec.RHIBufferUsage.COPY_DST as unknown as number)) as unknown as MSpec.RHIBufferUsage)
-      : MSpec.RHIBufferUsage.VERTEX;
-
     this.gpuBuffer = device.createBuffer({
       label: `${this.label}_GPU`,
       size: this.maxInstances * this.strideBytes,
-      usage,
+      usage: MSpec.RHIBufferUsage.VERTEX,
+      hint: this.dynamic ? 'dynamic' : 'static',
     });
   }
 
@@ -226,15 +222,12 @@ export class InstanceBuffer {
 
     // 创建新的 GPU 缓冲区
     const oldGpuBuffer = this.gpuBuffer;
-    const usage = this.dynamic
-      ? (((MSpec.RHIBufferUsage.VERTEX as unknown as number) |
-          (MSpec.RHIBufferUsage.COPY_DST as unknown as number)) as unknown as MSpec.RHIBufferUsage)
-      : MSpec.RHIBufferUsage.VERTEX;
 
     this.gpuBuffer = this.device.createBuffer({
       label: `${this.label}_GPU_Resized`,
       size: newMaxInstances * this.strideBytes,
-      usage,
+      usage: MSpec.RHIBufferUsage.VERTEX,
+      hint: this.dynamic ? 'dynamic' : 'static',
     });
 
     // 复制旧数据到新 GPU 缓冲区

@@ -626,6 +626,7 @@ void main() {
             stepMode: 'vertex' as MSpec.RHIVertexStepMode,
             attributes: [
               {
+                name: 'aPosition',
                 shaderLocation: 0,
                 format: 'float32x3' as MSpec.RHIVertexFormat,
                 offset: 0,
@@ -723,8 +724,8 @@ void main() {
             stride: 20, // vec3 pos + vec2 tex
             stepMode: 'vertex' as MSpec.RHIVertexStepMode,
             attributes: [
-              { shaderLocation: 0, format: 'float32x3' as MSpec.RHIVertexFormat, offset: 0 },
-              { shaderLocation: 1, format: 'float32x2' as MSpec.RHIVertexFormat, offset: 12 },
+              { name: 'aPosition', shaderLocation: 0, format: 'float32x3' as MSpec.RHIVertexFormat, offset: 0 },
+              { name: 'aTexCoord', shaderLocation: 1, format: 'float32x2' as MSpec.RHIVertexFormat, offset: 12 },
             ],
           },
         ],

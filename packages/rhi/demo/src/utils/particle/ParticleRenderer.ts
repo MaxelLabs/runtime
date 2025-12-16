@@ -192,11 +192,13 @@ export class ParticleRenderer {
         stepMode: 'vertex' as MSpec.RHIVertexStepMode,
         attributes: [
           {
+            name: 'aPosition',
             shaderLocation: 0,
             format: 'float32x3' as MSpec.RHIVertexFormat,
             offset: 0,
           }, // aPosition
           {
+            name: 'aTexCoord',
             shaderLocation: 1,
             format: 'float32x2' as MSpec.RHIVertexFormat,
             offset: 12,
@@ -210,6 +212,7 @@ export class ParticleRenderer {
         stride: instanceStride,
         stepMode: 'instance' as MSpec.RHIVertexStepMode,
         attributes: instanceLayout.map((attr) => ({
+          name: attr.name,
           shaderLocation: attr.location,
           format: attr.format,
           offset: attr.offset,

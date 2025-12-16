@@ -101,32 +101,32 @@ export function getStandardInstanceLayout(baseLocation: number = 2): InstanceAtt
   return [
     // mat4 modelMatrix - 占用 4 个 location (每列一个 vec4)
     {
-      name: 'instanceMatrixRow0',
+      name: 'aInstanceMatrixRow0',
       location: baseLocation,
       format: 'float32x4' as MSpec.RHIVertexFormat,
       offset: 0,
     },
     {
-      name: 'instanceMatrixRow1',
+      name: 'aInstanceMatrixRow1',
       location: baseLocation + 1,
       format: 'float32x4' as MSpec.RHIVertexFormat,
       offset: 16,
     },
     {
-      name: 'instanceMatrixRow2',
+      name: 'aInstanceMatrixRow2',
       location: baseLocation + 2,
       format: 'float32x4' as MSpec.RHIVertexFormat,
       offset: 32,
     },
     {
-      name: 'instanceMatrixRow3',
+      name: 'aInstanceMatrixRow3',
       location: baseLocation + 3,
       format: 'float32x4' as MSpec.RHIVertexFormat,
       offset: 48,
     },
     // vec4 color
     {
-      name: 'instanceColor',
+      name: 'aInstanceColor',
       location: baseLocation + 4,
       format: 'float32x4' as MSpec.RHIVertexFormat,
       offset: 64,
