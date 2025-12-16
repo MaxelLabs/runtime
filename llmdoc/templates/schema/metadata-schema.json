@@ -1,0 +1,307 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://maxel.dev/docs/schemas/metadata.json",
+  "title": "Maxell 3D Runtime 文档元数据Schema",
+  "description": "定义文档元数据的JSON Schema，用于验证文档的AI友好属性",
+  "type": "object",
+  "required": [
+    "title",
+    "layer",
+    "category",
+    "lastModified",
+    "version",
+    "tags",
+    "estimatedReadTime"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "文档标题",
+      "minLength": 5,
+      "maxLength": 100
+    },
+    "layer": {
+      "type": "string",
+      "description": "文档层级",
+      "enum": ["overview", "detailed", "reference"],
+      "default": "detailed"
+    },
+    "category": {
+      "type": "string",
+      "description": "文档分类",
+      "enum": [
+        "foundations",
+        "learning",
+        "reference",
+        "advanced",
+        "agent",
+        "support",
+        "api",
+        "tutorial",
+        "guide",
+        "demo",
+        "tool",
+        "system"
+      ]
+    },
+    "subcategory": {
+      "type": "string",
+      "description": "文档子分类（可选）",
+      "maxLength": 50
+    },
+    "version": {
+      "type": "string",
+      "description": "文档版本号",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9]+)?$"
+    },
+    "lastModified": {
+      "type": "string",
+      "description": "最后修改日期 (YYYY-MM-DD)",
+      "format": "date"
+    },
+    "author": {
+      "type": "string",
+      "description": "文档作者",
+      "maxLength": 50
+    },
+    "reviewer": {
+      "type": "string",
+      "description": "文档审核者",
+      "maxLength": 50
+    },
+    "tags": {
+      "type": "array",
+      "description": "文档标签，用于搜索和分类",
+      "items": {
+        "type": "string",
+        "minLength": 2,
+        "maxLength": 30
+      },
+      "minItems": 1,
+      "maxItems": 10
+    },
+    "keywords": {
+      "type": "array",
+      "description": "关键词，用于AI搜索优化",
+      "items": {
+        "type": "string",
+        "minLength": 2,
+        "maxLength": 30
+      },
+      "maxItems": 15
+    },
+    "estimatedReadTime": {
+      "type": "number",
+      "description": "预估阅读时间（分钟）",
+      "minimum": 1,
+      "maximum": 120
+    },
+    "difficulty": {
+      "type": "string",
+      "description": "难度等级",
+      "enum": ["beginner", "intermediate", "advanced", "expert"],
+      "default": "intermediate"
+    },
+    "prerequisites": {
+      "type": "array",
+      "description": "前置知识要求",
+      "items": {
+        "type": "object",
+        "required": ["title", "type"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "前置文档或知识标题"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["document", "concept", "skill"],
+            "description": "前置类型：文档、概念或技能"
+          },
+          "url": {
+            "type": "string",
+            "description": "相关文档链接（可选）",
+            "format": "uri"
+          }
+        }
+      },
+      "maxItems": 5
+    },
+    "relatedDocs": {
+      "type": "array",
+      "description": "相关文档链接",
+      "items": {
+        "type": "object",
+        "required": ["title", "url"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "相关文档标题"
+          },
+          "url": {
+            "type": "string",
+            "description": "文档URL"
+          },
+          "relation": {
+            "type": "string",
+            "enum": ["prerequisite", "followup", "reference", "alternative"],
+            "description": "与当前文档的关系"
+          }
+        }
+      },
+      "maxItems": 10
+    },
+    "codeExamples": {
+      "type": "object",
+      "description": "代码示例统计",
+      "properties": {
+        "typescript": {
+          "type": "number",
+          "description": "TypeScript代码示例数量"
+        },
+        "glsl": {
+          "type": "number",
+          "description": "GLSL着色器代码示例数量"
+        },
+        "javascript": {
+          "type": "number",
+          "description": "JavaScript代码示例数量"
+        },
+        "json": {
+          "type": "number",
+          "description": "JSON配置示例数量"
+        }
+      }
+    },
+    "interactiveElements": {
+      "type": "array",
+      "description": "交互式元素",
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["demo", "playground", "quiz", "exercise", "interactive-diagram"],
+            "description": "交互元素类型"
+          },
+          "title": {
+            "type": "string",
+            "description": "交互元素标题"
+          },
+          "url": {
+            "type": "string",
+            "description": "交互元素URL"
+          }
+        }
+      }
+    },
+    "aiMetadata": {
+      "type": "object",
+      "description": "AI处理相关元数据",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "description": "文档内容摘要（AI生成）",
+          "maxLength": 500
+        },
+        "keyConcepts": {
+          "type": "array",
+          "description": "关键概念列表",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20
+        },
+        "searchTokens": {
+          "type": "array",
+          "description": "搜索令牌（同义词、缩写等）",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 30
+        },
+        "contextVector": {
+          "type": "array",
+          "description": "文档上下文向量（AI嵌入）",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 128,
+          "maxItems": 1536
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "description": "文档验证信息",
+      "properties": {
+        "markdownLint": {
+          "type": "boolean",
+          "description": "是否通过markdownlint检查"
+        },
+        "linkCheck": {
+          "type": "boolean",
+          "description": "是否通过链接检查"
+        },
+        "sizeCheck": {
+          "type": "boolean",
+          "description": "是否符合大小限制"
+        },
+        "lastValidated": {
+          "type": "string",
+          "description": "最后验证时间",
+          "format": "date-time"
+        }
+      }
+    },
+    "stats": {
+      "type": "object",
+      "description": "文档统计信息",
+      "properties": {
+        "wordCount": {
+          "type": "number",
+          "description": "字数统计"
+        },
+        "lineCount": {
+          "type": "number",
+          "description": "行数统计"
+        },
+        "sizeKB": {
+          "type": "number",
+          "description": "文件大小（KB）"
+        },
+        "sectionCount": {
+          "type": "number",
+          "description": "章节数量"
+        }
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "description": "文档工作流状态",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["draft", "review", "approved", "published", "deprecated"],
+          "description": "文档状态"
+        },
+        "stage": {
+          "type": "string",
+          "enum": ["planning", "writing", "reviewing", "finalizing"],
+          "description": "当前阶段"
+        },
+        "assignedTo": {
+          "type": "string",
+          "description": "当前负责人"
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "截止日期",
+          "format": "date"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

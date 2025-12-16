@@ -15,8 +15,11 @@
 **👨‍💻 开发者入门（2-4小时）**
 1. [图形系统圣经](./foundations/graphics-bible.md) - ⭐ **必读**：图形系统核心规范
 2. [RHI Demo宪法](./foundations/rhi-demo-constitution.md) - ⭐ **必读**：Demo实现规范
-3. [后处理系统](./reference/modules/post-processing-system.md) - **新**：完整的后处理框架
-4. [PBR材质系统](./reference/pbr-material-system.md) - **核心**：现代PBR渲染技术
+3. [RHI API 参考](./reference/api-v2/rhi/) - **新**：WebGL抽象层完整文档
+4. [Math API 参考](./reference/api-v2/math/) - **新**：高性能数学库详解
+5. [Specification API 参考](./reference/api-v2/specification/) - **新**：USD集成与类型系统
+6. [后处理系统](./reference/modules/post-processing-system.md) - **新**：完整的后处理框架
+7. [PBR材质系统](./reference/pbr-material-system.md) - **核心**：现代PBR渲染技术
 
 ### 环境配置
 
@@ -82,6 +85,7 @@ pnpm test
 - **硬件抽象层**：屏蔽底层图形API复杂性
 - **WebGL实现**：完整的WebGL 2.0支持
 - **类型安全**：TypeScript驱动的命令编码
+- **[完整API文档](./reference/api-v2/rhi/)** 🆕 - 设备、资源、管线、命令详解
 
 ### 🎨 现代渲染工具
 - **PBR材质**：Cook-Torrance BRDF、IBL光照
@@ -99,6 +103,13 @@ pnpm test
 - **高性能**：SIMD优化、对象池机制
 - **完整API**：向量、矩阵、四元数
 - **内存安全**：避免GC压力的设计
+- **[完整API文档](./reference/api-v2/math/)** 🆕 - 详细类型说明与优化指南
+
+### 📋 Specification (USD集成)
+- **OpenUSD兼容**：Pixar USD标准完整支持
+- **统一类型系统**：跨库类型定义与泛型设计
+- **动画框架**：关键帧、轨道、混合控制
+- **[完整API文档](./reference/api-v2/specification/)** 🆕 - 核心类型与动画系统
 
 ---
 
@@ -128,6 +139,11 @@ pnpm test
 ### 项目仓库
 - **主仓库**: [Maxell 3D Runtime](https://github.com/MaxelLabs/runtime)
 - **Demo集合**: `packages/rhi/demo/` - 19个交互式演示
+
+### 🆕 API v2 文档
+- **[RHI API 参考](./reference/api-v2/rhi/)** - WebGL硬件抽象层完整API
+- **[Math API 参考](./reference/api-v2/math/)** - 高性能3D数学库
+- **[Specification API 参考](./reference/api-v2/specification/)** - USD集成与类型系统
 
 ### 技术文档
 - [WebGL API](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API) - MDN WebGL教程
@@ -220,6 +236,35 @@ packages/
 
 ---
 
-**🎯 文档架构重构完成**：采用6层体系结构，87个文档全面覆盖从基础规范到高级实现的完整技术栈。**交叉引用系统已建立**：所有文档间建立了完整的关联网络，提供清晰的学习路径和技术导航。
+## 🔗 智能导航系统 🆕
+
+### 🧭 全新导航体验
+我们引入了现代化的智能文档导航系统，彻底改变您发现和访问信息的方式：
+
+**[🚀 查看智能导航系统](./navigation/README.md)**
+
+### ✨ 核心特性
+- **🎯 3-Click Rule**: 任何信息最多3次点击到达
+- **🤖 AI驱动推荐**: 基于学习行为和偏好的个性化内容推荐
+- **🔍 智能搜索**: 语义搜索 + 多维度过滤 + 实时建议
+- **🛤️ 学习路径规划**: 智能生成个性化学习路径和进度追踪
+- **📱 响应式设计**: 完美适配桌面端和移动端体验
+
+### 🛠️ 导航工具集
+- **全局索引系统**: 按技术栈、难度、任务的智能分类
+- **交叉引用网络**: 概念关联和知识图谱可视化
+- **快速跳转工具**: Ctrl+K/Cmd+K 快速导航到任何内容
+- **面包屑导航**: 清晰的层级定位和快速回溯
+- **智能书签**: 自动标签建议和分类管理
+
+### 🎮 快速开始体验
+1. **快捷键导航**: 按 `Ctrl+K` (Windows) 或 `Cmd+K` (Mac) 打开快速跳转
+2. **智能搜索**: 在搜索框输入关键词，体验语义搜索和智能建议
+3. **个性化推荐**: 系统会根据您的阅读历史和偏好推荐相关内容
+4. **学习路径**: 自动生成适合您水平的学习计划和进度追踪
+
+---
+
+**🎯 文档架构重构完成**：采用6层体系结构，87个文档全面覆盖从基础规范到高级实现的完整技术栈。**智能导航系统上线**：通过AI驱动的推荐和3-Click规则，让文档发现变得前所未有的高效。
 
 **如有问题或建议，欢迎通过 Issues 或 Pull Request 联系我们。**

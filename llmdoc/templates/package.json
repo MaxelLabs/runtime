@@ -1,0 +1,51 @@
+{
+  "name": "@maxel/doc-templates",
+  "version": "1.0.0",
+  "description": "AI友好文档模板系统 - 为Maxell 3D Runtime项目设计",
+  "main": "scripts/validate-docs.js",
+  "bin": {
+    "validate-docs": "./scripts/validate-docs.js",
+    "check-links": "./scripts/check-links.js"
+  },
+  "scripts": {
+    "validate": "node scripts/validate-docs.js",
+    "validate:learning": "node scripts/validate-docs.js \"learning/**/*.md\"",
+    "validate:reference": "node scripts/validate-docs.js \"reference/**/*.md\"",
+    "check-links": "find . -name \"*.md\" -not -path \"./node_modules/*\" -not -path \"./templates/*\" | xargs node scripts/check-links.js",
+    "lint": "markdownlint \"**/*.md\" --config config/markdownlint.json",
+    "lint:fix": "markdownlint \"**/*.md\" --config config/markdownlint.json --fix",
+    "test": "npm run validate && npm run check-links && npm run lint"
+  },
+  "keywords": [
+    "documentation",
+    "templates",
+    "markdown",
+    "ai-friendly",
+    "validation",
+    "maxell-3d"
+  ],
+  "author": "Maxell 3D Runtime Team",
+  "license": "MIT",
+  "dependencies": {
+    "glob": "^10.3.10"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "eslint-plugin-markdown": "^3.0.1",
+    "markdownlint": "^0.34.0",
+    "markdownlint-cli": "^0.39.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MaxelLabs/runtime.git",
+    "directory": "llmdoc/templates"
+  },
+  "bugs": {
+    "url": "https://github.com/MaxelLabs/runtime/issues"
+  },
+  "homepage": "https://github.com/MaxelLabs/runtime/tree/main/llmdoc/templates"
+}

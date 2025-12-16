@@ -5,6 +5,15 @@
 ## 技术参考
 
 ### 🔌 API Documentation
+
+#### API v2 (推荐) 🆕
+- **[API v2 总览](api-v2/overview.md)** - **新架构**：开发者友好的完整API文档
+- **[RHI API v2](api-v2/rhi/)** - 渲染硬件接口完整文档
+- **[Math API v2](api-v2/math/)** - 数学运算库完整文档
+- **[Specification v2](api-v2/specification/)** - 数据规范完整文档
+- **[API v2 索引](api-v2/SUMMARY.md)** - 快速查找和导航
+
+#### API v1 (旧版)
 - [RHI API](api/) - 渲染硬件接口API
 - [Math API](api/math-type-reference.md) - **常用**：数学库API参考
 - [Utils API](api/) - 工具函数API
@@ -79,6 +88,19 @@
 ### 🎨 现代渲染技术主题链
 **核心技术**：[PBR材质系统](pbr-material-system.md) + [阴影映射Demo](shadow-mapping-demo.md) + [后处理系统](modules/post-processing-system.md) + [FXAA抗锯齿](modules/fxaa-anti-aliasing.md)
 **相关技术**：[天空盒系统](skybox-system.md) + [粒子系统](particle-system.md)
+
+## 快速开始
+
+### 🆕 新用户推荐路径
+1. **[API v2 总览](api-v2/overview.md)** - 了解整体架构
+2. **[RHI 快速开始](api-v2/rhi/)** - 创建第一个渲染
+3. **[Math 基础](api-v2/math/)** - 掌握3D数学
+4. **[完整示例](../../demos/)** - 查看实际应用
+
+### 📚 深度学习
+- **[API v2 文档集](api-v2/)** - 完整的v2版本文档
+- **[架构指南](../architecture/)** - 深入理解系统设计
+- **[实践教程](../learning/)** - 循序渐进的学习路径
 
 ## 导航
 
