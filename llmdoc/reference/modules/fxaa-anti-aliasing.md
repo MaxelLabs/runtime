@@ -531,8 +531,31 @@ class FXAAControlPanel {
 }
 ```
 
-## 参考链接
+## 相关文档
 
-- [后处理系统文档](./post-processing-system.md)
-- [性能优化指南](../advanced/optimization/performance.md)
-- [渲染管线整合](../advanced/integration/rendering-pipeline.md)
+### 🏛️ 理论基础
+- [图形系统圣经](../../foundations/graphics-bible.md) - FXAA应用的颜色空间和采样理论基础
+- [RHI Demo宪法](../../foundations/rhi-demo-constitution.md) - FXAA实现的性能和内存规范
+
+### 🎬 后处理框架
+- [后处理系统](./post-processing-system.md) - **核心**：FXAA所属的完整后处理框架
+- [模块索引](./) - 所有后处理模块的完整列表
+
+### 🎮 实际演示
+- [FXAA Demo](../../../packages/rhi/demo/html/fxaa.html) - **体验**：交互式FXAA效果演示
+- [后处理Demo](../../../packages/rhi/demo/html/post-process.html) - FXAA在完整后处理链中的应用
+- [参考层Demo集合](../) - 27个技术演示的完整索引
+
+### 🔧 渲染集成
+- [渲染管线整合](../../advanced/integration/rendering-pipeline.md) - FXAA在完整渲染管线中的位置
+- [PBR材质系统](../pbr-material-system.md) - FXAA与PBR渲染的典型结合场景
+- [阴影工具](../shadow-tools.md) - FXAA处理阴影边缘抗锯齿
+
+### 📚 学习路径
+- [Learning 学习层](../../learning/) - 系统化的渲染技术学习路径
+- [PBR迁移指南](../../learning/tutorials/pbr-migration-guide.md) - 包含FXAA集成的PBR实现
+
+### 🔗 相关技术
+- [数学API参考](../../api/math-type-reference.md) - FXAA算法所需的数学库
+- [Shader工具参考](../../api/shader-utils-reference.md) - FXAA着色器开发工具
+- [性能优化指南](../technical-debt.md) - FXAA性能优化相关指导

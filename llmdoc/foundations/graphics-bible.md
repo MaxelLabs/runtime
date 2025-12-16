@@ -227,3 +227,35 @@ function updatePositions_GOOD(objects: any[]): void {
 
 -   矩阵数据必须以 **列主序** 格式上传到 GPU。
 -   `Float32Array` 在填充时应遵循 `[col0_row0, col0_row1, ..., col1_row0, ...]` 的顺序。
+
+---
+
+## 相关文档
+
+### 🏛️ 基础规范
+- [RHI Demo 实现宪法](./rhi-demo-constitution.md) - Demo开发的详细规范和最佳实践
+- [编码规范](./coding-conventions.md) - 项目代码风格指南
+
+### 🔧 技术实现
+- [矩阵数学API](../api/math-type-reference.md) - 数学库的具体API参考
+- [渲染管线整合](../advanced/integration/rendering-pipeline.md) - 将图形学原理应用到渲染管线
+
+### 📦 材质与渲染系统
+- [PBR材质系统](../reference/pbr-material-system.md) - 基于物理的渲染实现，严格遵循本圣经的坐标系和颜色空间规则
+- [PBR迁移指南](../learning/tutorials/pbr-migration-guide.md) - 从旧PBR到SimplePBR的迁移，遵循图形学最佳实践
+- [粒子系统](../reference/particle-system.md) - GPU加速粒子效果，使用本圣经定义的变换系统
+- [阴影工具](../reference/shadow-tools.md) - 实时阴影渲染，基于本圣经的光照计算原理
+
+### 🎬 后处理系统
+- [后处理系统](../reference/modules/post-processing-system.md) - 完整后处理框架，处理本圣经定义的颜色空间转换
+- [FXAA抗锯齿](../reference/modules/fxaa-anti-aliasing.md) - 快速抗锯齿技术，应用于线性颜色空间
+
+### 🎮 演示和示例
+- [方向光源Demo](../reference/directional-light-demo.md) - 光照计算的实际应用
+- [Phong光照Demo](../reference/phong-lighting-demo.md) - 光照模型的实现示例
+- [阴影映射Demo](../reference/shadow-mapping-demo.md) - 阴影技术的完整实现
+- [GPU实例化Demo](../reference/instancing-demo.md) - 高效批量渲染，展示变换矩阵优化
+
+### 📚 学习路径
+- [Learning 学习层](../learning/) - 从基础到高级的完整学习路径
+- [Reference 参考层](../reference/) - 完整的技术文档和API参考

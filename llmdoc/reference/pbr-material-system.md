@@ -376,6 +376,37 @@ interface AnisotropyConfig {
 - [Filament PBR Implementation](https://google.github.io/filament/Filament.md.html#materialsystem/pbrmodel)
 - [Unreal Engine PBR](https://docs.unrealengine.com/en-US/Engine/Rendering/Materials/PhysicallyBased/)
 
+## 相关文档
+
+### 🏛️ 理论基础
+- [图形系统圣经](../foundations/graphics-bible.md) - PBR遵循的图形学基础原理（坐标系、颜色空间、变换）
+- [RHI Demo宪法](../foundations/rhi-demo-constitution.md) - PBR实现的性能和内存规范
+
+### 📚 学习与迁移
+- [PBR迁移指南](../learning/tutorials/pbr-migration-guide.md) - **推荐**：从旧PBR到SimplePBR的完整迁移指南
+- [Learning 学习层](../learning/) - 系统化的渲染技术学习路径
+
+### 🔧 实际应用
+- [阴影工具](./shadow-tools.md) - 与PBR结合的实时阴影系统
+- [粒子系统](./particle-system.md) - PBR材质的粒子效果应用
+- [天空盒系统](./skybox-system.md) - 为PBR提供IBL环境光照
+
+### 🎬 后处理集成
+- [后处理系统](./modules/post-processing-system.md) - PBR渲染的后处理管道
+- [FXAA抗锯齿](./modules/fxaa-anti-aliasing.md) - PBR渲染的抗锯齿处理
+
+### 🎮 实际演示
+- [阴影映射Demo](./shadow-mapping-demo.md) - PBR+阴影的完整实现
+- [GPU实例化Demo](./instancing-demo.md) - PBR材质的高效批量渲染
+- [参考层Demo集合](./) - 27个技术演示的完整索引
+
+### 🔗 相关技术
+- [渲染管线整合](../advanced/integration/rendering-pipeline.md) - PBR在完整渲染管线中的集成
+- [数学API参考](../api/math-type-reference.md) - PBR计算所需的数学库
+- [Shader工具参考](../api/shader-utils-reference.md) - PBR着色器开发工具
+
+---
+
 ## 10. 版本历史
 
 - **v1.0.0** - 基础PBR实现
@@ -383,3 +414,4 @@ interface AnisotropyConfig {
 - **v1.2.0** - 材质库和预设
 - **v1.3.0** - 性能优化和批处理
 - **v1.4.0** - 扩展材质属性（清漆、SSS等）
+- **v1.5.0** - 添加交叉引用系统

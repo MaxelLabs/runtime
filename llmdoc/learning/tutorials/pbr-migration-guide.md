@@ -640,9 +640,35 @@ class PBRBatchRenderer {
 }
 ```
 
-## 参考链接
+## 相关文档
 
-- [SimplePBR API文档](../../reference/modules/simple-pbr.md)
-- [PBR渲染原理](../../learning/tutorials/pbr-theory.md)
-- [性能优化指南](../../advanced/optimization/performance.md)
-- [材质系统架构](../../reference/modules/material-system.md)
+### 🏛️ 理论基础
+- [图形系统圣经](../../foundations/graphics-bible.md) - PBR实现的坐标系、颜色空间和变换基础
+- [RHI Demo宪法](../../foundations/rhi-demo-constitution.md) - SimplePBR遵循的性能和内存规范
+
+### 📚 核心参考
+- [PBR材质系统](../../reference/pbr-material-system.md) - **核心**：完整的PBR材质系统参考
+- [Learning 学习层](../) - 系统化的渲染技术学习路径
+
+### 🔧 实现工具
+- [SimplePBR实现](../../../packages/rhi/demo/src/utils/material/pbr/SimplePBRMaterial.ts) - 实际代码实现
+- [天空盒系统](../../reference/skybox-system.md) - PBR环境光照（IBL）的立方体贴图支持
+- [阴影工具](../../reference/shadow-tools.md) - 与PBR结合的实时阴影系统
+
+### 🎬 后处理集成
+- [后处理系统](../../reference/modules/post-processing-system.md) - PBR渲染的后处理管道
+- [FXAA抗锯齿](../../reference/modules/fxaa-anti-aliasing.md) - PBR渲染的抗锯齿处理
+
+### 🎮 实际演示
+- [阴影映射Demo](../../reference/shadow-mapping-demo.md) - PBR+阴影的完整实现示例
+- [GPU实例化Demo](../../reference/instancing-demo.md) - PBR材质的高效批量渲染
+- [参考层Demo集合](../../reference/) - 27个技术演示的完整索引
+
+### 🔗 开发资源
+- [渲染管线整合](../../advanced/integration/rendering-pipeline.md) - PBR在完整渲染管线中的集成
+- [数学API参考](../../api/math-type-reference.md) - PBR计算所需的数学库
+- [Shader工具参考](../../api/shader-utils-reference.md) - PBR着色器开发工具
+
+### 📖 进阶学习
+- [接下来可以学习](../) - 渲染技术的进阶学习路径
+- [粒子系统](../../reference/particle-system.md) - PBR材质的粒子效果应用
