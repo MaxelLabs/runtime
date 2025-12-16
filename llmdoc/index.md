@@ -9,14 +9,14 @@
 **🎯 快速体验（30分钟）**
 1. [项目概览](./overview/project-overview.md) - 了解核心功能
 2. [RHI概述](./overview/rhi-overview.md) - 渲染抽象层概念
-3. [PBR迁移指南](./learning/tutorials/pbr-migration-guide.md) - **新**：从旧PBR迁移到SimplePBR
+3. [PBR迁移指南](./learning/tutorials/pbr-migration-guide.md) - **🔥 推荐**：从旧PBR迁移到SimplePBR
 4. [FXAA抗锯齿](./reference/modules/fxaa-anti-aliasing.md) - **新**：后处理抗锯齿技术
 
 **👨‍💻 开发者入门（2-4小时）**
-1. [图形系统圣经](./foundations/graphics-bible.md) - ⭐ 核心规范
-2. [RHI Demo宪法](./foundations/rhi-demo-constitution.md) - ⭐ 实现规范
+1. [图形系统圣经](./foundations/graphics-bible.md) - ⭐ **必读**：图形系统核心规范
+2. [RHI Demo宪法](./foundations/rhi-demo-constitution.md) - ⭐ **必读**：Demo实现规范
 3. [后处理系统](./reference/modules/post-processing-system.md) - **新**：完整的后处理框架
-4. [编码约定](./foundations/coding-conventions.md) - 开发规范
+4. [PBR材质系统](./reference/pbr-material-system.md) - **核心**：现代PBR渲染技术
 
 ### 环境配置
 
@@ -198,6 +198,28 @@ packages/
 
 ---
 
-**🎯 文档架构重构完成**：采用6层体系结构，87个文档全面覆盖从基础规范到高级实现的完整技术栈。
+---
+
+## 🔗 交叉引用导航系统
+
+### 🎯 完整渲染管线学习路径
+**新手入门** → **进阶实战** → **高级优化**
+1. [图形系统圣经](./foundations/graphics-bible.md) → [方向光源Demo](./reference/directional-light-demo.md) → [PBR材质系统](./reference/pbr-material-system.md)
+2. [PBR迁移指南](./learning/tutorials/pbr-migration-guide.md) → [阴影映射Demo](./reference/shadow-mapping-demo.md) → [后处理系统](./reference/modules/post-processing-system.md)
+3. [FXAA抗锯齿](./reference/modules/fxaa-anti-aliasing.md) → [GPU实例化](./reference/instancing-demo.md) → [渲染管线整合](./advanced/integration/rendering-pipeline.md)
+
+### 🔥 热门技术组合
+- **现代渲染栈**：PBR材质 + 阴影映射 + 后处理 + FXAA抗锯齿
+- **性能优化栈**：GPU实例化 + SimplePBR + 视锥体剔除
+- **后处理效果栈**：HDR色调映射 + 高斯模糊 + 抗锯齿 + 亮度对比度调整
+
+### 📚 按角色推荐
+- **图形学学习者**：[图形系统圣经](./foundations/graphics-bible.md) → [基础Demo集合](./reference/) → [PBR材质系统](./reference/pbr-material-system.md)
+- **WebGL开发者**：[RHI Demo宪法](./foundations/rhi-demo-constitution.md) → [API文档](./api/) → [工具模块](./reference/modules/)
+- **渲染工程师**：[PBR迁移指南](./learning/tutorials/pbr-migration-guide.md) → [渲染管线整合](./advanced/integration/rendering-pipeline.md) → [性能优化](./reference/technical-debt.md)
+
+---
+
+**🎯 文档架构重构完成**：采用6层体系结构，87个文档全面覆盖从基础规范到高级实现的完整技术栈。**交叉引用系统已建立**：所有文档间建立了完整的关联网络，提供清晰的学习路径和技术导航。
 
 **如有问题或建议，欢迎通过 Issues 或 Pull Request 联系我们。**

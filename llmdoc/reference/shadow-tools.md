@@ -765,6 +765,32 @@ Render Time: ${shadowStats.renderTime.toFixed(2)}ms
 - [Unreal Engine Shadows](https://docs.unrealengine.com/en-US/Engine/Rendering/LightingAndShadows/)
 - [Three.js Shadow Mapping](https://threejs.org/examples/?q=shadow)
 
+## 相关文档
+
+### 🏛️ 理论基础
+- [图形系统圣经](../foundations/graphics-bible.md) - 阴影实现的数学基础和坐标系原理
+- [RHI Demo宪法](../foundations/rhi-demo-constitution.md) - 阴影系统的性能和内存规范
+
+### 📚 核心应用
+- [PBR材质系统](./pbr-material-system.md) - **推荐**：PBR材质与实时阴影的完美结合
+- [PBR迁移指南](../learning/tutorials/pbr-migration-guide.md) - 包含阴影集成的PBR实现
+
+### 🎮 实际演示
+- [阴影映射Demo](./shadow-mapping-demo.md) - **体验**：完整的阴影技术演示
+- [方向光源Demo](./directional-light-demo.md) - 基础阴影实现
+- [参考层Demo集合](./) - 27个技术演示的完整索引
+
+### 🎬 后处理集成
+- [后处理系统](./modules/post-processing-system.md) - 阴影的后处理增强
+- [FXAA抗锯齿](./modules/fxaa-anti-aliasing.md) - 阴影边缘的抗锯齿处理
+
+### 🔧 相关技术
+- [GPU实例化](./instancing-demo.md) - 大量带阴影物体的高效渲染
+- [渲染管线整合](../advanced/integration/rendering-pipeline.md) - 阴影在完整渲染管线中的集成
+- [数学API参考](../api/math-type-reference.md) - 阴影计算所需的数学库
+
+---
+
 ## 12. 版本历史
 
 - **v1.0.0** - 基础阴影贴图
@@ -772,3 +798,4 @@ Render Time: ${shadowStats.renderTime.toFixed(2)}ms
 - **v1.2.0** - 级联阴影贴图
 - **v1.3.0** - VSM和ESM支持
 - **v1.4.0** - 接触阴影和自适应质量
+- **v1.5.0** - 添加交叉引用系统
