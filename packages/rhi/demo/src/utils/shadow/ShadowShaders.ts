@@ -29,7 +29,7 @@ export class ShadowShaders {
    * @param transformBinding Uniform Block绑定点，默认0
    * @returns GLSL顶点着色器代码
    */
-  static getDepthVertexShader(transformBinding: number = 0): string {
+  static getDepthVertexShader(_transformBinding: number = 0): string {
     return `#version 300 es
 precision highp float;
 
@@ -37,7 +37,7 @@ precision highp float;
 layout(location = 0) in vec3 aPosition;
 
 // 变换矩阵
-layout(std140, binding = ${transformBinding}) uniform ShadowTransforms {
+layout(std140) uniform ShadowTransforms {
   mat4 uLightViewProjMatrix;  // 64 bytes
   mat4 uModelMatrix;          // 64 bytes
 }; // Total: 128 bytes
@@ -87,8 +87,8 @@ void main() {
    * @param binding 绑定点，默认2
    * @returns GLSL Uniform Block声明
    */
-  static getShadowUniformBlock(binding: number = 2): string {
-    return PCFFilter.getShadowUniformBlock(binding);
+  static getShadowUniformBlock(_binding: number = 2): string {
+    return PCFFilter.getShadowUniformBlock(_binding);
   }
 
   /**
@@ -105,7 +105,12 @@ void main() {
       shadowBinding?: number;
     } = {}
   ): string {
-    const { hasNormals = true, hasUVs = false, transformBinding = 0, shadowBinding = 2 } = options;
+    const {
+      hasNormals = true,
+      hasUVs = false,
+      transformBinding: _transformBinding = 0,
+      shadowBinding: _shadowBinding = 2,
+    } = options;
 
     return `#version 300 es
 precision highp float;
@@ -116,21 +121,21 @@ ${hasNormals ? 'layout(location = 1) in vec3 aNormal;' : ''}
 ${hasUVs ? 'layout(location = 2) in vec2 aTexCoord;' : ''}
 
 // 变换矩阵
-layout(std140, binding = ${transformBinding}) uniform Transforms {
+layout(std140) uniform Transforms {
   mat4 uModelMatrix;       // 64 bytes
   mat4 uViewMatrix;        // 64 bytes
   mat4 uProjectionMatrix;  // 64 bytes
 }; // Total: 192 bytes
 
 // 阴影矩阵
-layout(std140, binding = ${shadowBinding}) uniform ShadowUniforms {
-  mat4 uLightViewProjMatrix;  // 64 bytes
-  vec3 uLightPosition;        // 12 bytes
-  float _pad1;                // 4 bytes (vec3 padding to 16 bytes)
-  float uShadowBias;          // 4 bytes
-  float uShadowIntensity;     // 4 bytes
-  int uPCFSamples;            // 4 bytes
-  float _pad2;                // 4 bytes
+layout(std140) uniform ShadowUniforms {
+  highp mat4 uLightViewProjMatrix;  // 64 bytes
+  highp vec3 uLightPosition;        // 12 bytes
+  highp float _pad_shadow_1;        // 4 bytes (vec3 padding to 16 bytes)
+  highp float uShadowBias;          // 4 bytes
+  highp float uShadowIntensity;     // 4 bytes
+  highp int uPCFSamples;            // 4 bytes
+  highp float _pad_shadow_2;        // 4 bytes
 }; // Total: 96 bytes (std140 aligned)
 
 // 输出到片元着色器
@@ -180,7 +185,13 @@ void main() {
       lightingBinding?: number;
     } = {}
   ): string {
-    const { hasNormals = true, hasUVs = false, pcfMode = '3x3', shadowBias = 0.005, lightingBinding = 1 } = options;
+    const {
+      hasNormals = true,
+      hasUVs = false,
+      pcfMode = '3x3',
+      shadowBias = 0.005,
+      lightingBinding: _lightingBinding = 1,
+    } = options;
 
     const shadowSnippet = this.getShadowSamplingSnippet(pcfMode, shadowBias);
 
@@ -193,17 +204,43 @@ ${hasNormals ? 'in vec3 vWorldNormal;' : ''}
 ${hasUVs ? 'in vec2 vTexCoord;' : ''}
 in vec4 vLightSpacePosition;
 
+// 阴影参数 (Shadow Uniforms)
+layout(std140) uniform ShadowUniforms {
+  highp mat4 uLightViewProjMatrix;  // 64 bytes
+  highp vec3 uLightPosition;        // 12 bytes
+  highp float _pad_shadow_1;        // 4 bytes
+  highp float uShadowBias;          // 4 bytes
+  highp float uShadowIntensity;     // 4 bytes
+  highp int uPCFSamples;            // 4 bytes
+  highp float _pad_shadow_2;        // 4 bytes
+}; // Total: 96 bytes
+
 // 光照参数
-layout(std140, binding = ${lightingBinding}) uniform Lighting {
-  vec3 uLightDirection;   // 12 bytes
-  float _pad1;            // 4 bytes
-  vec3 uLightColor;       // 12 bytes
-  float _pad2;            // 4 bytes
+layout(std140) uniform Lighting {
+  // 主光源 (Main Light) - 投射阴影
+  vec3 uMainLightDir;     // 12 bytes
+  float _pad_main_1;      // 4 bytes
+  vec3 uMainLightColor;   // 12 bytes
+  float _pad_main_2;      // 4 bytes
+
+  // 补光 (Fill Light)
+  vec3 uFillLightDir;     // 12 bytes
+  float _pad_fill_1;      // 4 bytes
+  vec3 uFillLightColor;   // 12 bytes
+  float _pad_fill_2;      // 4 bytes
+
+  // 背光 (Back Light)
+  vec3 uBackLightDir;     // 12 bytes
+  float _pad_back_1;      // 4 bytes
+  vec3 uBackLightColor;   // 12 bytes
+  float _pad_back_2;      // 4 bytes
+
+  // 环境与材质
   vec3 uAmbientColor;     // 12 bytes
-  float _pad3;            // 4 bytes
+  float _pad_amb_1;       // 4 bytes
   vec3 uObjectColor;      // 12 bytes
-  float _pad4;            // 4 bytes
-}; // Total: 64 bytes
+  float _pad_obj_1;       // 4 bytes
+}; // Total: 128 bytes
 
 // 阴影贴图
 uniform sampler2D uShadowMap;
@@ -220,28 +257,40 @@ void main() {
   // 法线
   vec3 normal = normalize(vWorldNormal);
 
-  // 光照方向
-  vec3 lightDir = normalize(-uLightDirection);
+  // 1. 主光源 (Main Light) - 带阴影
+  vec3 mainLightDir = normalize(-uMainLightDir);
+  float mainDiff = max(dot(normal, mainLightDir), 0.0);
+  vec3 mainDiffuse = mainDiff * uMainLightColor;
 
-  // 漫反射
-  float diff = max(dot(normal, lightDir), 0.0);
-  vec3 diffuse = diff * uLightColor;
-  `
-      : `
-  vec3 diffuse = uLightColor;
-  `
-  }
+  // 计算阴影
+  float shadow = calculateShadow(vLightSpacePosition, uShadowMap);
+  vec3 mainLighting = (1.0 - shadow) * mainDiffuse;
+
+  // 2. 补光 (Fill Light)
+  vec3 fillLightDir = normalize(-uFillLightDir);
+  float fillDiff = max(dot(normal, fillLightDir), 0.0);
+  vec3 fillLighting = fillDiff * uFillLightColor;
+
+  // 3. 背光 (Back Light)
+  vec3 backLightDir = normalize(-uBackLightDir);
+  float backDiff = max(dot(normal, backLightDir), 0.0);
+  vec3 backLighting = backDiff * uBackLightColor;
 
   // 环境光
   vec3 ambient = uAmbientColor;
 
-  // 计算阴影
+  // 最终光照组合
+  vec3 lighting = ambient + mainLighting + fillLighting + backLighting;
+  `
+      : `
+  // 无法线，简单的环境光+主光颜色
+  vec3 ambient = uAmbientColor;
   float shadow = calculateShadow(vLightSpacePosition, uShadowMap);
+  vec3 lighting = ambient + (1.0 - shadow) * uMainLightColor;
+  `
+  }
 
-  // 最终颜色（阴影只影响漫反射，不影响环境光）
-  vec3 lighting = ambient + (1.0 - shadow) * diffuse;
   vec3 color = lighting * uObjectColor;
-
   fragColor = vec4(color, 1.0);
 }
 `;

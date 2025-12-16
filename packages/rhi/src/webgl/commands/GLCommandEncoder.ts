@@ -1,5 +1,6 @@
 import { WebGLRenderPass } from './GLRenderPass';
 import { WebGLCommandBuffer } from './GLCommandBuffer';
+import type { WebGLUtils } from '../utils/GLUtils';
 import type { MSpec } from '@maxellabs/core';
 
 /**
@@ -11,18 +12,21 @@ export class WebGLCommandEncoder implements MSpec.IRHICommandEncoder {
   private commands: MSpec.RHICommand[];
   private label?: string;
   private isDestroyed = false;
+  private utils?: WebGLUtils;
 
   /**
    * 创建WebGL命令编码器
    *
    * @param gl WebGL上下文
    * @param label 可选标签
+   * @param utils WebGL工具类实例
    */
-  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, label?: string) {
+  constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, label?: string, utils?: WebGLUtils) {
     this.gl = gl;
     this.isWebGL2 = gl instanceof WebGL2RenderingContext;
     this.commands = [];
     this.label = label;
+    this.utils = utils;
   }
 
   /**
@@ -80,7 +84,7 @@ export class WebGLCommandEncoder implements MSpec.IRHICommandEncoder {
     // 创建渲染通道
     // 注意：WebGLRenderPass 构造函数中已经通过 addCommand 添加了 beginPass 命令，
     // 不需要再额外添加 beginRenderPass 命令，否则会导致帧缓冲被创建两次
-    const renderPass = new WebGLRenderPass(this.gl, options, this);
+    const renderPass = new WebGLRenderPass(this.gl, options, this, this.utils);
     // // 记录渲染通道命令
     // this.commands.push({
     //   type: 'beginRenderPass',

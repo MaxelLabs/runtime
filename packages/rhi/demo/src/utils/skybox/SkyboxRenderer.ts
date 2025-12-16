@@ -215,14 +215,15 @@ void main() {
 
     // 创建绑定组布局
     const bindGroupLayout = this.runner.device.createBindGroupLayout([
-      { binding: 0, visibility: MSpec.RHIShaderStage.VERTEX, buffer: { type: 'uniform' } },
+      { binding: 0, visibility: MSpec.RHIShaderStage.VERTEX, buffer: { type: 'uniform' }, name: 'Transforms' },
       {
         binding: 1,
         visibility: MSpec.RHIShaderStage.FRAGMENT,
         texture: { sampleType: 'float', viewDimension: 'cube' },
+        name: 'uSkybox',
       },
-      { binding: 2, visibility: MSpec.RHIShaderStage.FRAGMENT, sampler: { type: 'filtering' } },
-      { binding: 3, visibility: MSpec.RHIShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
+      { binding: 2, visibility: MSpec.RHIShaderStage.FRAGMENT, sampler: { type: 'filtering' }, name: 'uSkyboxSampler' },
+      { binding: 3, visibility: MSpec.RHIShaderStage.FRAGMENT, buffer: { type: 'uniform' }, name: 'uExposure' },
     ]);
 
     // 创建管线布局
@@ -256,7 +257,7 @@ void main() {
           cullMode: MSpec.RHICullMode.FRONT, // 反转立方体，剔除前面
         },
         depthStencilState: {
-          format: MSpec.RHITextureFormat.DEPTH24_UNORM_STENCIL8,
+          format: MSpec.RHITextureFormat.DEPTH24_UNORM,
           depthWriteEnabled: false, // 不写入深度
           depthCompare: MSpec.RHICompareFunction.LESS_EQUAL, // 深度测试为LESS_EQUAL
         },
@@ -283,14 +284,15 @@ void main() {
     // 更好的做法是: 在 createPipeline 中创建 bindGroupLayout 并保存到 this.bindGroupLayout
     // 但为了尽量少改动，我们这里重新创建一次相同的 layout
     const bindGroupLayout = this.runner.device.createBindGroupLayout([
-      { binding: 0, visibility: MSpec.RHIShaderStage.VERTEX, buffer: { type: 'uniform' } },
+      { binding: 0, visibility: MSpec.RHIShaderStage.VERTEX, buffer: { type: 'uniform' }, name: 'Transforms' },
       {
         binding: 1,
         visibility: MSpec.RHIShaderStage.FRAGMENT,
         texture: { sampleType: 'float', viewDimension: 'cube' },
+        name: 'uSkybox',
       },
-      { binding: 2, visibility: MSpec.RHIShaderStage.FRAGMENT, sampler: { type: 'filtering' } },
-      { binding: 3, visibility: MSpec.RHIShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
+      { binding: 2, visibility: MSpec.RHIShaderStage.FRAGMENT, sampler: { type: 'filtering' }, name: 'uSkyboxSampler' },
+      { binding: 3, visibility: MSpec.RHIShaderStage.FRAGMENT, buffer: { type: 'uniform' }, name: 'uExposure' },
     ]);
 
     this.bindGroup = this.runner.track(

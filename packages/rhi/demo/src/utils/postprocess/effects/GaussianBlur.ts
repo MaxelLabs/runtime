@@ -130,7 +130,7 @@ out vec4 fragColor;
 
 uniform sampler2D uTexture;
 
-layout(std140, binding = 2) uniform Params {
+layout(std140) uniform Params {
   vec2 uTexelSize;
   float uRadius;
   float uIntensity;

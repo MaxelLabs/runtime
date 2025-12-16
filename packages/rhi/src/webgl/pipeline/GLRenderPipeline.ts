@@ -126,8 +126,16 @@ export class WebGLRenderPipeline implements MSpec.IRHIRenderPipeline {
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
       const infoLog = gl.getProgramInfoLog(program);
 
+      // 获取更多调试信息
+      const vertexSource = gl.getShaderSource(vertexGLShader);
+      const fragmentSource = gl.getShaderSource(fragmentGLShader);
+
+      console.error(`[WebGLRenderPipeline] Shader Link Error:\n${infoLog}`);
+      console.error('Vertex Shader Source:\n', vertexSource);
+      console.error('Fragment Shader Source:\n', fragmentSource);
+
       gl.deleteProgram(program);
-      throw new Error(`链接着色器程序失败: ${infoLog}`);
+      throw new Error(`链接着色器程序失败: ${infoLog}\n请检查控制台获取详细着色器源码。`);
     }
 
     return program;

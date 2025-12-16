@@ -73,9 +73,9 @@ export class ShaderUtils {
    * ```
    */
   static generateUniformBlock(definition: UniformBlockDefinition): string {
-    const { name, binding, fields } = definition;
+    const { name, binding: _binding, fields } = definition;
 
-    let code = `layout(std140, binding = ${binding}) uniform ${name} {\n`;
+    let code = `layout(std140) uniform ${name} {\n`;
 
     for (const field of fields) {
       const arrayPart = field.arraySize ? `[${field.arraySize}]` : '';

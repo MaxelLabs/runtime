@@ -277,6 +277,10 @@ export class WebGLBindGroup implements MSpec.IRHIBindGroup {
     }
 
     const gl = this.gl;
+    if (gl.getParameter(gl.CURRENT_PROGRAM) !== program) {
+      gl.useProgram(program);
+    }
+    let dynamicOffsetIndex = 0;
 
     for (const entry of this.entries) {
       const binding = entry.binding;
@@ -309,6 +313,20 @@ export class WebGLBindGroup implements MSpec.IRHIBindGroup {
         actualResource = (boundResourceItem as any).buffer as GLBuffer;
         bufferBindOffset = (boundResourceItem as any).offset || 0;
         bufferBindSize = (boundResourceItem as any).size;
+      }
+
+      // Apply dynamic offset if applicable
+      if (layoutEntry.buffer && layoutEntry.buffer.hasDynamicOffset) {
+        if (dynamicOffsets && dynamicOffsetIndex < dynamicOffsets.length) {
+          const dynamicOffset = dynamicOffsets[dynamicOffsetIndex];
+          bufferBindOffset += dynamicOffset;
+          dynamicOffsetIndex++;
+          // console.log(`[WebGLBindGroup] Applied dynamic offset ${dynamicOffset} to binding ${binding}. New offset: ${bufferBindOffset}`);
+        } else {
+          console.warn(
+            `[${this.label || 'WebGLBindGroup'}] Binding ${binding} expects a dynamic offset, but none provided or index out of bounds.`
+          );
+        }
       }
 
       if (layoutEntry.buffer && actualResource instanceof GLBuffer) {

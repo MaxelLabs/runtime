@@ -52,6 +52,7 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
    * @param gl WebGL上下文
    * @param options 渲染通道选项
    * @param encoder 命令编码器
+   * @param utils WebGL工具类实例
    */
   constructor(
     gl: WebGLRenderingContext | WebGL2RenderingContext,
@@ -75,7 +76,8 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
       };
       label?: string;
     },
-    encoder: WebGLCommandEncoder
+    encoder: WebGLCommandEncoder,
+    utils?: WebGLUtils
   ) {
     this.gl = gl;
     this.isWebGL2 = gl instanceof WebGL2RenderingContext;
@@ -84,12 +86,34 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
     this.depthStencilAttachment = options.depthStencilAttachment;
     this._label = options.label;
     this.framebuffer = null;
-    this.utils = new WebGLUtils(gl);
+
+    if (utils) {
+      this.utils = utils;
+    } else {
+      // 这是一个潜在的性能问题，如果在每一帧都创建新的 WebGLRenderPass 且不传递 utils，
+      // 会导致 WebGLUtils 被反复创建，从而重复查询 WebGL 扩展。
+      console.warn(
+        'WebGLRenderPass: utils instance not provided, creating a new one. This may impact performance if called frequently.'
+      );
+      this.utils = new WebGLUtils(gl);
+    }
 
     // 设置默认视口和裁剪矩形
-    const mainColorAttachment = this.colorAttachments[0];
-    const width = mainColorAttachment.view.texture.width;
-    const height = mainColorAttachment.view.texture.height;
+    let width = 0;
+    let height = 0;
+
+    if (this.colorAttachments && this.colorAttachments.length > 0) {
+      const mainColorAttachment = this.colorAttachments[0];
+      if (mainColorAttachment && mainColorAttachment.view && mainColorAttachment.view.texture) {
+        width = mainColorAttachment.view.texture.width;
+        height = mainColorAttachment.view.texture.height;
+      }
+    } else if (this.depthStencilAttachment) {
+      if (this.depthStencilAttachment.view && this.depthStencilAttachment.view.texture) {
+        width = this.depthStencilAttachment.view.texture.width;
+        height = this.depthStencilAttachment.view.texture.height;
+      }
+    }
 
     this.viewport = { x: 0, y: 0, width, height, minDepth: 0, maxDepth: 1 };
     this.scissorRect = { x: 0, y: 0, width, height };
@@ -202,9 +226,16 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
       }
     }
 
-    // 对于WebGL2，配置多渲染目标的drawBuffers
-    if (this.isWebGL2 && drawBuffers.length > 1) {
-      (gl as WebGL2RenderingContext).drawBuffers(drawBuffers);
+    if (this.isWebGL2) {
+      const gl2 = gl as WebGL2RenderingContext;
+
+      if (drawBuffers.length === 0) {
+        gl2.drawBuffers([gl2.NONE]);
+        gl2.readBuffer(gl2.NONE);
+      } else {
+        gl2.drawBuffers(drawBuffers);
+        gl2.readBuffer(drawBuffers[0]);
+      }
     }
 
     // 检查帧缓冲完整性
@@ -330,11 +361,14 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
       return;
     }
 
+    // 捕获当前缓冲区引用
+    const boundBuffer = this.currentIndexBuffer;
+
     // 添加设置索引缓冲区的命令
     this.encoder.addCommand(() => {
       const gl = this.gl;
 
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.currentIndexBuffer!.getGLBuffer());
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, boundBuffer.getGLBuffer());
     });
   }
 
@@ -347,6 +381,9 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
 
       return;
     }
+
+    // 捕获当前管线
+    const pipeline = this.currentPipeline;
 
     this.encoder.addCommand(() => {
       try {
@@ -362,13 +399,13 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
 
         const glBuffer = (buffer as any).getGLBuffer();
 
-        if (!glBuffer || !this.currentPipeline) {
+        if (!glBuffer || !pipeline) {
           console.error('获取WebGL缓冲区对象失败 或 没有设置渲染管线');
 
           return;
         }
 
-        this.currentPipeline.applyVertexBufferLayout(slot, buffer, offset);
+        pipeline.applyVertexBufferLayout(slot, buffer, offset);
         // console.log(`设置顶点缓冲区: 槽位 ${slot}, 偏移 ${offset}`);
       } catch (e) {
         console.error('设置顶点缓冲区时出错:', e);
@@ -389,19 +426,22 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
       return;
     }
 
+    // 捕获当前管线
+    const pipeline = this.currentPipeline;
+
     // 添加设置顶点缓冲区的命令
     this.encoder.addCommand({
       type: 'setVertexBuffers',
       params: {
         startSlot: firstSlot,
         buffers: buffers,
-        pipeline: this.currentPipeline,
+        pipeline: pipeline,
       },
     });
 
     // 同时添加一个自定义命令来确保设置生效
     this.encoder.addCommand(() => {
-      if (this.currentPipeline) {
+      if (pipeline) {
         for (let i = 0; i < buffers.length; i++) {
           const slot = firstSlot + i;
           const buffer = buffers[i].buffer;
@@ -411,7 +451,7 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
             // 尝试直接设置顶点缓冲区
             const glBuffer = buffer.getGLBuffer();
 
-            this.currentPipeline.applyVertexBufferLayout(slot, glBuffer, offset);
+            pipeline.applyVertexBufferLayout(slot, glBuffer, offset);
             // console.log(`手动设置顶点缓冲区: 槽位 ${slot}, 偏移 ${offset}`);
           } catch (e) {
             console.error('设置顶点缓冲区失败:', e);
@@ -431,11 +471,14 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
       return;
     }
 
+    // 捕获当前管线
+    const pipeline = this.currentPipeline;
+
     this.encoder.addCommand(() => {
-      if (this.currentPipeline) {
+      if (pipeline) {
         try {
           const webglBindGroup = bindGroup as any;
-          const program = this.currentPipeline.getProgram();
+          const program = pipeline.getProgram();
 
           if (program && webglBindGroup.applyBindings) {
             webglBindGroup.applyBindings(program, dynamicOffsets);
@@ -464,6 +507,9 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
       return;
     }
 
+    // 捕获当前管线
+    const primitiveTopology = this.currentPipeline.primitiveTopology;
+
     // 添加绘制命令
     this.encoder.addCommand({
       type: 'draw',
@@ -472,7 +518,7 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
         instanceCount,
         firstVertex,
         firstInstance,
-        primitiveTopology: this.currentPipeline.primitiveTopology,
+        primitiveTopology: primitiveTopology,
       },
     });
 
@@ -493,20 +539,26 @@ export class WebGLRenderPass implements MSpec.IRHIRenderPass {
       throw new Error('渲染通道已结束，无法执行索引绘制');
     }
 
+    // 捕获当前状态
+    const pipeline = this.currentPipeline;
+    const indexBuffer = this.currentIndexBuffer;
+    const indexFormat = this.currentIndexFormat;
+    const indexOffset = this.currentIndexOffset;
+
     // 添加索引绘制命令
     this.encoder.addCommand(() => {
       const gl = this.gl;
 
-      if (!this.currentPipeline || !this.currentIndexBuffer) {
+      if (!pipeline || !indexBuffer) {
         console.error('尝试在未设置渲染管线或索引缓冲区的情况下进行索引绘制');
 
         return;
       }
 
-      const primitiveType = this.utils.primitiveTopologyToGL(this.currentPipeline.primitiveTopology);
-      const indexType = this.currentIndexFormat === MSpec.RHIIndexFormat.UINT16 ? gl.UNSIGNED_SHORT : gl.UNSIGNED_INT;
-      const bytesPerIndex = this.currentIndexFormat === MSpec.RHIIndexFormat.UINT16 ? 2 : 4;
-      const offset = this.currentIndexOffset + firstIndex * bytesPerIndex;
+      const primitiveType = this.utils.primitiveTopologyToGL(pipeline.primitiveTopology);
+      const indexType = indexFormat === MSpec.RHIIndexFormat.UINT16 ? gl.UNSIGNED_SHORT : gl.UNSIGNED_INT;
+      const bytesPerIndex = indexFormat === MSpec.RHIIndexFormat.UINT16 ? 2 : 4;
+      const offset = indexOffset + firstIndex * bytesPerIndex;
 
       // baseVertex不直接被WebGL支持，需要在顶点着色器中处理
 

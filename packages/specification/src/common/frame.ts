@@ -11,13 +11,11 @@
 import type { CommonElement } from './elements';
 import type {
   ElementType,
-  InterpolationMode,
   AnimationProperties,
   BaseEvent,
   EventType,
   UnifiedKeyframe,
   UnifiedAnimationTrack,
-  BlendMode,
 } from '../core';
 
 /**

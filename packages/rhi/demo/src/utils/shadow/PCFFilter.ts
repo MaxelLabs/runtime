@@ -83,14 +83,14 @@ uniform float uShadowIntensity;
    */
   static getShadowUniformBlock(binding: number = 2): string {
     return `
-layout(std140, binding = ${binding}) uniform ShadowUniforms {
-  mat4 uLightViewProjMatrix;  // 64 bytes
-  vec3 uLightPosition;        // 12 bytes
-  float _pad1;                // 4 bytes (vec3 padding to 16 bytes)
-  float uShadowBias;          // 4 bytes
-  float uShadowIntensity;     // 4 bytes
-  int uPCFSamples;            // 4 bytes
-  float _pad2;                // 4 bytes
+layout(std140) uniform ShadowUniforms {
+  highp mat4 uLightViewProjMatrix;  // 64 bytes
+  highp vec3 uLightPosition;        // 12 bytes
+  highp float _pad_shadow_1;        // 4 bytes (vec3 padding to 16 bytes)
+  highp float uShadowBias;          // 4 bytes
+  highp float uShadowIntensity;     // 4 bytes
+  highp int uPCFSamples;            // 4 bytes
+  highp float _pad_shadow_2;        // 4 bytes
 }; // Total: 96 bytes (std140 aligned)
 `;
   }
@@ -152,22 +152,19 @@ float calculateShadow(vec4 lightSpacePos, sampler2D shadowMap) {
     return 0.0;
   }
 
-  // 阴影偏移
-  float shadowBias = ${bias.toFixed(6)};
+  // 阴影偏移 (使用Uniform)
+  float shadowBias = uShadowBias;
   float shadowNormalBias = ${normalBias.toFixed(6)};
 
   // 应用 normalBias 到深度比较
-  // 注意：通常 normalBias 应该在顶点着色器中应用到 lightSpacePos，
-  // 但这里作为后处理的近似，我们可以调整当前深度值。
-  // 更准确的做法是 projCoords.xy += normal * shadowNormalBias
-  // 但这里我们没有法线信息，所以仅作为深度偏移的额外参数。
-  // 为了保持简单和兼容现有签名，我们将 shadowNormalBias 加到 shadowBias 上。
-  // 实际应用中，如果需要真正的 normal bias，应该在顶点阶段处理。
   float currentDepth = projCoords.z;
   float closestDepth = texture(shadowMap, projCoords.xy).r;
 
   // 深度比较
-  return currentDepth - (shadowBias + shadowNormalBias) > closestDepth ? 1.0 : 0.0;
+  float shadow = currentDepth - (shadowBias + shadowNormalBias) > closestDepth ? 1.0 : 0.0;
+
+  // 应用阴影强度
+  return shadow * uShadowIntensity;
 }
 `;
   }
@@ -197,7 +194,7 @@ float calculateShadow(vec4 lightSpacePos, sampler2D shadowMap) {
     return 0.0;
   }
 
-  float shadowBias = ${bias.toFixed(6)};
+  float shadowBias = uShadowBias;
   float shadowNormalBias = ${normalBias.toFixed(6)};
   float currentDepth = projCoords.z;
   float shadow = 0.0;
@@ -214,7 +211,7 @@ float calculateShadow(vec4 lightSpacePos, sampler2D shadowMap) {
     }
   }
 
-  return shadow / 4.0;
+  return (shadow / 4.0) * uShadowIntensity;
 }
 `;
   }
@@ -244,7 +241,7 @@ float calculateShadow(vec4 lightSpacePos, sampler2D shadowMap) {
     return 0.0;
   }
 
-  float shadowBias = ${bias.toFixed(6)};
+  float shadowBias = uShadowBias;
   float shadowNormalBias = ${normalBias.toFixed(6)};
   float currentDepth = projCoords.z;
   float shadow = 0.0;
@@ -261,7 +258,7 @@ float calculateShadow(vec4 lightSpacePos, sampler2D shadowMap) {
     }
   }
 
-  return shadow / 9.0;
+  return (shadow / 9.0) * uShadowIntensity;
 }
 `;
   }
@@ -291,7 +288,7 @@ float calculateShadow(vec4 lightSpacePos, sampler2D shadowMap) {
     return 0.0;
   }
 
-  float shadowBias = ${bias.toFixed(6)};
+  float shadowBias = uShadowBias;
   float shadowNormalBias = ${normalBias.toFixed(6)};
   float currentDepth = projCoords.z;
   float shadow = 0.0;
@@ -308,7 +305,7 @@ float calculateShadow(vec4 lightSpacePos, sampler2D shadowMap) {
     }
   }
 
-  return shadow / 25.0;
+  return (shadow / 25.0) * uShadowIntensity;
 }
 `;
   }

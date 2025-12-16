@@ -122,7 +122,7 @@ out vec4 fragColor;
 
 uniform sampler2D uTexture;
 
-layout(std140, binding = 2) uniform Params {
+layout(std140) uniform Params {
   float uBrightness;  // [-1.0, 1.0]
   float uContrast;    // [0.0, 2.0]
 };

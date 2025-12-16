@@ -569,7 +569,7 @@ export class WebGLDevice implements MSpec.IRHIDevice {
    * 创建命令编码器
    */
   createCommandEncoder(label?: string): MSpec.IRHICommandEncoder {
-    const encoder = new WebGLCommandEncoder(this.gl, label);
+    const encoder = new WebGLCommandEncoder(this.gl, label, this.utils);
     this.resourceTracker.register(encoder, ResourceType.COMMAND_ENCODER);
     return encoder;
   }

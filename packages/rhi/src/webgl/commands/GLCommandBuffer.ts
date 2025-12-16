@@ -648,11 +648,26 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
   private executeCopyTextureToCanvas(params: MSpec.RHICopyTextureToCanvasParams): void {
     const { source } = params;
     const gl = this.gl;
+    const previousProgram = gl.getParameter(gl.CURRENT_PROGRAM) as WebGLProgram | null;
+    const previousArrayBuffer = gl.getParameter(gl.ARRAY_BUFFER_BINDING) as WebGLBuffer | null;
+    const previousActiveTexture = gl.getParameter(gl.ACTIVE_TEXTURE) as number;
+    const wasDepthTestEnabled = gl.isEnabled(gl.DEPTH_TEST);
+    const wasBlendEnabled = gl.isEnabled(gl.BLEND);
+    const wasCullFaceEnabled = gl.isEnabled(gl.CULL_FACE);
+    const canvas = gl.canvas as HTMLCanvasElement;
+    const previousViewport = gl.getParameter(gl.VIEWPORT) as Int32Array;
+
+    const previousVAO =
+      gl instanceof WebGL2RenderingContext
+        ? ((gl as WebGL2RenderingContext).getParameter(
+            (gl as WebGL2RenderingContext).VERTEX_ARRAY_BINDING
+          ) as WebGLVertexArrayObject | null)
+        : null;
+
     // 绑定到默认帧缓冲区（画布）
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
     // 重置viewport到完整canvas尺寸（修复三分屏等场景的viewport污染）
-    const canvas = gl.canvas as HTMLCanvasElement;
     gl.viewport(0, 0, canvas.width, canvas.height);
 
     // 禁用深度测试，确保全屏四边形能够绘制
@@ -668,25 +683,53 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
     gl.clearColor(0.1, 0.1, 0.1, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    // 创建一个简单的着色器程序来显示纹理
-    const vertexShaderSource = `
-      attribute vec2 a_position;
-      attribute vec2 a_texcoord;
-      varying vec2 v_texcoord;
-      void main() {
-        gl_Position = vec4(a_position, 0.0, 1.0);
-        v_texcoord = a_texcoord;
-      }
-    `;
+    const isWebGL2 = gl instanceof WebGL2RenderingContext;
 
-    const fragmentShaderSource = `
-      precision mediump float;
-      uniform sampler2D u_texture;
-      varying vec2 v_texcoord;
-      void main() {
-        gl_FragColor = texture2D(u_texture, v_texcoord);
-      }
-    `;
+    const vertexShaderSource = isWebGL2
+      ? `#version 300 es
+precision highp float;
+
+layout(location = 0) in vec2 a_position;
+layout(location = 1) in vec2 a_texcoord;
+
+out vec2 v_texcoord;
+
+void main() {
+  gl_Position = vec4(a_position, 0.0, 1.0);
+  v_texcoord = a_texcoord;
+}
+`
+      : `
+attribute vec2 a_position;
+attribute vec2 a_texcoord;
+varying vec2 v_texcoord;
+void main() {
+  gl_Position = vec4(a_position, 0.0, 1.0);
+  v_texcoord = a_texcoord;
+}
+`;
+
+    const fragmentShaderSource = isWebGL2
+      ? `#version 300 es
+precision highp float;
+
+uniform sampler2D u_texture;
+
+in vec2 v_texcoord;
+out vec4 fragColor;
+
+void main() {
+  fragColor = texture(u_texture, v_texcoord);
+}
+`
+      : `
+precision mediump float;
+uniform sampler2D u_texture;
+varying vec2 v_texcoord;
+void main() {
+  gl_FragColor = texture2D(u_texture, v_texcoord);
+}
+`;
 
     // 创建着色器
     const vertexShader = gl.createShader(gl.VERTEX_SHADER);
@@ -767,21 +810,98 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
 
     // 创建缓冲区
     const vertexBuffer = gl.createBuffer();
+    if (!vertexBuffer) {
+      console.error('创建顶点缓冲区失败');
+
+      if (previousVAO && isWebGL2) {
+        (gl as WebGL2RenderingContext).bindVertexArray(previousVAO);
+      }
+      if (previousProgram) {
+        gl.useProgram(previousProgram);
+      }
+      if (previousViewport) {
+        gl.viewport(previousViewport[0], previousViewport[1], previousViewport[2], previousViewport[3]);
+      }
+      if (wasDepthTestEnabled) {
+        gl.enable(gl.DEPTH_TEST);
+      } else {
+        gl.disable(gl.DEPTH_TEST);
+      }
+      if (wasBlendEnabled) {
+        gl.enable(gl.BLEND);
+      } else {
+        gl.disable(gl.BLEND);
+      }
+      if (wasCullFaceEnabled) {
+        gl.enable(gl.CULL_FACE);
+      } else {
+        gl.disable(gl.CULL_FACE);
+      }
+      gl.bindBuffer(gl.ARRAY_BUFFER, previousArrayBuffer);
+      gl.activeTexture(previousActiveTexture);
+      return;
+    }
+
+    let copyVAO: WebGLVertexArrayObject | null = null;
+    if (isWebGL2) {
+      copyVAO = (gl as WebGL2RenderingContext).createVertexArray();
+      (gl as WebGL2RenderingContext).bindVertexArray(copyVAO);
+    }
+
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
 
-    // 位置属性
-    const positionLoc = gl.getAttribLocation(program, 'a_position');
-    gl.enableVertexAttribArray(positionLoc);
-    gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 16, 0);
+    const positionLoc = isWebGL2 ? 0 : gl.getAttribLocation(program, 'a_position');
+    if (positionLoc >= 0) {
+      gl.enableVertexAttribArray(positionLoc);
+      gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 16, 0);
+    }
 
-    // 纹理坐标属性
-    const texcoordLoc = gl.getAttribLocation(program, 'a_texcoord');
-    gl.enableVertexAttribArray(texcoordLoc);
-    gl.vertexAttribPointer(texcoordLoc, 2, gl.FLOAT, false, 16, 8);
+    const texcoordLoc = isWebGL2 ? 1 : gl.getAttribLocation(program, 'a_texcoord');
+    if (texcoordLoc >= 0) {
+      gl.enableVertexAttribArray(texcoordLoc);
+      gl.vertexAttribPointer(texcoordLoc, 2, gl.FLOAT, false, 16, 8);
+    }
 
     // 绑定源纹理
     const sourceTexture = (source as WebGLTextureView).getGLTexture();
+
+    if (!sourceTexture) {
+      console.error('无法获取源纹理');
+
+      if (copyVAO && isWebGL2) {
+        (gl as WebGL2RenderingContext).bindVertexArray(previousVAO);
+        (gl as WebGL2RenderingContext).deleteVertexArray(copyVAO);
+      }
+      gl.deleteBuffer(vertexBuffer);
+      gl.deleteProgram(program);
+      gl.deleteShader(vertexShader);
+      gl.deleteShader(fragmentShader);
+      if (previousProgram) {
+        gl.useProgram(previousProgram);
+      }
+      if (previousViewport) {
+        gl.viewport(previousViewport[0], previousViewport[1], previousViewport[2], previousViewport[3]);
+      }
+      if (wasDepthTestEnabled) {
+        gl.enable(gl.DEPTH_TEST);
+      } else {
+        gl.disable(gl.DEPTH_TEST);
+      }
+      if (wasBlendEnabled) {
+        gl.enable(gl.BLEND);
+      } else {
+        gl.disable(gl.BLEND);
+      }
+      if (wasCullFaceEnabled) {
+        gl.enable(gl.CULL_FACE);
+      } else {
+        gl.disable(gl.CULL_FACE);
+      }
+      gl.bindBuffer(gl.ARRAY_BUFFER, previousArrayBuffer);
+      gl.activeTexture(previousActiveTexture);
+      return;
+    }
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, sourceTexture);
@@ -792,9 +912,10 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-    // 设置纹理uniform（使用纹理单元0）
     const textureLoc = gl.getUniformLocation(program, 'u_texture');
-    gl.uniform1i(textureLoc, 0);
+    if (textureLoc !== null) {
+      gl.uniform1i(textureLoc, 0);
+    }
     // 绘制四边形
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
@@ -805,10 +926,38 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
     }
 
     // 清理资源
+    if (copyVAO && isWebGL2) {
+      (gl as WebGL2RenderingContext).bindVertexArray(previousVAO);
+      (gl as WebGL2RenderingContext).deleteVertexArray(copyVAO);
+    }
     gl.deleteBuffer(vertexBuffer);
     gl.deleteProgram(program);
     gl.deleteShader(vertexShader);
     gl.deleteShader(fragmentShader);
+
+    if (previousProgram) {
+      gl.useProgram(previousProgram);
+    }
+    if (previousViewport) {
+      gl.viewport(previousViewport[0], previousViewport[1], previousViewport[2], previousViewport[3]);
+    }
+    if (wasDepthTestEnabled) {
+      gl.enable(gl.DEPTH_TEST);
+    } else {
+      gl.disable(gl.DEPTH_TEST);
+    }
+    if (wasBlendEnabled) {
+      gl.enable(gl.BLEND);
+    } else {
+      gl.disable(gl.BLEND);
+    }
+    if (wasCullFaceEnabled) {
+      gl.enable(gl.CULL_FACE);
+    } else {
+      gl.disable(gl.CULL_FACE);
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, previousArrayBuffer);
+    gl.activeTexture(previousActiveTexture);
   }
 
   /**
@@ -1076,16 +1225,7 @@ export class WebGLCommandBuffer implements MSpec.IRHICommandBuffer {
           continue;
         }
 
-        // 尝试获取WebGL缓冲区对象
-        const glBuffer = buffer.getGLBuffer();
-
-        if (!glBuffer) {
-          console.error('获取WebGL缓冲区对象失败');
-          continue;
-        }
-
-        // 如果渲染管线有顶点缓冲区布局，应用它
-        webglPipeline.applyVertexBufferLayout(startSlot + i, glBuffer, offset);
+        webglPipeline.applyVertexBufferLayout(startSlot + i, buffer, offset);
 
         // console.log(`成功设置槽位 ${startSlot + i} 的顶点缓冲区`, buffer);
       }

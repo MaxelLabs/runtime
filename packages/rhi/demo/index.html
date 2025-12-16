@@ -585,6 +585,45 @@
         </div>
         <a class="demo-link" href="html/instancing.html">🎮 运行Demo</a>
       </div>
+
+      <div class="demo-card">
+        <h3>🌑 阴影贴图 <span class="difficulty advanced">高级</span></h3>
+        <p>演示阴影贴图技术，通过两遍渲染实现实时阴影效果。第一遍从光源视角渲染深度贴图，第二遍在场景渲染中采样深度贴图计算阴影。支持 PCF 软阴影滤波和阴影参数实时调节。</p>
+        <div class="tech-tags">
+          <span class="tech-tag">Shadow Mapping</span>
+          <span class="tech-tag">Depth Pass</span>
+          <span class="tech-tag">PCF Filter</span>
+          <span class="tech-tag">Light Space Matrix</span>
+          <span class="tech-tag">软阴影</span>
+        </div>
+        <a class="demo-link" href="html/shadow-mapping.html">🎮 运行Demo</a>
+      </div>
+
+      <div class="demo-card">
+        <h3>🎨 后处理框架 <span class="difficulty advanced">高级</span></h3>
+        <p>演示后处理管道系统，支持链式应用多个后处理效果。展示亮度/对比度调整、高斯模糊、色调映射等效果的组合使用。使用 Ping-Pong 缓冲区技术避免读写冲突。</p>
+        <div class="tech-tags">
+          <span class="tech-tag">Post-Processing</span>
+          <span class="tech-tag">Ping-Pong Buffer</span>
+          <span class="tech-tag">Tone Mapping</span>
+          <span class="tech-tag">Gaussian Blur</span>
+          <span class="tech-tag">效果链</span>
+        </div>
+        <a class="demo-link" href="html/post-process.html">🎮 运行Demo</a>
+      </div>
+
+      <div class="demo-card">
+        <h3>✨ FXAA 抗锯齿 <span class="difficulty advanced">高级</span></h3>
+        <p>演示 FXAA（Fast Approximate Anti-Aliasing）后处理抗锯齿技术。通过边缘检测和亚像素混合实现快速抗锯齿效果，性能开销远低于 MSAA。支持实时调节抗锯齿参数和对比显示开关效果。</p>
+        <div class="tech-tags">
+          <span class="tech-tag">FXAA</span>
+          <span class="tech-tag">Edge Detection</span>
+          <span class="tech-tag">Subpixel AA</span>
+          <span class="tech-tag">Post-Processing</span>
+          <span class="tech-tag">性能优化</span>
+        </div>
+        <a class="demo-link" href="html/fxaa.html">🎮 运行Demo</a>
+      </div>
     </div>
 
     <div class="footer">

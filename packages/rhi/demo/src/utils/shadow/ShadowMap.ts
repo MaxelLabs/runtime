@@ -114,7 +114,7 @@ export class ShadowMap {
       width: this._resolution,
       height: this._resolution,
       format: this.depthFormat,
-      usage: MSpec.RHITextureUsage.RENDER_ATTACHMENT,
+      usage: MSpec.RHITextureUsage.TEXTURE_BINDING,
       dimension: MSpec.RHITextureType.TEXTURE_2D,
       mipLevelCount: 1,
       sampleCount: 1,
@@ -153,10 +153,9 @@ export class ShadowMap {
       colorAttachments: [],
       depthStencilAttachment: {
         view: this._depthView,
-        depthLoadOp: 'clear',
-        depthStoreOp: 'store',
+        depthLoadOp: 'clear' as const,
+        depthStoreOp: 'store' as const,
         clearDepth: clearDepth,
-        depthWriteEnabled: true,
       },
     };
   }

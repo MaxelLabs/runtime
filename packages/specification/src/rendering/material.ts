@@ -19,7 +19,6 @@ import type {
   MaterialProperties,
   DataType,
   LoopMode,
-  Vector2Like,
   ColorLike,
   UsdPrim,
   UsdValue,

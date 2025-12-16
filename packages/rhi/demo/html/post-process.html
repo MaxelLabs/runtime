@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>后处理框架 - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <link rel="stylesheet" href="../css/demo-styles.css" />
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+    <div class="info-panel">
+      <h2>🎨 Post-Process (后处理框架)</h2>
+      <p>演示后处理管道系统，支持链式应用多个后处理效果。展示亮度/对比度调整、高斯模糊、色调映射等效果的组合使用。使用 Ping-Pong 缓冲区技术避免读写冲突。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">Post-Processing</span>
+        <span class="tech-tag">Ping-Pong Buffer</span>
+        <span class="tech-tag">Tone Mapping</span>
+        <span class="tech-tag">Gaussian Blur</span>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="../src/post-process.ts"></script>
+</body>
+</html>

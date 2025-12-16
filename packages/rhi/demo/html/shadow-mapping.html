@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>阴影贴图 - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <link rel="stylesheet" href="../css/demo-styles.css" />
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+    <div class="info-panel">
+      <h2>🌑 Shadow Mapping (阴影贴图)</h2>
+      <p>演示阴影贴图技术，通过两遍渲染实现实时阴影效果。第一遍从光源视角渲染深度贴图，第二遍在场景渲染中采样深度贴图计算阴影。支持 PCF 软阴影滤波和阴影参数实时调节。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">Shadow Mapping</span>
+        <span class="tech-tag">Depth Pass</span>
+        <span class="tech-tag">PCF Filter</span>
+        <span class="tech-tag">Light Space Matrix</span>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="../src/shadow-mapping.ts"></script>
+</body>
+</html>
