@@ -1,3 +1,18 @@
+---
+# Identity
+id: "module-index"
+type: "reference"
+title: "Module Documentation Index"
+
+# Semantics
+description: "Complete reference index for all rendering modules, post-processing effects, and technical implementations"
+tags: ["index", "reference", "modules", "rendering", "documentation"]
+
+# Graph
+context_dependency: []
+related_ids: ["fxaa-anti-aliasing", "post-processing-system", "rendering-pipeline"]
+---
+
 # 模块文档索引
 
 ## 核心渲染模块
@@ -14,8 +29,8 @@
 
 ### [FXAA抗锯齿 (FXAA Anti-Aliasing)](./fxaa-anti-aliasing.md)
 - **描述**: 快速近似抗锯齿技术
-- **内容**: 算法原理、参数调优、性能分析、使用示例
-- **适用场景**: 实时抗锯齿、性能敏感场景
+- **内容**: 算法原理、参数调优、性能分析、现代化架构集成
+- **适用场景**: 实时抗锯齿、性能敏感场景，支持现代化渲染管线
 
 ## 材质系统
 
