@@ -1,45 +1,65 @@
 /**
  * post-process.ts
- * 后处理框架（Post-Processing）Demo
+ * PBR + 后处理 Demo - 展示 PBR 渲染 + 后处理效果链
  *
  * 核心特性：
- * - 使用后处理管道系统链式应用多个效果
- * - Ping-Pong缓冲区技术避免读写冲突
- * - 支持动态启用/禁用效果
- * - 展示 PostProcessManager 和内置效果的使用
- *
- * 技术要点：
- * - 离屏渲染到纹理
- * - 全屏四边形渲染
- * - 效果链式组合
+ * - PBR 材质渲染（Cook-Torrance BRDF）
+ * - 离屏渲染到纹理（Render-to-Texture）
+ * - 后处理效果链（Bloom 泛光 -> FXAA 抗锯齿）
+ * - Ping-Pong 缓冲区管理
  * - 实时参数调节
+ *
+ * 渲染流程：
+ * 1. 场景Pass：PBR 渲染到离屏纹理
+ * 2. Bloom Pass：提取高亮区域并模糊叠加
+ * 3. FXAA Pass：抗锯齿处理
+ * 4. 输出到屏幕
  */
 
 import { MSpec, MMath } from '@maxellabs/core';
+import type { SimplePBRLightParams, SimplePBRMaterialParams } from './utils';
 import {
   DemoRunner,
   OrbitController,
   Stats,
   GeometryGenerator,
   SimpleGUI,
+  SimplePBRMaterial,
   RenderTarget,
-  PostProcessManager,
-  BrightnessContrast,
-  GaussianBlur,
-  ToneMapping,
+  FXAA,
+  Bloom,
 } from './utils';
 
 // ==================== 主程序 ====================
 
 const runner = new DemoRunner({
   canvasId: 'J-canvas',
-  name: 'Post-Process Demo',
+  name: 'PBR + Post-Processing Demo',
   clearColor: [0.0, 0.0, 0.0, 1.0],
 });
 
+// 渲染目标
+let sceneRenderTarget: RenderTarget; // 场景离屏渲染
+let bloomRenderTarget: RenderTarget; // Bloom 中间缓冲
 let depthTexture: MSpec.IRHITexture;
-let sceneRenderTarget: RenderTarget;
-let postProcessManager: PostProcessManager;
+
+// 后处理效果
+let bloomEffect: Bloom | null = null;
+let fxaaEffect: FXAA | null = null;
+
+// 后处理参数
+const postProcessParams = {
+  // Bloom 参数
+  enableBloom: true,
+  bloomThreshold: 0.3, // 降低阈值，更多区域产生 bloom
+  bloomIntensity: 2.5, // 增强强度
+  bloomRadius: 8, // 增大模糊半径
+  // FXAA 参数
+  enableFXAA: true,
+  fxaaSubpixelQuality: 0.75,
+  fxaaEdgeThreshold: 0.166,
+  fxaaEdgeThresholdMin: 0.0833,
+};
 
 const updateRenderTargets = () => {
   // 销毁旧资源
@@ -49,22 +69,11 @@ const updateRenderTargets = () => {
   if (sceneRenderTarget) {
     sceneRenderTarget.destroy();
   }
-  if (postProcessManager) {
-    postProcessManager.destroy();
+  if (bloomRenderTarget) {
+    bloomRenderTarget.destroy();
   }
 
-  // 创建深度纹理
-  depthTexture = runner.track(
-    runner.device.createTexture({
-      width: runner.width,
-      height: runner.height,
-      format: MSpec.RHITextureFormat.DEPTH24_UNORM_STENCIL8,
-      usage: MSpec.RHITextureUsage.RENDER_ATTACHMENT,
-      label: 'Scene Depth Texture',
-    })
-  );
-
-  // 创建场景渲染目标
+  // 创建场景渲染目标（离屏）
   sceneRenderTarget = runner.track(
     new RenderTarget(runner.device, {
       width: runner.width,
@@ -75,15 +84,44 @@ const updateRenderTargets = () => {
     })
   );
 
-  // 创建后处理管理器
-  postProcessManager = runner.track(
-    new PostProcessManager(runner.device, {
+  // 创建 Bloom 中间缓冲
+  bloomRenderTarget = runner.track(
+    new RenderTarget(runner.device, {
       width: runner.width,
       height: runner.height,
-      useHDR: false,
+      colorFormat: MSpec.RHITextureFormat.RGBA8_UNORM,
+      label: 'Bloom Render Target',
     })
   );
+
+  depthTexture = sceneRenderTarget.getDepthTexture()!;
 };
+
+// PBR 材质参数
+const materialParams: SimplePBRMaterialParams = {
+  metallic: 0.9,
+  roughness: 0.3,
+  albedo: [1.0, 0.8, 0.2], // 金色 - 更容易看到 Bloom 效果
+  ambientStrength: 0.05,
+};
+
+// 光源参数 - 增强亮度以产生更明显的 Bloom
+const lightParams: SimplePBRLightParams[] = [
+  {
+    position: [3.0, 3.0, 3.0],
+    color: [5.0, 5.0, 5.0], // 大幅增强亮度
+    constant: 1.0,
+    linear: 0.09,
+    quadratic: 0.032,
+  },
+  {
+    position: [-3.0, 2.0, 2.0],
+    color: [3.0, 3.5, 4.0], // 偏蓝色高亮
+    constant: 1.0,
+    linear: 0.09,
+    quadratic: 0.032,
+  },
+];
 
 (async function main() {
   try {
@@ -91,492 +129,334 @@ const updateRenderTargets = () => {
 
     const stats = new Stats({ position: 'top-left', show: ['fps', 'ms'] });
     const orbit = new OrbitController(runner.canvas, {
-      distance: 8,
+      distance: 5,
       enableDamping: true,
-      minDistance: 3,
-      maxDistance: 20,
     });
 
     updateRenderTargets();
-    runner.onResize(updateRenderTargets);
-
-    // ==================== 创建后处理效果 ====================
-    const brightnessContrast = runner.track(
-      new BrightnessContrast(runner.device, {
-        brightness: 0.0,
-        contrast: 1.0,
-      })
-    );
-
-    const gaussianBlur = runner.track(
-      new GaussianBlur(runner.device, {
-        radius: 2.0,
-      })
-    );
-
-    const toneMapping = runner.track(
-      new ToneMapping(runner.device, {
-        mode: 'aces',
-        exposure: 1.0,
-        gamma: 2.2,
-      })
-    );
-
-    // 添加效果到管道
-    postProcessManager.addEffect(brightnessContrast);
-    postProcessManager.addEffect(gaussianBlur);
-    postProcessManager.addEffect(toneMapping);
+    runner.onResize(() => {
+      updateRenderTargets();
+      // 重新创建后处理效果（分辨率改变）
+      if (bloomEffect) {
+        bloomEffect.destroy();
+        bloomEffect = runner.track(
+          new Bloom(runner.device, {
+            threshold: postProcessParams.bloomThreshold,
+            intensity: postProcessParams.bloomIntensity,
+            radius: postProcessParams.bloomRadius,
+          })
+        );
+      }
+      if (fxaaEffect) {
+        fxaaEffect.destroy();
+        fxaaEffect = runner.track(
+          new FXAA(runner.device, {
+            subpixelQuality: postProcessParams.fxaaSubpixelQuality,
+            edgeThreshold: postProcessParams.fxaaEdgeThreshold,
+            edgeThresholdMin: postProcessParams.fxaaEdgeThresholdMin,
+          })
+        );
+      }
+    });
 
     // ==================== 创建场景几何体 ====================
-    const cubeGeometry = GeometryGenerator.cube({
-      size: 2.0,
+
+    // 创建球体几何体
+    const sphereGeometry = GeometryGenerator.sphere({
+      radius: 1,
       normals: true,
+      uvs: false,
     });
 
     const vertexBuffer = runner.track(
       runner.device.createBuffer({
-        size: cubeGeometry.vertices.byteLength,
+        size: sphereGeometry.vertices.byteLength,
         usage: MSpec.RHIBufferUsage.VERTEX,
         hint: 'static',
-        initialData: cubeGeometry.vertices as BufferSource,
-        label: 'Cube Vertex Buffer',
+        initialData: sphereGeometry.vertices as BufferSource,
+        label: 'Sphere Vertex Buffer',
       })
     );
 
     const indexBuffer = runner.track(
       runner.device.createBuffer({
-        size: cubeGeometry.indices!.byteLength,
+        size: sphereGeometry.indices!.byteLength,
         usage: MSpec.RHIBufferUsage.INDEX,
         hint: 'static',
-        initialData: cubeGeometry.indices as BufferSource,
-        label: 'Cube Index Buffer',
+        initialData: sphereGeometry.indices as BufferSource,
+        label: 'Sphere Index Buffer',
       })
     );
 
-    // ==================== 创建场景着色器 ====================
-    const vertexShaderSource = `#version 300 es
-precision highp float;
+    // ==================== 创建 PBR 材质 ====================
 
-layout(location = 0) in vec3 aPosition;
-layout(location = 1) in vec3 aNormal;
+    const pbrMaterial = new SimplePBRMaterial(runner.device, materialParams, lightParams);
 
-uniform Transforms {
-  mat4 uModelMatrix;
-  mat4 uViewMatrix;
-  mat4 uProjectionMatrix;
-};
-
-out vec3 vWorldNormal;
-out vec3 vWorldPosition;
-
-void main() {
-  vec4 worldPos = uModelMatrix * vec4(aPosition, 1.0);
-  vWorldPosition = worldPos.xyz;
-
-  mat3 normalMatrix = transpose(inverse(mat3(uModelMatrix)));
-  vWorldNormal = normalize(normalMatrix * aNormal);
-
-  gl_Position = uProjectionMatrix * uViewMatrix * worldPos;
-}
-`;
-
-    const fragmentShaderSource = `#version 300 es
-precision mediump float;
-
-in vec3 vWorldNormal;
-in vec3 vWorldPosition;
-
-uniform Lighting {
-  vec3 uLightDirection;
-  float _pad1;
-  vec3 uLightColor;
-  float _pad2;
-  vec3 uAmbientColor;
-  float _pad3;
-  vec3 uObjectColor;
-  float _pad4;
-};
-
-out vec4 fragColor;
-
-void main() {
-  vec3 normal = normalize(vWorldNormal);
-  vec3 lightDir = normalize(uLightDirection);
-
-  float diff = max(dot(normal, lightDir), 0.0);
-  vec3 diffuse = diff * uLightColor;
-
-  vec3 ambient = uAmbientColor;
-  vec3 lighting = ambient + diffuse;
-  vec3 color = lighting * uObjectColor;
-
-  fragColor = vec4(color, 1.0);
-}
-`;
-
-    const vertexShader = runner.track(
-      runner.device.createShaderModule({
-        code: vertexShaderSource,
-        language: 'glsl',
-        stage: MSpec.RHIShaderStage.VERTEX,
-      })
-    );
-
-    const fragmentShader = runner.track(
-      runner.device.createShaderModule({
-        code: fragmentShaderSource,
-        language: 'glsl',
-        stage: MSpec.RHIShaderStage.FRAGMENT,
-      })
-    );
-
-    // ==================== 创建Uniform缓冲区 ====================
-    const transformBuffer = runner.track(
-      runner.device.createBuffer({
-        size: 192,
-        usage: MSpec.RHIBufferUsage.UNIFORM,
-        hint: 'dynamic',
-        label: 'Transform Buffer',
-      })
-    );
-
-    const lightingBuffer = runner.track(
-      runner.device.createBuffer({
-        size: 64,
-        usage: MSpec.RHIBufferUsage.UNIFORM,
-        hint: 'dynamic',
-        label: 'Lighting Buffer',
-      })
-    );
-
-    // ==================== 创建场景渲染管线 ====================
-    const bindGroupLayout = runner.track(
-      runner.device.createBindGroupLayout([
-        {
-          binding: 0,
-          visibility: MSpec.RHIShaderStage.VERTEX,
-          buffer: { type: 'uniform' },
-          name: 'Transforms',
-        },
-        {
-          binding: 1,
-          visibility: MSpec.RHIShaderStage.FRAGMENT,
-          buffer: { type: 'uniform' },
-          name: 'Lighting',
-        },
-      ])
-    );
-
-    const pipelineLayout = runner.track(runner.device.createPipelineLayout([bindGroupLayout]));
-
-    const vertexLayout: MSpec.RHIVertexLayout = {
-      buffers: [
-        {
-          arrayStride: 24,
-          attributes: [
-            { shaderLocation: 0, offset: 0, format: MSpec.RHIVertexFormat.FLOAT32X3 },
-            { shaderLocation: 1, offset: 12, format: MSpec.RHIVertexFormat.FLOAT32X3 },
-          ],
-        },
-      ],
+    // 初始化材质（加载环境贴图）
+    const cubemapUrls = {
+      posX: '../assets/cube/Bridge2/posx.jpg',
+      negX: '../assets/cube/Bridge2/negx.jpg',
+      posY: '../assets/cube/Bridge2/posy.jpg',
+      negY: '../assets/cube/Bridge2/negy.jpg',
+      posZ: '../assets/cube/Bridge2/posz.jpg',
+      negZ: '../assets/cube/Bridge2/negz.jpg',
     };
 
-    const pipeline = runner.track(
-      runner.device.createRenderPipeline({
-        vertexShader,
-        fragmentShader,
-        vertexLayout,
-        primitiveTopology: MSpec.RHIPrimitiveTopology.TRIANGLE_LIST,
-        layout: pipelineLayout,
-        rasterizationState: { cullMode: MSpec.RHICullMode.BACK },
-        depthStencilState: {
-          depthWriteEnabled: true,
-          depthCompare: MSpec.RHICompareFunction.LESS,
-          format: MSpec.RHITextureFormat.DEPTH24_UNORM_STENCIL8,
-        },
+    await pbrMaterial.initialize(cubemapUrls);
+
+    // ==================== 创建后处理效果 ====================
+
+    bloomEffect = runner.track(
+      new Bloom(runner.device, {
+        threshold: postProcessParams.bloomThreshold,
+        intensity: postProcessParams.bloomIntensity,
+        radius: postProcessParams.bloomRadius,
       })
     );
 
-    const bindGroup = runner.track(
-      runner.device.createBindGroup(bindGroupLayout, [
-        { binding: 0, resource: { buffer: transformBuffer } },
-        { binding: 1, resource: { buffer: lightingBuffer } },
-      ])
-    );
-
-    // ==================== 创建全屏四边形渲染管线（用于输出到屏幕）====================
-    const fullscreenVertexShader = runner.track(
-      runner.device.createShaderModule({
-        code: `#version 300 es
-precision highp float;
-
-out vec2 vUV;
-
-void main() {
-  float x = float((gl_VertexID & 1) << 2) - 1.0;
-  float y = float((gl_VertexID & 2) << 1) - 1.0;
-  vUV = vec2((x + 1.0) * 0.5, (y + 1.0) * 0.5);
-  gl_Position = vec4(x, y, 0.0, 1.0);
-}`,
-        language: 'glsl',
-        stage: MSpec.RHIShaderStage.VERTEX,
+    fxaaEffect = runner.track(
+      new FXAA(runner.device, {
+        subpixelQuality: postProcessParams.fxaaSubpixelQuality,
+        edgeThreshold: postProcessParams.fxaaEdgeThreshold,
+        edgeThresholdMin: postProcessParams.fxaaEdgeThresholdMin,
       })
     );
 
-    const fullscreenFragmentShader = runner.track(
-      runner.device.createShaderModule({
-        code: `#version 300 es
-precision mediump float;
+    // ==================== GUI 控制 ====================
 
-in vec2 vUV;
-out vec4 fragColor;
-
-uniform sampler2D uTexture;
-
-void main() {
-  fragColor = texture(uTexture, vUV);
-}`,
-        language: 'glsl',
-        stage: MSpec.RHIShaderStage.FRAGMENT,
-      })
-    );
-
-    const fullscreenBindGroupLayout = runner.track(
-      runner.device.createBindGroupLayout([
-        {
-          binding: 0,
-          visibility: MSpec.RHIShaderStage.FRAGMENT,
-          texture: { sampleType: 'float' },
-          name: 'uTexture',
-        },
-        {
-          binding: 1,
-          visibility: MSpec.RHIShaderStage.FRAGMENT,
-          sampler: { type: 'filtering' },
-          name: 'uSampler',
-        },
-      ])
-    );
-
-    const fullscreenPipelineLayout = runner.track(runner.device.createPipelineLayout([fullscreenBindGroupLayout]));
-
-    const fullscreenPipeline = runner.track(
-      runner.device.createRenderPipeline({
-        vertexShader: fullscreenVertexShader,
-        fragmentShader: fullscreenFragmentShader,
-        vertexLayout: { buffers: [] },
-        primitiveTopology: MSpec.RHIPrimitiveTopology.TRIANGLE_LIST,
-        layout: fullscreenPipelineLayout,
-      })
-    );
-
-    const fullscreenSampler = runner.track(
-      runner.device.createSampler({
-        minFilter: MSpec.RHIFilterMode.LINEAR,
-        magFilter: MSpec.RHIFilterMode.LINEAR,
-        addressModeU: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
-        addressModeV: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
-      })
-    );
-
-    // ==================== GUI 参数 ====================
     const gui = new SimpleGUI();
-    const params = {
-      enableBrightness: true,
-      brightness: 0.0,
-      contrast: 1.0,
-      enableBlur: false,
-      blurRadius: 2.0,
-      enableToneMapping: true,
-      exposure: 1.0,
-      rotationSpeed: 1.0,
-    };
 
-    gui.addSeparator('亮度/对比度 (Brightness/Contrast)');
-    gui.add('enableBrightness', {
-      value: params.enableBrightness,
+    // PBR 材质控制
+    gui.addSeparator('🎨 PBR Material');
+    gui.add('metallic', {
+      value: materialParams.metallic,
+      min: 0,
+      max: 1,
+      step: 0.01,
       onChange: (v) => {
-        params.enableBrightness = v as boolean;
-        brightnessContrast.enabled = v as boolean;
+        materialParams.metallic = v as number;
       },
     });
-    gui.add('brightness', {
-      value: params.brightness,
-      min: -0.5,
-      max: 0.5,
+
+    gui.add('roughness', {
+      value: materialParams.roughness,
+      min: 0,
+      max: 1,
+      step: 0.01,
+      onChange: (v) => {
+        materialParams.roughness = v as number;
+      },
+    });
+
+    gui.add('ambientStrength', {
+      value: materialParams.ambientStrength,
+      min: 0,
+      max: 0.2,
+      step: 0.01,
+      onChange: (v) => {
+        materialParams.ambientStrength = v as number;
+      },
+    });
+
+    // Albedo 颜色控制
+    gui.addSeparator('🌈 Albedo Color');
+    gui.add('albedoR', {
+      value: materialParams.albedo[0],
+      min: 0,
+      max: 1,
+      step: 0.01,
+      onChange: (v) => {
+        materialParams.albedo[0] = v as number;
+      },
+    });
+    gui.add('albedoG', {
+      value: materialParams.albedo[1],
+      min: 0,
+      max: 1,
+      step: 0.01,
+      onChange: (v) => {
+        materialParams.albedo[1] = v as number;
+      },
+    });
+    gui.add('albedoB', {
+      value: materialParams.albedo[2],
+      min: 0,
+      max: 1,
+      step: 0.01,
+      onChange: (v) => {
+        materialParams.albedo[2] = v as number;
+      },
+    });
+
+    // Bloom 控制
+    gui.addSeparator('🌟 Bloom');
+    gui.add('enableBloom', {
+      value: postProcessParams.enableBloom,
+      onChange: (v) => {
+        postProcessParams.enableBloom = v as boolean;
+      },
+    });
+
+    gui.add('bloomThreshold', {
+      value: postProcessParams.bloomThreshold,
+      min: 0,
+      max: 2,
       step: 0.05,
       onChange: (v) => {
-        params.brightness = v as number;
-        brightnessContrast.setParameters({ brightness: v });
-      },
-    });
-    gui.add('contrast', {
-      value: params.contrast,
-      min: 0.5,
-      max: 2.0,
-      step: 0.05,
-      onChange: (v) => {
-        params.contrast = v as number;
-        brightnessContrast.setParameters({ contrast: v });
+        postProcessParams.bloomThreshold = v as number;
+        bloomEffect?.setParameters({ threshold: v });
       },
     });
 
-    gui.addSeparator('高斯模糊 (Gaussian Blur)');
-    gui.add('enableBlur', {
-      value: params.enableBlur,
-      onChange: (v) => {
-        params.enableBlur = v as boolean;
-        gaussianBlur.enabled = v as boolean;
-      },
-    });
-    gui.add('blurRadius', {
-      value: params.blurRadius,
-      min: 0.5,
-      max: 5.0,
-      step: 0.5,
-      onChange: (v) => {
-        params.blurRadius = v as number;
-        gaussianBlur.setParameters({ radius: v });
-      },
-    });
-
-    gui.addSeparator('色调映射 (Tone Mapping)');
-    gui.add('enableToneMapping', {
-      value: params.enableToneMapping,
-      onChange: (v) => {
-        params.enableToneMapping = v as boolean;
-        toneMapping.enabled = v as boolean;
-      },
-    });
-    gui.add('exposure', {
-      value: params.exposure,
-      min: 0.1,
-      max: 3.0,
+    gui.add('bloomIntensity', {
+      value: postProcessParams.bloomIntensity,
+      min: 0,
+      max: 5,
       step: 0.1,
       onChange: (v) => {
-        params.exposure = v as number;
-        toneMapping.setParameters({ exposure: v });
+        postProcessParams.bloomIntensity = v as number;
+        bloomEffect?.setParameters({ intensity: v });
       },
     });
 
-    gui.addSeparator('场景 (Scene)');
-    gui.add('rotationSpeed', {
-      value: params.rotationSpeed,
-      min: 0.0,
-      max: 3.0,
-      step: 0.1,
-      onChange: (v) => (params.rotationSpeed = v as number),
+    gui.add('bloomRadius', {
+      value: postProcessParams.bloomRadius,
+      min: 1,
+      max: 15,
+      step: 1,
+      onChange: (v) => {
+        postProcessParams.bloomRadius = v as number;
+        bloomEffect?.setParameters({ radius: v });
+      },
     });
 
-    // 初始化效果状态
-    brightnessContrast.enabled = params.enableBrightness;
-    gaussianBlur.enabled = params.enableBlur;
-    toneMapping.enabled = params.enableToneMapping;
+    // FXAA 控制
+    gui.addSeparator('✨ FXAA');
+    gui.add('enableFXAA', {
+      value: postProcessParams.enableFXAA,
+      onChange: (v) => {
+        postProcessParams.enableFXAA = v as boolean;
+      },
+    });
+
+    gui.add('fxaaSubpixelQuality', {
+      value: postProcessParams.fxaaSubpixelQuality,
+      min: 0,
+      max: 1,
+      step: 0.01,
+      onChange: (v) => {
+        postProcessParams.fxaaSubpixelQuality = v as number;
+        fxaaEffect?.setParameters({ subpixelQuality: v });
+      },
+    });
+
+    // 矩阵
+    const modelMatrix = new MMath.Matrix4();
+    const normalMatrix = new MMath.Matrix4();
 
     // ==================== 渲染循环 ====================
-    let time = 0;
-    const modelMatrix = new MMath.Matrix4();
-
-    // 更新光照参数
-    const lightingData = new Float32Array(16);
-    lightingData.set([0.5, 1.0, 0.3, 0], 0); // lightDirection + pad
-    lightingData.set([1.0, 1.0, 0.9, 0], 4); // lightColor + pad
-    lightingData.set([0.2, 0.2, 0.3, 0], 8); // ambientColor + pad
-    lightingData.set([0.8, 0.3, 0.3, 0], 12); // objectColor + pad
-    lightingBuffer.update(lightingData, 0);
 
     runner.start((dt) => {
-      orbit.update(dt);
       stats.begin();
 
-      time += dt * params.rotationSpeed;
+      orbit.update(dt);
 
-      // 更新模型矩阵
-      modelMatrix
-        .identity()
-        .rotateY(time)
-        .rotateX(time * 0.5);
+      // 更新材质参数
+      pbrMaterial.setMaterialParams(materialParams);
+      pbrMaterial.update();
+      pbrMaterial.reset(); // Reset dynamic offsets
 
-      // 更新变换Uniform
+      // 缓慢旋转
+      modelMatrix.identity();
+      modelMatrix.rotateY(performance.now() * 0.0005);
+
+      // 计算法线矩阵
+      normalMatrix.copyFrom(modelMatrix);
+      normalMatrix.invert();
+      normalMatrix.transpose();
+
+      // 更新变换矩阵
       const viewMatrix = orbit.getViewMatrix();
       const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
-      const transformData = new Float32Array(48);
-      transformData.set(modelMatrix.toArray(), 0);
-      transformData.set(viewMatrix, 16);
-      transformData.set(projMatrix, 32);
-      transformBuffer.update(transformData, 0);
+      const cameraPos = orbit.getPosition();
 
-      const encoder = runner.device.createCommandEncoder();
+      pbrMaterial.updateTransforms(modelMatrix, viewMatrix, projMatrix, normalMatrix, cameraPos);
 
-      // ==================== 第一步：渲染场景到离屏纹理 ====================
-      const scenePassDesc = sceneRenderTarget.getRenderPassDescriptor([0.1, 0.15, 0.2, 1.0], 1.0);
-      const scenePass = encoder.beginRenderPass(scenePassDesc);
-      scenePass.setPipeline(pipeline);
-      scenePass.setBindGroup(0, bindGroup);
+      // 开始渲染
+      const { encoder, passDescriptor } = runner.beginFrame();
+
+      // ==================== Pass 1: 场景渲染到离屏纹理 ====================
+
+      const scenePass = encoder.beginRenderPass({
+        colorAttachments: [
+          {
+            view: sceneRenderTarget.getColorTexture().createView(),
+            loadOp: 'clear',
+            storeOp: 'store',
+            clearColor: [0.05, 0.05, 0.08, 1.0], // 深蓝色背景
+          },
+        ],
+        depthStencilAttachment: {
+          view: depthTexture.createView(),
+          clearDepth: 1.0,
+          depthLoadOp: 'clear',
+          depthStoreOp: 'store',
+        },
+      });
+
+      // 绑定材质并渲染
+      pbrMaterial.bind(scenePass);
       scenePass.setVertexBuffer(0, vertexBuffer);
       scenePass.setIndexBuffer(indexBuffer, MSpec.RHIIndexFormat.UINT16);
-      scenePass.drawIndexed(cubeGeometry.indexCount, 1, 0, 0, 0);
+      scenePass.drawIndexed(sphereGeometry.indices!.length);
+
       scenePass.end();
 
-      // ==================== 第二步：应用后处理链 ====================
-      const processedTexture = postProcessManager.process(encoder, sceneRenderTarget.getColorView(0));
+      // ==================== Pass 2-3: 后处理链 ====================
 
-      // ==================== 第三步：输出到屏幕 ====================
-      const fullscreenBindGroup = runner.device.createBindGroup(fullscreenBindGroupLayout, [
-        { binding: 0, resource: processedTexture },
-        { binding: 1, resource: fullscreenSampler },
-      ]);
+      const sceneTexture = sceneRenderTarget.getColorTexture();
+      const bloomTexture = bloomRenderTarget.getColorTexture();
+      const outputView = passDescriptor.colorAttachments![0].view;
 
-      const { passDescriptor } = runner.beginFrame();
-      const screenPass = encoder.beginRenderPass(passDescriptor);
-      screenPass.setPipeline(fullscreenPipeline);
-      screenPass.setBindGroup(0, fullscreenBindGroup);
-      screenPass.draw(3, 1, 0, 0);
-      screenPass.end();
+      // 确定后处理链
+      const applyBloom = postProcessParams.enableBloom && bloomEffect;
+      const applyFXAA = postProcessParams.enableFXAA && fxaaEffect;
+
+      if (applyBloom && applyFXAA) {
+        // Bloom -> FXAA -> 屏幕
+        const sceneView = sceneTexture.createView();
+        const bloomView = bloomTexture.createView();
+
+        // Pass 2: Bloom
+        bloomEffect!.apply(encoder, sceneView, bloomView);
+
+        // Pass 3: FXAA
+        fxaaEffect!.apply(encoder, bloomView, outputView);
+      } else if (applyBloom) {
+        // Bloom -> 屏幕
+        const sceneView = sceneTexture.createView();
+        bloomEffect!.apply(encoder, sceneView, outputView);
+      } else if (applyFXAA) {
+        // FXAA -> 屏幕
+        const sceneView = sceneTexture.createView();
+        fxaaEffect!.apply(encoder, sceneView, outputView);
+      } else {
+        // 直接复制到屏幕 - 使用简单的 blit pass
+        const outputPass = encoder.beginRenderPass(passDescriptor);
+        outputPass.end();
+        // 使用 copyTextureToCanvas 命令
+        encoder.copyTextureToCanvas({
+          source: sceneTexture.createView(),
+          destination: runner.canvas,
+        });
+      }
 
       runner.endFrame(encoder);
 
       stats.end();
     });
-
-    // ==================== 帮助信息和键盘事件 ====================
-    DemoRunner.showHelp([
-      'ESC: 退出 Demo',
-      'F11: 切换全屏',
-      'R: 重置视角',
-      '鼠标左键拖动: 旋转视角',
-      '鼠标滚轮: 缩放',
-      '鼠标右键拖动: 平移',
-    ]);
-
-    runner.onKey('r', () => {
-      orbit.reset();
-    });
-
-    runner.onKey('Escape', () => {
-      stats.destroy();
-      orbit.destroy();
-      gui.destroy();
-      sceneRenderTarget.destroy();
-      postProcessManager.destroy();
-      runner.destroy();
-    });
-
-    runner.onKey('F11', (_, event) => {
-      event.preventDefault();
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      } else {
-        runner.canvas.requestFullscreen();
-      }
-    });
-
-    const ppStats = postProcessManager.getStats();
-    console.info('[Post-Process Demo] Initialized');
-    console.info(`  Effects: ${ppStats.enabledEffectCount}/${ppStats.effectCount}`);
-    console.info(`  Memory: ${(ppStats.totalMemoryUsage / 1024 / 1024).toFixed(2)} MB`);
   } catch (error) {
-    console.error('Post-Process Demo Error:', error);
+    console.error('Demo initialization failed:', error);
     throw error;
   }
 })();

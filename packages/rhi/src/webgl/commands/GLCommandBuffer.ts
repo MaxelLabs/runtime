@@ -977,14 +977,9 @@ void main() {
         return;
       }
 
-      // 获取当前绑定的顶点缓冲区
-      const vertexBuffer = gl.getParameter(gl.ARRAY_BUFFER_BINDING);
-
-      if (!vertexBuffer) {
-        console.error('绘制失败: 没有绑定顶点缓冲区');
-
-        return;
-      }
+      // 注意：对于使用 gl_VertexID 生成顶点的全屏三角形绘制，
+      // 不需要绑定顶点缓冲区和启用顶点属性。
+      // 当 vertexCount 为 3 且没有顶点属性时，假定为程序化全屏三角形绘制。
 
       // 获取活跃的顶点属性
       const maxAttribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
@@ -996,10 +991,20 @@ void main() {
         }
       }
 
+      // 如果没有启用顶点属性，检查是否为程序化全屏绘制
       if (enabledAttribs.length === 0) {
-        console.error('绘制失败: 没有启用顶点属性');
+        // 允许程序化全屏三角形绘制（使用 gl_VertexID）
+        // 这种绘制方式不需要顶点缓冲区和顶点属性
+        // vertexCount === 3 是全屏三角形的标志
+        if (vertexCount === 3) {
+          // 这是合法的程序化全屏三角形绘制
+          // console.log('执行程序化全屏三角形绘制 (使用 gl_VertexID)');
+        } else {
+          // 非程序化绘制必须有顶点属性
+          console.error('绘制失败: 没有启用顶点属性，vertexCount:', vertexCount);
 
-        return;
+          return;
+        }
       }
 
       // 检查帧缓冲区状态

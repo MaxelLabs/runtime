@@ -56,7 +56,7 @@ export class FXAA extends PostProcessEffect {
       {
         binding: 0,
         visibility: MSpec.RHIShaderStage.FRAGMENT,
-        texture: { sampleType: 'float' },
+        texture: { sampleType: 'float', viewDimension: '2d' },
         name: 'uTexture',
       },
       // Binding 1: Sampler

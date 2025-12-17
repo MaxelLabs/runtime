@@ -33,7 +33,7 @@
 - [**实例化渲染工具**](instancing-tools.md) - 高效批量渲染
 
 ### 🎬 后处理模块 🆕
-- [**后处理系统**](modules/post-processing-system.md) - **核心**：完整的后处理框架
+- [**后处理系统 Demo**](post-process-demo.md) - **核心**：Bloom + FXAA 完整后处理链
 - [**FXAA抗锯齿**](modules/fxaa-anti-aliasing.md) - **推荐**：快速抗锯齿技术
 - [更多后处理模块](modules/) - 模块索引
 
@@ -72,6 +72,7 @@
 - [Shadow Mapping Demo](shadow-mapping-demo.md) - 深度阴影映射
 - [Cubemap Skybox Demo](cubemap-skybox-demo.md) - 立方体贴图天空盒
 - [Frustum Culling Demo](frustum-culling-demo.md) - 视锥体剔除优化
+- [**Post-Process Demo**](post-process-demo.md) - 🆕 Bloom + FXAA 后处理链
 
 ---
 

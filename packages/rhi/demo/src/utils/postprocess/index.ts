@@ -12,6 +12,7 @@ export { BrightnessContrast } from './effects/BrightnessContrast';
 export { GaussianBlur } from './effects/GaussianBlur';
 export { ToneMapping } from './effects/ToneMapping';
 export { FXAA } from './effects/FXAA';
+export { Bloom } from './effects/Bloom';
 
 // 类型定义
 export type {
