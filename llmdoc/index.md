@@ -40,7 +40,7 @@ pnpm test
 
 ---
 
-## 📚 文档架构（6层体系）
+## 📚 文档架构（7层体系）
 
 ### 1️⃣ **Foundations** - 基础规范层
 - [编码约定](./foundations/coding-conventions.md) - TypeScript 代码规范
@@ -65,16 +65,35 @@ pnpm test
 - **Demo演示集合** (27个文档)
   - 基础渲染、纹理系统、光照效果、高级特效
 
-### 4️⃣ **Advanced** - 高级集成层
+### 4️⃣ **Guides** - 实用指南层 🆕
+- **性能优化指南** ✅
+  - [性能优化概览](./guides/performance-optimization/README.md) - **重构**：从85KB文档拆分
+  - [性能分析器](./guides/performance-optimization/performance-analyzer.md) - 实时监控和分析
+  - [RHI命令优化](./guides/performance-optimization/rhi-command-optimizer.md) - 渲染优化技术
+  - [数学对象池优化](./guides/performance-optimization/math-pool-optimization.md) - 内存管理
+  - [SIMD优化技术](./guides/performance-optimization/simd-optimization.md) - 向量计算加速
+  - [内存泄漏检测](./guides/performance-optimization/memory-leak-detection.md) - 内存监控
+
+- **Demo开发指南** ✅
+  - [Demo开发概览](./guides/demo-development/README.md) - **重构**：从60KB文档拆分
+  - [开发规范](./guides/demo-development/demo-standards.md) - 编码规范和标准
+  - [工具库使用](./guides/demo-development/tools-library.md) - API文档和示例
+  - [Demo目录](./guides/demo-development/demo-catalog.md) - 完整Demo列表
+  - [最佳实践](./guides/demo-development/best-practices.md) - 优化技巧和故障排除
+
+- **技术指南** (12个文档)
+  - WebGL命令、USD规范、动画系统、RHI使用、数学库等
+
+### 5️⃣ **Advanced** - 高级集成层
 - [渲染管线集成](./advanced/integration/rendering-pipeline.md) - 高级渲染技术
 
-### 5️⃣ **Agent** - 策略存档层
+### 6️⃣ **Agent** - 策略存档层
 - **策略文档** (28个) - 技术方案选择记录
 - **实现指南** (3个) - 具体实现细节
 - **技术调查** (9个) - 前期技术研究
 - **经验总结** (3个) - 开发经验备忘录
 
-### 6️⃣ **Support** - 支持文档层
+### 7️⃣ **Support** - 支持文档层
 - 快速帮助和FAQ
 
 ---
@@ -120,15 +139,23 @@ pnpm test
 | Foundations | 4 | ✅ 完成 | 核心规范文档 |
 | Learning | 2 | ✅ 完成 | PBR迁移指南 |
 | Reference | 27 | ✅ 完成 | 后处理模块 |
+| Guides | 22 | ✅ 完成 | **性能优化+Demo开发指南重构** |
 | Advanced | 2 | ✅ 完成 | 渲染管线集成 |
 | Agent | 51 | ✅ 完成 | 策略实现文档 |
 | Support | 1 | ✅ 完成 | 支持文档 |
-| **总计** | **87** | **100%** | **文档架构重构完成** |
+| **总计** | **109** | **100%** | **文档系统重构完成** |
 
-### 🎉 阶段三成果
+### 🎉 重构阶段成果 (2025-12-17)
+- ✅ **超大文档拆分**: 2个超大文档(85KB+60KB)→11个专题文档
+- ✅ **性能优化指南模块化**: 6个专题文档覆盖完整优化技术栈
+- ✅ **Demo开发指南体系化**: 5个专题文档规范开发流程
+- ✅ **文档质量提升**: 平均文档大小减少15.8%
+- ✅ **导航系统优化**: 建立模块化README导航体系
+
+### 🏆 历史成就
 - ✅ PBR材质系统完成重构（SimplePBR）
 - ✅ 后处理系统框架上线（FXAA抗锯齿）
-- ✅ 文档架构完成6层体系重构
+- ✅ 文档架构完成7层体系重构
 - ✅ 所有核心工具模块（5个）开发完成
 - ✅ Agent策略文档系统完善（51个）
 
@@ -263,8 +290,15 @@ packages/
 3. **个性化推荐**: 系统会根据您的阅读历史和偏好推荐相关内容
 4. **学习路径**: 自动生成适合您水平的学习计划和进度追踪
 
+## 📋 变更日志
+
+### 最新重构 (2025-12-17)
+- **📊 [完整重构日志](./REFACTORING_LOG.md)** - 记录文档系统重构全过程
+- **🔧 [质量评级报告](./REFACTORING_LOG.md#质量评级)** - B+ 综合评级
+- **📈 [性能提升数据](./REFACTORING_LOG.md#重构成果)** - 平均文档大小减少15.8%
+
 ---
 
-**🎯 文档架构重构完成**：采用6层体系结构，87个文档全面覆盖从基础规范到高级实现的完整技术栈。**智能导航系统上线**：通过AI驱动的推荐和3-Click规则，让文档发现变得前所未有的高效。
+**🎯 文档系统重构完成**：采用7层体系结构，109个文档全面覆盖从基础规范到高级实现的完整技术栈。**超大文档拆分完成**：2个超大文档(145KB)→11个专题文档，平均文档大小减少15.8%。**智能导航系统上线**：通过AI驱动的推荐和3-Click规则，让文档发现变得前所未有的高效。
 
 **如有问题或建议，欢迎通过 Issues 或 Pull Request 联系我们。**

@@ -82,23 +82,6 @@ const gui = new SimpleGUI();  // 自动定位到右上角
 3. 下拉选择（options）
 4. 颜色选择器（color picker）
 
-**示例：**
-
-```typescript
-gui.add('rotationSpeed', {
-  value: 1.0,
-  min: 0,
-  max: 5,
-  step: 0.1,
-  onChange: (v) => params.rotationSpeed = v
-});
-
-gui.add('autoRotate', {
-  value: false,
-  onChange: (v) => params.autoRotate = v
-});
-```
-
 ### 1.3 Demo 介绍面板（右下角）
 
 **位置：** 右下角（可选）
@@ -189,20 +172,6 @@ const geometry = GeometryGenerator.cube({
 });
 ```
 
-**返回数据结构：**
-
-```typescript
-interface GeometryData {
-  vertices: Float32Array;      // 交错顶点数据
-  indices?: Uint16Array;        // 索引数据
-  vertexCount: number;          // 顶点数量
-  indexCount?: number;          // 索引数量
-  vertexStride: number;         // 顶点步长（字节）
-  layout: RHIVertexLayout;      // 顶点布局
-  attributes: VertexAttributeConfig[];  // 属性配置
-}
-```
-
 ### 2.3 坐标系变换（X 轴旋转 90°）
 
 **应用场景：** 当需要将 XZ 平面（水平）转换为 XY 平面（正对相机）时
@@ -222,14 +191,6 @@ modelMatrix.scale(new MMath.Vector3(scale, scale, 1));
 - ✅ 跑道平面俯视效果（mipmaps.ts）
 - ❌ 3D 场景中的地面（保持 XZ 平面）
 - ❌ 天空盒内部（rotating-cube.ts）
-
-**反例（错误）：**
-
-```typescript
-// ❌ 不要在 3D 场景中旋转地面
-const groundGeometry = GeometryGenerator.plane({ width: 100, height: 100 });
-modelMatrix.rotateX(Math.PI / 2);  // 错误！地面应该保持水平
-```
 
 ---
 
@@ -728,4 +689,4 @@ hint: 'dynamic'
 
 **更新记录：**
 - v1.0（2025-12-14）— 初始版本
-- v1.1（2025-12-17）— 添加交叉引用系统
+- v1.1（2025-12-17）— 添加交叉引用系统，精简冗余内容
