@@ -340,6 +340,9 @@ const TEXTURE_CONFIGS: TextureInfo[] = [
 
     // ==================== 渲染循环 ====================
 
+    // 预分配变换数据数组（避免每帧创建）
+    const transformData = new Float32Array(64);
+
     runner.start((dt) => {
       orbit.update(dt);
       stats.begin();
@@ -357,8 +360,7 @@ const TEXTURE_CONFIGS: TextureInfo[] = [
       // 只渲染当前选中的纹理
       const currentData = renderData[currentTextureIndex];
 
-      // 更新变换矩阵
-      const transformData = new Float32Array(64);
+      // 更新变换矩阵（使用预分配的数组）
       transformData.set(currentData.modelMatrix.toArray(), 0);
       transformData.set(viewMatrix, 16);
       transformData.set(projMatrix, 32);

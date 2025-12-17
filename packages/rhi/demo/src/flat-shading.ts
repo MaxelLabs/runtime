@@ -272,7 +272,12 @@ async function main(): Promise<void> {
       orbit.reset();
     });
 
-    // 16. 启动渲染循环
+    // 16. 预分配渲染循环中使用的数组
+    const transformData = new Float32Array(64); // 4 * mat4
+    const lightingData = new Float32Array(8); // 32 bytes
+    const lightDir = new MMath.Vector3();
+
+    // 17. 启动渲染循环
     runner.start((dt) => {
       stats.begin();
       orbit.update(dt);
@@ -283,17 +288,15 @@ async function main(): Promise<void> {
       // 更新法线矩阵
       normalMatrix.copyFrom(modelMatrix).invert().transpose();
 
-      // 更新 Transform Uniform
-      const transformData = new Float32Array(64); // 4 * mat4
+      // 更新 Transform Uniform（使用预分配数组）
       transformData.set(modelMatrix.toArray(), 0);
       transformData.set(orbit.getViewMatrix(), 16);
       transformData.set(orbit.getProjectionMatrix(runner.width / runner.height), 32);
       transformData.set(normalMatrix.toArray(), 48);
       transformBuffer.update(transformData, 0);
 
-      // 更新 Lighting Uniform (std140)
-      const lightDir = new MMath.Vector3(params.lightX, params.lightY, params.lightZ).normalize();
-      const lightingData = new Float32Array(8); // 32 bytes
+      // 更新 Lighting Uniform (std140)（使用预分配数组）
+      lightDir.set(params.lightX, params.lightY, params.lightZ).normalize();
       lightingData.set([lightDir.x, lightDir.y, lightDir.z], 0);
       lightingData.set([params.ambientIntensity, params.ambientIntensity, params.ambientIntensity], 4);
       lightingBuffer.update(lightingData, 0);

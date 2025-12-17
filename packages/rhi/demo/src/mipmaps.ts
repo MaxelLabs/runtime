@@ -488,6 +488,9 @@ function generateColoredMipmapLevel(size: number, level: number, maxLevels: numb
       },
     });
 
+    // ==================== 预分配渲染循环数据 ====================
+    const transformData = new Float32Array(64);
+
     // ==================== 渲染循环 ====================
 
     runner.start((_dt) => {
@@ -499,8 +502,7 @@ function generateColoredMipmapLevel(size: number, level: number, maxLevels: numb
       const aspectRatio = runner.width / runner.height / 3;
       const projMatrix = orbit.getProjectionMatrix(aspectRatio);
 
-      // 更新 Transform Uniform
-      const transformData = new Float32Array(64);
+      // 更新 Transform Uniform（使用预分配数组）
       transformData.set(modelMatrix.toArray(), 0);
       transformData.set(viewMatrix, 16);
       transformData.set(projMatrix, 32);

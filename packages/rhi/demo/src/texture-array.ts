@@ -640,6 +640,9 @@ function generateMixedPattern(width: number, height: number): Uint8Array {
   gui.addSeparator('Texture Info');
   // 注意：SimpleGUI 可能不支持 addInfo，使用 separator 代替
 
+  // ==================== 预分配渲染循环数据 ====================
+  const transformData = new Float32Array(64);
+
   // ==================== 渲染循环 ====================
 
   runner.start((_dt) => {
@@ -650,8 +653,7 @@ function generateMixedPattern(width: number, height: number): Uint8Array {
     const viewMatrix = orbit.getViewMatrix();
     const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
 
-    // 更新变换矩阵
-    const transformData = new Float32Array(64);
+    // 更新变换矩阵（使用预分配数组）
     transformData.set(modelMatrix.toArray(), 0);
     transformData.set(viewMatrix, 16);
     transformData.set(projMatrix, 32);

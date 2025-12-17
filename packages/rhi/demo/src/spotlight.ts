@@ -387,6 +387,9 @@ const updateDepthTexture = () => {
     const modelMatrix = new MMath.Matrix4();
     const normalMatrix = new MMath.Matrix4();
     const spotlightData = new Float32Array(20); // 80 bytes / 4 = 20 floats
+    const transformData = new Float32Array(64); // 预分配变换数据
+    const cameraData = new Float32Array(4); // 预分配相机数据
+    const lightDir = new MMath.Vector3(); // 预分配光照方向向量
 
     runner.start((dt) => {
       orbit.update(dt);
@@ -398,8 +401,7 @@ const updateDepthTexture = () => {
       modelMatrix.identity().rotateY(Date.now() * 0.0005);
       normalMatrix.copyFrom(modelMatrix).invert().transpose();
 
-      // 更新变换矩阵 Uniform
-      const transformData = new Float32Array(64);
+      // 更新变换矩阵 Uniform（使用预分配数组）
       transformData.set(modelMatrix.toArray(), 0);
       transformData.set(viewMatrix, 16);
       transformData.set(projMatrix, 32);
@@ -411,7 +413,7 @@ const updateDepthTexture = () => {
       spotlightData.set([params.lightPosX, params.lightPosY, params.lightPosZ, 0], 0);
 
       // Light Direction: offset 4-7 (16 bytes)
-      const lightDir = new MMath.Vector3(params.lightDirX, params.lightDirY, params.lightDirZ).normalize();
+      lightDir.set(params.lightDirX, params.lightDirY, params.lightDirZ).normalize();
       spotlightData.set([lightDir.x, lightDir.y, lightDir.z, 0], 4);
 
       // Light Color: offset 8-11 (16 bytes) - white light
@@ -433,10 +435,12 @@ const updateDepthTexture = () => {
 
       spotlightBuffer.update(spotlightData, 0);
 
-      // 更新相机位置
+      // 更新相机位置（使用预分配数组）
       const cameraPosition = orbit.getPosition();
-      const cameraData = new Float32Array(4);
-      cameraData.set([cameraPosition.x, cameraPosition.y, cameraPosition.z, 0], 0);
+      cameraData[0] = cameraPosition.x;
+      cameraData[1] = cameraPosition.y;
+      cameraData[2] = cameraPosition.z;
+      cameraData[3] = 0;
       cameraBuffer.update(cameraData, 0);
 
       const { encoder, passDescriptor } = runner.beginFrame();
