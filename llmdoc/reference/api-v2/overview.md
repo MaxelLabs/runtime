@@ -1,4 +1,189 @@
+---
+title: "Maxellabs API v2 总览"
+id: "maxellabs-api-v2-overview"
+type: "reference"
+tags: ["api", "architecture", "webgl2", "rendering", "math", "specification"]
+category: "api-reference"
+related_ids: ["graphics-bible", "rhi-demo-constitution"]
+difficulty: "beginner"
+prerequisites: ["基础JavaScript", "WebGL基础概念", "TypeScript基础"]
+estimated_time: "15-20分钟"
+version: "2.0.0"
+status: "stable"
+---
+
 # Maxellabs API v2 总览
+
+## 🎯 学习目标
+完成本总览后，您将能够：
+- 理解Maxellabs Runtime的三层架构设计
+- 掌握RHI、Math、Specification三大核心库的职责分工
+- 建立WebGL2渲染应用的完整工作流
+- 了解性能优化和资源管理的最佳实践
+- 规划从基础到高级的学习路径
+
+## ⚠️ 禁止事项
+- **禁止** 在同步函数中执行异步操作 - 遵循异步编程模式
+- **禁止** 在渲染循环中重复创建对象 - 使用对象池和缓存
+- **禁止** 忽略资源释放 - 必须调用dispose()方法
+- **禁止** 混用不同的坐标系统 - 严格遵循右手坐标系
+- **禁止** 在片元着色器中直接修改深度值
+
+## 🔧 核心接口定义
+
+### IRHIDevice
+```typescript
+interface IRHIDevice {
+  // 资源创建
+  createBuffer(descriptor: BufferDescriptor): Buffer;
+  createTexture(descriptor: TextureDescriptor): Texture;
+  createSampler(descriptor: SamplerDescriptor): Sampler;
+  createRenderPipeline(descriptor: RenderPipelineDescriptor): RenderPipeline;
+  createBindGroup(descriptor: BindGroupDescriptor): BindGroup;
+
+  // 命令编码
+  createCommandEncoder(): CommandEncoder;
+
+  // 资源管理
+  flush(): void;
+  lose(): void;
+}
+```
+
+### IDeviceFactory
+```typescript
+interface IDeviceFactory {
+  createWebGL2Device(canvas: HTMLCanvasElement, options?: DeviceOptions): Promise<IRHIDevice>;
+  createWebGPUDevice(canvas: HTMLCanvasElement, options?: DeviceOptions): Promise<IRHIDevice>;
+  getSupportedAPIs(): ('webgl2' | 'webgpu')[];
+}
+```
+
+### IMathLibrary
+```typescript
+interface IMathLibrary {
+  // 基础数学对象
+  Vec2: typeof Vec2;
+  Vec3: typeof Vec3;
+  Vec4: typeof Vec4;
+  Mat3: typeof Mat3;
+  Mat4: typeof Mat4;
+  Quat: typeof Quat;
+
+  // 对象池
+  getObjectPool(): IObjectPool;
+
+  // 工具函数
+  degToRad(degrees: number): number;
+  radToDeg(radians: number): number;
+  clamp(value: number, min: number, max: number): number;
+}
+```
+
+### ISpecificationLibrary
+```typescript
+interface ISpecificationLibrary {
+  // 核心类型
+  Frame: typeof Frame;
+  Material: typeof Material;
+  Animation: typeof Animation;
+
+  // USD支持
+  USDStage: typeof USDStage;
+  USDLayer: typeof USDLayer;
+  USDPrim: typeof USDPrim;
+}
+```
+
+## 📝 Few-Shot 示例
+
+### 问题1：WebGL2设备初始化失败
+**解决方案**：
+```typescript
+async function initializeDevice(canvas: HTMLCanvasElement): Promise<IRHIDevice> {
+  try {
+    // 检查WebGL2支持
+    if (!navigator.gpu && !canvas.getContext('webgl2')) {
+      throw new Error('WebGL2 not supported in this browser');
+    }
+
+    // 使用工厂模式创建设备
+    const factory = new DeviceFactory();
+    const device = await factory.createWebGL2Device(canvas, {
+      antialias: true,
+      preserveDrawingBuffer: false
+    });
+
+    return device;
+  } catch (error) {
+    console.error('Failed to initialize RHI device:', error);
+    // 回退到软件渲染或显示错误信息
+    throw error;
+  }
+}
+```
+
+### 问题2：缓冲区数据更新性能问题
+**解决方案**：
+```typescript
+// 错误方式：每次更新都创建新缓冲区
+function badUpdate(data: Float32Array) {
+  const buffer = device.createBuffer({
+    size: data.byteLength,
+    usage: BufferUsage.Vertex,
+    data: data
+  });
+}
+
+// 正确方式：复用缓冲区，使用subData更新
+class DynamicVertexBuffer {
+  private buffer: Buffer;
+  private capacity: number;
+
+  constructor(device: IRHIDevice, capacity: number) {
+    this.capacity = capacity;
+    this.buffer = device.createBuffer({
+      size: capacity * Float32Array.BYTES_PER_ELEMENT,
+      usage: BufferUsage.Vertex | BufferUsage.CopyDst
+    });
+  }
+
+  update(data: Float32Array, offset: number = 0) {
+    this.buffer.setSubData(data, offset * Float32Array.BYTES_PER_ELEMENT);
+  }
+}
+```
+
+### 问题3：着色器编译错误处理
+**解决方案**：
+```typescript
+async function createShader(device: IRHIDevice, source: string, type: 'vertex' | 'fragment'): Promise<ShaderModule> {
+  try {
+    return device.createShaderModule({
+      code: source,
+      hint: type
+    });
+  } catch (error) {
+    console.error(`Shader compilation failed (${type}):`, error);
+
+    // 提供详细的错误信息
+    if (error.shaderInfoLog) {
+      console.error('Shader info log:', error.shaderInfoLog);
+    }
+
+    // 尝试使用备用着色器
+    return getFallbackShader(type);
+  }
+}
+
+function getFallbackShader(type: 'vertex' | 'fragment'): ShaderModule {
+  const fallbackSource = type === 'vertex'
+    ? fallbackVertexShader
+    : fallbackFragmentShader;
+
+  return device.createShaderModule({ code: fallbackSource, hint: type });
+}
+```
 
 ## 架构概览
 

@@ -1,4 +1,285 @@
-# Point Lights Demo 参考文档
+---
+title: "Point Lights Demo参考文档"
+id: "point-lights-demo"
+type: "reference"
+tags: ["point-lights", "lighting", "attenuation", "real-time-rendering", "phong-shading"]
+category: "demo"
+demo_type: "interactive"
+related_ids: ["graphics-bible", "pbr-material-system", "directional-light-demo", "spotlight-demo"]
+difficulty: "beginner"
+prerequisites: ["基础渲染管线", "着色器编程", "向量数学", "光照模型"]
+estimated_time: "20-25分钟"
+version: "1.0.0"
+status: "complete"
+---
+
+# Point Lights Demo参考文档
+
+## 🎯 学习目标
+完成本Demo后，您将能够：
+- 实现完整的点光源光照系统，包括距离衰减计算
+- 掌握std140内存布局规范，确保CPU和GPU数据一致性
+- 理解并优化多光源渲染性能（最多4个点光源）
+- 调整衰减参数控制光照范围和强度分布
+- 解决常见多光源渲染问题（光照重叠、性能瓶颈）
+
+## ⚠️ 禁止事项
+- **禁止** 在std140布局中使用vec3而不进行16字节对齐
+- **禁止** 在片元着色器中不检查lightCount就遍历所有光源
+- **禁止** 混用左手和右手坐标系的光照计算
+- **禁止** 在点光源计算中忽略距离衰减导致的物理错误
+- **禁止** 在uniform缓冲区中使用动态数组大小
+
+## 🔧 核心接口定义
+
+### IPointLight
+```typescript
+interface IPointLight {
+  // 位置和颜色
+  position: Vec3;
+  color: Vec3;
+
+  // 衰减参数
+  constant: number;    // 常数衰减
+  linear: number;      // 线性衰减
+  quadratic: number;   // 二次衰减
+
+  // 状态控制
+  enabled: boolean;
+  intensity: number;
+
+  // 辅助方法
+  getAttenuation(distance: number): number;
+  getInfluenceRadius(threshold: number): number;
+}
+```
+
+### IPointLightSystem
+```typescript
+interface IPointLightSystem {
+  // 光源管理
+  addLight(light: IPointLight): void;
+  removeLight(lightId: string): void;
+  updateLight(lightId: string, updates: Partial<IPointLight>): void;
+
+  // 批量操作
+  setLights(lights: IPointLight[]): void;
+  getActiveLights(): IPointLight[];
+
+  // Uniform缓冲区管理
+  updateUniformBuffer(): void;
+  getLightCount(): number;
+
+  // 性能优化
+  enableCulling(enabled: boolean): void;
+  setMaxLights(maxCount: number): void;
+}
+```
+
+### IAttenuationCalculator
+```typescript
+interface IAttenuationCalculator {
+  // 衰减计算
+  calculateAttenuation(light: IPointLight, distance: number): number;
+
+  // 范围计算
+  calculateRadius(light: IPointLight, threshold: number): number;
+
+  // 预设参数
+  getAttenuationPreset(range: 'short' | 'medium' | 'long' | 'extreme'): {
+    constant: number;
+    linear: number;
+    quadratic: number;
+  };
+}
+```
+
+## 📝 Few-Shot 示例
+
+### 问题1：点光源光照范围控制不准确
+**解决方案**：
+```typescript
+// 精确的衰减半径计算
+class PreciseAttenuation implements IAttenuationCalculator {
+  calculateRadius(light: IPointLight, threshold: number = 0.01): number {
+    // 求解衰减方程: threshold = 1 / (c + l*r + q*r^2)
+    // 转换为二次方程: q*r^2 + l*r + (c - 1/threshold) = 0
+
+    const c = light.constant;
+    const l = light.linear;
+    const q = light.quadratic;
+    const d = c - 1.0 / threshold;
+
+    if (Math.abs(q) < 0.001) {
+      // 线性情况
+      return Math.max(0, -d / l);
+    }
+
+    // 二次方程求解
+    const discriminant = l * l - 4 * q * d;
+    if (discriminant < 0) {
+      return 0; // 无实数解
+    }
+
+    const sqrtDisc = Math.sqrt(discriminant);
+    const r1 = (-l + sqrtDisc) / (2 * q);
+    const r2 = (-l - sqrtDisc) / (2 * q);
+
+    return Math.max(0, Math.max(r1, r2));
+  }
+
+  // 使用距离剔除优化性能
+  cullLights(camera: Camera, lights: IPointLight[]): IPointLight[] {
+    return lights.filter(light => {
+      const radius = this.calculateRadius(light);
+      const distance = light.position.distance(camera.position);
+      return distance <= radius + camera.farPlane;
+    });
+  }
+}
+```
+
+### 问题2：std140内存布局数据错位
+**解决方案**：
+```typescript
+// 正确的std140数据打包
+class PointLightUniformPacker {
+  private readonly FLOAT_SIZE = 4;
+  private readonly VEC3_SIZE = 16; // vec3需要16字节对齐
+  private readonly LIGHT_SIZE = 48; // 每个光源48字节
+
+  packLights(lights: IPointLight[]): Float32Array {
+    const buffer = new Float32Array(208); // 4光源 + 控制参数
+
+    for (let i = 0; i < 4; i++) {
+      const offset = i * 12; // 每个光源12个float
+      const light = i < lights.length ? lights[i] : this.getDefaultLight();
+
+      // vec3 position (16字节对齐)
+      buffer[offset] = light.position.x;
+      buffer[offset + 1] = light.position.y;
+      buffer[offset + 2] = light.position.z;
+      buffer[offset + 3] = 0; // padding
+
+      // vec3 color (16字节对齐)
+      buffer[offset + 4] = light.color.x;
+      buffer[offset + 5] = light.color.y;
+      buffer[offset + 6] = light.color.z;
+      buffer[offset + 7] = 0; // padding
+
+      // float attenuation parameters
+      buffer[offset + 8] = light.constant;
+      buffer[offset + 9] = light.linear;
+      buffer[offset + 10] = light.quadratic;
+      buffer[offset + 11] = 0; // padding
+    }
+
+    // 全局参数 (偏移192)
+    buffer[192] = Math.min(lights.length, 4); // lightCount
+    buffer[193] = 0.1; // ambientIntensity
+    buffer[194] = 32; // shininess
+    buffer[195] = 0; // padding
+
+    return buffer;
+  }
+}
+```
+
+### 问题3：多光源渲染性能优化
+**解决方案**：
+```typescript
+class OptimizedPointLightRenderer {
+  private lightSystem: IPointLightSystem;
+  private lodManager: PointLightLOD;
+
+  constructor(device: IRHIDevice) {
+    this.lightSystem = new PointLightSystem(device, 4);
+    this.lodManager = new PointLightLOD();
+  }
+
+  render(renderContext: RenderContext): void {
+    // 距离剔除
+    const visibleLights = this.cullLightsByDistance(
+      this.lightSystem.getActiveLights(),
+      renderContext.camera
+    );
+
+    // 重要性排序（距离相机近的优先）
+    const sortedLights = this.sortByImportance(visibleLights, renderContext.camera);
+
+    // LOD优化
+    const lodLights = this.lodManager.applyLOD(sortedLights, renderContext);
+
+    // 更新uniform缓冲区
+    this.lightSystem.setLights(lodLights);
+    this.lightSystem.updateUniformBuffer();
+  }
+
+  private cullLightsByDistance(lights: IPointLight[], camera: Camera): IPointLight[] {
+    return lights.filter(light => {
+      const distance = light.position.distance(camera.position);
+      const influenceRadius = this.calculateInfluenceRadius(light);
+      return distance <= influenceRadius + camera.farPlane;
+    });
+  }
+
+  private sortByImportance(lights: IPointLight[], camera: Camera): IPointLight[] {
+    return lights.sort((a, b) => {
+      const distA = a.position.distance(camera.position);
+      const distB = b.position.distance(camera.position);
+      const intensityA = a.intensity / (distA * distA);
+      const intensityB = b.intensity / (distB * distB);
+      return intensityB - intensityA; // 降序排列
+    });
+  }
+}
+
+// 简化版着色器（移动设备优化）
+const simplifiedPointLightShader = `
+#version 300 es
+precision mediump float;
+
+struct PointLight {
+  vec3 position;
+  vec3 color;
+  float constant;
+  float linear;
+  float quadratic;
+};
+
+uniform PointLight uLights[4];
+uniform int uLightCount;
+uniform float uAmbientIntensity;
+
+in vec3 vNormal;
+in vec3 vWorldPosition;
+out vec4 fragColor;
+
+void main() {
+  vec3 normal = normalize(vNormal);
+  vec3 result = vec3(uAmbientIntensity);
+
+  for (int i = 0; i < 4; i++) {
+    if (i >= uLightCount) break;
+
+    vec3 lightDir = uLights[i].position - vWorldPosition;
+    float distance = length(lightDir);
+    lightDir = normalize(lightDir);
+
+    // 简化衰减计算（性能优先）
+    float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
+
+    // Lambert漫反射
+    float diff = max(dot(normal, lightDir), 0.0);
+    vec3 diffuse = diff * uLights[i].color * attenuation;
+
+    result += diffuse;
+  }
+
+  fragColor = vec4(result, 1.0);
+}
+`;
+```
 
 ## 概述
 

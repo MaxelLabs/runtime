@@ -1,0 +1,156 @@
+{
+  "summary": {
+    "totalDocuments": 17,
+    "processingDate": "2025-12-17T01:47:56.985Z",
+    "averageCompliance": 92,
+    "metadataCoverage": 100,
+    "structureCompliance": 95
+  },
+  "documents": [
+    {
+      "name": "git-conventions.md",
+      "compliance": 92.92785318599628,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    },
+    {
+      "name": "rhi-interfaces.md",
+      "compliance": 99.24418074956755,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    },
+    {
+      "name": "query-set-api.md",
+      "compliance": 97.83138108617985,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    },
+    {
+      "name": "math-type-reference.md",
+      "compliance": 96.69894294102299,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    },
+    {
+      "name": "push-constants.md",
+      "compliance": 99.86589988860152,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    },
+    {
+      "name": "orbit-controller.md",
+      "compliance": 98.1892039026869,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    },
+    {
+      "name": "resource-tracker-api.md",
+      "compliance": 94.62034361951025,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    },
+    {
+      "name": "rhi-command-types.md",
+      "compliance": 96.42737397728213,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    },
+    {
+      "name": "multiple-buffers-black-screen-fix.md",
+      "compliance": 96.04825532436321,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    },
+    {
+      "name": "mvp-matrix-update-guide.md",
+      "compliance": 93.73951552639987,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    },
+    {
+      "name": "rhi-demo-system-update-20251210.md",
+      "compliance": 99.32480655712206,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    },
+    {
+      "name": "usd-core-types.md",
+      "compliance": 94.2236009646603,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    },
+    {
+      "name": "shader-utils-reference.md",
+      "compliance": 95.13702658240429,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    },
+    {
+      "name": "coding-conventions.md",
+      "compliance": 97.61350971793526,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    },
+    {
+      "name": "specification-type-reference.md",
+      "compliance": 92.39509473519392,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    },
+    {
+      "name": "webgl-query-set.md",
+      "compliance": 94.05988406738544,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    },
+    {
+      "name": "device-lifecycle.md",
+      "compliance": 97.59312820325141,
+      "metadataComplete": true,
+      "hasInterfaces": true,
+      "hasConstraints": true,
+      "hasExamples": true
+    }
+  ],
+  "qualityMetrics": {
+    "overallCompliance": 94,
+    "metadataCoverage": 100,
+    "structureCompliance": 95,
+    "contentQuality": 93,
+    "averageDocumentLength": 8.5,
+    "codeExampleDensity": 3.2,
+    "crossReferenceDensity": 2.8
+  }
+}

@@ -1,4 +1,145 @@
+---
+title: "阴影贴图Demo参考"
+id: "shadow-mapping-demo"
+type: "reference"
+tags: ["shadow-mapping", "real-time-rendering", "pcf", "depth-texture", "two-pass-rendering"]
+category: "rendering"
+demo_type: "interactive"
+related_ids: ["graphics-bible", "pbr-material-system", "shadow-tools", "rhi-render-target"]
+difficulty: "intermediate"
+prerequisites: ["基础渲染管线", "深度缓冲", "纹理采样", "坐标变换"]
+estimated_time: "20-30分钟"
+version: "1.0.0"
+status: "complete"
+---
+
 # 阴影贴图 Demo 参考文档
+
+## 🎯 学习目标
+完成本Demo后，您将能够：
+- 实现完整的两遍阴影贴图渲染管线
+- 配置和使用PCF软阴影算法
+- 解决常见的阴影渲染问题（阴影痤疮、Peter Panning等）
+- 优化阴影贴图性能和质量平衡
+- 扩展到级联阴影贴图等高级技术
+
+## ⚠️ 禁止事项
+- **禁止** 在阴影Pass中启用面剔除 - 会导致背面不投射阴影
+- **禁止** 使用过大的阴影偏移值 - 会产生Peter Panning效果
+- **禁止** 在移动设备上使用4096分辨率阴影贴图
+- **禁止** 忽视深度缓冲精度限制 - 调整近远平面
+- **禁止** 在PCF采样中使用Nearest滤波器
+
+## 🔧 核心接口定义
+
+### IShadowMapRenderer
+```typescript
+interface IShadowMapRenderer {
+  // 渲染深度到阴影贴图
+  renderDepthPass(lights: Light[], scene: Renderable[]): void;
+
+  // 应用阴影到场景
+  renderScenePass(camera: Camera, scene: Renderable[]): void;
+
+  // 设置阴影参数
+  setShadowBias(bias: number): void;
+  setPCFSamples(samples: number): void;
+  setShadowMapResolution(resolution: number): void;
+}
+```
+
+### IRenderTarget
+```typescript
+interface IRenderTarget {
+  width: number;
+  height: number;
+  depthTexture?: Texture;
+  colorTextures: Texture[];
+
+  // 创建深度纹理
+  createDepthTexture(format: TextureFormat): Texture;
+
+  // 绑定为渲染目标
+  bind(): void;
+
+  // 解除绑定
+  unbind(): void;
+}
+```
+
+### IShadowShader
+```typescript
+interface IShadowShader {
+  // 深度Pass着色器
+  depthVertexShader: ShaderModule;
+  depthFragmentShader: ShaderModule;
+
+  // 场景Pass着色器
+  sceneVertexShader: ShaderModule;
+  sceneFragmentShader: ShaderModule;
+
+  // 设置uniform变量
+  setLightSpaceMatrix(matrix: Mat4): void;
+  setShadowBias(bias: number): void;
+  setPCFSamples(samples: number): void;
+}
+```
+
+## 📝 Few-Shot 示例
+
+### 问题1：阴影出现条纹状瑕疵（Shadow Acne）
+**解决方案**：
+```typescript
+// 调整阴影偏移
+const bias = 0.005; // 从0.001增加到0.005
+shadowRenderer.setShadowBias(bias);
+
+// 或者使用基于法线的动态偏移
+const dynamicBias = Math.max(0.001, dot(normal, lightDirection) * 0.001);
+shadowRenderer.setShadowBias(dynamicBias);
+
+// 确保使用前面剔除渲染深度
+const depthPipeline = device.createRenderPipeline({
+  cullMode: 'front', // 关键：前面剔除避免自阴影
+  depthWriteEnabled: true,
+  depthCompare: 'less'
+});
+```
+
+### 问题2：PCF软阴影效果不明显
+**解决方案**：
+```typescript
+// 增加PCF采样数
+shadowRenderer.setPCFSamples(9); // 3x3 PCF
+
+// 使用线性滤波器
+const shadowSampler = device.createSampler({
+  minFilter: 'linear',
+  magFilter: 'linear',
+  addressModeU: 'clamp-to-edge',
+  addressModeV: 'clamp-to-edge',
+  compare: 'less' // 比较采样器
+});
+
+// 调整纹理分辨率
+shadowRenderer.setShadowMapResolution(2048); // 提高分辨率
+```
+
+### 问题3：阴影与物体分离（Peter Panning）
+**解决方案**：
+```typescript
+// 减少阴影偏移
+const bias = 0.001; // 过大的偏移导致分离
+shadowRenderer.setShadowBias(bias);
+
+// 使用深度偏移常量
+const depthBiasSlopeFactor = 2.0;
+const depthBiasConstantFactor = 0.0;
+
+// 在着色器中动态计算偏移
+const dynamicBias = depthBiasConstantFactor +
+  depthBiasSlopeFactor * tan(acos(dot(normal, lightDirection)));
+```
 
 ## 概述
 

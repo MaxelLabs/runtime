@@ -1,4 +1,227 @@
-# 实例化渲染Demo技术文档
+---
+title: "GPU实例化渲染Demo技术文档"
+id: "instancing-demo"
+type: "reference"
+tags: ["instancing", "gpu-rendering", "performance-optimization", "batch-rendering", "webgl2"]
+category: "demo"
+demo_type: "interactive"
+related_ids: ["graphics-bible", "pbr-material-system", "particle-system", "shadow-tools"]
+difficulty: "intermediate"
+prerequisites: ["基础渲染管线", "顶点缓冲区", "着色器编程", "矩阵变换"]
+estimated_time: "25-35分钟"
+version: "1.2.0"
+status: "complete"
+---
+
+# GPU实例化渲染Demo技术文档
+
+## 🎯 学习目标
+完成本Demo后，您将能够：
+- 掌握GPU实例化渲染的原理和实现方法
+- 配置WebGL2实例化顶点属性和缓冲区布局
+- 实现高效的批量渲染，显著减少Draw Call数量
+- 优化实例数据传输和GPU内存管理
+- 扩展实例化技术到粒子系统、植被渲染等实际场景
+
+## ⚠️ 禁止事项
+- **禁止** 在实例化渲染中使用非std140布局的缓冲区
+- **禁止** 在实例属性缓冲区中使用vec3类型 - 需要填充为vec4
+- **禁止** 在WebGL1环境中不检查ANGLE_instanced_arrays扩展支持
+- **禁止** 忽略实例数量的硬件限制（通常最大65535）
+- **禁止** 在实例数据中使用动态数组类型
+
+## 🔧 核心接口定义
+
+### IInstancedRenderer
+```typescript
+interface IInstancedRenderer {
+  // 设置实例数据
+  setInstanceData(data: Float32Array, layout: InstanceAttributeLayout): void;
+  updateInstanceData(offset: number, data: Float32Array): void;
+
+  // 渲染配置
+  setGeometry(geometry: IGeometry): void;
+  setMaterial(material: IMaterial): void;
+
+  // 执行渲染
+  render(instanceCount: number, startInstance?: number): void;
+  renderIndirect(indirectBuffer: Buffer, offset?: number): void;
+}
+
+interface InstanceAttributeLayout {
+  attributes: InstanceAttribute[];
+  stride: number;
+  divisor: number; // 实例更新频率
+}
+
+interface InstanceAttribute {
+  location: number;
+  offset: number;
+  format: VertexFormat;
+  divisor: number; // 每N个实例更新一次
+}
+```
+
+### IInstanceBuffer
+```typescript
+interface IInstanceBuffer {
+  // 缓冲区管理
+  allocate(instanceCount: number, instanceSize: number): void;
+  update(instanceIndex: number, data: Float32Array): void;
+  updateRange(startIndex: number, count: number, data: Float32Array): void;
+
+  // GPU同步
+  uploadToDevice(): void;
+  invalidate(): void;
+
+  // 资源访问
+  getBuffer(): Buffer;
+  getInstanceCount(): number;
+}
+```
+
+### IInstancedGeometry
+```typescript
+interface IInstancedGeometry {
+  // 基础几何体
+  vertexBuffer: Buffer;
+  indexBuffer?: Buffer;
+  vertexCount: number;
+  indexCount?: number;
+
+  // 实例数据
+  instanceBuffer: InstanceBuffer;
+  instanceAttributes: InstanceAttribute[];
+
+  // 渲染统计
+  getDrawCallCount(): number;
+  getTriangleCount(instanceCount: number): number;
+}
+```
+
+## 📝 Few-Shot 示例
+
+### 问题1：实例化渲染显示位置错误
+**解决方案**：
+```typescript
+// 检查矩阵数据布局
+function validateInstanceMatrices(matrices: Float32Array): boolean {
+  // 确保矩阵是列主序
+  for (let i = 0; i < matrices.length; i += 16) {
+    const matrix = matrices.subarray(i, i + 16);
+    if (!isColumnMajor(matrix)) {
+      console.error('Matrix must be column-major for WebGL2');
+      return false;
+    }
+  }
+
+  // 检查std140对齐
+  const instanceSize = 64; // mat4 = 16 floats * 4 bytes
+  if (matrices.length % 16 !== 0) {
+    console.error('Instance matrix data not properly aligned');
+    return false;
+  }
+
+  return true;
+}
+
+// 正确的实例数据布局
+const instanceData = new Float32Array(maxInstances * instanceSize);
+for (let i = 0; i < instances.length; i++) {
+  const offset = i * 16;
+  const matrix = instances[i].transform.elements;
+
+  // 列主序复制
+  instanceData.set(matrix, offset);
+}
+```
+
+### 问题2：WebGL2实例化兼容性处理
+**解决方案**：
+```typescript
+function setupInstancing(device: IRHIDevice): boolean {
+  const gl = device.getContext();
+
+  // 检查WebGL2支持
+  if (!gl.drawArraysInstanced) {
+    console.error('WebGL2 instancing not supported');
+    return false;
+  }
+
+  // 设置顶点属性divisor
+  const instanceMatrixLocations = [2, 3, 4, 5]; // mat4占4个location
+  for (let i = 0; i < 4; i++) {
+    const location = instanceMatrixLocations[i];
+    gl.vertexAttribDivisor(location, 1); // 每个实例更新一次
+  }
+
+  // 对于WebGL1，检查扩展
+  if (gl instanceof WebGLRenderingContext) {
+    const ext = gl.getExtension('ANGLE_instanced_arrays');
+    if (!ext) {
+      console.error('ANGLE_instanced_arrays not available');
+      return false;
+    }
+
+    // 使用扩展方法
+    for (let i = 0; i < 4; i++) {
+      const location = instanceMatrixLocations[i];
+      ext.vertexAttribDivisorANGLE(location, 1);
+    }
+  }
+
+  return true;
+}
+```
+
+### 问题3：实例化性能优化
+**解决方案**：
+```typescript
+class OptimizedInstancedRenderer implements IInstancedRenderer {
+  private instanceBuffer: Buffer;
+  private dataBuffer: Float32Array;
+  private dirtyRegions: Array<{start: number, end: number}> = [];
+
+  constructor(device: IRHIDevice, maxInstances: number) {
+    // 预分配大缓冲区
+    this.instanceBuffer = device.createBuffer({
+      size: maxInstances * 64, // 每个实例64字节
+      usage: BufferUsage.Vertex | BufferUsage.CopyDst
+    });
+
+    this.dataBuffer = new Float32Array(maxInstances * 16);
+  }
+
+  // 脏区域更新，避免全量上传
+  updateInstanceRange(startIndex: number, count: number, matrices: Mat4[]): void {
+    const startOffset = startIndex * 16;
+    const dataLength = count * 16;
+
+    for (let i = 0; i < count; i++) {
+      const offset = startOffset + i * 16;
+      this.dataBuffer.set(matrices[i].elements, offset);
+    }
+
+    // 记录脏区域
+    this.dirtyRegions.push({
+      start: startIndex * 64,
+      end: (startIndex + count) * 64
+    });
+  }
+
+  // 批量上传脏区域
+  flushToDevice(): void {
+    for (const region of this.dirtyRegions) {
+      this.instanceBuffer.setSubData(
+        this.dataBuffer.subarray(region.start / 4, region.end / 4),
+        region.start
+      );
+    }
+
+    this.dirtyRegions.length = 0; // 清空脏区域
+  }
+}
+```
 
 ## 概述
 

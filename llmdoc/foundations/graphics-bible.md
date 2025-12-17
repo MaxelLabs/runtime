@@ -1,6 +1,66 @@
-# 图形学圣经 (Graphics Bible)
+---
+title: "图形系统圣经"
+id: "graphics-system-bible"
+type: "constitution"
+tags: ["graphics", "coordinate-system", "matrix-order", "color-space", "rendering-pipeline"]
+related_ids: ["coding-conventions", "rhi-demo-constitution", "pbr-material-system"]
+token_cost: "high"
+context_dependency: []
+---
 
-本文档是项目图形系统的核心宪法，所有相关的代码实现都必须严格遵守本文档定义的规则。
+# 图形系统圣经 (Graphics Bible)
+
+## Context
+本文档是项目图形系统的核心宪法，定义所有渲染、几何变换和数学运算的基本规则。所有相关的代码实现都必须严格遵守本文档定义的规则。
+
+## Goal
+提供统一、准确、完整的图形学基础原理和实现标准，确保整个渲染系统的一致性和正确性。
+
+## 接口定义
+
+### 核心矩阵类型
+```typescript
+// 列主序 4x4 矩阵布局
+interface ColumnMajorMatrix4 {
+  elements: Float32Array; // 16个元素，按列存储
+  // 内存布局：
+  // [0, 1, 2, 3]   = 第一列 (m00, m10, m20, m30)
+  // [4, 5, 6, 7]   = 第二列 (m01, m11, m21, m31)
+  // [8, 9, 10, 11] = 第三列 (m02, m12, m22, m32)
+  // [12, 13, 14, 15]= 第四列 (m03, m13, m23, m33)
+}
+
+// 坐标系验证接口
+interface CoordinateSystem {
+  readonly X_AXIS: Vector3; // [1, 0, 0]
+  readonly Y_AXIS: Vector3; // [0, 1, 0]
+  readonly Z_AXIS: Vector3; // [0, 0, 1]
+  validate(): boolean;     // 验证右手定则
+}
+
+// MVP变换矩阵集合
+interface MVPMatrices {
+  model: ColumnMajorMatrix4;     // 局部->世界
+  view: ColumnMajorMatrix4;      // 世界->观察
+  projection: ColumnMajorMatrix4;// 观察->裁剪
+  mvp?: ColumnMajorMatrix4;      // 组合矩阵
+}
+```
+
+### 纹理和颜色接口
+```typescript
+// UV坐标定义
+interface UVCoordinate {
+  u: number; // [0, 1], 从左到右
+  v: number; // [0, 1], 从下到上
+}
+
+// 颜色空间转换
+interface ColorSpaceConverter {
+  srgbToLinear(srgbColor: Vector3): Vector3;
+  linearToSRGB(linearColor: Vector3): Vector3;
+}
+```
 
 ## 第一章：基本教义 (The Creed)
 
@@ -8,254 +68,324 @@
 
 本项目统一采用 **右手坐标系 (Right-Handed Coordinate System)**。
 
--   **+X 轴**: 指向右方
--   **+Y 轴**: 指向上方
--   **+Z 轴**: 指向前方 (从屏幕内部指向观察者)
+```typescript
+// 坐标系定义
+const RIGHT_HANDED_SYSTEM: CoordinateSystem = {
+  X_AXIS: new Vector3(1, 0, 0),  // 指向右方
+  Y_AXIS: new Vector3(0, 1, 0),  // 指向上方
+  Z_AXIS: new Vector3(0, 0, 1),  // 指向前方(从屏幕指向观察者)
 
-![Right-Handed Coordinate System](https://i.imgur.com/EAb7e1s.png)
+  validate(): boolean {
+    const xy = new Vector3().crossVectors(this.X_AXIS, this.Y_AXIS);
+    const yz = new Vector3().crossVectors(this.Y_AXIS, this.Z_AXIS);
+    return xy.equals(this.Z_AXIS) && yz.equals(this.X_AXIS);
+  }
+};
+```
 
-#### 验证法则
+**负面约束：**
+- ❌ 禁止使用左手坐标系
+- ❌ 禁止修改坐标轴方向
+- ❌ 禁止混合使用不同的坐标系统
 
-所有与坐标系相关的基础运算，必须符合右手定则。基向量的叉积是判断坐标系性质的“指纹”。
+### 1.2 验证法则
+
+所有与坐标系相关的基础运算，必须符合右手定则：
 
 ```typescript
-// 验证: X × Y = Z
-const X_AXIS = new Vector3(1, 0, 0);
-const Y_AXIS = new Vector3(0, 1, 0);
-const Z_AXIS = new Vector3(0, 0, 1);
-
-const xyResult = new Vector3().crossVectors(X_AXIS, Y_AXIS);
-console.assert(xyResult.equals(Z_AXIS), "坐标系验证失败: X × Y 应该等于 Z");
-
-// 验证: Y × Z = X
-const yzResult = new Vector3().crossVectors(Y_AXIS, Z_AXIS);
-console.assert(yzResult.equals(X_AXIS), "坐标系验证失败: Y × Z 应该等于 X");
+// 强制验证 - 所有初始化代码必须包含
+console.assert(
+  RIGHT_HANDED_SYSTEM.validate(),
+  "坐标系验证失败: 必须使用右手坐标系"
+);
 ```
 
 ## 第二章：核心变换与矩阵系统
 
 ### 2.1 MVP 变换流程 (MVP Transform)
 
-该流程将局部坐标系下的顶点 `P_local` 转换到屏幕坐标系 `P_screen`。这是渲染管线的核心。
+```typescript
+// MVP变换管线
+interface TransformPipeline {
+  modelMatrix: ColumnMajorMatrix4;
+  viewMatrix: ColumnMajorMatrix4;
+  projectionMatrix: ColumnMajorMatrix4;
 
-#### 1. 符号定义
+  // 应用完整变换链
+  transform(point: Vector3): Vector3 {
+    const world = point.applyMatrix4(this.modelMatrix);
+    const view = world.applyMatrix4(this.viewMatrix);
+    const clip = view.applyMatrix4(this.projectionMatrix);
 
-*   `P_local`: 顶点在模型局部坐标系下的坐标 `(x, y, z, 1)`
-*   `M_model`: 模型矩阵 (Model Matrix)，将顶点从局部空间变换到世界空间
-*   `M_view`: 视图矩阵 (View Matrix)，将顶点从世界空间变换到观察空间
-*   `M_proj`: 投影矩阵 (Projection Matrix)，将顶点从观察空间变换到裁剪空间
-*   `P_clip`: 裁剪空间坐标 `(cx, cy, cz, cw)`
-*   `P_ndc`: 归一化设备坐标 (Normalized Device Coordinates) `(nx, ny, nz)`
-*   `P_screen`: 屏幕坐标 `(sx, sy)`
+    // 透视除法
+    const ndc = new Vector3(
+      clip.x / clip.w,
+      clip.y / clip.w,
+      clip.z / clip.w
+    );
 
-#### 2. 变换公式 (后乘)
-
-变换遵循后乘 (Post-multiplication) 规则，与代码实现顺序一致。
-
-```
-// 单步运算
-P_world = M_model * P_local
-P_view = M_view * P_world
-P_clip = M_proj * P_view
-
-// 级联运算 (符合后乘规则)
-M_mvp = M_proj * M_view * M_model
-P_clip = M_mvp * P_local
+    return ndc;
+  }
+}
 ```
 
-#### 3. 透视除法
-
-从裁剪空间 (Clip Space) 到 NDC 空间的转换通过透视除法完成。
-
+**关键公式：**
 ```
-P_ndc.x = P_clip.x / P_clip.w
-P_ndc.y = P_clip.y / P_clip.w
-P_ndc.z = P_clip.z / P_clip.w
+P_world = M_model × P_local
+P_view = M_view × P_world
+P_clip = M_proj × P_view
+P_ndc = P_clip / P_clip.w
 ```
-
-*   **NDC 空间范围**: `x, y, z` 均在 `[-1, 1]` 区间内，符合 OpenGL 规范。超出此范围的几何体将被裁剪。
 
 ### 2.2 内存布局：列主序 (Column-Major)
 
-所有矩阵实例在内存中都必须采用 **列主序 (Column-Major)** 布局。这意味着数组中的连续元素构成矩阵的**列**。
+**要求：** 所有矩阵实例在内存中必须采用列主序布局
 
-对于一个 4x4 矩阵，其 `elements[16]` 数组的布局如下：
+```typescript
+// 正确的列主序矩阵实现
+class Matrix4 implements ColumnMajorMatrix4 {
+  elements = new Float32Array(16);
 
-|       | Column 0 | Column 1 | Column 2 | Column 3 |
-| :---- | :------: | :------: | :------: | :------: |
-| **Row 0** | `m[0]`   | `m[4]`   | `m[8]`   | `m[12]`  |
-| **Row 1** | `m[1]`   | `m[5]`   | `m[9]`   | `m[13]`  |
-| **Row 2** | `m[2]`   | `m[6]`   | `m[10]`  | `m[14]`  |
-| **Row 3** | `m[3]`   | `m[7]`   | `m[11]`  | `m[15]`  |
+  // 获取元素 - 注意索引规则
+  getElement(row: number, col: number): number {
+    return this.elements[col * 4 + row]; // 列优先访问
+  }
 
-**警告：** 任何将 `[m[0], m[1], m[2], m[3]]` 视为矩阵第一行的实现都是 **绝对错误** 的，必须被禁止。
+  // 设置元素
+  setElement(row: number, col: number, value: number): void {
+    this.elements[col * 4 + row] = value; // 列优先设置
+  }
+}
+```
+
+**内存布局表：**
+| 索引 | 值 | 位置 |
+|------|----|------ |
+| m[0] | elements[0] | 第0列, 第0行 |
+| m[1] | elements[1] | 第0列, 第1行 |
+| m[2] | elements[2] | 第0列, 第2行 |
+| m[3] | elements[3] | 第0列, 第3行 |
+| m[4] | elements[4] | 第1列, 第0行 |
+| ... | ... | ... |
+
+**负面约束：**
+- ❌ 禁止将 [m[0], m[1], m[2], m[3]] 视为第一行
+- ❌ 禁止使用行主序布局
+- ❌ 禁止跨平台使用不同的矩阵布局
 
 ### 2.3 矩阵乘法：后乘 (Post-multiplication)
 
-矩阵乘法 `A.multiply(B)` 的数学意义为 `A = A × B`。这是一个 **in-place** 操作，即 `A` 实例自身会被修改。
-
-`p_clip = M_projection × M_view × M_model × p_model`
-
-在代码中，由于 `multiply` 是 in-place 操作，为了不修改原始矩阵，必须先 `clone()`：
-
 ```typescript
-// 假设 M_model, M_view, M_proj 已经计算好
-// 必须使用 clone() 来防止 M_proj 被修改
-const M_mvp = M_proj.clone().multiply(M_view).multiply(M_model);
+// 后乘实现规则
+interface MatrixOperations {
+  multiply(b: Matrix4): Matrix4; // this = this × b
+  clone(): Matrix4;              // 深拷贝
+}
 
-// 将模型空间的点变换到裁剪空间
-const transformedPoint = originalPoint.applyMatrix4(M_mvp);
+// 正确的MVP组合方式
+function calculateMVP(model: Matrix4, view: Matrix4, proj: Matrix4): Matrix4 {
+  return proj.clone().multiply(view).multiply(model);
+}
 ```
+
+**负面约束：**
+- ❌ 禁止在前乘操作中修改原始矩阵
+- ❌ 禁止不使用clone()就修改矩阵
+- ❌ 禁止错误的乘法顺序
 
 ## 第三章：纹理与颜色空间
 
 ### 3.1 纹理坐标系 (UV)
 
-1.  **原点**: (0, 0) 位于纹理图像的 **左下角**。
-2.  **U 轴**: 从左到右，范围 `[0, 1]`。
-3.  **V 轴**: 从下到上，范围 `[0, 1]`。
-
-这与 OpenGL/WebGL 的标准一致，可以简化与 RHI 层的对接。
-
-![UV Coordinate System](https://i.imgur.com/V2iQ42B.png)
-
-### 3.2 纹理采样与过滤 (双线性插值)
-
-当采样点 `(u, v)` 不与任何纹理像素中心重合时，使用双线性插值计算颜色，作为 `LINEAR` 过滤的默认实现标准。
-
-#### 伪代码
-
-```
-// 1. 输入
-// uv: 归一化的纹理坐标 (u, v)
-// texture: 纹理对象
-// tex_dims: 纹理尺寸 (width, height)
-
-// 2. 计算实际像素坐标
-xy = uv * tex_dims - 0.5
-
-// 3. 获取四个相邻像素的整数坐标
-x0 = floor(xy.x), y0 = floor(xy.y)
-x1 = x0 + 1, y1 = y0 + 1
-
-// 4. 采样四个像素的颜色
-C00 = sample(texture, x0, y0) // 左下
-C10 = sample(texture, x1, y0) // 右下
-C01 = sample(texture, x0, y1) // 左上
-C11 = sample(texture, x1, y1) // 右上
-
-// 5. 计算插值权重
-tx = xy.x - x0
-ty = xy.y - y0
-
-// 6. 执行两次线性插值 (lerp)
-C_bottom = lerp(C00, C10, tx) // 底部插值
-C_top = lerp(C01, C11, tx)    // 顶部插值
-
-// 7. 最终颜色
-final_color = lerp(C_bottom, C_top, ty) // 垂直插值
-return final_color
+```typescript
+// UV坐标系统定义
+const UV_SYSTEM = {
+  ORIGIN: { u: 0, v: 0 },     // 左下角
+  U_DIRECTION: { u: 1, v: 0 }, // 从左到右
+  V_DIRECTION: { u: 0, v: 1 }, // 从下到上
+  RANGE: { min: 0, max: 1 }
+};
 ```
 
-### 3.3 颜色空间 (Color Space)
-
-为了在线性空间中进行正确的光照计算，需要对 sRGB 颜色空间的纹理和颜色值进行 Gamma 校正。**所有光照计算必须在线性空间中进行。**
-
-#### 1. sRGB -> Linear
-
-适用于从 sRGB 纹理或颜色选择器获取的颜色。
-
-```
-// gamma_factor ≈ 2.2
-linear_color = pow(srgb_color, gamma_factor)
-```
-
-#### 2. Linear -> sRGB
-
-适用于将最终计算出的线性颜色写入帧缓冲区。
-
-```
-// inv_gamma_factor = 1.0 / gamma_factor
-srgb_color = pow(linear_color, inv_gamma_factor)
-```
-
-## 第四章：数值精度与性能
-
-### 4.1 EPSILON 标准
-
-所有浮点数比较必须使用 `EPSILON` 来避免精度问题。核心数学库的默认值为 `1e-6`。严禁在新代码中使用 `a === b` 来直接比较两个浮点数。
+### 3.2 双线性插值算法
 
 ```typescript
-function fuzzyEquals(a: number, b: number, epsilon: number = 1e-6): boolean {
-    return Math.abs(a - b) < epsilon;
+// 标准双线性插值实现
+function bilinearInterpolation(
+  texture: TextureData,
+  uv: UVCoordinate
+): Vector4 {
+  // 1. 计算像素坐标
+  const texDims = { x: texture.width, y: texture.height };
+  const xy = {
+    x: uv.u * texDims.x - 0.5,
+    y: uv.v * texDims.y - 0.5
+  };
+
+  // 2. 获取四个相邻像素
+  const x0 = Math.floor(xy.x), y0 = Math.floor(xy.y);
+  const x1 = x0 + 1, y1 = y0 + 1;
+
+  // 3. 采样四个像素
+  const C00 = texture.sample(x0, y0); // 左下
+  const C10 = texture.sample(x1, y0); // 右下
+  const C01 = texture.sample(x0, y1); // 左上
+  const C11 = texture.sample(x1, y1); // 右上
+
+  // 4. 计算权重
+  const tx = xy.x - x0;
+  const ty = xy.y - y0;
+
+  // 5. 执行插值
+  const bottom = lerp(C00, C10, tx);
+  const top = lerp(C01, C11, tx);
+  return lerp(bottom, top, ty);
 }
 ```
 
-### 4.2 性能：禁止在循环中创建新对象
-
-**绝对禁止** 在循环或高频调用函数（如 `update`）中创建新的实例 (`new Matrix4()`, `new Vector3()`)。这会导致严重的性能问题和GC压力。必须复用实例。
+### 3.3 颜色空间转换
 
 ```typescript
-// --- 错误示范 ---
-function updatePositions_BAD(objects: any[]): void {
-    for (const obj of objects) {
-        const tempVec = new Vector3(0, 1, 0); // 每次循环都创建新对象
-        obj.position.add(tempVec);
-    }
-}
+// Gamma校正实现
+class ColorSpaceManager implements ColorSpaceConverter {
+  private readonly GAMMA = 2.2;
+  private readonly INV_GAMMA = 1.0 / 2.2;
 
-// --- 正确示范 ---
-const _tempVec = new Vector3(0, 1, 0); // 在外部创建一次
-function updatePositions_GOOD(objects: any[]): void {
-    for (const obj of objects) {
-        obj.position.add(_tempVec); // 复用对象
-    }
+  srgbToLinear(srgbColor: Vector3): Vector3 {
+    return new Vector3(
+      Math.pow(srgbColor.x, this.GAMMA),
+      Math.pow(srgbColor.y, this.GAMMA),
+      Math.pow(srgbColor.z, this.GAMMA)
+    );
+  }
+
+  linearToSRGB(linearColor: Vector3): Vector3 {
+    return new Vector3(
+      Math.pow(linearColor.x, this.INV_GAMMA),
+      Math.pow(linearColor.y, this.INV_GAMMA),
+      Math.pow(linearColor.z, this.INV_GAMMA)
+    );
+  }
 }
 ```
 
-## 第五章：RHI 数据接口契约
+**负面约束：**
+- ❌ 禁止在sRGB空间进行光照计算
+- ❌ 禁止忽略Gamma校正
+- ❌ 禁止使用错误的Gamma值
 
-本章定义了与底层图形 API (Render Hardware Interface) 通信的硬性规定。
+## 第四章：数值精度与性能约束
 
-### 5.1 顶点缓冲布局 (Vertex Buffer Layout)
+### 4.1 浮点数比较标准
 
--   数据必须是平铺 (interleaved) 的 `ArrayBuffer`。
--   顶点属性顺序: Position (vec3), Normal (vec3), UV (vec2), Tangent (vec4) ...
--   示例: `[Px, Py, Pz, Nx, Ny, Nz, U, V, ...]`
+```typescript
+// 强制使用EPSILON比较
+const EPSILON = 1e-6;
 
-### 5.2 统一缓冲对象 (UBO)
+function fuzzyEquals(a: number, b: number, epsilon: number = EPSILON): boolean {
+  return Math.abs(a - b) < epsilon;
+}
 
--   矩阵数据必须以 **列主序** 格式上传到 GPU。
--   `Float32Array` 在填充时应遵循 `[col0_row0, col0_row1, ..., col1_row0, ...]` 的顺序。
+// 错误示例 - 禁止直接比较浮点数
+// function compare(a: number, b: number): boolean {
+//   return a === b; // ❌ 绝对禁止
+// }
+```
 
----
+### 4.2 对象创建约束
+
+```typescript
+// 正确的对象复用模式
+class PerformanceManager {
+  private static _tempVector = new Vector3();
+  private static _tempMatrix = new Matrix4();
+
+  static getTempVector(): Vector3 {
+    return this._tempVector.set(0, 0, 0); // 重置后复用
+  }
+
+  static getTempMatrix(): Matrix4 {
+    return this._tempMatrix.identity(); // 重置后复用
+  }
+}
+
+// 错误示例 - 禁止在循环中创建对象
+// function badLoop(): void {
+//   for (let i = 0; i < 1000; i++) {
+//     const vec = new Vector3(i, i, i); // ❌ 性能杀手
+//   }
+// }
+```
+
+**负面约束：**
+- ❌ 禁止在循环或update函数中创建新对象
+- ❌ 禁止直接比较浮点数
+- ❌ 禁止使用小于1e-6的EPSILON值
+
+## Few-Shot示例
+
+### 示例1：正确的MVP计算
+```typescript
+// 问题：需要将模型空间的顶点变换到屏幕空间
+// 解决方案：
+const mvp = calculateMVP(modelMatrix, viewMatrix, projectionMatrix);
+const screenPos = vertexPosition.applyMatrix4(mvp);
+```
+
+### 示例2：正确的纹理采样
+```typescript
+// 问题：需要高质量的纹理过滤
+// 解决方案：使用双线性插值
+const filteredColor = bilinearInterpolation(texture, { u: 0.5, v: 0.5 });
+```
+
+### 示例3：错误的矩阵乘法
+```typescript
+// 问题：矩阵乘法顺序错误
+// 错误方式：
+// const mvp = model.multiply(view).multiply(proj); // ❌ 顺序错误
+
+// 正确方式：
+const mvp = proj.clone().multiply(view).multiply(model); // ✅ 正确顺序
+```
+
+## RHI数据接口契约
+
+### 顶点缓冲区布局
+```typescript
+// 强制interleaved布局
+interface VertexBufferLayout {
+  // 顺序：Position -> Normal -> UV -> Tangent
+  position: [number, number, number];  // 12 bytes
+  normal: [number, number, number];    // 12 bytes
+  uv: [number, number];                // 8 bytes
+  // 总计：32 bytes per vertex
+}
+```
+
+### UBO对齐规则
+```typescript
+// std140对齐要求
+const STD140_ALIGNMENT = {
+  FLOAT: 4,
+  VEC2: 8,
+  VEC3: 16,  // 注意：vec3需要16字节对齐
+  VEC4: 16,
+  MAT4: 64
+};
+```
 
 ## 相关文档
 
-### 🏛️ 基础规范
-- [RHI Demo 实现宪法](./rhi-demo-constitution.md) - Demo开发的详细规范和最佳实践
-- [编码规范](./coding-conventions.md) - 项目代码风格指南
+### 🏛️ 核心规范
+- [编码规范](./coding-conventions.md) - 代码风格约定
+- [RHI Demo宪法](./rhi-demo-constitution.md) - Demo实现规范
 
 ### 🔧 技术实现
-- [矩阵数学API](../api/math-type-reference.md) - 数学库的具体API参考
-- [渲染管线整合](../advanced/integration/rendering-pipeline.md) - 将图形学原理应用到渲染管线
+- [矩阵数学API](../api/math-type-reference.md) - 数学库实现
+- [渲染管线](../advanced/integration/rendering-pipeline.md) - 管线集成
 
-### 📦 材质与渲染系统
-- [PBR材质系统](../reference/pbr-material-system.md) - 基于物理的渲染实现，严格遵循本圣经的坐标系和颜色空间规则
-- [PBR迁移指南](../learning/tutorials/pbr-migration-guide.md) - 从旧PBR到SimplePBR的迁移，遵循图形学最佳实践
-- [粒子系统](../reference/particle-system.md) - GPU加速粒子效果，使用本圣经定义的变换系统
-- [阴影工具](../reference/shadow-tools.md) - 实时阴影渲染，基于本圣经的光照计算原理
-
-### 🎬 后处理系统
-- [后处理系统](../reference/modules/post-processing-system.md) - 完整后处理框架，处理本圣经定义的颜色空间转换
-- [FXAA抗锯齿](../reference/modules/fxaa-anti-aliasing.md) - 快速抗锯齿技术，应用于线性颜色空间
-
-### 🎮 演示和示例
-- [方向光源Demo](../reference/directional-light-demo.md) - 光照计算的实际应用
-- [Phong光照Demo](../reference/phong-lighting-demo.md) - 光照模型的实现示例
-- [阴影映射Demo](../reference/shadow-mapping-demo.md) - 阴影技术的完整实现
-- [GPU实例化Demo](../reference/instancing-demo.md) - 高效批量渲染，展示变换矩阵优化
-
-### 📚 学习路径
-- [Learning 学习层](../learning/) - 从基础到高级的完整学习路径
-- [Reference 参考层](../reference/) - 完整的技术文档和API参考
+### 📦 应用模块
+- [PBR材质系统](../reference/pbr-material-system.md) - 遵循本圣经的PBR实现
+- [阴影工具](../reference/shadow-tools.md) - 基于本圣经的阴影系统
+- [粒子系统](../reference/particle-system.md) - 遵循性能要求的粒子效果

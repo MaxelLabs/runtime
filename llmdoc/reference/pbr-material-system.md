@@ -1,4 +1,154 @@
+---
+title: "PBR材质系统参考"
+id: "pbr-material-system"
+type: "reference"
+tags: ["pbr", "material", "rendering", "ibl", "cook-torrance", "brdf"]
+category: "rendering"
+related_ids: ["graphics-bible", "shadow-mapping-demo", "skybox-system"]
+difficulty: "advanced"
+prerequisites: ["基础渲染管线", "纹理系统", "光照模型"]
+estimated_time: "30-45分钟"
+version: "1.5.0"
+status: "complete"
+---
+
 # PBR材质系统参考
+
+## 🎯 学习目标
+完成本教程后，您将能够：
+- 实现完整的Cook-Torrance BRDF PBR材质系统
+- 配置和使用基于图像的光照（IBL）
+- 优化PBR渲染性能，包括纹理压缩和批量渲染
+- 调试和解决常见PBR渲染问题
+- 扩展PBR系统支持次表面散射、清漆层等高级特性
+
+## ⚠️ 禁止事项
+- **禁止** 在片元着色器中进行伽马校正 - 使用线性渲染管线
+- **禁止** 使用sRGB纹理作为albedo输入而不进行转换
+- **禁止** 在循环中创建临时Vec3/Mat4对象 - 使用对象池
+- **禁止** 忽略金属度工作流的能量守恒定律
+- **禁止** 在移动设备上使用4K分辨率IBL贴图而不进行LOD处理
+
+## 🔧 核心接口定义
+
+### IPBRMaterial
+```typescript
+interface IPBRMaterial {
+  // 基础材质属性
+  setAlbedo(value: Vec3 | Texture): void;
+  setMetalness(value: number | Texture): void;
+  setRoughness(value: number | Texture): void;
+  setNormalMap(texture: Texture): void;
+  setAOMap(texture: Texture): void;
+
+  // 环境映射
+  setEnvironmentMaps(irradiance: Texture, prefilter: Texture, brdfLUT: Texture): void;
+
+  // 渲染方法
+  render(cmdBuf: CommandBuffer, geometry: Geometry, transform: Mat4, camera: Camera, lights: Light[]): void;
+
+  // 资源管理
+  dispose(): void;
+}
+```
+
+### IIBLLoader
+```typescript
+interface IIBLLoader {
+  generateFromCubemap(cubemap: Texture): Promise<{
+    irradiance: Texture;
+    prefilter: Texture;
+    brdfLUT: Texture;
+  }>;
+
+  generateFromEquirectangular(equirectangular: Texture): Promise<{
+    irradiance: Texture;
+    prefilter: Texture;
+    brdfLUT: Texture;
+  }>;
+}
+```
+
+### IMaterialLibrary
+```typescript
+interface IMaterialLibrary {
+  presets: {
+    gold: IPBRMaterial;
+    silver: IPBRMaterial;
+    copper: IPBRMaterial;
+    iron: IPBRMaterial;
+    plastic: IPBRMaterial;
+    rubber: IPBRMaterial;
+  };
+
+  createMaterial(config: PBRMaterialConfig): IPBRMaterial;
+  loadMaterial(path: string): Promise<IPBRMaterial>;
+  saveMaterial(material: IPBRMaterial, path: string): Promise<void>;
+}
+```
+
+## 📝 Few-Shot 示例
+
+### 问题1：PBR材质显示为纯黑色
+**解决方案**：
+```typescript
+// 检查光照设置
+if (lights.length === 0) {
+  console.error('PBR需要至少一个光源');
+  return;
+}
+
+// 验证法线贴图
+if (material.normalMap && !material.tangentSpace) {
+  console.warn('法线贴图需要切线空间数据');
+  material.generateTangents();
+}
+
+// 检查金属度/粗糙度值
+if (material.metalness === 0 && material.roughness === 0) {
+  console.warn('极端材质值可能导致渲染问题');
+  material.roughness = 0.01; // 最小粗糙度
+}
+```
+
+### 问题2：IBL环境反射不明显
+**解决方案**：
+```typescript
+// 确保环境贴图正确加载
+if (!material.irradianceMap || !material.prefilterMap) {
+  console.error('IBL贴图未设置');
+  const iblLoader = new IBLLoader(device);
+  const iblMaps = await iblLoader.generateFromCubemap(skyboxTexture);
+  material.setEnvironmentMaps(iblMaps.irradiance, iblMaps.prefilter, iblMaps.brdfLUT);
+}
+
+// 检查粗糙度影响（低粗糙度 = 强反射）
+if (material.roughness < 0.1) {
+  console.log('低粗糙度材质会有强烈镜面反射');
+}
+```
+
+### 问题3：PBR渲染性能优化
+**解决方案**：
+```typescript
+// 使用纹理压缩
+const optimizedMaterial = materialLibrary.createMaterial({
+  albedo: 'textures/albedo.bc7',     // BC7压缩
+  normalMap: 'textures/normal.bc5',  // BC5压缩
+  metalness: 'textures/metallic.bc4', // BC4压缩
+  roughness: 'textures/roughness.bc4' // BC4压缩
+});
+
+// 批量渲染相同材质
+const instances = [];
+for (let i = 0; i < 100; i++) {
+  instances.push({
+    transform: createTransform(i),
+    material: material
+  });
+}
+renderInstanced(instances, material);
+```
 
 ## 1. 概述
 

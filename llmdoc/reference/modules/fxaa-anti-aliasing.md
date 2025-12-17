@@ -1,4 +1,235 @@
-# FXAA抗锯齿文档
+---
+title: "FXAA抗锯齿技术文档"
+id: "fxaa-anti-aliasing"
+type: "reference"
+tags: ["fxaa", "anti-aliasing", "post-processing", "performance-optimization", "webgl2"]
+category: "post-processing"
+related_ids: ["post-processing-system", "pbr-material-system", "graphics-bible"]
+difficulty: "intermediate"
+prerequisites: ["后处理系统", "着色器编程", "图像处理基础", "渲染管线"]
+estimated_time: "30-40分钟"
+version: "1.3.0"
+status: "complete"
+---
+
+# FXAA抗锯齿技术文档
+
+## 🎯 学习目标
+完成本指南后，您将能够：
+- 理解FXAA算法的原理和核心技术特点
+- 实现完整的FXAA后处理效果，包括边缘检测和亚像素混合
+- 根据不同内容类型调优FXAA参数（动画、写实、UI）
+- 集成FXAA到完整的后处理管线中
+- 解决常见的FXAA实现问题（过度模糊、锯齿残留、闪烁）
+
+## ⚠️ 禁止事项
+- **禁止** 在HDR渲染管线中不进行色调映射就直接应用FXAA
+- **禁止** 在移动设备上使用high质量模式而不考虑性能影响
+- **禁止** 在文本渲染中使用低edgeThreshold值 - 会导致文字模糊
+- **禁止** 忽略FXAA与MSAA的兼容性问题 - 两者不能同时启用
+- **禁止** 在动态分辨率调整中不相应调整FXAA参数
+
+## 🔧 核心接口定义
+
+### IFXAAEffect
+```typescript
+interface IFXAAEffect extends IPostProcessEffect {
+  // 参数设置
+  setParameters(params: FXAAParameters): void;
+  getParameters(): FXAAParameters;
+
+  // 质量预设
+  setQualityPreset(preset: 'low' | 'medium' | 'high' | 'ultra'): void;
+
+  // 自适应质量
+  enableAdaptiveQuality(enable: boolean): void;
+  updateForPerformance(fps: number): void;
+}
+
+interface FXAAParameters {
+  subpixelQuality: number;      // 0.0 - 1.0
+  edgeThreshold: number;        // 0.063 - 0.333
+  edgeThresholdMin: number;     // 0.0 - 0.1
+}
+```
+
+### IFXAARenderTarget
+```typescript
+interface IFXAARenderTarget {
+  // 渲染目标管理
+  createInputTarget(width: number, height: number): IRenderTarget;
+  createOutputTarget(width: number, height: number): IRenderTarget;
+
+  // 格式优化
+  getOptimalFormat(useHDR: boolean): RHITextureFormat;
+  getMemoryUsage(width: number, height: number): number;
+}
+```
+
+### IFXAAProfiler
+```typescript
+interface IFXAAProfiler {
+  // 性能监控
+  measureFrameTime(): number;
+  getMemoryUsage(): number;
+  getQualityMetrics(): FXAAQualityMetrics;
+
+  // 调试工具
+  enableDebugMode(enabled: boolean): void;
+  visualizeEdges(enabled: boolean): void;
+  exportPerformanceData(): FXAAStats;
+}
+
+interface FXAAQualityMetrics {
+  edgeDetectionRate: number;    // 边缘检测覆盖率
+  blurIntensity: number;        // 模糊强度
+  detailPreservation: number;   // 细节保留度
+}
+```
+
+## 📝 Few-Shot 示例
+
+### 问题1：FXAA导致文本过度模糊
+**解决方案**：
+```typescript
+// 针对UI文本的FXAA配置
+const uiFXAA = new FXAA(device);
+uiFXAA.setParameters({
+  subpixelQuality: 0.25,      // 降低亚像素处理
+  edgeThreshold: 0.250,       // 提高边缘阈值
+  edgeThresholdMin: 0.0625    // 忽略细微差异
+});
+
+// 分层渲染：UI使用独立配置
+function renderWithLayeredFXAA(sceneTexture: Texture, uiTexture: Texture) {
+  // 3D场景使用标准FXAA
+  const sceneFXAA = new FXAA(device);
+  sceneFXAA.setParameters({
+    subpixelQuality: 0.75,
+    edgeThreshold: 0.166
+  });
+
+  // UI使用保守FXAA
+  const uiFXAA = new FXAA(device);
+  uiFXAA.setParameters({
+    subpixelQuality: 0.25,
+    edgeThreshold: 0.333
+  });
+
+  // 分别处理后合成
+  const processedScene = sceneFXAA.apply(sceneTexture);
+  const processedUI = uiFXAA.apply(uiTexture);
+  return composite(processedScene, processedUI);
+}
+```
+
+### 问题2：动态场景中的边缘闪烁
+**解决方案**：
+```typescript
+// 时间一致性FXAA
+class TemporalStableFXAA extends FXAAEffect {
+  private historyBuffer: Texture[] = [];
+  private frameIndex: number = 0;
+
+  constructor(device: IRHIDevice) {
+    super(device);
+    this.createHistoryBuffers();
+  }
+
+  apply(input: Texture): Texture {
+    // 当前帧FXAA处理
+    const currentResult = super.apply(input);
+
+    // 与历史帧混合
+    if (this.frameIndex > 0) {
+      const historyTexture = this.historyBuffer[this.frameIndex % 2];
+      currentResult = blendWithHistory(currentResult, historyTexture, 0.1);
+    }
+
+    // 更新历史缓冲区
+    this.historyBuffer[this.frameIndex % 2] = currentResult.clone();
+    this.frameIndex++;
+
+    return currentResult;
+  }
+
+  private blendWithHistory(current: Texture, history: Texture, weight: number): Texture {
+    // 使用着色器混合当前帧和历史帧
+    const blendShader = this.createBlendShader(weight);
+    return this.applyShader(current, history, blendShader);
+  }
+}
+```
+
+### 问题3：性能自适应质量调整
+**解决方案**：
+```typescript
+class AdaptiveFXAAController {
+  private fxaa: FXAAEffect;
+  private performanceHistory: number[] = [];
+  private currentQuality: 'low' | 'medium' | 'high' = 'medium';
+
+  constructor(fxaa: FXAAEffect) {
+    this.fxaa = fxaa;
+    this.setupPerformanceMonitoring();
+  }
+
+  update(frameTime: number): void {
+    // 记录性能历史
+    this.performanceHistory.push(frameTime);
+    if (this.performanceHistory.length > 60) {
+      this.performanceHistory.shift();
+    }
+
+    // 计算平均性能
+    const avgFrameTime = this.performanceHistory.reduce((a, b) => a + b, 0) / this.performanceHistory.length;
+    const targetFrameTime = 16.67; // 60 FPS
+
+    // 动态调整质量
+    const newQuality = this.calculateOptimalQuality(avgFrameTime, targetFrameTime);
+    if (newQuality !== this.currentQuality) {
+      this.applyQualityPreset(newQuality);
+      this.currentQuality = newQuality;
+      console.log(`FXAA Quality: ${newQuality} (Avg: ${avgFrameTime.toFixed(2)}ms)`);
+    }
+  }
+
+  private calculateOptimalQuality(avgTime: number, targetTime: number): 'low' | 'medium' | 'high' {
+    if (avgTime > targetTime * 1.5) {
+      return 'low';    // 性能不足，降低质量
+    } else if (avgTime < targetTime * 0.8) {
+      return 'high';   // 性能充足，提升质量
+    }
+    return 'medium';
+  }
+
+  private applyQualityPreset(quality: 'low' | 'medium' | 'high'): void {
+    switch (quality) {
+      case 'low':
+        this.fxaa.setParameters({
+          subpixelQuality: 0.5,
+          edgeThreshold: 0.125,
+          edgeThresholdMin: 0.0625
+        });
+        break;
+      case 'medium':
+        this.fxaa.setParameters({
+          subpixelQuality: 0.75,
+          edgeThreshold: 0.166,
+          edgeThresholdMin: 0.0833
+        });
+        break;
+      case 'high':
+        this.fxaa.setParameters({
+          subpixelQuality: 1.0,
+          edgeThreshold: 0.083,
+          edgeThresholdMin: 0.0312
+        });
+        break;
+    }
+  }
+}
+```
 
 ## 概述
 
