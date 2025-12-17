@@ -12,7 +12,7 @@
 import type { MMath } from '@maxellabs/core';
 import { MSpec } from '@maxellabs/core';
 import { simplePBRVertexShader, simplePBRFragmentShader } from './SimplePBRShaders';
-import type { SimplePBRMaterialParams, SimplePBRLightParams } from './SimplePBRTypes';
+import type { SimplePBRMaterialParams, SimplePBRLightParams, ShadowParams } from './SimplePBRTypes';
 import { CubemapGenerator } from '../../texture';
 
 /**
@@ -24,6 +24,7 @@ export class SimplePBRMaterial {
   private device: MSpec.IRHIDevice;
   private materialParams: SimplePBRMaterialParams;
   private lightParams: SimplePBRLightParams[];
+  private shadowParams: ShadowParams;
   private options: { cullMode?: MSpec.RHICullMode };
 
   // RHI资源
@@ -38,10 +39,18 @@ export class SimplePBRMaterial {
   private materialBuffer: MSpec.IRHIBuffer | null = null;
   private lightsBuffer: MSpec.IRHIBuffer | null = null;
   private cameraBuffer: MSpec.IRHIBuffer | null = null;
+  private lightSpaceMatrixBuffer: MSpec.IRHIBuffer | null = null;
+  private shadowParamsBuffer: MSpec.IRHIBuffer | null = null;
 
   // 环境贴图
   private envTexture: MSpec.IRHITexture | null = null;
   private envSampler: MSpec.IRHISampler | null = null;
+
+  // Shadow Map
+  private shadowMapTexture: MSpec.IRHITexture | null = null;
+  private shadowSampler: MSpec.IRHISampler | null = null;
+  private ownsShadowMap: boolean = false;
+  private dummyShadowTexture: MSpec.IRHITexture | null = null; // 占位纹理
 
   // 预分配的数据数组（避免在渲染循环中创建）
   private materialData: Float32Array;
@@ -49,6 +58,9 @@ export class SimplePBRMaterial {
   private lightCountData: Int32Array;
   private transformData: Float32Array;
   private cameraData: Float32Array;
+  private lightSpaceMatrixData: Float32Array;
+  private shadowParamsData: Float32Array;
+  private shadowPCFSamplesData: Int32Array;
 
   private ownsEnvTexture: boolean = true;
   private currentInstanceIndex: number = 0;
@@ -60,17 +72,26 @@ export class SimplePBRMaterial {
    * @param device RHI设备
    * @param materialParams 材质参数
    * @param lightParams 光源参数（最多2个）
+   * @param options 其他选项
+   * @param shadowParams 阴影参数
    */
   constructor(
     device: MSpec.IRHIDevice,
     materialParams: SimplePBRMaterialParams,
     lightParams: SimplePBRLightParams[] = [],
-    options: { cullMode?: MSpec.RHICullMode } = {}
+    options: { cullMode?: MSpec.RHICullMode } = {},
+    shadowParams?: ShadowParams
   ) {
     this.device = device;
     this.materialParams = materialParams;
     this.lightParams = lightParams.slice(0, 2); // 最多2个光源
     this.options = options;
+    this.shadowParams = shadowParams ?? {
+      enabled: true,
+      strength: 0.8,
+      bias: 0.005,
+      pcfSamples: 9,
+    };
 
     // 预分配数据数组
     this.materialData = new Float32Array(8);
@@ -78,6 +99,9 @@ export class SimplePBRMaterial {
     this.lightCountData = new Int32Array(this.lightsData.buffer, 96, 1);
     this.transformData = new Float32Array(64);
     this.cameraData = new Float32Array(4);
+    this.lightSpaceMatrixData = new Float32Array(16);
+    this.shadowParamsData = new Float32Array(4);
+    this.shadowPCFSamplesData = new Int32Array(this.shadowParamsData.buffer, 8, 1);
   }
 
   /**
@@ -119,6 +143,9 @@ export class SimplePBRMaterial {
     // 创建管线
     this.createPipeline();
 
+    // 创建占位 Shadow Map（当没有外部 Shadow Map 时使用）
+    this.createDummyShadowTexture();
+
     // 创建绑定组
     this.createBindGroup();
 
@@ -129,6 +156,33 @@ export class SimplePBRMaterial {
 
   private isTexture(obj: any): obj is MSpec.IRHITexture {
     return obj && typeof obj.createView === 'function';
+  }
+
+  /**
+   * 创建占位 Shadow Map 纹理
+   * 当没有外部 Shadow Map 时，使用此纹理避免 WebGL 绑定错误
+   */
+  private createDummyShadowTexture(): void {
+    // 创建 1x1 的占位深度纹理
+    this.dummyShadowTexture = this.device.createTexture({
+      width: 1,
+      height: 1,
+      format: MSpec.RHITextureFormat.DEPTH32_FLOAT,
+      usage: MSpec.RHITextureUsage.TEXTURE_BINDING,
+      label: 'SimplePBR Dummy Shadow Texture',
+    });
+
+    // 创建 Shadow Map 采样器（如果还没有）
+    if (!this.shadowSampler) {
+      this.shadowSampler = this.device.createSampler({
+        magFilter: MSpec.RHIFilterMode.NEAREST,
+        minFilter: MSpec.RHIFilterMode.NEAREST,
+        mipmapFilter: MSpec.RHIFilterMode.NEAREST,
+        addressModeU: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
+        addressModeV: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
+        label: 'SimplePBR Shadow Sampler',
+      });
+    }
   }
 
   /**
@@ -201,6 +255,22 @@ export class SimplePBRMaterial {
       hint: 'dynamic',
       label: 'SimplePBR Camera Buffer',
     });
+
+    // Light Space Matrix Buffer: 64 bytes (mat4)
+    this.lightSpaceMatrixBuffer = this.device.createBuffer({
+      size: 64,
+      usage: MSpec.RHIBufferUsage.UNIFORM,
+      hint: 'dynamic',
+      label: 'SimplePBR Light Space Matrix Buffer',
+    });
+
+    // Shadow Params Buffer: 16 bytes (2 floats + 1 int + padding)
+    this.shadowParamsBuffer = this.device.createBuffer({
+      size: 16,
+      usage: MSpec.RHIBufferUsage.UNIFORM,
+      hint: 'dynamic',
+      label: 'SimplePBR Shadow Params Buffer',
+    });
   }
 
   /**
@@ -272,6 +342,30 @@ export class SimplePBRMaterial {
         sampler: { type: 'filtering' },
         name: 'uEnvironmentMapSampler',
       },
+      {
+        binding: 6,
+        visibility: MSpec.RHIShaderStage.VERTEX,
+        buffer: { type: 'uniform' },
+        name: 'LightSpaceMatrix',
+      },
+      {
+        binding: 7,
+        visibility: MSpec.RHIShaderStage.FRAGMENT,
+        buffer: { type: 'uniform' },
+        name: 'ShadowParams',
+      },
+      {
+        binding: 8,
+        visibility: MSpec.RHIShaderStage.FRAGMENT,
+        texture: { sampleType: 'float', viewDimension: '2d' },
+        name: 'uShadowMap',
+      },
+      {
+        binding: 9,
+        visibility: MSpec.RHIShaderStage.FRAGMENT,
+        sampler: { type: 'filtering' },
+        name: 'uShadowMapSampler',
+      },
     ]);
   }
 
@@ -325,19 +419,104 @@ export class SimplePBRMaterial {
       !this.lightsBuffer ||
       !this.cameraBuffer ||
       !this.envTexture ||
-      !this.envSampler
+      !this.envSampler ||
+      !this.lightSpaceMatrixBuffer ||
+      !this.shadowParamsBuffer
     ) {
       throw new Error('Resources not initialized');
     }
 
-    this.bindGroup = this.device.createBindGroup(this.bindGroupLayout, [
+    // 创建绑定组条目
+    const bindGroupEntries: MSpec.IRHIBindGroupEntry[] = [
       { binding: 0, resource: this.transformBuffer },
       { binding: 1, resource: this.materialBuffer },
       { binding: 2, resource: this.lightsBuffer },
       { binding: 3, resource: this.cameraBuffer },
       { binding: 4, resource: this.envTexture.createView() },
       { binding: 5, resource: this.envSampler },
-    ]);
+      { binding: 6, resource: this.lightSpaceMatrixBuffer },
+      { binding: 7, resource: this.shadowParamsBuffer },
+    ];
+
+    // Shadow Map 绑定：使用实际纹理或占位纹理
+    const shadowTexture = this.shadowMapTexture || this.dummyShadowTexture;
+    if (shadowTexture && this.shadowSampler) {
+      bindGroupEntries.push(
+        { binding: 8, resource: shadowTexture.createView() },
+        { binding: 9, resource: this.shadowSampler }
+      );
+    }
+
+    this.bindGroup = this.device.createBindGroup(this.bindGroupLayout, bindGroupEntries);
+  }
+
+  /**
+   * 设置Shadow Map纹理
+   *
+   * @param shadowMap Shadow Map纹理
+   */
+  setShadowMap(shadowMap: MSpec.IRHITexture): void {
+    if (this.ownsShadowMap && this.shadowMapTexture) {
+      this.shadowMapTexture.destroy();
+    }
+    this.shadowMapTexture = shadowMap;
+    this.ownsShadowMap = false;
+
+    // 创建Shadow Map采样器
+    if (!this.shadowSampler) {
+      this.shadowSampler = this.device.createSampler({
+        magFilter: MSpec.RHIFilterMode.NEAREST,
+        minFilter: MSpec.RHIFilterMode.NEAREST,
+        mipmapFilter: MSpec.RHIFilterMode.NEAREST,
+        addressModeU: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
+        addressModeV: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
+        label: 'SimplePBR Shadow Sampler',
+      });
+    }
+
+    // 重新创建绑定组
+    if (this.bindGroupLayout && this.envTexture && this.envSampler) {
+      this.createBindGroup();
+    }
+  }
+
+  /**
+   * 更新光源空间矩阵
+   *
+   * @param lightSpaceMatrix 光源空间变换矩阵
+   */
+  updateLightSpaceMatrix(lightSpaceMatrix: MMath.Matrix4): void {
+    if (!this.lightSpaceMatrixBuffer) {
+      return;
+    }
+    this.lightSpaceMatrixData.set(lightSpaceMatrix.getElements(), 0);
+    this.lightSpaceMatrixBuffer.update(this.lightSpaceMatrixData as BufferSource, 0);
+  }
+
+  /**
+   * 更新阴影参数
+   *
+   * @param params 阴影参数
+   */
+  setShadowParams(params: Partial<ShadowParams>): void {
+    Object.assign(this.shadowParams, params);
+  }
+
+  /**
+   * 更新阴影Uniform数据
+   */
+  private updateShadowUniforms(): void {
+    if (!this.shadowParamsBuffer) {
+      return;
+    }
+
+    // ShadowParams Buffer (16 bytes)
+    this.shadowParamsData[0] = this.shadowParams.strength;
+    this.shadowParamsData[1] = this.shadowParams.bias;
+    this.shadowPCFSamplesData[0] = this.shadowParams.pcfSamples;
+    this.shadowParamsData[3] = this.shadowParams.debugShadow ?? 0.0; // debugShadow
+
+    this.shadowParamsBuffer.update(this.shadowParamsData as BufferSource, 0);
   }
 
   /**
@@ -470,6 +649,7 @@ export class SimplePBRMaterial {
   update(): void {
     this.updateMaterialUniforms();
     this.updateLightsUniforms();
+    this.updateShadowUniforms();
   }
 
   /**
@@ -512,9 +692,16 @@ export class SimplePBRMaterial {
     this.materialBuffer?.destroy();
     this.lightsBuffer?.destroy();
     this.cameraBuffer?.destroy();
+    this.lightSpaceMatrixBuffer?.destroy();
+    this.shadowParamsBuffer?.destroy();
     if (this.ownsEnvTexture) {
       this.envTexture?.destroy();
     }
     this.envSampler?.destroy();
+    if (this.ownsShadowMap) {
+      this.shadowMapTexture?.destroy();
+    }
+    this.dummyShadowTexture?.destroy();
+    this.shadowSampler?.destroy();
   }
 }

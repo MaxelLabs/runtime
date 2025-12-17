@@ -1,6 +1,6 @@
 /**
  * shadow-mapping.ts
- * PBR+Shadow 完整演示 - 阶段2：深度图输出与调试可视化
+ * PBR+Shadow 完整演示 - 阶段3：实时阴影贴图与PCF软阴影 ✅
  *
  * 当前场景配置：
  * - 地面平面（20x20，双面渲染，灰色）
@@ -13,15 +13,19 @@
  * 技术特性：
  * - 完整的PBR材质系统（Cook-Torrance BRDF）
  * - 环境贴图光照（简化版IBL）
- * - Shadow Map深度渲染（从光源视角）
+ * - Shadow Map深度渲染（从光源视角，2048x2048）
+ * - 实时阴影贴图与PCF软阴影（1x1/2x2/3x3可配置）
  * - 深度可视化（分屏显示：左=正常场景，右=深度图）
+ * - GUI控制（阴影强度、偏移、PCF采样数、PBR参数）
  *
- * 后续阶段：
- * - 阶段3：实时阴影贴图与PCF软阴影
+ * 已完成阶段：
+ * - ✅ 阶段1：基础PBR场景
+ * - ✅ 阶段2：深度图输出与调试可视化
+ * - ✅ 阶段3：实时阴影贴图与PCF软阴影
  */
 
 import { MSpec, MMath } from '@maxellabs/core';
-import type { SimplePBRLightParams, SimplePBRMaterialParams } from './utils';
+import type { SimplePBRLightParams, SimplePBRMaterialParams, ShadowParams } from './utils';
 import { DemoRunner, OrbitController, Stats, GeometryGenerator, SimpleGUI, SimplePBRMaterial } from './utils';
 
 // ==================== 着色器代码 ====================
@@ -129,6 +133,15 @@ const materialParams: SimplePBRMaterialParams = {
   roughness: 0.5,
   albedo: [1.0, 0.0, 0.0], // 红色
   ambientStrength: 0.03,
+};
+
+// 阴影参数
+const shadowParams: ShadowParams = {
+  enabled: true,
+  strength: 0.8,
+  bias: 0.002, // 降低 bias，减少 peter-panning（阴影分离）
+  pcfSamples: 9, // 默认3x3 PCF
+  debugShadow: 0, // 调试模式：0=关闭, 1=显示阴影因子
 };
 
 // 光源参数 - 单个主光源用于阴影投射
@@ -341,7 +354,7 @@ const lightParams: SimplePBRLightParams[] = [
       {
         binding: 0,
         visibility: MSpec.RHIShaderStage.FRAGMENT,
-        texture: { sampleType: 'depth', viewDimension: '2d' },
+        texture: { sampleType: 'float', viewDimension: '2d' },
         name: 'uDepthMap',
       },
       {
@@ -576,18 +589,24 @@ const lightParams: SimplePBRLightParams[] = [
     // ==================== 创建材质 ====================
 
     // 创建SimplePBRMaterial（默认材质）
-    const pbrMaterial = new SimplePBRMaterial(runner.device, materialParams, lightParams);
+    const pbrMaterial = new SimplePBRMaterial(runner.device, materialParams, lightParams, {}, shadowParams);
 
     // 创建地面材质（双面渲染）
     const groundMaterialParams: SimplePBRMaterialParams = {
-      metallic: 0.1,
-      roughness: 0.8,
-      albedo: [0.5, 0.5, 0.5], // 灰色地面
-      ambientStrength: 0.03,
+      metallic: 0.0,
+      roughness: 0.9,
+      albedo: [0.6, 0.6, 0.6], // 灰色地面
+      ambientStrength: 10.0, // 增加环境光以便看清阴影
     };
-    const groundMaterial = new SimplePBRMaterial(runner.device, groundMaterialParams, lightParams, {
-      cullMode: MSpec.RHICullMode.NONE, // 双面渲染
-    });
+    const groundMaterial = new SimplePBRMaterial(
+      runner.device,
+      groundMaterialParams,
+      lightParams,
+      {
+        cullMode: MSpec.RHICullMode.NONE, // 双面渲染
+      },
+      shadowParams
+    );
 
     // 初始化材质（加载环境贴图）
     const cubemapUrls = {
@@ -602,8 +621,61 @@ const lightParams: SimplePBRLightParams[] = [
     await pbrMaterial.initialize(cubemapUrls);
     await groundMaterial.initialize(cubemapUrls);
 
+    // 设置Shadow Map
+    pbrMaterial.setShadowMap(shadowMapTexture);
+    groundMaterial.setShadowMap(shadowMapTexture);
+
     // GUI 控制
     const gui = new SimpleGUI();
+
+    // 阴影控制
+    gui.addSeparator('🌑 Shadow Settings');
+    gui.add('shadowStrength', {
+      value: shadowParams.strength,
+      min: 0,
+      max: 1,
+      step: 0.01,
+      onChange: (v) => {
+        shadowParams.strength = v as number;
+        pbrMaterial.setShadowParams({ strength: shadowParams.strength });
+        groundMaterial.setShadowParams({ strength: shadowParams.strength });
+      },
+    });
+
+    gui.add('shadowBias', {
+      value: shadowParams.bias,
+      min: 0,
+      max: 0.01, // 增加最大范围以便调试
+      step: 0.0001,
+      onChange: (v) => {
+        shadowParams.bias = v as number;
+        pbrMaterial.setShadowParams({ bias: shadowParams.bias });
+        groundMaterial.setShadowParams({ bias: shadowParams.bias });
+      },
+    });
+
+    gui.add('pcfSamples', {
+      value: shadowParams.pcfSamples,
+      min: 1,
+      max: 9,
+      step: 1,
+      onChange: (v) => {
+        const samples = v as number;
+        // 限制为1, 4, 9
+        let validSamples = 1;
+        if (samples >= 7) {
+          validSamples = 9;
+        } else if (samples >= 3) {
+          validSamples = 4;
+        } else {
+          validSamples = 1;
+        }
+
+        shadowParams.pcfSamples = validSamples;
+        pbrMaterial.setShadowParams({ pcfSamples: validSamples });
+        groundMaterial.setShadowParams({ pcfSamples: validSamples });
+      },
+    });
 
     // 深度可视化控制
     let showDepthVis = true; // 默认显示分屏
@@ -613,6 +685,18 @@ const lightParams: SimplePBRLightParams[] = [
       value: showDepthVis,
       onChange: (v) => {
         showDepthVis = v as boolean;
+      },
+    });
+
+    gui.add('debugShadow', {
+      value: shadowParams.debugShadow ?? 0,
+      min: 0,
+      max: 4,
+      step: 1,
+      onChange: (v) => {
+        shadowParams.debugShadow = v as number;
+        pbrMaterial.setShadowParams({ debugShadow: shadowParams.debugShadow });
+        groundMaterial.setShadowParams({ debugShadow: shadowParams.debugShadow });
       },
     });
 
@@ -680,6 +764,7 @@ const lightParams: SimplePBRLightParams[] = [
     const modelMatrix = new MMath.Matrix4();
     const normalMatrix = new MMath.Matrix4();
     const lightSpaceMatrix = new MMath.Matrix4();
+    const depthLightSpaceMatrix = new MMath.Matrix4(); // 深度 Pass 专用矩阵（避免污染）
 
     // 渲染循环
     runner.start((dt) => {
@@ -687,12 +772,19 @@ const lightParams: SimplePBRLightParams[] = [
 
       orbit.update(dt);
 
+      // 计算光源空间矩阵（Projection * View，不含 Model）
+      // 这个矩阵用于 PBR shader 中的阴影采样
+      lightSpaceMatrix.copyFrom(lightProjectionMatrix);
+      lightSpaceMatrix.multiply(lightViewMatrix);
+
       // 更新材质参数
       pbrMaterial.setMaterialParams(materialParams);
+      pbrMaterial.updateLightSpaceMatrix(lightSpaceMatrix);
       pbrMaterial.update();
       pbrMaterial.reset(); // Reset dynamic offsets
 
       groundMaterial.setMaterialParams(groundMaterialParams);
+      groundMaterial.updateLightSpaceMatrix(lightSpaceMatrix);
       groundMaterial.update();
       groundMaterial.reset(); // Reset dynamic offsets
 
@@ -721,21 +813,18 @@ const lightParams: SimplePBRLightParams[] = [
       // 渲染每个物体到Shadow Map
       const renderDepthObject = (modelMat: MMath.Matrix4) => {
         // 计算光源空间矩阵: Projection * View * Model
-        lightSpaceMatrix.copyFrom(lightProjectionMatrix);
-        lightSpaceMatrix.multiply(lightViewMatrix);
-        lightSpaceMatrix.multiply(modelMat);
+        // 使用专用矩阵，避免污染 lightSpaceMatrix
+        depthLightSpaceMatrix.copyFrom(lightProjectionMatrix);
+        depthLightSpaceMatrix.multiply(lightViewMatrix);
+        depthLightSpaceMatrix.multiply(modelMat);
 
         // 更新Uniform
-        lightSpaceMatrixData.set(lightSpaceMatrix.getElements(), 0);
+        lightSpaceMatrixData.set(depthLightSpaceMatrix.getElements(), 0);
         lightSpaceMatrixBuffer.update(lightSpaceMatrixData as BufferSource, 0);
       };
 
-      // 地面
-      modelMatrix.identity();
-      renderDepthObject(modelMatrix);
-      depthPass.setVertexBuffer(0, planeVertexBuffer);
-      depthPass.setIndexBuffer(planeIndexBuffer, MSpec.RHIIndexFormat.UINT32);
-      depthPass.drawIndexed(planeGeometry.indices!.length);
+      // 注意：地面不渲染到 Shadow Map（地面只接收阴影，不投射阴影）
+      // 只渲染投射阴影的物体
 
       // 球体
       modelMatrix.identity();

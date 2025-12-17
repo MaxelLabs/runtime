@@ -34,6 +34,22 @@ export interface SimplePBRLightParams {
 }
 
 /**
+ * 阴影参数
+ */
+export interface ShadowParams {
+  /** 是否启用阴影 */
+  enabled: boolean;
+  /** 阴影强度 (0.0 = 无阴影, 1.0 = 完全阴影) */
+  strength: number;
+  /** 阴影偏移（用于消除阴影失真） */
+  bias: number;
+  /** PCF采样数量（1 = 无PCF, 4 = 2x2, 9 = 3x3） */
+  pcfSamples: number;
+  /** 调试模式（0 = 关闭, 1 = 显示阴影因子） */
+  debugShadow?: number;
+}
+
+/**
  * 简化版PBR材质配置
  */
 export interface SimplePBRMaterialConfig {

@@ -9,8 +9,9 @@ related_ids: ["graphics-bible", "pbr-material-system", "shadow-tools", "rhi-rend
 difficulty: "intermediate"
 prerequisites: ["基础渲染管线", "深度缓冲", "纹理采样", "坐标变换"]
 estimated_time: "20-30分钟"
-version: "1.0.0"
+version: "1.1.0"
 status: "complete"
+last_updated: "2025-12-17"
 ---
 
 # 阴影贴图 Demo 参考文档
@@ -29,6 +30,64 @@ status: "complete"
 - **禁止** 在移动设备上使用4096分辨率阴影贴图
 - **禁止** 忽视深度缓冲精度限制 - 调整近远平面
 - **禁止** 在PCF采样中使用Nearest滤波器
+
+## 🔧 关键实现修复 (v1.1.0)
+
+### 1. 矩阵分离：深度Pass vs PBR Pass
+
+**问题**：深度 Pass 和 PBR Pass 共用同一个 `lightSpaceMatrix`，导致矩阵被污染。
+
+**原因**：
+- 深度 Pass 需要 `Projection * View * Model` 矩阵
+- PBR Pass 阴影采样只需要 `Projection * View` 矩阵
+
+**解决方案**：
+```typescript
+// ✅ 正确：分离两个矩阵
+const lightSpaceMatrix = new MMath.Matrix4();      // PBR Pass 用
+const depthLightSpaceMatrix = new MMath.Matrix4(); // 深度 Pass 专用
+
+// 深度 Pass：包含 Model 矩阵
+depthLightSpaceMatrix.copyFrom(lightProjectionMatrix);
+depthLightSpaceMatrix.multiply(lightViewMatrix);
+depthLightSpaceMatrix.multiply(modelMatrix);  // ← 包含 Model
+
+// PBR Pass：不含 Model 矩阵（在 shader 中乘）
+lightSpaceMatrix.copyFrom(lightProjectionMatrix);
+lightSpaceMatrix.multiply(lightViewMatrix);
+pbrMaterial.updateLightSpaceMatrix(lightSpaceMatrix);  // ← 不含 Model
+```
+
+### 2. 地面阴影规则
+
+**规则**：地面只接收阴影，不投射阴影。
+
+**实现**：
+```typescript
+// 深度 Pass：只渲染投射阴影的物体
+// ⚠️ 注意：地面不渲染到 Shadow Map
+depthPass.setVertexBuffer(0, sphereVertexBuffer);  // ✅ 球体
+depthPass.setVertexBuffer(0, cube1VertexBuffer);   // ✅ 立方体
+// planeVertexBuffer 不渲染到深度 Pass            // ❌ 地面
+
+// 场景 Pass：所有物体都渲染（包括地面）
+renderPass.setVertexBuffer(0, planeVertexBuffer);  // ✅ 地面接收阴影
+```
+
+### 3. 环境光阴影因子
+
+**问题**：阴影只影响直接光照，环境光过强时阴影不可见。
+
+**解决方案**：
+```glsl
+// 阴影因子也影响环境光（减半影响，保留全局照明）
+float ambientShadow = mix(1.0, shadowFactor, 0.5);
+
+// 应用到环境光
+vec3 ambient = (kD_env * diffuse * ambientShadow + specular) * uAmbientStrength;
+//                                 ↑ 阴影对漫反射的影响
+//                                   镜面反射保持不变（保留高光）
+```
 
 ## 🔧 核心接口定义
 
@@ -342,17 +401,40 @@ const shadowSampler = runner.device.createSampler({
 
 ## 调试技巧
 
-### 1. 可视化阴影贴图
+### 1. debugShadow 调试模式
+
+Demo 提供 5 种调试模式（通过 GUI 的 `debugShadow` 参数控制）：
+
+| 值 | 模式 | 输出 | 用途 |
+|---|------|------|------|
+| 0 | 正常渲染 | PBR 光照 + 阴影 | 最终效果 |
+| 1 | 阴影因子 | 白=无阴影, 黑=完全阴影 | 验证阴影计算是否正确 |
+| 2 | 光源空间坐标 | RGB = XYZ 坐标 | 验证矩阵变换 |
+| 3 | 采样深度值 | 灰度 = Shadow Map 深度 | 验证纹理绑定 |
+| 4 | 深度差异 | 红=在阴影中, 绿=不在阴影 | 可视化深度比较结果 |
+
+```glsl
+// 调试模式实现（片段着色器）
+if (uDebugShadow > 3.5) {
+  // 深度差异可视化
+  float diff = currentDepth - sampledDepth;
+  fragColor = diff > 0.0
+    ? vec4(diff * 10.0, 0.0, 0.0, 1.0)  // 红色 = 在阴影中
+    : vec4(0.0, -diff * 10.0, 0.0, 1.0); // 绿色 = 不在阴影
+}
+```
+
+### 2. 可视化阴影贴图
 - 在场景角落显示深度纹理
 - 检查深度值分布
 - 验证光源视锥体覆盖
 
-### 2. 阴影边界调试
+### 3. 阴影边界调试
 - 绘制光源投影边界框
 - 确保包含所有阴影接收体
 - 避免场景物体超出边界
 
-### 3. 性能分析
+### 4. 性能分析
 - 使用WebGL Inspector分析渲染
 - 监控纹理带宽使用
 - 优化渲染批次
