@@ -26,31 +26,17 @@ const runner = new DemoRunner({
   clearColor: [0.0, 0.0, 0.0, 1.0],
 });
 
-let depthTexture: MSpec.IRHITexture;
+// 渲染目标
 let sceneRenderTarget: RenderTarget;
 let fxaaEffect: FXAA;
 
 const updateRenderTargets = () => {
   // 销毁旧资源
-  if (depthTexture) {
-    depthTexture.destroy();
-  }
   if (sceneRenderTarget) {
     sceneRenderTarget.destroy();
   }
 
-  // 创建深度纹理
-  depthTexture = runner.track(
-    runner.device.createTexture({
-      width: runner.width,
-      height: runner.height,
-      format: MSpec.RHITextureFormat.DEPTH24_UNORM_STENCIL8,
-      usage: MSpec.RHITextureUsage.RENDER_ATTACHMENT,
-      label: 'Scene Depth Texture',
-    })
-  );
-
-  // 创建场景渲染目标
+  // 创建场景渲染目标（带深度）
   sceneRenderTarget = runner.track(
     new RenderTarget(runner.device, {
       width: runner.width,
@@ -75,7 +61,20 @@ const updateRenderTargets = () => {
     });
 
     updateRenderTargets();
-    runner.onResize(updateRenderTargets);
+    runner.onResize(() => {
+      updateRenderTargets();
+      // 重新创建 FXAA 效果
+      if (fxaaEffect) {
+        fxaaEffect.destroy();
+        fxaaEffect = runner.track(
+          new FXAA(runner.device, {
+            subpixelQuality: params.subpixelQuality,
+            edgeThreshold: params.edgeThreshold,
+            edgeThresholdMin: params.edgeThresholdMin,
+          })
+        );
+      }
+    });
 
     // ==================== 创建 FXAA 效果 ====================
     fxaaEffect = runner.track(
@@ -90,6 +89,7 @@ const updateRenderTargets = () => {
     const cubeGeometry = GeometryGenerator.cube({
       size: 1.0,
       normals: true,
+      uvs: false, // 不需要 UV，只用 position + normal
     });
 
     const vertexBuffer = runner.track(
@@ -228,23 +228,11 @@ void main() {
 
     const pipelineLayout = runner.track(runner.device.createPipelineLayout([bindGroupLayout]));
 
-    const vertexLayout: MSpec.RHIVertexLayout = {
-      buffers: [
-        {
-          arrayStride: 24,
-          attributes: [
-            { shaderLocation: 0, offset: 0, format: MSpec.RHIVertexFormat.FLOAT32x3 },
-            { shaderLocation: 1, offset: 12, format: MSpec.RHIVertexFormat.FLOAT32x3 },
-          ],
-        },
-      ],
-    };
-
     const pipeline = runner.track(
       runner.device.createRenderPipeline({
         vertexShader,
         fragmentShader,
-        vertexLayout,
+        vertexLayout: cubeGeometry.layout, // 直接使用几何体生成器返回的布局
         primitiveTopology: MSpec.RHIPrimitiveTopology.TRIANGLE_LIST,
         layout: pipelineLayout,
         rasterizationState: { cullMode: MSpec.RHICullMode.BACK },
@@ -261,92 +249,6 @@ void main() {
         { binding: 0, resource: { buffer: transformBuffer } },
         { binding: 1, resource: { buffer: lightingBuffer } },
       ])
-    );
-
-    // ==================== 创建全屏四边形渲染管线（用于输出到屏幕）====================
-    const fullscreenVertexShader = runner.track(
-      runner.device.createShaderModule({
-        code: `#version 300 es
-precision highp float;
-
-out vec2 vUV;
-
-void main() {
-  float x = float((gl_VertexID & 1) << 2) - 1.0;
-  float y = float((gl_VertexID & 2) << 1) - 1.0;
-  vUV = vec2((x + 1.0) * 0.5, (y + 1.0) * 0.5);
-  gl_Position = vec4(x, y, 0.0, 1.0);
-}`,
-        language: 'glsl',
-        stage: MSpec.RHIShaderStage.VERTEX,
-      })
-    );
-
-    const fullscreenFragmentShader = runner.track(
-      runner.device.createShaderModule({
-        code: `#version 300 es
-precision mediump float;
-
-in vec2 vUV;
-out vec4 fragColor;
-
-uniform sampler2D uTexture;
-
-void main() {
-  fragColor = texture(uTexture, vUV);
-}`,
-        language: 'glsl',
-        stage: MSpec.RHIShaderStage.FRAGMENT,
-      })
-    );
-
-    const fullscreenBindGroupLayout = runner.track(
-      runner.device.createBindGroupLayout([
-        {
-          binding: 0,
-          visibility: MSpec.RHIShaderStage.FRAGMENT,
-          texture: { sampleType: 'float' },
-          name: 'uTexture',
-        },
-        {
-          binding: 1,
-          visibility: MSpec.RHIShaderStage.FRAGMENT,
-          sampler: { type: 'filtering' },
-          name: 'uSampler',
-        },
-      ])
-    );
-
-    const fullscreenPipelineLayout = runner.track(runner.device.createPipelineLayout([fullscreenBindGroupLayout]));
-
-    const fullscreenPipeline = runner.track(
-      runner.device.createRenderPipeline({
-        vertexShader: fullscreenVertexShader,
-        fragmentShader: fullscreenFragmentShader,
-        vertexLayout: { buffers: [] },
-        primitiveTopology: MSpec.RHIPrimitiveTopology.TRIANGLE_LIST,
-        layout: fullscreenPipelineLayout,
-      })
-    );
-
-    const fullscreenSampler = runner.track(
-      runner.device.createSampler({
-        minFilter: MSpec.RHIFilterMode.LINEAR,
-        magFilter: MSpec.RHIFilterMode.LINEAR,
-        addressModeU: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
-        addressModeV: MSpec.RHIAddressMode.CLAMP_TO_EDGE,
-      })
-    );
-
-    // 创建FXAA输出渲染目标
-    const fxaaRenderTarget = runner.track(
-      new RenderTarget(runner.device, {
-        width: runner.width,
-        height: runner.height,
-        colorFormat: MSpec.RHITextureFormat.RGBA8_UNORM,
-        depthFormat: null,
-        label: 'FXAA Output',
-      })
     );
 
     // ==================== GUI 参数 ====================
@@ -427,8 +329,8 @@ void main() {
     lightingBuffer.update(lightingData, 0);
 
     runner.start((dt) => {
-      orbit.update(dt);
       stats.begin();
+      orbit.update(dt);
 
       time += dt * params.rotationSpeed;
 
@@ -436,11 +338,27 @@ void main() {
       const viewMatrix = orbit.getViewMatrix();
       const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
 
-      const encoder = runner.device.createCommandEncoder();
+      // 开始渲染 - 使用 runner.beginFrame() 获取 encoder
+      const { encoder, passDescriptor } = runner.beginFrame();
 
-      // ==================== 第一步：渲染场景到离屏纹理 ====================
-      const scenePassDesc = sceneRenderTarget.getRenderPassDescriptor([0.1, 0.15, 0.2, 1.0], 1.0);
-      const scenePass = encoder.beginRenderPass(scenePassDesc);
+      // ==================== Pass 1: 场景渲染到离屏纹理 ====================
+      const scenePass = encoder.beginRenderPass({
+        colorAttachments: [
+          {
+            view: sceneRenderTarget.getColorTexture().createView(),
+            loadOp: 'clear',
+            storeOp: 'store',
+            clearColor: [0.1, 0.15, 0.2, 1.0],
+          },
+        ],
+        depthStencilAttachment: {
+          view: sceneRenderTarget.getDepthTexture()!.createView(),
+          clearDepth: 1.0,
+          depthLoadOp: 'clear',
+          depthStoreOp: 'store',
+        },
+      });
+
       scenePass.setPipeline(pipeline);
       scenePass.setBindGroup(0, bindGroup);
       scenePass.setVertexBuffer(0, vertexBuffer);
@@ -478,34 +396,27 @@ void main() {
           lightingData.set([r, g, b, 0], 12); // objectColor
           lightingBuffer.update(lightingData, 0);
 
-          scenePass.drawIndexed(cubeGeometry.indexCount, 1, 0, 0, 0);
+          scenePass.drawIndexed(cubeGeometry.indexCount!, 1, 0, 0, 0);
         }
       }
 
       scenePass.end();
 
-      // ==================== 第二步：应用 FXAA ====================
-      let finalTexture: MSpec.IRHITextureView;
+      // ==================== Pass 2: 后处理 (FXAA) ====================
+      const sceneTexture = sceneRenderTarget.getColorTexture();
+      const sceneView = sceneTexture.createView();
+      const outputView = passDescriptor.colorAttachments![0].view;
 
       if (params.enableFXAA) {
-        fxaaEffect.apply(encoder, sceneRenderTarget.getColorView(0), fxaaRenderTarget.getColorView(0));
-        finalTexture = fxaaRenderTarget.getColorView(0);
+        // 使用 FXAA 效果输出到屏幕
+        fxaaEffect.apply(encoder, sceneView, outputView);
       } else {
-        finalTexture = sceneRenderTarget.getColorView(0);
+        // 直接复制到屏幕
+        encoder.copyTextureToCanvas({
+          source: sceneView,
+          destination: runner.canvas,
+        });
       }
-
-      // ==================== 第三步：输出到屏幕 ====================
-      const fullscreenBindGroup = runner.device.createBindGroup(fullscreenBindGroupLayout, [
-        { binding: 0, resource: finalTexture },
-        { binding: 1, resource: fullscreenSampler },
-      ]);
-
-      const { passDescriptor } = runner.beginFrame();
-      const screenPass = encoder.beginRenderPass(passDescriptor);
-      screenPass.setPipeline(fullscreenPipeline);
-      screenPass.setBindGroup(0, fullscreenBindGroup);
-      screenPass.draw(3, 1, 0, 0);
-      screenPass.end();
 
       runner.endFrame(encoder);
 
@@ -538,7 +449,6 @@ void main() {
       orbit.destroy();
       gui.destroy();
       sceneRenderTarget.destroy();
-      fxaaRenderTarget.destroy();
       fxaaEffect.destroy();
       runner.destroy();
     });
