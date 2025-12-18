@@ -38,7 +38,7 @@ export interface ObjectPoolOptions {
  */
 export class ObjectPoolManager extends EventDispatcher {
   /** 单例实例 */
-  private static instance: ObjectPoolManager;
+  private static instance: ObjectPoolManager | null = null;
 
   /** 所有注册的对象池 */
   private pools: Map<string, ObjectPool<any>> = new Map();
@@ -492,7 +492,7 @@ export class ObjectPoolManager extends EventDispatcher {
     if (ObjectPoolManager.instance) {
       ObjectPoolManager.instance.disposeAllPools();
       ObjectPoolManager.instance.dispose();
-      ObjectPoolManager.instance = null as any;
+      ObjectPoolManager.instance = null;
     }
   }
 }
