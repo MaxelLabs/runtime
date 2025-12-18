@@ -2,751 +2,280 @@
 id: "core-ecs-architecture"
 type: "constitution"
 title: "Core ECS Architecture Bible"
-description: "Core包ECS架构的核心规范，定义Entity、Component、System的实现标准和执行模式"
-tags: ["ecs", "architecture", "core", "entity", "component", "system", "data-oriented"]
-context_dependency: ["graphics-system-bible", "coding-conventions"]
-related_ids: ["core-integration-boundary", "engine-architecture", "rhi-architecture"]
+description: "Core包架构宪法：定义基于Archetype的高性能、空间感知型ECS标准"
+tags: ["ecs", "architecture", "core", "performance", "archetype", "transform", "spatial"]
+context_dependency: ["spec-type-system", "coding-conventions"]
+related_ids: ["engine-architecture", "rhi-architecture"]
+version: "2.0.0 (Spatial-Core Revision)"
 token_cost: "high"
+last_updated: "2025-12-18"
 ---
 
 # Core ECS Architecture Bible
 
-## Context
+## 1. 核心理念与边界 (Core Philosophy)
 
-本文档是 `@maxellabs/core` 包的架构宪法，定义ECS（Entity-Component-System）架构的实现规范。Core包与渲染层（RHI）完全解耦，通过 `@maxellabs/engine` 进行最终组装。
+### 1.1 核心定位
+`@maxellabs/core` 是世界的**唯一真理源 (Single Source of Truth)**。
+它负责维护对象的数据状态、空间关系和生命周期。它**不知道** WebGL 是什么，也不依赖 DOM。
 
-## Goal
+* **Core 的职责**：数据存储、变换计算 (`Matrix4`), 层级管理、脏标记传播、通用输入状态。
+* **Engine 的职责**：作为 Core 的“观察者”，消费 Core 的数据进行渲染、音效播放或物理碰撞检测。
 
-提供统一、准确、完整的ECS架构标准，确保：
-1. 组件化设计的一致性
-2. 数据与逻辑的完全分离
-3. 高性能的批处理能力
-4. 与渲染层的清晰边界
+### 1.2 架构模式：Archetype ECS
+为了满足 WebGL/WebGPU 对数据连续性的苛刻要求，我们采用 **Archetype (原型)** 内存布局。
+
+* **SoA (Structure of Arrays)**：同一种 Component 的数据在内存中是连续的。
+* **Zero-Copy Extraction**：在理想情况下，Core 计算出的 `WorldTransform` 矩阵数组可以直接传递给 RHI 进行 Instance Drawing。
 
 ---
 
-## 第一章：核心概念与接口定义
+## 2. 核心类型定义 (Type Definitions)
 
-### 1.1 ECS三元组定义
+### 2.1 基础单元
 
 ```typescript
-// ============= ENTITY =============
-/**
- * Entity: 纯粹的唯一标识符
- * 约束：Entity本身不持有任何数据或逻辑
- */
-type EntityId = number;
+// Entity: 纯数字 ID (20位 Index + 12位 Generation)
+export type Entity = number;
 
-interface IEntityManager {
-  /** 创建新实体 */
-  create(): EntityId;
-
-  /** 销毁实体及其所有组件 */
-  destroy(entity: EntityId): void;
-
-  /** 检查实体是否存在 */
-  exists(entity: EntityId): boolean;
-
-  /** 获取实体的代数（用于验证引用有效性） */
-  getGeneration(entity: EntityId): number;
+// Component: 必须是具体的类，纯数据结构 (POD)
+export interface ComponentClass<T> {
+  new (): T;
+  readonly componentId: number; // 运行时自动生成或静态注入
 }
 
-// ============= COMPONENT =============
-/**
- * Component: 纯数据结构，无方法
- * 约束：只包含数据字段，不包含任何业务逻辑
- */
-interface IComponent {
-  /** 组件类型标识（用于查询） */
-  readonly __type: symbol;
-}
+// 标记组件: 用于逻辑分类 (如 "IsDirty", "UIElement", "BillBoard")
+export abstract class TagComponent {}
 
-/**
- * 组件存储策略
- */
-interface IComponentStorage<T extends IComponent> {
-  /** 为实体添加组件 */
-  add(entity: EntityId, component: T): void;
-
-  /** 移除实体的组件 */
-  remove(entity: EntityId): boolean;
-
-  /** 获取实体的组件（只读） */
-  get(entity: EntityId): Readonly<T> | undefined;
-
-  /** 获取实体的组件（可变） */
-  getMut(entity: EntityId): T | undefined;
-
-  /** 检查实体是否拥有此组件 */
-  has(entity: EntityId): boolean;
-
-  /** 批量迭代 */
-  iter(): IterableIterator<[EntityId, T]>;
-}
-
-// ============= SYSTEM =============
-/**
- * System: 处理特定组件组合的逻辑单元
- * 约束：System不持有状态，所有状态都在Component或Resource中
- */
-interface ISystem {
-  /** 系统唯一标识 */
-  readonly id: string;
-
-  /** 执行优先级（数字越小越先执行） */
-  readonly priority: number;
-
-  /** 系统执行 */
-  execute(world: IWorld, deltaTime: number): void;
-
-  /** 系统是否启用 */
-  enabled: boolean;
-}
-
-/**
- * 查询构建器 - 用于组件组合查询
- */
-interface IQuery<T extends IComponent[]> {
-  /** 必须拥有的组件 */
-  with<C extends IComponent>(...components: C[]): IQuery<[...T, C]>;
-
-  /** 不能拥有的组件 */
-  without<C extends IComponent>(...components: C[]): IQuery<T>;
-
-  /** 执行查询 */
-  iter(world: IWorld): IterableIterator<[EntityId, ...T]>;
-}
 ```
 
-### 1.2 World容器
+### 2.2 World 接口
 
 ```typescript
-/**
- * World: ECS世界容器
- * 职责：管理所有Entity、Component、System、Resource
- */
-interface IWorld {
-  // === Entity Management ===
-  readonly entities: IEntityManager;
+export interface IWorld {
+  // === 实体管理 (立即生效) ===
+  // 注意：在 System 循环中严禁调用，必须使用 CommandBuffer
+  createEntity(): Entity;
+  destroyEntity(entity: Entity): void;
 
-  // === Component Management ===
-  registerComponent<T extends IComponent>(type: new () => T): void;
-  getStorage<T extends IComponent>(type: new () => T): IComponentStorage<T>;
+  // === 组件操作 ===
+  add<T>(entity: Entity, component: ComponentClass<T>, data?: Partial<T>): void;
+  remove<T>(entity: Entity, component: ComponentClass<T>): void;
+  get<T>(entity: Entity, component: ComponentClass<T>): Readonly<T> | undefined;
+  getMut<T>(entity: Entity, component: ComponentClass<T>): T | undefined; // 获取可变引用，触发脏标记
 
-  // === System Management ===
-  addSystem(system: ISystem): void;
-  removeSystem(systemId: string): void;
-  getSystem(systemId: string): ISystem | undefined;
-
-  // === Resource Management ===
+  // === 资源 (全局单例) ===
   insertResource<T>(resource: T): void;
-  getResource<T>(type: new () => T): T | undefined;
-  getResourceMut<T>(type: new () => T): T | undefined;
+  getResource<T>(resourceClass: new () => T): T | undefined;
 
-  // === Query ===
-  query<T extends IComponent[]>(): IQuery<T>;
-
-  // === Lifecycle ===
+  // === 帧循环 ===
   update(deltaTime: number): void;
 }
+
 ```
 
 ---
 
-## 第二章：组件设计规范
+## 3. 内置核心组件 (Built-in Components)
 
-### 2.1 组件类型分类
+**边界修正说明**：以下组件是所有上层业务（UI、3D、报表）的公约数，必须驻留在 Core 中。
+
+### 3.1 空间变换 (The Transform System)
+
+采用 **双组件设计** 以分离“用户意图”和“系统计算”。
 
 ```typescript
 /**
- * 1. 标记组件（Marker Component）
- * 用途：标记实体具有某种属性，无数据
+ * LocalTransform: 用户操作的数据源
+ * 适用于 3D 物体和相对定位的 UI 元素
  */
-class VisibleTag implements IComponent {
-  readonly __type = Symbol('VisibleTag');
-}
+export class LocalTransform {
+  position: Vector3 = Vector3.ZERO;
+  rotation: Quaternion = Quaternion.IDENTITY;
+  scale: Vector3 = Vector3.ONE;
 
-class StaticTag implements IComponent {
-  readonly __type = Symbol('StaticTag');
-}
-
-/**
- * 2. 数据组件（Data Component）
- * 用途：存储实体的具体数据
- */
-class TransformComponent implements IComponent {
-  readonly __type = Symbol('Transform');
-
-  position: Vector3 = Vector3.zero();
-  rotation: Quaternion = Quaternion.identity();
-  scale: Vector3 = Vector3.one();
-
-  // 缓存的世界矩阵
-  worldMatrix: Matrix4 = Matrix4.identity();
-  localMatrix: Matrix4 = Matrix4.identity();
-
-  // 脏标记
+  //脏标记：当用户修改属性时，系统会自动标记（或需手动标记，视Proxy开销而定）
   dirty: boolean = true;
 }
 
 /**
- * 3. 关系组件（Relationship Component）
- * 用途：描述实体间的关系
+ * WorldTransform: 系统计算出的最终结果
+ * Engine 层只读取这个组件用于渲染
  */
-class ParentComponent implements IComponent {
-  readonly __type = Symbol('Parent');
+export class WorldTransform {
+  // 最终的模型矩阵 (Local -> World)
+  matrix: Matrix4 = Matrix4.IDENTITY;
 
-  parentId: EntityId = -1;
+  // 可选：如果支持 UI 布局，可能包含 computedWidth/Height
 }
 
-class ChildrenComponent implements IComponent {
-  readonly __type = Symbol('Children');
+```
 
-  childIds: EntityId[] = [];
+### 3.2 场景图 (Hierarchy)
+
+用于支撑 3D 父子节点或 UI DOM 树结构。
+
+```typescript
+export class Parent {
+  entity: Entity;
+}
+
+export class Children {
+  // 使用数组或链表存储子节点 ID
+  entities: Entity[] = [];
+}
+
+```
+
+### 3.3 基础状态
+
+```typescript
+/**
+ * 显式可见性
+ * 用户手动设置: "我想隐藏这个物体"
+ */
+export class Visible {
+  value: boolean = true;
 }
 
 /**
- * 4. 渲染相关组件（由engine包定义，core包只定义接口）
+ * 计算可见性
+ * 系统计算: 父节点隐藏 -> 子节点也隐藏
+ * Engine 渲染剔除以此为准
  */
-interface IMeshComponent extends IComponent {
-  geometryId: string;
-  materialId: string;
+export class ComputedVisible {
+  isVisible: boolean = true;
 }
 
-interface ICameraComponent extends IComponent {
-  projectionType: 'perspective' | 'orthographic';
-  fov: number;
-  near: number;
-  far: number;
-  aspect: number;
-}
 ```
-
-### 2.2 组件设计约束
-
-```typescript
-// ✅ 正确：纯数据结构
-class HealthComponent implements IComponent {
-  readonly __type = Symbol('Health');
-
-  current: number = 100;
-  max: number = 100;
-}
-
-// ❌ 错误：包含业务逻辑
-class BadHealthComponent implements IComponent {
-  readonly __type = Symbol('Health');
-
-  current: number = 100;
-  max: number = 100;
-
-  // ❌ 禁止在组件中定义方法
-  takeDamage(amount: number): void {
-    this.current = Math.max(0, this.current - amount);
-  }
-
-  // ❌ 禁止在组件中定义计算属性
-  get isDead(): boolean {
-    return this.current <= 0;
-  }
-}
-```
-
-**负面约束：**
-- 🚫 禁止在组件中定义方法
-- 🚫 禁止在组件中定义getter/setter逻辑
-- 🚫 禁止组件之间直接引用（使用EntityId）
-- 🚫 禁止在组件中持有对World的引用
 
 ---
 
-## 第三章：系统设计规范
+## 4. 系统调度与执行流 (Scheduling)
 
-### 3.1 系统执行顺序
+Core 的 `update` 循环被严格划分为多个阶段。**Engine 的渲染通常发生在整个 Core Update 完成之后。**
+
+### 4.1 阶段定义 (Stages)
+
+| 阶段 | 名称 | 职责 |
+| --- | --- | --- |
+| 1 | **FrameStart** | 处理 `CommandBuffer` (结构变更)，更新 `TimeResource`。 |
+| 2 | **Input** | 处理输入事件，更新 `InputResource`。 |
+| 3 | **PreUpdate** | 游戏逻辑准备。 |
+| 4 | **Update** | **核心业务逻辑** (用户脚本、物理结算、动画播放)。 |
+| 5 | **PostUpdate** | **Core 系统接管**：<br>
+
+<br>1. TransformSystem (计算矩阵)<br>
+
+<br>2. HierarchySystem (同步父子关系)<br>
+
+<br>3. VisibilitySystem (计算剔除状态) |
+| 6 | **FrameEnd** | 清理脏标记，准备供 Engine 提取数据。 |
+
+### 4.2 关键系统实现逻辑 (伪代码)
+
+**TransformSystem (位于 PostUpdate 阶段)**
+这是连接 UI/3D 的枢纽。
 
 ```typescript
-/**
- * 系统执行阶段定义
- */
-enum SystemStage {
-  /** 输入处理 */
-  PreUpdate = 0,
+function transformSystem(world: IWorld) {
+  // 1. 获取所有脏的根节点 (无 Parent 且 LocalTransform.dirty)
+  const roots = world.query([LocalTransform]).without(Parent).filter(t => t.dirty);
 
-  /** 主更新逻辑 */
-  Update = 100,
-
-  /** 变换计算 */
-  PostUpdate = 200,
-
-  /** 渲染准备（仅在engine包中） */
-  PreRender = 300,
-
-  /** 渲染执行（仅在engine包中） */
-  Render = 400,
-
-  /** 渲染后处理 */
-  PostRender = 500,
+  // 2. 深度优先遍历，传递父矩阵
+  roots.forEach(entity => updateRecursive(entity, Matrix4.IDENTITY));
 }
 
-/**
- * 系统依赖声明
- */
-interface SystemDescriptor {
-  id: string;
-  stage: SystemStage;
+function updateRecursive(entity: Entity, parentMatrix: Matrix4) {
+  const local = world.get(entity, LocalTransform);
+  const worldTx = world.getMut(entity, WorldTransform);
 
-  /** 必须在这些系统之后执行 */
-  after?: string[];
+  // 3. 计算: Parent * Local = World
+  const localMat = Matrix4.compose(local.position, local.rotation, local.scale);
+  Matrix4.multiply(parentMatrix, localMat, worldTx.matrix);
 
-  /** 必须在这些系统之前执行 */
-  before?: string[];
+  // 4. 处理子节点
+  const children = world.get(entity, Children);
+  if (children) {
+    children.entities.forEach(child => updateRecursive(child, worldTx.matrix));
+  }
 }
+
 ```
 
-### 3.2 系统实现模式
+---
+
+## 5. 查询与响应式 (Queries & Reactivity)
+
+为了避免每帧遍历所有实体，Core 必须提供高效的变更检测。
+
+### 5.1 Query 描述符
 
 ```typescript
-/**
- * 变换系统 - 处理层级变换
- */
-class TransformSystem implements ISystem {
-  readonly id = 'TransformSystem';
-  readonly priority = SystemStage.PostUpdate;
-  enabled = true;
+interface QueryFilter {
+  all: ComponentClass<any>[];    // 必须包含
+  any?: ComponentClass<any>[];   // 包含任意
+  none?: ComponentClass<any>[];  // 必须不含
+}
 
-  execute(world: IWorld, deltaTime: number): void {
-    // 1. 查询所有带Transform的根实体（无Parent）
-    const roots = world.query<[TransformComponent]>()
-      .with(TransformComponent)
-      .without(ParentComponent)
-      .iter(world);
+```
 
-    // 2. 递归更新变换层级
-    for (const [entity, transform] of roots) {
-      this.updateTransformHierarchy(world, entity, transform, Matrix4.identity());
-    }
-  }
+### 5.2 响应式迭代 (Reactive Iteration)
 
-  private updateTransformHierarchy(
-    world: IWorld,
-    entity: EntityId,
-    transform: TransformComponent,
-    parentWorldMatrix: Matrix4
-  ): void {
-    // 更新本地矩阵
-    if (transform.dirty) {
-      Matrix4.compose(
-        transform.position,
-        transform.rotation,
-        transform.scale,
-        transform.localMatrix
+Engine 需要知道“哪些 Mesh 是新加的”以便上传 GPU Buffer。
+
+```typescript
+interface Query<T> {
+  // 基础迭代 (O(N) 遍历匹配的原型)
+  forEach(fn: (entity: Entity, ...comps: T) => void): void;
+
+  // 增量迭代 (仅遍历本帧发生变化的实体)
+  // 实现原理：通过 Archetype 迁移记录或 Dirty Bitmask
+  forEachAdded(fn: (entity: Entity, ...comps: T) => void): void;
+  forEachRemoved(fn: (entity: Entity) => void): void;
+}
+
+```
+
+---
+
+## 6. Core 与 Engine 的集成协议
+
+### 6.1 数据流向
+
+`Core (计算)` -> `Extraction (复制)` -> `Engine (渲染)`
+
+### 6.2 提取器 (The Extractor)
+
+Engine 包中将包含一系列 Extractor System，它们在渲染帧开始时运行。
+
+**示例：MeshRenderExtractor**
+
+```typescript
+class MeshRenderExtractor {
+  // 关注：具有 WorldTransform 和 MeshRef 的实体
+  query = world.query({ all: [WorldTransform, MeshRef, ComputedVisible] });
+
+  extract(renderScene: RenderScene) {
+    this.query.forEach((entity, transform, meshRef, visible) => {
+      if (!visible.isVisible) return;
+
+      // 将 Core 的数据扁平化到 RenderScene 的 Arrays 中
+      renderScene.addRenderable(
+        meshRef.assetId,
+        transform.matrix // 直接拷贝 float32 数组
       );
-    }
-
-    // 计算世界矩阵
-    Matrix4.multiply(parentWorldMatrix, transform.localMatrix, transform.worldMatrix);
-    transform.dirty = false;
-
-    // 处理子节点
-    const children = world.getStorage(ChildrenComponent).get(entity);
-    if (children) {
-      for (const childId of children.childIds) {
-        const childTransform = world.getStorage(TransformComponent).getMut(childId);
-        if (childTransform) {
-          this.updateTransformHierarchy(world, childId, childTransform, transform.worldMatrix);
-        }
-      }
-    }
-  }
-}
-```
-
-### 3.3 系统设计约束
-
-```typescript
-// ✅ 正确：无状态系统
-class CorrectSystem implements ISystem {
-  readonly id = 'CorrectSystem';
-  readonly priority = 0;
-  enabled = true;
-
-  execute(world: IWorld, deltaTime: number): void {
-    // 所有数据从world获取
-    const query = world.query<[TransformComponent]>();
-    // ...
+    });
   }
 }
 
-// ❌ 错误：有状态系统
-class BadSystem implements ISystem {
-  readonly id = 'BadSystem';
-  readonly priority = 0;
-  enabled = true;
-
-  // ❌ 禁止系统持有状态
-  private cachedEntities: EntityId[] = [];
-  private lastFrameTime: number = 0;
-
-  execute(world: IWorld, deltaTime: number): void {
-    // ❌ 使用缓存状态
-    for (const entity of this.cachedEntities) {
-      // ...
-    }
-  }
-}
-```
-
-**负面约束：**
-- 🚫 禁止系统持有可变状态（使用Resource代替）
-- 🚫 禁止系统直接创建/销毁实体（使用CommandBuffer）
-- 🚫 禁止系统之间直接调用（使用事件或依赖声明）
-- 🚫 禁止在系统中进行同步I/O操作
-
----
-
-## 第四章：资源系统
-
-### 4.1 资源定义
-
-```typescript
-/**
- * Resource: 全局单例数据
- * 用途：存储不属于特定实体的全局状态
- */
-
-// 时间资源
-class TimeResource {
-  deltaTime: number = 0;
-  totalTime: number = 0;
-  frameCount: number = 0;
-}
-
-// 输入资源
-class InputResource {
-  keys: Map<string, boolean> = new Map();
-  mousePosition: Vector2 = Vector2.zero();
-  mouseButtons: boolean[] = [false, false, false];
-}
-
-// 配置资源
-class ConfigResource {
-  readonly targetFrameRate: number = 60;
-  readonly enablePhysics: boolean = false;
-  readonly debugMode: boolean = false;
-}
-
-// 事件队列资源
-class EventQueueResource<T> {
-  private events: T[] = [];
-
-  push(event: T): void {
-    this.events.push(event);
-  }
-
-  drain(): T[] {
-    const events = this.events;
-    this.events = [];
-    return events;
-  }
-}
-```
-
-### 4.2 命令缓冲区
-
-```typescript
-/**
- * CommandBuffer: 延迟执行的世界修改命令
- * 用途：避免在迭代过程中修改数据结构
- */
-interface ICommandBuffer {
-  /** 延迟创建实体 */
-  spawn(): EntityId;
-
-  /** 延迟销毁实体 */
-  despawn(entity: EntityId): void;
-
-  /** 延迟添加组件 */
-  insert<T extends IComponent>(entity: EntityId, component: T): void;
-
-  /** 延迟移除组件 */
-  remove<T extends IComponent>(entity: EntityId, type: new () => T): void;
-
-  /** 执行所有命令 */
-  flush(world: IWorld): void;
-}
 ```
 
 ---
 
-## 第五章：性能优化规范
+## 7. 性能规约 (Performance Rules)
 
-### 5.1 组件存储策略
+1. **禁止动态闭包**：在 `forEach` 循环中，避免创建闭包函数。尽量使用预定义的 Handler。
+2. **结构变更缓冲**：`add/remove` 组件涉及内存搬运。**绝对禁止**在每帧 Update 中对同一批实体反复添加/移除组件（例如：不要用添加 `IsSelected` 组件来表示选中，应该用 `Selection` 组件的一个 bool 字段）。
+3. **对象池化**：Core 内部的 `Matrix4`、`Vector3` 运算必须使用全局对象池，实现 **Zero GC (零垃圾回收)** 循环。
 
-```typescript
-/**
- * 稀疏集合存储（SparseSet）
- * 适用：大多数组件
- * 优点：O(1)访问，高效迭代
- */
-class SparseSetStorage<T extends IComponent> implements IComponentStorage<T> {
-  private sparse: number[] = [];  // EntityId -> dense index
-  private dense: EntityId[] = [];  // 连续的EntityId
-  private data: T[] = [];         // 连续的组件数据
-
-  // 实现方法...
-}
-
-/**
- * 原型存储（Archetype）
- * 适用：频繁查询的组件组合
- * 优点：极高的缓存友好性
- */
-interface Archetype {
-  /** 此原型包含的组件类型集合 */
-  componentTypes: Set<symbol>;
-
-  /** 属于此原型的实体列表 */
-  entities: EntityId[];
-
-  /** 组件数据表（按类型分列） */
-  columns: Map<symbol, unknown[]>;
-}
-```
-
-### 5.2 查询缓存
-
-```typescript
-/**
- * 查询缓存策略
- */
-class QueryCache {
-  private cachedQueries: Map<string, EntityId[]> = new Map();
-
-  /** 生成查询键 */
-  private generateKey(withTypes: symbol[], withoutTypes: symbol[]): string {
-    const withStr = withTypes.sort().join(',');
-    const withoutStr = withoutTypes.sort().join(',');
-    return `${withStr}|${withoutStr}`;
-  }
-
-  /** 使缓存失效（当组件添加/移除时调用） */
-  invalidate(componentType: symbol): void {
-    // 使所有包含此组件类型的查询失效
-    for (const [key] of this.cachedQueries) {
-      if (key.includes(componentType.toString())) {
-        this.cachedQueries.delete(key);
-      }
-    }
-  }
-}
-```
-
-### 5.3 批处理模式
-
-```typescript
-/**
- * 批处理优化示例
- */
-class BatchTransformSystem implements ISystem {
-  readonly id = 'BatchTransformSystem';
-  readonly priority = SystemStage.PostUpdate;
-  enabled = true;
-
-  // 预分配的临时矩阵（避免GC）
-  private static readonly tempMatrix = Matrix4.identity();
-
-  execute(world: IWorld, deltaTime: number): void {
-    const storage = world.getStorage(TransformComponent);
-
-    // 批量处理，利用数据局部性
-    for (const [entity, transform] of storage.iter()) {
-      if (transform.dirty) {
-        // 使用预分配矩阵
-        Matrix4.compose(
-          transform.position,
-          transform.rotation,
-          transform.scale,
-          BatchTransformSystem.tempMatrix
-        );
-
-        // 复制到目标
-        transform.localMatrix.copyFrom(BatchTransformSystem.tempMatrix);
-        transform.dirty = false;
-      }
-    }
-  }
-}
-```
-
----
-
-## 第六章：与渲染层边界
-
-### 6.1 Core包职责边界
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    @maxellabs/core                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │   Entity     │  │  Component   │  │   System     │   │
-│  │   Manager    │  │   Storage    │  │   Executor   │   │
-│  └──────────────┘  └──────────────┘  └──────────────┘   │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │  Transform   │  │   Parent/    │  │   Query      │   │
-│  │  Component   │  │   Children   │  │   Builder    │   │
-│  └──────────────┘  └──────────────┘  └──────────────┘   │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │   Resource   │  │   Command    │  │   Event      │   │
-│  │   Manager    │  │   Buffer     │  │   System     │   │
-│  └──────────────┘  └──────────────┘  └──────────────┘   │
-└─────────────────────────────────────────────────────────┘
-                          │
-                          │ 接口抽象
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│                   @maxellabs/engine                      │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │   Mesh       │  │   Camera     │  │   Light      │   │
-│  │  Component   │  │  Component   │  │  Component   │   │
-│  └──────────────┘  └──────────────┘  └──────────────┘   │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │   Render     │  │   Culling    │  │   Scene      │   │
-│  │   System     │  │   System     │  │   Manager    │   │
-│  └──────────────┘  └──────────────┘  └──────────────┘   │
-└─────────────────────────────────────────────────────────┘
-                          │
-                          │ 命令生成
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│                    @maxellabs/rhi                        │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │   Device     │  │   Pipeline   │  │   Command    │   │
-│  │              │  │   State      │  │   Buffer     │   │
-│  └──────────────┘  └──────────────┘  └──────────────┘   │
-└─────────────────────────────────────────────────────────┘
-```
-
-### 6.2 渲染组件接口（Core定义，Engine实现）
-
-```typescript
-// ===== Core包中定义的接口 =====
-
-/**
- * 可渲染组件接口
- * Core包只定义接口，不包含具体实现
- */
-interface IRenderableComponent extends IComponent {
-  /** 是否可见 */
-  visible: boolean;
-
-  /** 渲染层级 */
-  renderLayer: number;
-
-  /** 渲染排序优先级 */
-  renderOrder: number;
-}
-
-/**
- * 几何体引用组件接口
- */
-interface IGeometryComponent extends IComponent {
-  /** 几何体资源ID */
-  geometryId: string;
-
-  /** 边界盒（用于剔除） */
-  boundingBox: {
-    min: Vector3Like;
-    max: Vector3Like;
-  };
-}
-
-/**
- * 材质引用组件接口
- */
-interface IMaterialComponent extends IComponent {
-  /** 材质资源ID */
-  materialId: string;
-
-  /** 材质变体 */
-  variant?: string;
-}
-```
-
----
-
-## Few-Shot示例
-
-### 示例1：创建带Transform的实体
-
-```typescript
-// 正确的实体创建流程
-function createEntity(world: IWorld): EntityId {
-  const entity = world.entities.create();
-
-  // 添加Transform组件
-  const transform = new TransformComponent();
-  transform.position.set(0, 1, 0);
-  transform.scale.set(1, 1, 1);
-  world.getStorage(TransformComponent).add(entity, transform);
-
-  return entity;
-}
-```
-
-### 示例2：创建父子层级关系
-
-```typescript
-// 正确的层级关系建立
-function setParent(world: IWorld, child: EntityId, parent: EntityId): void {
-  // 1. 添加Parent组件到子实体
-  const parentComp = new ParentComponent();
-  parentComp.parentId = parent;
-  world.getStorage(ParentComponent).add(child, parentComp);
-
-  // 2. 更新父实体的Children组件
-  const childrenStorage = world.getStorage(ChildrenComponent);
-  let children = childrenStorage.getMut(parent);
-
-  if (!children) {
-    children = new ChildrenComponent();
-    childrenStorage.add(parent, children);
-  }
-
-  children.childIds.push(child);
-
-  // 3. 标记变换为脏
-  const childTransform = world.getStorage(TransformComponent).getMut(child);
-  if (childTransform) {
-    childTransform.dirty = true;
-  }
-}
-```
-
-### 示例3：查询特定组件组合
-
-```typescript
-// 查询所有可见的、带Transform和Mesh的实体
-function queryVisibleMeshes(world: IWorld): IterableIterator<[EntityId, TransformComponent]> {
-  return world.query<[TransformComponent]>()
-    .with(TransformComponent)
-    .with(VisibleTag)
-    .without(StaticTag)
-    .iter(world);
-}
-```
-
----
-
-## 相关文档
-
-### 核心规范
-- [图形系统圣经](../../foundations/graphics-bible.md) - 坐标系和矩阵规范
-- [编码规范](../../foundations/coding-conventions.md) - TypeScript代码规范
-
-### 集成文档
-- [Core-Engine-RHI集成边界](./core-integration-boundary.md) - 包间集成规范
-- [Engine架构](./engine-architecture.md) - Engine包架构
-
-### API参考
-- [Math API](../../reference/api-v2/math/index.md) - 数学库API
-- [Specification API](../../reference/api-v2/specification/index.md) - 类型定义
