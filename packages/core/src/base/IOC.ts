@@ -58,7 +58,9 @@ export class Container {
       return instance as T;
     }
 
-    throw new Error(`Service '${key}' not registered in container`);
+    throw new Error(
+      `Service '${key}' not registered in container. Use register() or registerFactory() to register the service first.`
+    );
   }
 
   /**

@@ -367,7 +367,7 @@ export class Entity extends ReferResource {
    * @returns 此实体，用于链式调用
    */
   removeComponent<T extends Component>(type: new (entity: Entity) => T): this {
-    if (type instanceof Transform) {
+    if (type.name === 'Transform') {
       const errorMsg = '[Entity] 无法移除Transform组件';
 
       logError(errorMsg, 'Entity', undefined);

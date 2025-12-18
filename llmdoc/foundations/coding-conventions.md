@@ -321,57 +321,73 @@ interface ErrorInfo {
 
 // 核心导出
 export const errors: ErrorInfo[] = [];
+
+/**
+ * 记录错误到全局数组并抛出异常
+ * 实现"记录+统一抛出"模式：既收集错误信息，又统一抛出
+ * @throws {Error} 总是抛出错误
+ */
 export function logError(message: string, component?: string, error?: Error): void;
 export function clearErrors(): void;
 export function getErrorCount(): number;
 ```
 
+#### 设计理念：统一错误处理
+
+**核心思想**：logError 同时做两件事
+1. **记录**：将错误信息push到 `errors` 数组
+2. **抛出**：立即 throw Error，确保调用者必须处理
+
+**优势**：
+- ✅ 集中收集所有错误信息，便于日志分析
+- ✅ 强制调用者处理异常，避免静默失败
+- ✅ 用户可通过 `errors.length` 查看累积错误数
+
 #### 使用场景
 
-**✅ 何时需要收集错误：**
-1. **异步操作失败**：网络请求、资源加载、Worker通信等
-2. **可选操作失败**：性能优化（SIMD、SharedArrayBuffer）降级
-3. **用户输入处理**：文件解析、配置加载等可能失败但不应中断程序
-4. **第三方库调用**：可能抛出未知错误的外部依赖
+**✅ 何时使用 logError（记录+抛出）：**
+1. **需要记录但也要终止的错误**：操作失败且需要中断执行
+2. **需要追踪的异常**：想要在错误数组中留下记录
+3. **需要统一处理的错误**：上层需要catch并统一处理
 
-**❌ 何时不需要收集错误（直接throw）：**
-1. **编程错误**：传入null、类型错误、API误用等
-2. **前置条件失败**：对象已销毁、状态不正确等
-3. **不可恢复的错误**：内存耗尽、环境不支持等
+**✅ 何时直接 throw Error（不记录）：**
+1. **参数验证失败**：编程错误，不需要记录到全局数组
+2. **前置条件检查**：如对象已销毁，这是使用错误不需要记录
 
 ### 4.3 实践指南
 
 #### ✅ 正确示例
 
 ```typescript
-// Example 1: 可恢复的错误 - 收集
+// Example 1: 使用 logError 记录+抛出
 try {
-  const texture = await loadTexture(url);
+  const obj = pool.get();
+  // ... 使用对象
 } catch (error) {
-  logError(`Failed to load texture: ${url}`, 'TextureLoader', error);
-  // 使用默认纹理继续运行
-  texture = defaultTexture;
+  // logError 已经记录错误并抛出，这里统一处理
+  console.error('池操作失败，已记录:', errors[errors.length - 1]);
+  // 进行降级处理
 }
 
-// Example 2: 编程错误 - 直接抛出
+// Example 2: 参数验证直接抛出（不使用logError）
 class ObjectPool<T> {
   release(obj: T): void {
     if (obj == null) {
-      throw new Error('Cannot release null object');
+      throw new Error('Cannot release null object'); // 编程错误，直接抛出
     }
     // ...
   }
 }
 
-// Example 3: 关键操作失败 - 收集但不中断
+// Example 3: 关键操作使用logError
 function preAllocate(count: number): void {
   try {
     for (let i = 0; i < count; i++) {
       this.pool.push(this.factory());
     }
   } catch (error) {
+    // logError 记录错误到数组并抛出
     logError('Failed to preallocate objects', 'ObjectPool', error);
-    // 继续运行，部分对象预分配失败不影响使用
   }
 }
 ```

@@ -8,7 +8,7 @@ export interface EventListener {
   /** 回调函数 */
   callback: (event: Event) => void;
   /** 上下文对象 */
-  target?: any;
+  target?: EventDispatcher;
   /** 优先级，数值越大越先执行 */
   priority: number;
   /** 是否只执行一次 */

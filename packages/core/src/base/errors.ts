@@ -19,10 +19,12 @@ export interface ErrorInfo {
 export const errors: ErrorInfo[] = [];
 
 /**
- * 记录错误到全局数组
+ * 记录错误到全局数组并抛出异常
+ * 这样可以做到错误集中处理：既记录错误信息，又统一抛出
  * @param message 错误消息
  * @param component 组件名称（可选）
  * @param error 原始错误对象（可选）
+ * @throws {Error} 总是抛出错误，确保调用者可以统一处理
  */
 export function logError(message: string, component?: string, error?: Error): void {
   errors.push({
