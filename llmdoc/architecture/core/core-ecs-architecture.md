@@ -1,17 +1,29 @@
 ---
 id: "core-ecs-architecture"
-type: "constitution"
+type: "rfc"
+status: "proposal"
+implementation_status: "not_started"
 title: "Core ECS Architecture Bible"
 description: "Core包架构宪法：定义基于Archetype的高性能、空间感知型ECS标准"
-tags: ["ecs", "architecture", "core", "performance", "archetype", "transform", "spatial"]
+tags: ["ecs", "architecture", "core", "performance", "archetype", "transform", "spatial", "proposal"]
 context_dependency: ["spec-type-system", "coding-conventions"]
 related_ids: ["engine-architecture", "rhi-architecture"]
-version: "2.0.0 (Spatial-Core Revision)"
+version: "2.0.0-proposal"
+breaking_changes: true
 token_cost: "high"
 last_updated: "2025-12-18"
 ---
 
 # Core ECS Architecture Bible
+
+> ⚠️ **重要提示**:
+> 本文档是 Archetype ECS 架构的**提案**，描述的是目标架构，而非当前实现。
+>
+> **当前状态**: Core 包采用传统 GameObject + Component 模式 (`Entity extends ReferResource`)
+>
+> **提案状态**: 讨论中
+>
+> 如需了解当前实现，请参阅: `packages/core/src/base/entity.ts`
 
 ## 1. 核心理念与边界 (Core Philosophy)
 
@@ -179,11 +191,14 @@ Core 的 `update` 循环被严格划分为多个阶段。**Engine 的渲染通�
 
 ```typescript
 function transformSystem(world: IWorld) {
-  // 1. 获取所有脏的根节点 (无 Parent 且 LocalTransform.dirty)
-  const roots = world.query([LocalTransform]).without(Parent).filter(t => t.dirty);
+  // 1. 获取所有根节点 (无 Parent)
+  const rootsQuery = world.query({ all: [LocalTransform], none: [Parent] });
 
-  // 2. 深度优先遍历，传递父矩阵
-  roots.forEach(entity => updateRecursive(entity, Matrix4.IDENTITY));
+  // 2. 仅处理脏节点
+  rootsQuery.forEach((entity, localTransform) => {
+    if (!localTransform.dirty) return;
+    updateRecursive(entity, Matrix4.IDENTITY);
+  });
 }
 
 function updateRecursive(entity: Entity, parentMatrix: Matrix4) {
@@ -278,4 +293,58 @@ class MeshRenderExtractor {
 1. **禁止动态闭包**：在 `forEach` 循环中，避免创建闭包函数。尽量使用预定义的 Handler。
 2. **结构变更缓冲**：`add/remove` 组件涉及内存搬运。**绝对禁止**在每帧 Update 中对同一批实体反复添加/移除组件（例如：不要用添加 `IsSelected` 组件来表示选中，应该用 `Selection` 组件的一个 bool 字段）。
 3. **对象池化**：Core 内部的 `Matrix4`、`Vector3` 运算必须使用全局对象池，实现 **Zero GC (零垃圾回收)** 循环。
+
+---
+
+## 8. 实现路线图 (Implementation Roadmap)
+
+本架构为分阶段实施计划：
+
+### Phase 1: 原型验证 (Q1 2026)
+- [ ] 实现 `Archetype` 内存布局原型
+- [ ] 性能基准测试 (vs. 当前 GameObject 模式)
+- [ ] Query API 设计验证
+- [ ] 评估内存占用与 Cache 命中率
+
+### Phase 2: 核心迁移 (Q2 2026)
+- [ ] 实现 `IWorld` 接口
+- [ ] 实现 `LocalTransform` + `WorldTransform` 双组件
+- [ ] 实现 `Parent` / `Children` / `Visible` / `ComputedVisible` 组件
+- [ ] 迁移现有 `Entity` / `Component` 到新架构
+- [ ] 编写自动化迁移脚本
+
+### Phase 3: Engine 层适配 (Q3 2026)
+- [ ] 更新 RenderSystem 使用新 Query API
+- [ ] 实现 Extractor 模式（零拷贝数据提取）
+- [ ] 重构 CullingSystem 基于 Archetype 查询
+- [ ] 性能优化与剔除系统重构
+
+### Phase 4: 文档与工具 (Q4 2026)
+- [ ] 编写迁移指南（从 GameObject 到 ECS）
+- [ ] 开发代码生成工具（Component 注册宏）
+- [ ] 开发调试工具（Archetype Inspector）
+- [ ] 更新所有示例代码和 Demo
+
+### 风险评估
+- **性能回退风险**: 如果 Archetype 实现不当，可能比当前 GameObject 模式更慢
+- **生态兼容性**: 现有使用 `Entity` 类的第三方代码将全部失效
+- **学习曲线**: Data-Oriented 范式对部分开发者较为陌生
+
+---
+
+## 相关文档
+
+### 核心规范
+- [图形系统圣经](../../reference/graphics-bible.md) - 坐标系和矩阵规范
+- [编码规范](../../reference/coding-conventions.md) - TypeScript代码规范
+
+### 当前实现
+- [Entity 实现](../../../packages/core/src/base/entity.ts) - 当前 GameObject 模式
+- [Component 实现](../../../packages/core/src/base/component.ts) - 组件基类
+- [Transform 实现](../../../packages/core/src/base/transform.ts) - 变换组件
+
+### 集成文档
+- [Core-Engine-RHI集成边界](./core-integration-boundary.md) - 包间集成规范
+- [Engine架构](../engine/engine-architecture.md) - Engine包架构
+- [RHI架构](../rhi/rhi-architecture.md) - RHI层架构
 
