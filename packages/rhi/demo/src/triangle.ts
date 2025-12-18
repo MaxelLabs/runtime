@@ -168,7 +168,10 @@ async function main(): Promise<void> {
       }
     });
 
-    // 15. 启动渲染循环
+    // 15. 预分配渲染循环中使用的数组
+    const transformData = new Float32Array(64); // 4 * 16
+
+    // 16. 启动渲染循环
     runner.start((dt) => {
       // 更新轨道控制器
       orbit.update(dt);
@@ -177,8 +180,7 @@ async function main(): Promise<void> {
       const viewMatrix = orbit.getViewMatrix();
       const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
 
-      // 更新 Transform Uniform
-      const transformData = new Float32Array(64); // 4 * 16
+      // 更新 Transform Uniform（使用预分配数组）
       transformData.set(modelMatrix.toArray(), 0);
       transformData.set(viewMatrix, 16);
       transformData.set(projMatrix, 32);
@@ -201,7 +203,7 @@ async function main(): Promise<void> {
       stats.end();
     });
 
-    // 16. 显示帮助
+    // 17. 显示帮助
     DemoRunner.showHelp([
       'ESC: 退出 Demo',
       'F11: 切换全屏',
