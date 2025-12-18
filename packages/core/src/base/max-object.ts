@@ -48,8 +48,7 @@ class IdGenerator {
  * 作为引擎中大多数对象的基类，提供唯一标识符、名称管理等基础功能
  *
  * @remarks
- * 实现 IDisposable 接口，使用 `dispose()` 方法释放资源。
- * 为了向后兼容，`destroy()` 方法作为 `dispose()` 的别名保留。
+ * 实现 IDisposable 接口，使用 `dispose()` 方法释放资源
  */
 export abstract class MaxObject implements IDisposable {
   /** 对象的唯一标识 */
@@ -84,15 +83,6 @@ export abstract class MaxObject implements IDisposable {
   }
 
   /**
-   * 检查对象是否已被销毁（isDisposed 的别名，向后兼容）
-   * @returns 是否已被销毁
-   * @deprecated 请使用 isDisposed()
-   */
-  isDestroyed(): boolean {
-    return this._disposed;
-  }
-
-  /**
    * 获取对象的唯一标识
    * @returns 唯一标识
    */
@@ -110,14 +100,6 @@ export abstract class MaxObject implements IDisposable {
     }
     this._disposed = true;
     this.onDispose();
-  }
-
-  /**
-   * 销毁对象（dispose 的别名，向后兼容）
-   * @deprecated 请使用 dispose()
-   */
-  destroy(): void {
-    this.dispose();
   }
 
   /**

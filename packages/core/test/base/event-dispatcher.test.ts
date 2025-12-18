@@ -270,12 +270,12 @@ describe('EventDispatcher - 事件分发器', () => {
     });
   });
 
-  describe('销毁', () => {
-    it('销毁后应该移除所有监听器', () => {
+  describe('释放', () => {
+    it('释放后应该移除所有监听器', () => {
       const callback = jest.fn();
 
       dispatcher.on('test', { callback, priority: 0, once: false });
-      dispatcher.destroy();
+      dispatcher.dispose();
 
       dispatcher.emit('test');
 

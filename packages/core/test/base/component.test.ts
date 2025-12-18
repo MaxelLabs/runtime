@@ -12,7 +12,7 @@ class TestComponent extends Component {
   public awakeCalled = false;
   public enableCalled = false;
   public updateCalled = false;
-  public destroyCalled = false;
+  public disposeCalled = false;
 
   protected override onAwake(): void {
     super.onAwake();
@@ -28,9 +28,9 @@ class TestComponent extends Component {
     this.updateCalled = true;
   }
 
-  override destroy(): void {
-    this.destroyCalled = true;
-    super.destroy();
+  override dispose(): void {
+    this.disposeCalled = true;
+    super.dispose();
   }
 }
 
@@ -129,21 +129,21 @@ describe('Component - 组件基类', () => {
     });
   });
 
-  describe('destroy - 销毁', () => {
-    it('应该调用destroy方法', () => {
-      component.destroy();
+  describe('dispose - 释放', () => {
+    it('应该调用dispose方法', () => {
+      component.dispose();
 
-      expect(component.destroyCalled).toBe(true);
-      expect(component.isDestroyed()).toBe(true);
+      expect(component.disposeCalled).toBe(true);
+      expect(component.isDisposed()).toBe(true);
     });
 
-    it('销毁后不应该再次销毁', () => {
-      component.destroy();
-      const firstDestroyState = component.isDestroyed();
+    it('释放后不应该再次释放', () => {
+      component.dispose();
+      const firstDisposeState = component.isDisposed();
 
-      component.destroy();
+      component.dispose();
 
-      expect(component.isDestroyed()).toBe(firstDestroyState);
+      expect(component.isDisposed()).toBe(firstDisposeState);
     });
   });
 
@@ -159,8 +159,8 @@ describe('Component - 组件基类', () => {
       component.update(0.016);
       expect(component.updateCalled).toBe(true);
 
-      component.destroy();
-      expect(component.isDestroyed()).toBe(true);
+      component.dispose();
+      expect(component.isDisposed()).toBe(true);
     });
 
     it('应该支持启用/禁用切换', () => {

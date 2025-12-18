@@ -1,6 +1,24 @@
 /**
  * 依赖注入容器 (Inversion of Control Container)
  * 用于解决组件之间的循环依赖问题，实现松耦合的架构
+ *
+ * @remarks
+ * **使用限制**：
+ * - 此容器使用单例模式，适用于主线程中的依赖注入
+ * - **不支持 Web Workers**：每个 Worker 有独立的全局作用域，单例不会共享
+ * - 如需在 Worker 中使用依赖注入，应在每个 Worker 中创建独立的容器实例
+ * - 异步初始化场景下，确保在使用服务前完成注册
+ *
+ * @example
+ * ```typescript
+ * // 主线程中使用
+ * const container = Container.getInstance();
+ * container.register('myService', new MyService());
+ *
+ * // 在 Worker 中，需要创建独立实例
+ * // worker.ts
+ * const workerContainer = new Container(); // 不使用 getInstance
+ * ```
  */
 export class Container {
   private static instance: Container | null = null;
@@ -8,8 +26,19 @@ export class Container {
   private factories: Map<string, () => any> = new Map();
 
   /**
+   * 私有构造函数，推荐使用 getInstance() 获取单例
+   * @remarks 如需在 Web Worker 中使用，可直接 new Container() 创建独立实例
+   */
+  constructor() {}
+
+  /**
    * 获取容器单例
-   * JavaScript 是单线程的，在同步代码中不需要复杂的并发控制
+   *
+   * @remarks
+   * JavaScript 是单线程的，在同步代码中不需要复杂的并发控制。
+   * 但请注意：
+   * - 此单例仅在当前执行上下文（主线程或特定 Worker）中有效
+   * - Web Workers 有独立的全局作用域，不会共享此单例
    */
   public static getInstance(): Container {
     if (!Container.instance) {

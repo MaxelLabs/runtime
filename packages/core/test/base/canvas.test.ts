@@ -207,6 +207,17 @@ describe('Canvas - 画布封装', () => {
     });
   });
 
+  describe('dispose - 释放', () => {
+    it('应该释放画布', () => {
+      const mockCanvas = createMockCanvas();
+      const canvas = new Canvas(mockCanvas);
+
+      canvas.dispose();
+
+      expect(canvas.isDisposed()).toBe(true);
+    });
+  });
+
   describe('复杂场景', () => {
     it('应该处理窗口resize', () => {
       const mockCanvas = createMockCanvas();

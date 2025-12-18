@@ -28,7 +28,7 @@ export enum ComponentLifecycleState {
  * 5. lateUpdate - 在所有update后调用
  * 6. render - 渲染时调用
  * 7. onDisable - 组件被禁用时调用
- * 8. onDestroy - 组件被销毁时调用
+ * 8. onDispose - 组件被释放时调用
  */
 export abstract class Component extends ReferResource {
   /** 组件所属的实体 */

@@ -374,12 +374,4 @@ export class ObjectPool<T extends object> {
   isDisposed(): boolean {
     return this._disposed;
   }
-
-  /**
-   * 检查对象池是否已销毁
-   * @deprecated 请使用 isDisposed() 方法代替
-   */
-  getDestroyed(): boolean {
-    return this._disposed;
-  }
 }

@@ -82,8 +82,8 @@ describe('ObjectPool - 对象池', () => {
       expect(stats.available).toBe(8);
     });
 
-    it('销毁后预分配应该抛出错误', () => {
-      pool.destroy();
+    it('释放后预分配应该抛出错误', () => {
+      pool.dispose();
 
       expect(() => pool.preAllocate(5)).toThrow();
       expect(errors.length).toBeGreaterThan(0);
@@ -122,8 +122,8 @@ describe('ObjectPool - 对象池', () => {
       expect(stats.totalGets).toBe(3);
     });
 
-    it('销毁后获取应该抛出错误', () => {
-      pool.destroy();
+    it('释放后获取应该抛出错误', () => {
+      pool.dispose();
 
       expect(() => pool.get()).toThrow();
     });
@@ -188,9 +188,9 @@ describe('ObjectPool - 对象池', () => {
       expect(stats.available).toBeLessThanOrEqual(2);
     });
 
-    it('销毁后释放应该抛出错误', () => {
+    it('池释放后释放对象应该抛出错误', () => {
       const obj = pool.get();
-      pool.destroy();
+      pool.dispose();
 
       expect(() => pool.release(obj)).toThrow();
     });
@@ -210,8 +210,8 @@ describe('ObjectPool - 对象池', () => {
       expect(stats.totalReleased).toBe(10);
     });
 
-    it('销毁后预热应该失败', () => {
-      pool.destroy();
+    it('释放后预热应该失败', () => {
+      pool.dispose();
 
       expect(() => pool.warmUp(5)).toThrow();
     });
@@ -285,19 +285,19 @@ describe('ObjectPool - 对象池', () => {
     });
   });
 
-  describe('destroy - 销毁池', () => {
-    it('应该销毁对象池', () => {
+  describe('dispose - 释放池', () => {
+    it('应该释放对象池', () => {
       pool.preAllocate(5);
-      pool.destroy();
+      pool.dispose();
 
-      expect(pool.getDestroyed()).toBe(true);
+      expect(pool.isDisposed()).toBe(true);
 
       const stats = pool.getStatus();
       expect(stats.total).toBe(0);
     });
 
-    it('销毁后所有操作应该失败', () => {
-      pool.destroy();
+    it('释放后所有操作应该失败', () => {
+      pool.dispose();
 
       expect(() => pool.get()).toThrow();
       expect(() => pool.preAllocate(5)).toThrow();
@@ -315,11 +315,11 @@ describe('ObjectPool - 对象池', () => {
       expect(stats.available).toBe(5); // 超出部分被裁剪
     });
 
-    it('销毁后调整容量应该失败', () => {
-      pool.destroy();
+    it('释放后调整容量应该失败', () => {
+      pool.dispose();
 
       pool.setMaxSize(10); // 应该不报错，只是警告
-      expect(pool.getDestroyed()).toBe(true);
+      expect(pool.isDisposed()).toBe(true);
     });
   });
 

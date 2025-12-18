@@ -291,33 +291,31 @@ export class EventDispatcher extends MaxObject {
     // 如果事件未被停止，则处理当前级别的捕获监听器
     if (!event.isPropagationStopped()) {
       const captureType = `${event.type}_capture`;
+      // 优化：使用一次 get 操作代替 has + get
+      const captureListeners = this.listeners.get(captureType);
 
-      if (this.listeners.has(captureType)) {
+      if (captureListeners && captureListeners.size > 0) {
         event.currentTarget = this;
-        const captureListeners = this.listeners.get(captureType);
+        // 创建监听器副本并按优先级排序
+        const listenersCopy = Array.from(captureListeners);
 
-        if (captureListeners) {
-          // 创建监听器副本并按优先级排序
-          const listenersCopy = Array.from(captureListeners);
+        listenersCopy.sort((a, b) => b.priority - a.priority);
 
-          listenersCopy.sort((a, b) => b.priority - a.priority);
+        for (const listener of listenersCopy) {
+          if (event.isImmediatelyStopped()) {
+            break;
+          }
 
-          for (const listener of listenersCopy) {
-            if (event.isImmediatelyStopped()) {
-              break;
+          try {
+            if (listener.target) {
+              listener.callback.call(listener.target, event);
+            } else {
+              listener.callback(event);
             }
-
-            try {
-              if (listener.target) {
-                listener.callback.call(listener.target, event);
-              } else {
-                listener.callback(event);
-              }
-              success = true;
-            } catch (e) {
-              // 记录警告但继续执行其他监听器，避免一个监听器的错误影响整个事件系统
-              logWarning(`Error in capture event handler for ${captureType}: ${e}`, 'EventDispatcher');
-            }
+            success = true;
+          } catch (e) {
+            // 记录警告但继续执行其他监听器，避免一个监听器的错误影响整个事件系统
+            logWarning(`Error in capture event handler for ${captureType}: ${e}`, 'EventDispatcher');
           }
         }
       }

@@ -23,7 +23,7 @@ export interface IScene extends EventDispatcher {
   getEntityCount(): number;
 
   clear(): this;
-  destroy(): void;
+  dispose(): void;
 
   getEntitiesByTag(tag: string): Entity[];
   findEntitiesByComponent<T extends Component>(componentType: new (...args: any[]) => T): Entity[];
@@ -40,7 +40,7 @@ export interface IScene extends EventDispatcher {
   // findGameObject(id: string): GameObject | null;
   // findGameObjectByName(name: string): GameObject | null;
 
-  // destroyGameObject(gameObject: GameObject): void;
+  // disposeGameObject(gameObject: GameObject): void;
 
   // getAllGameObjects(): GameObject[];
   // findGameObjectsByTag(tag: string): GameObject[];

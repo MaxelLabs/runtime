@@ -101,7 +101,7 @@ describe('Entity - 实体系统', () => {
       entity.removeComponent(TestComponent);
 
       expect(entity.hasComponent(TestComponent)).toBe(false);
-      expect(component.isDestroyed()).toBe(true);
+      expect(component.isDisposed()).toBe(true);
     });
 
     it('不应该移除Transform组件', () => {
@@ -328,24 +328,24 @@ describe('Entity - 实体系统', () => {
     });
   });
 
-  describe('destroy - 销毁', () => {
-    it('应该销毁实体', () => {
-      entity.destroy();
+  describe('dispose - 释放', () => {
+    it('应该释放实体', () => {
+      entity.dispose();
 
-      expect(entity.isDestroyed()).toBe(true);
+      expect(entity.isDisposed()).toBe(true);
     });
 
-    it('应该销毁所有组件', () => {
+    it('应该释放所有组件', () => {
       const component1 = entity.createComponent(TestComponent);
       const component2 = entity.createComponent(AnotherComponent);
 
-      entity.destroy();
+      entity.dispose();
 
-      expect(component1.isDestroyed()).toBe(true);
-      expect(component2.isDestroyed()).toBe(true);
+      expect(component1.isDisposed()).toBe(true);
+      expect(component2.isDisposed()).toBe(true);
     });
 
-    it('应该递归销毁所有子实体', () => {
+    it('应该递归释放所有子实体', () => {
       const parent = new Entity('Parent');
       const child1 = new Entity('Child1');
       const child2 = new Entity('Child2');
@@ -353,11 +353,11 @@ describe('Entity - 实体系统', () => {
       parent.addChild(child1);
       parent.addChild(child2);
 
-      parent.destroy();
+      parent.dispose();
 
-      expect(parent.isDestroyed()).toBe(true);
-      expect(child1.isDestroyed()).toBe(true);
-      expect(child2.isDestroyed()).toBe(true);
+      expect(parent.isDisposed()).toBe(true);
+      expect(child1.isDisposed()).toBe(true);
+      expect(child2.isDisposed()).toBe(true);
     });
 
     it('应该从父级中移除', () => {
@@ -365,7 +365,7 @@ describe('Entity - 实体系统', () => {
       const child = new Entity('Child');
 
       parent.addChild(child);
-      child.destroy();
+      child.dispose();
 
       expect(parent.getChildren()).not.toContain(child);
     });
@@ -440,10 +440,10 @@ describe('Entity - 实体系统', () => {
 
       expect(parent.getChildren().length).toBe(10);
 
-      parent.destroy();
+      parent.dispose();
 
       children.forEach((child) => {
-        expect(child.isDestroyed()).toBe(true);
+        expect(child.isDisposed()).toBe(true);
       });
     });
   });
