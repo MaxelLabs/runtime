@@ -8,6 +8,13 @@ api-v2/
 ├── README.md                      # 主导航文档
 ├── SUMMARY.md                     # 本文件 - 文档索引
 │
+├── core/                          # Core - 核心基础组件
+│   ├── index.md                   # 核心模块概览
+│   ├── ioc-container.md           # 依赖注入容器（线程安全）
+│   ├── canvas-wrapper.md          # Canvas包装器（浏览器验证）
+│   ├── event-dispatcher.md        # 事件分发器（优先级系统）
+│   └── transform-component.md     # 变换组件（递归防护）
+│
 ├── rhi/                           # RHI - 渲染硬件接口
 │   ├── index.md                   # RHI主文档
 │   ├── examples/                  # 示例代码
@@ -37,6 +44,12 @@ api-v2/
 
 ### 按主题查找
 
+#### 核心组件
+- [核心模块概览](./core/) - 基础组件系统
+- [IOC容器](./core/ioc-container.md) - 依赖注入与线程安全
+- [事件系统](./core/event-dispatcher.md) - 优先级事件分发
+- [变换组件](./core/transform-component.md) - 层级变换管理
+
 #### 渲染基础
 - [RHI概述](./rhi/) - 渲染硬件接口介绍
 - [基础三角形](./rhi/examples/basic-triangle.md) - 最简单的渲染示例
@@ -56,8 +69,9 @@ api-v2/
 
 #### 初级
 1. [API总览](./overview.md) - 了解整体架构
-2. [基础三角形](./rhi/examples/basic-triangle.md) - 第一个渲染程序
+2. [核心组件](./core/) - IOC、事件、变换基础
 3. [向量运算](./math/core-types/vec3.md) - 3D数学基础
+4. [基础三角形](./rhi/examples/basic-triangle.md) - 第一个渲染程序
 
 #### 中级
 1. [纹理渲染](./rhi/examples/textured-quad.md) - 添加纹理
@@ -70,6 +84,12 @@ api-v2/
 3. [资产管道](./specification/examples/asset-pipeline.md) - 资源管理
 
 ### 按功能查找
+
+#### 核心系统
+- 依赖注入 → [Core/IOC](./core/ioc-container.md) - 线程安全容器
+- 事件通信 → [Core/事件](./core/event-dispatcher.md) - 优先级系统
+- 场景层次 → [Core/变换](./core/transform-component.md) - 变换层级
+- 浏览器验证 → [Core/画布](./core/canvas-wrapper.md) - 环境检查
 
 #### 资源管理
 - Buffer管理 → [RHI/资源](./rhi/resources/buffer.md)
@@ -122,6 +142,22 @@ Week 4:  完整应用开发
 ```
 
 ## 📖 待完善文档
+
+### Core模块（已完成）
+- ✅ [x] core/index.md - 核心模块概览与导航
+- ✅ [x] core/architecture.md - **系统架构设计**（全新）
+- ✅ [x] core/max-object.md - 引擎对象基类（唯一ID、生命周期）
+- ✅ [x] core/refer-resource.md - 资源引用计数（自动管理）
+- ✅ [x] core/entity.md - 实体类（组件容器、场景层级）
+- ✅ [x] core/component.md - 组件基类（生命周期管理）
+- ✅ [x] core/event.md - 事件对象（数据载体）
+- ✅ [x] core/event-dispatcher.md - 事件分发器（优先级系统）
+- ✅ [x] core/object-pool.md - 对象池（通用复用）
+- ✅ [x] core/object-pool-manager.md - 池管理器（集中监控）
+- ✅ [x] core/time.md - 时间管理（delta、缩放）
+- ✅ [x] core/ioc-container.md - 依赖注入容器（线程安全）
+- ✅ [x] core/canvas-wrapper.md - Canvas包装器（浏览器验证）
+- ✅ [x] core/transform-component.md - 变换组件（层级管理）
 
 ### RHI模块
 - [ ] rhi/device.md - 设备管理详解
@@ -215,9 +251,42 @@ Week 4:  完整应用开发
 
 ## 📊 文档统计
 
-- 总文档数：20+
-- 已完成：3个主要文档 + 3个示例
-- 进行中：待规划
-- 待开始：见上述待完善列表
+- 总文档数：35+
+- 已完成：
+  - Core模块：13个文档（包含所有基础架构：对象、实体、组件、事件、池、时间、IOC、Canvas、变换）
+  - RHI示例：1个文档
+  - Math示例：1个文档
+  - Specification示例：1个文档
+  - 概览文档：2个（API总览、SUMMARY）
+- 进行中：RHI完整模块
+- 待开始：Math、Specification完整模块
 
-最后更新：2024-12-17
+### Core文档完整性验证
+**总源文件：14个** | **生成文档：14个（含架构文档）**
+
+| 源文件 | 文档 | 类型 | 状态 |
+|--------|------|------|------|
+| max-object.ts | max-object.md | reference | ✅ |
+| component.ts | component.md | reference | ✅ |
+| entity.ts | entity.md | reference | ✅ |
+| event.ts | event.md | reference | ✅ |
+| event-dispatcher.ts | event-dispatcher.md | reference | ✅ |
+| object-pool.ts | object-pool.md | reference | ✅ |
+| object-pool-manager.ts | object-pool-manager.md | reference | ✅ |
+| refer-resource.ts | refer-resource.md | reference | ✅ |
+| time.ts | time.md | reference | ✅ |
+| index.ts | index.md | reference | ✅ |
+| IOC.ts | ioc-container.md | reference | ✅ |
+| canvas.ts | canvas-wrapper.md | reference | ✅ |
+| transform.ts | transform-component.md | reference | ✅ |
+| N/A (conceptual) | architecture.md | architecture | ✅ |
+
+### 更新亮点（2025-12-18）
+1. **完整性**：所有13个核心模块已全部标准化文档化
+2. **新增架构文档**：system-architecture.md 提供完整集成视图
+3. **双向链接**：每个文档有清晰的依赖图和相关文档
+4. **LLM-Native**：所有文档遵循标准（YAML frontmatter、pseudocode、类型优先）
+5. **质量保证**：包含负约束、性能分析、调试指南
+
+版本：2.0.0（文档集）
+最后更新：2025-12-18
