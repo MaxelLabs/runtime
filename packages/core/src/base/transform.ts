@@ -1,8 +1,9 @@
 import type { Entity } from './entity';
-import type { ITransform, Vector3Like, QuaternionLike, Matrix4Like, TransformSpace } from '@maxellabs/specification';
+import type { ITransform, Vector3Like, QuaternionLike, Matrix4Like } from '@maxellabs/specification';
+import { TransformSpace } from '@maxellabs/specification';
 import { Vector3, Quaternion, Matrix4 } from '@maxellabs/math';
 import { Component } from './component';
-import { logError } from './errors';
+import { logError, logWarning } from './errors';
 
 /**
  * 变换组件，处理实体在3D空间中的位置、旋转和缩放
@@ -97,6 +98,20 @@ export class Transform extends Component implements ITransform {
   /** 最大递归深度限制，防止栈溢出 */
   private static readonly MAX_HIERARCHY_DEPTH = 1000;
 
+  /** 祖先节点缓存，用于优化循环引用检测 */
+  private ancestorCache: WeakSet<Transform> | null = null;
+  /** 祖先缓存是否有效 */
+  private ancestorCacheValid: boolean = false;
+
+  /** ITransform 接口实现：变换矩阵 */
+  private _matrix: Matrix4 = new Matrix4();
+
+  /** ITransform 接口实现：锚点 */
+  private _anchor: Vector3 = new Vector3();
+
+  /** ITransform 接口实现：变换空间 */
+  private _space: TransformSpace = TransformSpace.Local;
+
   /**
    * 创建一个新的变换组件
    * @param entity 组件所属的实体
@@ -104,9 +119,73 @@ export class Transform extends Component implements ITransform {
   constructor(entity: Entity) {
     super(entity);
   }
-  matrix?: Matrix4Like | undefined;
-  anchor?: Vector3Like | undefined;
-  space?: TransformSpace | undefined;
+
+  /**
+   * ITransform 接口实现：获取/设置变换矩阵
+   */
+  get matrix(): Matrix4Like {
+    return this.getWorldMatrix();
+  }
+
+  set matrix(value: Matrix4Like | undefined) {
+    if (value) {
+      // 从 Matrix4Like 复制数据到 Matrix4
+      // Matrix4Like 使用 m00-m33 命名，按列主序存储
+      this._matrix.set(
+        value.m00,
+        value.m01,
+        value.m02,
+        value.m03,
+        value.m10,
+        value.m11,
+        value.m12,
+        value.m13,
+        value.m20,
+        value.m21,
+        value.m22,
+        value.m23,
+        value.m30,
+        value.m31,
+        value.m32,
+        value.m33
+      );
+      // 从矩阵分解出位置、旋转和缩放
+      this._matrix.decompose(this._position, this._rotation, this._scale);
+      this.localMatrixDirty = true;
+      this.worldMatrixDirty = true;
+      this.directionsDirty = true;
+      this.onTransformChanged();
+    }
+  }
+
+  /**
+   * ITransform 接口实现：获取/设置锚点
+   */
+  get anchor(): Vector3Like {
+    return this._anchor;
+  }
+
+  set anchor(value: Vector3Like | undefined) {
+    if (value) {
+      this._anchor.copyFrom(value);
+      this.localMatrixDirty = true;
+      this.worldMatrixDirty = true;
+      this.onTransformChanged();
+    }
+  }
+
+  /**
+   * ITransform 接口实现：获取/设置变换空间
+   */
+  get space(): TransformSpace {
+    return this._space;
+  }
+
+  set space(value: TransformSpace | undefined) {
+    if (value) {
+      this._space = value;
+    }
+  }
 
   /**
    * 获取父变换
@@ -257,19 +336,71 @@ export class Transform extends Component implements ITransform {
   }
 
   /**
+   * 检查递归深度是否超过限制
+   * @param depth 当前深度
+   * @param operation 操作名称
+   * @returns 是否超过限制
+   */
+  private checkRecursionDepth(depth: number, operation: string): boolean {
+    if (depth >= Transform.MAX_HIERARCHY_DEPTH) {
+      logWarning(
+        `[Transform] ${operation} 递归深度超过最大限制 ${Transform.MAX_HIERARCHY_DEPTH}，可能存在循环引用。` +
+          `实体: ${this.entity.name}`,
+        'Transform'
+      );
+
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * 使祖先缓存失效
+   */
+  private invalidateAncestorCache(): void {
+    this.ancestorCacheValid = false;
+    this.ancestorCache = null;
+    // 递归使所有子节点的缓存失效
+    for (const child of this.children) {
+      child.invalidateAncestorCache();
+    }
+  }
+
+  /**
+   * 构建祖先节点缓存
+   */
+  private buildAncestorCache(): void {
+    this.ancestorCache = new WeakSet<Transform>();
+    let current = this.parent;
+
+    while (current) {
+      this.ancestorCache.add(current);
+      current = current.parent;
+    }
+    this.ancestorCacheValid = true;
+  }
+
+  /**
+   * 检查是否为祖先节点（使用缓存优化）
+   * @param transform 要检查的变换
+   * @returns 是否为祖先节点
+   */
+  isAncestor(transform: Transform): boolean {
+    if (!this.ancestorCacheValid) {
+      this.buildAncestorCache();
+    }
+
+    return this.ancestorCache?.has(transform) ?? false;
+  }
+
+  /**
    * 在变换更改时通知相关实体和组件
    * @private
    */
   private onTransformChanged(depth: number = 0): void {
     // 防止无限递归，超过最大深度时发出警告
-    if (depth >= Transform.MAX_HIERARCHY_DEPTH) {
-      logError(
-        `[Transform] 层级深度超过最大限制 ${Transform.MAX_HIERARCHY_DEPTH}，可能存在循环引用。` +
-          `实体: ${this.entity.name}`,
-        'Transform',
-        undefined
-      );
-
+    if (this.checkRecursionDepth(depth, '层级更新')) {
       return;
     }
 
@@ -290,21 +421,17 @@ export class Transform extends Component implements ITransform {
       return;
     }
 
-    // 防止循环引用
+    // 防止循环引用 - 使用优化的检测方法
     if (parent) {
-      let p = parent;
+      // 检查 parent 是否是 this 的后代（即 this 是否是 parent 的祖先）
+      if (parent.isAncestor(this) || parent === this) {
+        logError(
+          `[Transform] 检测到循环引用: 无法将变换 ${parent.entity.name} 设置为 ${this.entity.name} 的父级`,
+          'Transform',
+          undefined
+        );
 
-      while (p) {
-        if (p === this) {
-          logError(
-            `[Transform] 检测到循环引用: 无法将变换 ${parent.entity.name} 设置为 ${this.entity.name} 的父级`,
-            'Transform',
-            undefined
-          );
-
-          return;
-        }
-        p = p.parent as Transform;
+        return;
       }
     }
 
@@ -324,6 +451,9 @@ export class Transform extends Component implements ITransform {
     if (parent) {
       parent.children.push(this);
     }
+
+    // 使祖先缓存失效
+    this.invalidateAncestorCache();
 
     // 标记需要更新
     this.worldMatrixDirty = true;
@@ -376,15 +506,8 @@ export class Transform extends Component implements ITransform {
       return;
     }
 
-    // 防止无限递归
-    if (depth >= Transform.MAX_HIERARCHY_DEPTH) {
-      logError(
-        `[Transform] updateWorldMatrix 递归深度超过最大限制 ${Transform.MAX_HIERARCHY_DEPTH}。` +
-          `实体: ${this.entity.name}`,
-        'Transform',
-        undefined
-      );
-
+    // 防止无限递归 - 使用统一的检查方法
+    if (this.checkRecursionDepth(depth, 'updateWorldMatrix')) {
       return;
     }
 

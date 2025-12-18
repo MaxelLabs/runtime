@@ -1,4 +1,4 @@
-import { logError } from './errors';
+import { logError, logWarning } from './errors';
 
 /**
  * Core包对象池性能统计
@@ -312,7 +312,7 @@ export class ObjectPool<T> {
    */
   setMaxSize(maxSize: number): void {
     if (this.isDestroyed) {
-      console.warn(`对象池 ${this.name} 已销毁，无法调整容量`);
+      logWarning(`对象池 ${this.name} 已销毁，无法调整容量`, 'ObjectPool');
 
       return;
     }

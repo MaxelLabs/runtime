@@ -1,6 +1,6 @@
 import { MaxObject } from './max-object';
 import { Event } from './event';
-import { logError } from './errors';
+import { logWarning } from './errors';
 /**
  * 事件监听器接口
  */
@@ -132,7 +132,7 @@ export class EventDispatcher extends MaxObject {
     const type = event.type;
 
     if (!type) {
-      console.warn('Event type is required');
+      logWarning('Event type is required', 'EventDispatcher');
 
       return false;
     }
@@ -196,7 +196,7 @@ export class EventDispatcher extends MaxObject {
     const type = event.type;
 
     if (!type) {
-      console.warn('Event type is required');
+      logWarning('Event type is required', 'EventDispatcher');
 
       return false;
     }
@@ -228,7 +228,8 @@ export class EventDispatcher extends MaxObject {
           }
           processed = true;
         } catch (e) {
-          console.error(`Error in event handler for ${type}:`, e);
+          // 记录警告但继续执行其他监听器，避免一个监听器的错误影响整个事件系统
+          logWarning(`Error in event handler for ${type}: ${e}`, 'EventDispatcher');
         }
       }
     }
@@ -280,9 +281,8 @@ export class EventDispatcher extends MaxObject {
               }
               success = true;
             } catch (e) {
-              const errorMsg = `Error in capture event handler for ${captureType}: ${e}`;
-
-              logError(errorMsg, 'EventDispatcher', undefined);
+              // 记录警告但继续执行其他监听器，避免一个监听器的错误影响整个事件系统
+              logWarning(`Error in capture event handler for ${captureType}: ${e}`, 'EventDispatcher');
             }
           }
         }

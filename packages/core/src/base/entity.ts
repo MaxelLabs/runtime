@@ -3,7 +3,7 @@ import { ComponentLifecycleState } from './component';
 import { Transform } from './transform';
 import { ReferResource } from './refer-resource';
 import type { IScene } from '../rhi';
-import { logError } from './errors';
+import { logError, logWarning } from './errors';
 
 /**
  * 实体类，表示场景中的一个对象
@@ -49,10 +49,16 @@ export class Entity extends ReferResource {
     // 设置唯一的tag，避免Scene中的key冲突
     this.tag = this.id;
 
-    // 创建并初始化Transform组件
+    // 创建Transform组件，但延迟awake调用到Entity完全初始化后
     this.transform = new Transform(this);
     this.components.set(Transform.name, this.transform);
-    this.transform.awake();
+    // 注意：Transform的awake在Entity构造完成后调用，避免在Entity初始化完成前触发组件生命周期
+    // 使用queueMicrotask确保在当前同步代码执行完毕后立即执行
+    queueMicrotask(() => {
+      if (!this.isDestroyed()) {
+        this.transform.awake();
+      }
+    });
   }
 
   /**
@@ -317,7 +323,7 @@ export class Entity extends ReferResource {
    */
   addComponent<T extends Component>(component: T): T {
     if (this.components.has(component.constructor.name)) {
-      console.warn(`[Entity] 实体 ${this.name} 已经包含组件 ${component.constructor.name}，忽略添加请求`);
+      logWarning(`[Entity] 实体 ${this.name} 已经包含组件 ${component.constructor.name}，忽略添加请求`, 'Entity');
 
       return component;
     }
@@ -335,7 +341,6 @@ export class Entity extends ReferResource {
    */
   createComponent<T extends Component>(componentType: new (entity: Entity) => T): T {
     if (this.components.has(componentType.name)) {
-      console.warn(`[Entity] 实体 ${this.name} 已经包含组件 ${componentType.name}，移除旧组件并创建新组件`);
       this.removeComponent(componentType);
     }
 
