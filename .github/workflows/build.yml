@@ -25,5 +25,5 @@ jobs:
         run: pnpm build:core
       - name: Build other packages
         run: pnpm build:others
-      - name: Run tests
-        run: pnpm test
+      - name: Run tests across all package
+        run: pnpm test -r --if-present
