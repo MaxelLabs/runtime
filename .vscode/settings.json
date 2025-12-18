@@ -1,50 +1,70 @@
 {
+  "[javascript]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[json]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[jsonc]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[typescript]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[vue]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
   "cSpell.words": [
-    "clsx",
-    "drei",
-    "embla",
-    "extidp",
-    "fract",
-    "glsl",
-    "GLTF",
-    "highp",
-    "immer",
-    "IRHI",
-    "isbot",
-    "KEYCAP",
-    "languagedetector",
+    "gltf",
+    "kratos",
     "matcap",
-    "maxellabs",
-    "mediump",
     "meshopt",
-    "metalness",
-    "msgpack",
-    "ofetch",
-    "Pinterest",
+    "plark",
+    "pointermissed",
+    "polycount",
+    "preflights",
     "raycaster",
-    "Recraft",
-    "RGBA",
-    "shadcn",
+    "retopology",
+    "rgbe",
     "shapecast",
-    "smoothstep",
-    "sonner",
-    "stylelint",
+    "traceparent",
     "unocss",
-    "UNORM",
-    "unrigged",
     "untextured",
-    "usdz",
+    "vite",
     "voronoi",
-    "vstar",
-    "webgl"
+    "vueuse"
   ],
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "i18n-ally.sortKeys": true,
-  "i18n-ally.keepFulfilled": true,
-  "i18n-ally.enabledFrameworks": ["react-i18next", "custom"],
-  "i18n-ally.localesPaths": ["packages/locales/src"],
+  "editor.formatOnSave": true,
+  "eslint.format.enable": true,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "vue",
+    "json",
+    "jsonc",
+  ],
+  "i18n-ally.enabledFrameworks": ["vue", "vue-sfc"],
+  "i18n-ally.keystyle": "nested",
+  "i18n-ally.localesPaths": ["i18n/locales"],
   "i18n-ally.namespace": true,
-  "i18n-ally.defaultNamespace": "common",
-  "i18n-ally.pathMatcher": "{locale}/{namespaces}.json",
-  "i18n-ally.keystyle": "nested"
+  "i18n-ally.pathMatcher": "{namespaces?}/?{locale}.json",
+  "i18n-ally.sortKeys": true,
+  "typescript.tsdk": "node_modules/typescript/lib",
 }

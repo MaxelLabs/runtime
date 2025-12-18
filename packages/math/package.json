@@ -22,7 +22,7 @@
     "build:js": "rollup -c",
     "build:types": "tsc --emitDeclarationOnly",
     "clean": "rimraf dist tsconfig.tsbuildinfo .rollup.cache",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "prepublishOnly": "pnpm build",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
