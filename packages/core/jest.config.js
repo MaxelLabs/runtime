@@ -31,6 +31,7 @@ module.exports = {
   // 模块名映射
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    "^@maxellabs/specification$": "<rootDir>/../specification/src/index.ts",
   },
 
   // 覆盖率配置
