@@ -10,12 +10,22 @@ export class Canvas {
    * @param canvas HTML画布元素或Canvas ID
    */
   constructor(canvas: HTMLCanvasElement | string) {
+    // 检查是否在浏览器环境中
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      throw new Error('Canvas类只能在浏览器环境中使用。' + '如果您在Node.js或SSR环境中运行，请使用其他方式创建画布。');
+    }
+
     if (typeof canvas === 'string') {
       const element = document.getElementById(canvas) as HTMLCanvasElement;
 
       if (!element) {
         throw new Error(`Canvas with id '${canvas}' not found.`);
       }
+
+      if (!(element instanceof HTMLCanvasElement)) {
+        throw new Error(`Element with id '${canvas}' is not a canvas element.`);
+      }
+
       this.element = element;
     } else {
       this.element = canvas;

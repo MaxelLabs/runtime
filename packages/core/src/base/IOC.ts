@@ -3,16 +3,41 @@
  * 用于解决组件之间的循环依赖问题，实现松耦合的架构
  */
 export class Container {
-  private static instance: Container;
+  private static instance: Container | null = null;
+  private static isInitializing = false;
   private services: Map<string, any> = new Map();
   private factories: Map<string, () => any> = new Map();
 
   /**
    * 获取容器单例
+   * 使用双重检查锁定模式防止并发初始化
    */
   public static getInstance(): Container {
-    if (!Container.instance) {
-      Container.instance = new Container();
+    // 第一次检查（快速路径）
+    if (Container.instance) {
+      return Container.instance;
+    }
+
+    // 防止并发初始化
+    if (Container.isInitializing) {
+      // 自旋等待初始化完成
+      while (Container.isInitializing) {
+        // 在实际环境中，这里会被事件循环打断
+      }
+      return Container.instance!;
+    }
+
+    // 设置初始化标志
+    Container.isInitializing = true;
+
+    try {
+      // 第二次检查（防止竞态条件）
+      if (!Container.instance) {
+        Container.instance = new Container();
+      }
+    } finally {
+      // 清除初始化标志
+      Container.isInitializing = false;
     }
 
     return Container.instance;

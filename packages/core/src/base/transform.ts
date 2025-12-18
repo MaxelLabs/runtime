@@ -93,6 +93,9 @@ export class Transform extends Component implements ITransform {
   private static readonly tempVec3 = new Vector3();
   private static readonly tempQuat = new Quaternion();
 
+  /** 最大递归深度限制，防止栈溢出 */
+  private static readonly MAX_HIERARCHY_DEPTH = 1000;
+
   /**
    * 创建一个新的变换组件
    * @param entity 组件所属的实体
@@ -256,12 +259,22 @@ export class Transform extends Component implements ITransform {
    * 在变换更改时通知相关实体和组件
    * @private
    */
-  private onTransformChanged(): void {
+  private onTransformChanged(depth: number = 0): void {
+    // 防止无限递归，超过最大深度时发出警告
+    if (depth >= Transform.MAX_HIERARCHY_DEPTH) {
+      console.error(
+        `[Transform] 层级深度超过最大限制 ${Transform.MAX_HIERARCHY_DEPTH}，可能存在循环引用。` +
+          `实体: ${this.entity.name}`
+      );
+
+      return;
+    }
+
     // 通知子变换更新
     for (const child of this.children) {
       child.worldMatrixDirty = true;
       child.directionsDirty = true;
-      child.onTransformChanged();
+      child.onTransformChanged(depth + 1);
     }
   }
 
@@ -351,9 +364,20 @@ export class Transform extends Component implements ITransform {
 
   /**
    * 更新世界矩阵
+   * @param depth 递归深度，用于防止无限递归
    */
-  updateWorldMatrix(): void {
+  updateWorldMatrix(depth: number = 0): void {
     if (!this.worldMatrixDirty) {
+      return;
+    }
+
+    // 防止无限递归
+    if (depth >= Transform.MAX_HIERARCHY_DEPTH) {
+      console.error(
+        `[Transform] updateWorldMatrix 递归深度超过最大限制 ${Transform.MAX_HIERARCHY_DEPTH}。` +
+          `实体: ${this.entity.name}`
+      );
+
       return;
     }
 
@@ -364,7 +388,7 @@ export class Transform extends Component implements ITransform {
     if (this.parent) {
       // 确保父级世界矩阵是最新的
       if (this.parent.worldMatrixDirty) {
-        this.parent.updateWorldMatrix();
+        this.parent.updateWorldMatrix(depth + 1);
       }
 
       // 组合父级世界矩阵和本地矩阵

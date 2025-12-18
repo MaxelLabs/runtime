@@ -61,15 +61,19 @@ export class EventDispatcher extends MaxObject {
   /**
    * 添加只执行一次的事件监听器
    * @param type 事件类型
-   * @param listener 回调函数
+   * @param callback 回调函数
+   * @param target 上下文对象
+   * @param priority 优先级
    */
-  once(type: string, listener: (event: Event) => void): void {
-    const onceWrapper = (event: Event) => {
-      this.off(type, onceWrapper as unknown as EventListener);
-      listener(event);
+  once(type: string, callback: (event: Event) => void, target?: any, priority: number = 0): void {
+    const onceListener: EventListener = {
+      callback,
+      target,
+      priority,
+      once: true,
     };
 
-    this.on(type, onceWrapper as unknown as EventListener);
+    this.on(type, onceListener);
   }
 
   /**
@@ -148,30 +152,38 @@ export class EventDispatcher extends MaxObject {
 
     this.dispatchingEvents.delete(type);
 
-    // 如果有待清理的一次性监听器，执行清理
-    if (this.listeners.has(type) && !this.dispatchingEvents.has(type)) {
-      const listeners = this.listeners.get(type);
-
-      if (listeners) {
-        const remainingListeners = new Set(listeners);
-
-        remainingListeners.forEach((listener) => {
-          if (listener instanceof Function) {
-            try {
-              listener(event);
-            } catch (e) {
-              console.error(`Error in event handler for ${type}:`, e);
-            }
-          }
-        });
-
-        if (remainingListeners.size === 0) {
-          this.listeners.delete(type);
-        }
-      }
-    }
+    // 清理一次性监听器（在事件分发完成后）
+    this.cleanupOnceListeners(type);
 
     return success;
+  }
+
+  /**
+   * 清理一次性监听器
+   * @param type 事件类型
+   */
+  private cleanupOnceListeners(type: string): void {
+    const listeners = this.listeners.get(type);
+
+    if (!listeners) {
+      return;
+    }
+
+    const listenersToRemove: EventListener[] = [];
+
+    listeners.forEach((listener) => {
+      if (listener.once) {
+        listenersToRemove.push(listener);
+      }
+    });
+
+    listenersToRemove.forEach((listener) => {
+      listeners.delete(listener);
+    });
+
+    if (listeners.size === 0) {
+      this.listeners.delete(type);
+    }
   }
 
   /**
@@ -196,21 +208,27 @@ export class EventDispatcher extends MaxObject {
     let processed = false;
 
     if (listeners) {
-      const remainingListeners = new Set(listeners);
+      // 创建监听器副本，避免在迭代过程中修改集合
+      const listenersCopy = Array.from(listeners);
 
-      remainingListeners.forEach((listener) => {
-        if (listener instanceof Function) {
-          try {
-            listener(event);
-            processed = true;
-          } catch (e) {
-            console.error(`Error in event handler for ${type}:`, e);
-          }
+      // 按优先级排序（数值越大越先执行）
+      listenersCopy.sort((a, b) => b.priority - a.priority);
+
+      for (const listener of listenersCopy) {
+        if (event.isImmediatelyStopped()) {
+          break;
         }
-      });
 
-      if (remainingListeners.size === 0) {
-        this.listeners.delete(type);
+        try {
+          if (listener.target) {
+            listener.callback.call(listener.target, event);
+          } else {
+            listener.callback(event);
+          }
+          processed = true;
+        } catch (e) {
+          console.error(`Error in event handler for ${type}:`, e);
+        }
       }
     }
 

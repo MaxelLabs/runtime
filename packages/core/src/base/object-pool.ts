@@ -138,7 +138,8 @@ export class ObjectPool<T> {
    */
   private trackObject(obj: T): void {
     // 只有对象类型才能加入WeakSet
-    if (obj && typeof obj === 'object') {
+    // 对于原始值类型（number, string, boolean等），无法使用WeakSet追踪
+    if (obj && typeof obj === 'object' && obj !== null) {
       this.poolObjects.add(obj as object);
     }
   }
@@ -146,11 +147,13 @@ export class ObjectPool<T> {
   /**
    * 检查对象是否由此池创建
    * @param obj 需要检查的对象
+   * @returns 是否为池对象（原始值类型返回false，因为无法追踪）
    */
   private isPoolObject(obj: T): boolean {
-    // 非对象类型无法验证所有权，返回true
-    if (!obj || typeof obj !== 'object') {
-      return true;
+    // 原始值类型无法使用 WeakSet 追踪，返回 false
+    // 这意味着对象池不应该用于原始值类型
+    if (!obj || typeof obj !== 'object' || obj === null) {
+      return false;
     }
 
     return this.poolObjects.has(obj as object);
