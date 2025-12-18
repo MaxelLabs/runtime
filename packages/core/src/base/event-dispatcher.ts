@@ -261,21 +261,26 @@ export class EventDispatcher extends MaxObject {
         const captureListeners = this.listeners.get(captureType);
 
         if (captureListeners) {
-          const remainingListeners = new Set(captureListeners);
+          // 创建监听器副本并按优先级排序
+          const listenersCopy = Array.from(captureListeners);
 
-          remainingListeners.forEach((listener) => {
-            if (listener instanceof Function) {
-              try {
-                listener(event);
-                success = true;
-              } catch (e) {
-                console.error(`Error in capture event handler for ${captureType}:`, e);
-              }
+          listenersCopy.sort((a, b) => b.priority - a.priority);
+
+          for (const listener of listenersCopy) {
+            if (event.isImmediatelyStopped()) {
+              break;
             }
-          });
 
-          if (remainingListeners.size === 0) {
-            this.listeners.delete(captureType);
+            try {
+              if (listener.target) {
+                listener.callback.call(listener.target, event);
+              } else {
+                listener.callback(event);
+              }
+              success = true;
+            } catch (e) {
+              console.error(`Error in capture event handler for ${captureType}:`, e);
+            }
           }
         }
       }

@@ -196,25 +196,26 @@ export class ObjectPool<T> {
    * 将对象放回池中
    * @param obj 要放回的对象
    * @returns 是否成功释放对象
+   * @throws {Error} 当尝试释放 null、原始值类型或非池对象时抛出错误
    */
   release(obj: T): boolean {
     if (this.isDestroyed) {
-      console.warn(`对象池 ${this.name} 已销毁，对象将被丢弃`);
-
-      return false;
+      throw new Error(`对象池 ${this.name} 已销毁，无法释放对象`);
     }
 
-    if (!obj) {
-      console.warn(`对象池 ${this.name} 尝试释放空对象`);
+    // 检查是否为 null 或 undefined
+    if (obj == null) {
+      throw new Error(`对象池 ${this.name} 不能释放 null 或 undefined`);
+    }
 
-      return false;
+    // 检查是否为原始值类型
+    if (typeof obj !== 'object') {
+      throw new Error(`对象池 ${this.name} 不能释放原始值类型 (${typeof obj})。对象池仅支持对象类型。`);
     }
 
     // 验证对象是否由此池创建
     if (!this.isPoolObject(obj)) {
-      console.warn(`对象池 ${this.name} 尝试释放非池对象`);
-
-      return false;
+      throw new Error(`对象池 ${this.name} 尝试释放非池对象。请确保对象来自此对象池。`);
     }
 
     try {
