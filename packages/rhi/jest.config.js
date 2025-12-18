@@ -4,7 +4,7 @@ module.exports = {
   moduleNameMapper: {
     "^@sruim/(.*)$": "<rootDir>/../$1/src",
   },
-  setupFiles: ["<rootDir>/test/setup.ts"],
+  // setupFiles: ["<rootDir>/test/setup.ts"],
   testMatch: ["<rootDir>/test/**/*.test.ts"],
   transform: {
     "^.+\\.tsx?$": "ts-jest",
