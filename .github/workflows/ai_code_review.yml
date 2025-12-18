@@ -1,0 +1,71 @@
+name: PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    environment: AI
+    if: github.event.pull_request.draft == false
+    permissions:
+      contents: read
+      pull-requests: write # 必须保留，否则无法发表评论
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4 # 建议使用稳定版 v4
+        with:
+          fetch-depth: 0
+
+      - name: PR Review with Claude
+        id: review
+        uses: anthropics/claude-code-action@v1
+        env:
+          # 如果你在国内或者使用代理，可能需要保留 BASE_URL，否则可删除
+          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+        with:
+          # 这里通常直接用 GitHub 内置的 Token 即可，不需要额外配置 Secret
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: ${{ secrets.ANTHROPIC_MODEL }}
+          use_sticky_comment: true # 开启后会更新同一条评论，而不是每次都发新的
+          show_full_output: true
+          prompt: |
+            请对当前 PR 进行全面审查.
+
+            ## 审查维度
+            **代码质量**：代码风格、复杂度、重复代码、命名规范、错误处理、潜在 bug
+            **架构设计**：项目结构一致性、依赖合理性、设计模式、关注点分离
+
+            ## 输出格式
+            你必须且只能使用 `gh pr comment` 工具将结果发布到 PR 中。
+
+            审查报告内容必须严格遵守以下 Markdown 格式（简体中文）：
+
+            ## 🔍 PR 代码审查报告
+            ### 📋 概要
+            - **变更文件数**: {changedFiles}
+            - **新增/删除行数**: +{additions} / -{deletions}
+            ### 🎯 审查结论
+            {APPROVE/REQUEST_CHANGES/COMMENT}
+            ### 🔴 严重问题 (Critical)
+            {列表}
+            ### 🟠 重要问题 (Important)
+            {列表}
+            ### 🟢 改进建议 (Suggestions)
+            {列表}
+            ### 💡 总体评价
+            {评价}
+
+            ## 核心指令 (CRITICAL INSTRUCTIONS)
+            1. **不要**在控制台输出任何“可直接复制以下命令”之类的废话。
+            2. **不要**输出上面的审查报告文本到控制台，**只**作为参数传给 `gh pr comment`。
+            3. **直接执行** `gh pr comment` 工具。
+            4. 遇到任何问题，优先尝试执行工具，而不是告诉用户怎么做。
+
+            ALWAYS Answer in 简体中文.
+          # 移除了 --json-schema，因为没有飞书步骤后，我们不需要强制它输出机器可读的 JSON 统计了
+          claude_args: |
+            --model ${{ secrets.ANTHROPIC_MODEL }} --allowedTools "Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Read,Glob,Grep,Task"

@@ -766,6 +766,41 @@ const lightParams: SimplePBRLightParams[] = [
     const lightSpaceMatrix = new MMath.Matrix4();
     const depthLightSpaceMatrix = new MMath.Matrix4(); // 深度 Pass 专用矩阵（避免污染）
 
+    // ==================== 键盘事件处理 ====================
+
+    runner.onKey('Escape', () => {
+      stats.destroy();
+      orbit.destroy();
+      gui.destroy();
+      pbrMaterial.destroy();
+      groundMaterial.destroy();
+      if (depthTexture) {
+        depthTexture.destroy();
+      }
+      if (shadowMapTexture) {
+        shadowMapTexture.destroy();
+      }
+      runner.destroy();
+    });
+
+    runner.onKey('F11', (_, event) => {
+      event.preventDefault();
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        runner.canvas.requestFullscreen();
+      }
+    });
+
+    // 显示帮助信息
+    DemoRunner.showHelp([
+      'ESC: 退出 Demo',
+      'F11: 切换全屏',
+      '鼠标左键拖动: 旋转视角',
+      '鼠标滚轮: 缩放',
+      '鼠标右键拖动: 平移',
+    ]);
+
     // 渲染循环
     runner.start((dt) => {
       stats.begin();

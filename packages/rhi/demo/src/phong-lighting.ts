@@ -297,6 +297,8 @@ const updateDepthTexture = () => {
     const modelMatrix = new MMath.Matrix4();
     const normalMatrix = new MMath.Matrix4();
     const lightingData = new Float32Array(12); // 3*vec3 + 4*float, with padding
+    const transformData = new Float32Array(64); // 预分配变换数据
+    const lightDir = new MMath.Vector3(); // 预分配光照方向向量
 
     runner.start((dt) => {
       orbit.update(dt);
@@ -309,8 +311,7 @@ const updateDepthTexture = () => {
 
       normalMatrix.copyFrom(modelMatrix).invert().transpose();
 
-      // 更新变换矩阵 Uniform
-      const transformData = new Float32Array(64);
+      // 更新变换矩阵 Uniform（使用预分配数组）
       transformData.set(modelMatrix.toArray(), 0);
       transformData.set(viewMatrix, 16);
       transformData.set(projMatrix, 32);
@@ -318,7 +319,7 @@ const updateDepthTexture = () => {
       transformBuffer.update(transformData, 0);
 
       // 更新光照 Uniform (std140)
-      const lightDir = new MMath.Vector3(params.lightX, params.lightY, params.lightZ).normalize();
+      lightDir.set(params.lightX, params.lightY, params.lightZ).normalize();
       lightingData.set([lightDir.x, lightDir.y, lightDir.z], 0);
       const cameraPosition = orbit.getPosition();
       lightingData.set([cameraPosition.x, cameraPosition.y, cameraPosition.z], 4);

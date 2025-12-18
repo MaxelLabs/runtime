@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPU 粒子系统 - RHI Demo</title>
+  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <link rel="stylesheet" href="../css/demo-styles.css" />
+</head>
+<body>
+  <div class="container">
+    <canvas id="J-canvas"></canvas>
+    <div class="info-panel">
+      <h2>🎆 GPU Particle System (粒子系统)</h2>
+      <p>演示 GPU 实例化粒子系统，支持 10000+ 粒子实时渲染。包含多种发射器形状、力场效果、生命周期动画和透明混合模式。按空格键触发粒子爆发效果。</p>
+      <div class="tech-tags">
+        <span class="tech-tag">GPU Instancing</span>
+        <span class="tech-tag">Billboard</span>
+        <span class="tech-tag">Alpha Blending</span>
+        <span class="tech-tag">Force Fields</span>
+        <span class="tech-tag">Particle Pool</span>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="../src/particle-system.ts"></script>
+</body>
+</html>

@@ -1,6 +1,21 @@
+---
+# Identity
+id: "post-processing-system"
+type: "reference"
+title: "Post-Processing System"
+
+# Semantics
+description: "Pipeline-based image processing framework supporting multi-effect chains and ping-pong buffer technology"
+tags: ["post-processing", "pipeline", "effects-chain", "rendering", "performance"]
+
+# Graph
+context_dependency: ["graphics-bible", "rhi-demo-constitution"]
+related_ids: ["fxaa-anti-aliasing", "rendering-pipeline", "bloom"]
+---
+
 # 后处理系统文档
 
-## 概述
+## 🎯 概述
 
 后处理系统（Post-Processing System）是一个强大的图像处理框架，支持在场景渲染完成后对图像应用各种视觉效果。系统采用管道式设计，支持多效果链式组合和Ping-Pong缓冲区技术。
 
@@ -61,10 +76,15 @@ const effects = postProcess.getEffects();
 
 #### 渲染处理
 ```typescript
-// 应用后处理链
-const encoder = device.createCommandEncoder();
-const sceneTexture = sceneRenderTarget.getColorView(0);
-const finalTexture = postProcess.process(encoder, sceneTexture);
+// 在现代架构中使用 runner.beginFrame()
+const { encoder, passDescriptor } = runner.beginFrame();
+const sceneTexture = sceneRenderTarget.getColorTexture().createView();
+const outputView = passDescriptor.colorAttachments![0].view;
+
+// FXAA作为独立效果应用
+fxaaEffect.apply(encoder, sceneTexture, outputView);
+
+runner.endFrame(encoder);
 ```
 
 #### 资源管理

@@ -14,12 +14,13 @@
 
 **👨‍💻 开发者入门（2-4小时）**
 1. [图形系统圣经](./foundations/graphics-bible.md) - ⭐ **必读**：图形系统核心规范
-2. [RHI Demo宪法](./foundations/rhi-demo-constitution.md) - ⭐ **必读**：Demo实现规范
-3. [RHI API 参考](./reference/api-v2/rhi/) - **新**：WebGL抽象层完整文档
-4. [Math API 参考](./reference/api-v2/math/) - **新**：高性能数学库详解
-5. [Specification API 参考](./reference/api-v2/specification/) - **新**：USD集成与类型系统
-6. [后处理系统](./reference/modules/post-processing-system.md) - **新**：完整的后处理框架
-7. [PBR材质系统](./reference/pbr-material-system.md) - **核心**：现代PBR渲染技术
+2. [Core ECS架构](./architecture/core/core-ecs-architecture.md) - ⭐ **必读**：ECS架构规范 🆕
+3. [RHI Demo宪法](./foundations/rhi-demo-constitution.md) - ⭐ **必读**：Demo实现规范
+4. [RHI API 参考](./reference/api-v2/rhi/) - **新**：WebGL抽象层完整文档
+5. [Math API 参考](./reference/api-v2/math/) - **新**：高性能数学库详解
+6. [Specification API 参考](./reference/api-v2/specification/) - **新**：USD集成与类型系统
+7. [后处理系统](./reference/modules/post-processing-system.md) - **新**：完整的后处理框架
+8. [PBR材质系统](./reference/pbr-material-system.md) - **核心**：现代PBR渲染技术
 
 ### 环境配置
 
@@ -46,6 +47,15 @@ pnpm test
 - [编码约定](./foundations/coding-conventions.md) - TypeScript 代码规范
 - [图形系统圣经](./foundations/graphics-bible.md) - ⭐ 图形系统宪法
 - [RHI Demo宪法](./foundations/rhi-demo-constitution.md) - ⭐ Demo实现规范
+
+### 1️⃣+ **Architecture** - 架构规范层 🆕
+- **Core ECS 架构**
+  - [Core ECS架构圣经](./architecture/core/core-ecs-architecture.md) - ⭐ ECS核心规范
+  - [Core-Engine-RHI集成边界](./architecture/core/core-integration-boundary.md) - 包间集成契约
+- **RHI 架构**
+  - [RHI架构](./architecture/rhi/rhi-architecture.md) - 渲染硬件抽象层
+- **Engine 架构**
+  - [Engine架构](./architecture/engine/engine-architecture.md) - 引擎组装层
 
 ### 2️⃣ **Learning** - 学习教程层
 - [PBR迁移指南](./learning/tutorials/pbr-migration-guide.md) - **重磅更新**：从旧PBR到SimplePBR的完整迁移指南
@@ -203,11 +213,16 @@ pnpm dev
 ### 核心包结构
 ```
 packages/
+├── core/         # ECS核心框架 🆕
 ├── rhi/          # 渲染硬件抽象层
 ├── math/         # 数学库
 ├── specification # 类型系统
-└── engine/       # 3D引擎核心
+└── engine/       # 3D引擎组装层
 ```
+
+### 🆕 Core包架构文档
+- **[Core ECS架构圣经](./architecture/core/core-ecs-architecture.md)** - ECS架构核心规范
+- **[Core-Engine-RHI集成边界](./architecture/core/core-integration-boundary.md)** - 包间集成契约
 
 ---
 

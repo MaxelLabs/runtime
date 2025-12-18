@@ -321,102 +321,138 @@ fxaa.setParameters({ edgeThresholdMin: 0.0625 });
 
 ## 使用示例
 
-### 基础使用
+### 基础使用（现代架构）
 
 ```typescript
-import { FXAA, RenderTarget } from './utils';
+import { FXAA, RenderTarget, DemoRunner } from './utils';
 
 class FXAADemo {
   private fxaaEffect: FXAA;
   private sceneRenderTarget: RenderTarget;
-  private fxaaRenderTarget: RenderTarget;
+  private runner: DemoRunner;
 
-  constructor(device: RHIDevice, width: number, height: number) {
-    // 创建FXAA效果
-    this.fxaaEffect = new FXAA(device, {
-      subpixelQuality: 0.75,
-      edgeThreshold: 0.166,
-      edgeThresholdMin: 0.0833
-    });
+  constructor(runner: DemoRunner) {
+    this.runner = runner;
 
-    // 创建场景渲染目标
-    this.sceneRenderTarget = new RenderTarget(device, {
-      width, height,
-      colorFormat: RHITextureFormat.RGBA8_UNORM,
-      depthFormat: RHITextureFormat.DEPTH24_UNORM_STENCIL8
-    });
+    // 1. 创建场景渲染目标（集成深度）
+    this.sceneRenderTarget = runner.track(
+      new RenderTarget(runner.device, {
+        width: runner.width,
+        height: runner.height,
+        colorFormat: MSpec.RHITextureFormat.RGBA8_UNORM,
+        depthFormat: MSpec.RHITextureFormat.DEPTH24_UNORM_STENCIL8,
+        label: 'Scene Render Target'
+      })
+    );
 
-    // 创建FXAA输出目标
-    this.fxaaRenderTarget = new RenderTarget(device, {
-      width, height,
-      colorFormat: RHITextureFormat.RGBA8_UNORM,
-      depthFormat: null // FXAA不需要深度
+    // 2. 创建FXAA效果
+    this.fxaaEffect = runner.track(
+      new FXAA(runner.device, {
+        subpixelQuality: 0.75,
+        edgeThreshold: 0.166,
+        edgeThresholdMin: 0.0833
+      })
+    );
+
+    // 3. 响应窗口大小变化
+    runner.onResize(() => {
+      this.sceneRenderTarget.destroy();
+      this.sceneRenderTarget = runner.track(
+        new RenderTarget(runner.device, {
+          width: runner.width,
+          height: runner.height,
+          colorFormat: MSpec.RHITextureFormat.RGBA8_UNORM,
+          depthFormat: MSpec.RHITextureFormat.DEPTH24_UNORM_STENCIL8,
+          label: 'Scene Render Target'
+        })
+      );
+
+      // 重新创建FXAA效果以适应新分辨率
+      this.fxaaEffect.destroy();
+      this.fxaaEffect = runner.track(
+        new FXAA(runner.device, {
+          subpixelQuality: 0.75,
+          edgeThreshold: 0.166,
+          edgeThresholdMin: 0.0833
+        })
+      );
     });
   }
 
-  public render(encoder: RHICommandEncoder): void {
-    // 1. 渲染场景到离屏纹理
-    const scenePass = encoder.beginRenderPass(
-      this.sceneRenderTarget.getRenderPassDescriptor()
-    );
-    // ... 场景渲染代码
+  public render(): void {
+    // 使用runner.beginFrame()简化渲染流程
+    const { encoder, passDescriptor } = this.runner.beginFrame();
+
+    // Pass 1: 场景渲染到离屏纹理
+    const scenePass = encoder.beginRenderPass({
+      colorAttachments: [{
+        view: this.sceneRenderTarget.getColorTexture().createView(),
+        loadOp: 'clear',
+        storeOp: 'store',
+        clearColor: [0.1, 0.15, 0.2, 1.0]
+      }],
+      depthStencilAttachment: {
+        view: this.sceneRenderTarget.getDepthTexture()!.createView(),
+        clearDepth: 1.0,
+        depthLoadOp: 'clear',
+        depthStoreOp: 'store'
+      }
+    });
+
+    // ... 渲染场景代码
     scenePass.end();
 
-    // 2. 应用FXAA
-    this.fxaaEffect.apply(
-      encoder,
-      this.sceneRenderTarget.getColorView(0),
-      this.fxaaRenderTarget.getColorView(0)
-    );
+    // Pass 2: FXAA后处理并输出到屏幕
+    const sceneView = this.sceneRenderTarget.getColorTexture().createView();
+    const outputView = passDescriptor.colorAttachments![0].view;
 
-    // 3. 输出到屏幕
-    const finalTexture = this.fxaaRenderTarget.getColorView(0);
-    this.renderToScreen(encoder, finalTexture);
+    this.fxaaEffect.apply(encoder, sceneView, outputView);
+
+    this.runner.endFrame(encoder);
   }
 }
 ```
 
-### 动态质量调节
+### 优化的动态质量调节
 
 ```typescript
 class AdaptiveFXAA {
   private fxaa: FXAA;
+  private runner: DemoRunner;
   private currentQuality: 'low' | 'medium' | 'high' = 'medium';
 
-  constructor(device: RHIDevice) {
-    this.fxaa = new FXAA(device);
+  constructor(runner: DemoRunner) {
+    this.runner = runner;
+    this.fxaa = runner.track(new FXAA(runner.device));
     this.setQuality('medium');
+
+    // 自动响应窗口大小变化
+    runner.onResize(() => {
+      this.updateFXAAForResize();
+    });
+  }
+
+  private updateFXAAForResize(): void {
+    // FXAA效果会自动适应分辨率，但建议在缩放后重新创建
+    const params = this.getCurrentParameters();
+    this.fxaa.destroy();
+    this.fxaa = this.runner.track(new FXAA(this.runner.device, params));
+  }
+
+  private getCurrentParameters() {
+    switch (this.currentQuality) {
+      case 'low':
+        return { subpixelQuality: 0.5, edgeThreshold: 0.125, edgeThresholdMin: 0.0625 };
+      case 'medium':
+        return { subpixelQuality: 0.75, edgeThreshold: 0.166, edgeThresholdMin: 0.0833 };
+      case 'high':
+        return { subpixelQuality: 1.0, edgeThreshold: 0.083, edgeThresholdMin: 0.0312 };
+    }
   }
 
   public setQuality(quality: 'low' | 'medium' | 'high'): void {
     this.currentQuality = quality;
-
-    switch (quality) {
-      case 'low':
-        this.fxaa.setParameters({
-          subpixelQuality: 0.5,
-          edgeThreshold: 0.125,
-          edgeThresholdMin: 0.0625
-        });
-        break;
-
-      case 'medium':
-        this.fxaa.setParameters({
-          subpixelQuality: 0.75,
-          edgeThreshold: 0.166,
-          edgeThresholdMin: 0.0833
-        });
-        break;
-
-      case 'high':
-        this.fxaa.setParameters({
-          subpixelQuality: 1.0,
-          edgeThreshold: 0.083,
-          edgeThresholdMin: 0.0312
-        });
-        break;
-    }
-
+    this.fxaa.setParameters(this.getCurrentParameters());
     console.log(`FXAA Quality set to: ${quality}`);
   }
 
@@ -432,37 +468,110 @@ class AdaptiveFXAA {
 }
 ```
 
-### 与后处理系统集成
+### 现代后处理集成
 
 ```typescript
-import { PostProcessManager } from './utils/postprocess';
-
-class IntegratedFXAA {
-  private postProcess: PostProcessManager;
+class ModernFXAAPipeline {
+  private runner: DemoRunner;
+  private sceneRenderTarget: RenderTarget;
   private fxaa: FXAA;
+  private enableFXAA: boolean = true;
 
-  constructor(device: RHIDevice, width: number, height: number) {
-    this.postProcess = new PostProcessManager(device, { width, height });
+  constructor(runner: DemoRunner) {
+    this.runner = runner;
 
-    // 创建FXAA并添加到处理链末尾
-    this.fxaa = new FXAA(device, {
-      subpixelQuality: 0.75,
-      edgeThreshold: 0.166
+    // 渲染目标集成
+    this.sceneRenderTarget = runner.track(
+      new RenderTarget(runner.device, {
+        width: runner.width,
+        height: runner.height,
+        colorFormat: MSpec.RHITextureFormat.RGBA8_UNORM,
+        depthFormat: MSpec.RHITextureFormat.DEPTH24_UNORM_STENCIL8
+      })
+    );
+
+    // FXAA效果
+    this.fxaa = runner.track(
+      new FXAA(runner.device, {
+        subpixelQuality: 0.75,
+        edgeThreshold: 0.166
+      })
+    );
+
+    // 统一的大小变化处理
+    runner.onResize(() => {
+      this.sceneRenderTarget.destroy();
+      this.sceneRenderTarget = runner.track(
+        new RenderTarget(runner.device, {
+          width: runner.width,
+          height: runner.height,
+          colorFormat: MSpec.RHITextureFormat.RGBA8_UNORM,
+          depthFormat: MSpec.RHITextureFormat.DEPTH24_UNORM_STENCIL8
+        })
+      );
+
+      // FXAA重建
+      this.fxaa.destroy();
+      this.fxaa = runner.track(
+        new FXAA(runner.device, {
+          subpixelQuality: 0.75,
+          edgeThreshold: 0.166
+        })
+      );
     });
+  }
 
-    this.postProcess.addEffect(this.fxaa);
+  public render(): void {
+    const { encoder, passDescriptor } = this.runner.beginFrame();
+
+    // 场景渲染
+    const scenePass = encoder.beginRenderPass({
+      colorAttachments: [{
+        view: this.sceneRenderTarget.getColorTexture().createView(),
+        loadOp: 'clear',
+        storeOp: 'store',
+        clearColor: [0.1, 0.15, 0.2, 1.0]
+      }],
+      depthStencilAttachment: {
+        view: this.sceneRenderTarget.getDepthTexture()!.createView(),
+        clearDepth: 1.0,
+        depthLoadOp: 'clear',
+        depthStoreOp: 'store'
+      }
+    });
+    // ... 场景绘制
+    scenePass.end();
+
+    // 后处理
+    const sceneView = this.sceneRenderTarget.getColorTexture().createView();
+    const outputView = passDescriptor.colorAttachments![0].view;
+
+    if (this.enableFXAA) {
+      this.fxaaEffect.apply(encoder, sceneView, outputView);
+    } else {
+      encoder.copyTextureToCanvas({
+        source: sceneView,
+        destination: this.runner.canvas
+      });
+    }
+
+    this.runner.endFrame(encoder);
   }
 
   public toggleFXAA(enabled: boolean): void {
+    this.enableFXAA = enabled;
     this.fxaa.enabled = enabled;
-    console.log(`FXAA ${enabled ? 'Enabled' : 'Disabled'}`);
-  }
-
-  public process(encoder: RHICommandEncoder, sceneTexture: RHITextureView): RHITextureView {
-    return this.postProcess.process(encoder, sceneTexture);
   }
 }
 ```
+
+### 架构演进说明
+
+**关键改进点：**
+1. **RenderTarget集成**：深度纹理已集成到RenderTarget中，无需单独管理
+2. **Runner辅助方法**：使用`runner.beginFrame()`和`runner.endFrame()`简化渲染流程
+3. **几何体布局**：直接使用`GeometryGenerator`返回的布局，无需手动定义
+4. **精简渲染管线**：移除冗余的全屏四边形渲染，使用FXAA内置的全屏三角形
 
 ## 性能分析
 

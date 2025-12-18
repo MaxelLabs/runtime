@@ -304,14 +304,17 @@ async function main(): Promise<void> {
     // 13. 创建模型矩阵
     const modelMatrix = new MMath.Matrix4();
 
-    // 14. 启动渲染循环
+    // 14. 预分配渲染循环中使用的数组
+    const transformData = new Float32Array(64);
+
+    // 15. 启动渲染循环
     runner.start((dt) => {
       orbit.update(dt);
 
       const viewMatrix = orbit.getViewMatrix();
       const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
 
-      const transformData = new Float32Array(64);
+      // 更新 Transform Uniform（使用预分配数组）
       transformData.set(modelMatrix.toArray(), 0);
       transformData.set(viewMatrix, 16);
       transformData.set(projMatrix, 32);
@@ -333,7 +336,7 @@ async function main(): Promise<void> {
       stats.end();
     });
 
-    // 15. 显示帮助信息
+    // 16. 显示帮助信息
     DemoRunner.showHelp([
       'ESC: 退出 Demo',
       'F11: 切换全屏',
@@ -352,7 +355,7 @@ async function main(): Promise<void> {
       '5: TRIANGLE_STRIP (三角带)',
     ]);
 
-    // 16. 输出技术信息
+    // 17. 输出技术信息
     console.info('🎯 Primitive Types Demo');
     console.info('支持的图元类型:');
     Object.keys(PRIMITIVE_MAP).forEach((type, index) => {

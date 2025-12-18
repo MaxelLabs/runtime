@@ -325,6 +325,9 @@ const WRAPPING_CONFIGS: WrappingConfig[] = [
     // 初始化模型矩阵
     modelMatrix.rotateX((tiltAngle * Math.PI) / 180);
 
+    // ==================== 预分配渲染循环数据 ====================
+    const transformData = new Float32Array(64);
+
     // ==================== 渲染循环 ====================
 
     runner.start((dt) => {
@@ -335,8 +338,7 @@ const WRAPPING_CONFIGS: WrappingConfig[] = [
       const viewMatrix = orbit.getViewMatrix();
       const projMatrix = orbit.getProjectionMatrix(runner.width / runner.height);
 
-      // 更新变换矩阵
-      const transformData = new Float32Array(64);
+      // 更新变换矩阵（使用预分配数组）
       transformData.set(modelMatrix.toArray(), 0);
       transformData.set(viewMatrix, 16);
       transformData.set(projMatrix, 32);
