@@ -29,7 +29,7 @@
     "build:declaration": "tsc -d --emitDeclarationOnly",
     "clean": "rimraf dist",
     "prepublishOnly": "pnpm build",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
