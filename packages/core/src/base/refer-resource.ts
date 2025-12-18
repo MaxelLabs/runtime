@@ -30,8 +30,8 @@ export interface IReferable {
  * 使用方法:
  * 1. 每次使用资源时调用addRef()增加引用计数
  * 2. 不再使用时调用release()减少引用计数
- * 3. 引用计数为0时资源会自动销毁
- * 4. 子类需实现onResourceDestroy()方法释放具体资源
+ * 3. 引用计数为0时资源会自动释放
+ * 4. 子类需实现 onResourceDispose() 方法释放具体资源
  */
 export class ReferResource extends MaxObject implements IReferable {
   /** 引用计数 */
@@ -59,8 +59,8 @@ export class ReferResource extends MaxObject implements IReferable {
    * @returns 增加后的引用计数
    */
   addRef(): number {
-    if (this.isDestroyed()) {
-      console.warn(`[ReferResource] 尝试增加已销毁资源的引用计数: ${this.tag}(${this.name})`);
+    if (this.isDisposed()) {
+      console.warn(`[ReferResource] 尝试增加已释放资源的引用计数: ${this.tag}(${this.name})`);
 
       return this.referenceCount;
     }
@@ -69,18 +69,18 @@ export class ReferResource extends MaxObject implements IReferable {
   }
 
   /**
-   * 减少引用计数，当计数为0时销毁资源
+   * 减少引用计数，当计数为0时释放资源
    * @returns 减少后的引用计数
    */
   release(): number {
-    if (this.isDestroyed()) {
+    if (this.isDisposed()) {
       return 0;
     }
 
     this.referenceCount = Math.max(0, this.referenceCount - 1);
 
     if (this.referenceCount === 0 && this.isLoaded) {
-      this.destroy();
+      this.dispose();
     }
 
     return this.referenceCount;
@@ -135,30 +135,30 @@ export class ReferResource extends MaxObject implements IReferable {
   }
 
   /**
-   * 销毁资源，释放内存
-   * 如果资源有引用，会输出警告但仍会强制销毁
+   * 释放资源
+   * 如果资源有引用，会输出警告但仍会强制释放
    */
-  override destroy(): void {
-    if (this.isDestroyed()) {
+  override dispose(): void {
+    if (this.isDisposed()) {
       return;
     }
 
     if (this.referenceCount > 0) {
-      console.warn(`[ReferResource] 销毁仍被引用的资源: ${this.tag}(${this.name}), 剩余引用: ${this.referenceCount}`);
+      console.warn(`[ReferResource] 释放仍被引用的资源: ${this.tag}(${this.name}), 剩余引用: ${this.referenceCount}`);
     }
 
-    this.onResourceDestroy();
+    this.onResourceDispose();
     this.isLoaded = false;
     this.referenceCount = 0;
 
-    super.destroy();
+    super.dispose();
   }
 
   /**
-   * 资源销毁时调用，子类应重写此方法释放特定资源
+   * 资源释放时调用，子类应重写此方法释放特定资源
    * @protected
    */
-  protected onResourceDestroy(): void {
+  protected onResourceDispose(): void {
     // 子类实现特定资源的释放逻辑
   }
 }

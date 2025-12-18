@@ -11,3 +11,7 @@ export * from './time';
 export * from './IOC';
 export * from './canvas';
 export * from './errors';
+export * from './hierarchy-utils';
+export * from './disposable';
+export * from './bitset';
+export * from './sparse-set';

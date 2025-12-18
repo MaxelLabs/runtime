@@ -4,6 +4,7 @@ import { TransformSpace } from '@maxellabs/specification';
 import { Vector3, Quaternion, Matrix4 } from '@maxellabs/math';
 import { Component } from './component';
 import { logError, logWarning } from './errors';
+import { checkCircularReference } from './hierarchy-utils';
 
 /**
  * 变换组件，处理实体在3D空间中的位置、旋转和缩放
@@ -421,18 +422,17 @@ export class Transform extends Component implements ITransform {
       return;
     }
 
-    // 防止循环引用 - 使用优化的检测方法
-    if (parent) {
-      // 检查 parent 是否是 this 的后代（即 this 是否是 parent 的祖先）
-      if (parent.isAncestor(this) || parent === this) {
-        logError(
-          `[Transform] 检测到循环引用: 无法将变换 ${parent.entity.name} 设置为 ${this.entity.name} 的父级`,
-          'Transform',
-          undefined
-        );
+    // 防止循环引用 - 使用通用工具函数
+    // 注意：这里使用 checkCircularReference 而不是 isAncestor，因为 isAncestor 依赖缓存
+    // 在设置父级时缓存可能尚未更新
+    if (parent && checkCircularReference(this, parent, (t) => t.getParent())) {
+      logError(
+        `[Transform] 检测到循环引用: 无法将变换 ${parent.entity.name} 设置为 ${this.entity.name} 的父级`,
+        'Transform',
+        undefined
+      );
 
-        return;
-      }
+      return;
     }
 
     // 从原父级中移除
@@ -933,10 +933,11 @@ export class Transform extends Component implements ITransform {
   }
 
   /**
-   * 销毁变换组件
+   * 释放变换组件
+   * @remarks 实现 IDisposable 接口
    */
-  override destroy(): void {
-    if (this.isDestroyed()) {
+  override dispose(): void {
+    if (this.isDisposed()) {
       return;
     }
 
@@ -953,6 +954,6 @@ export class Transform extends Component implements ITransform {
     // 清空引用
     this.children.length = 0;
 
-    super.destroy();
+    super.dispose();
   }
 }

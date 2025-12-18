@@ -12,7 +12,8 @@ context_dependency: []
 related_ids: [
   "core-ioc-container", "core-canvas-wrapper", "core-event-dispatcher", "core-transform-component",
   "core-max-object", "core-component", "core-entity", "core-event", "core-refer-resource",
-  "core-object-pool", "core-object-pool-manager", "core-time"
+  "core-object-pool", "core-object-pool-manager", "core-time", "core-hierarchy-utils",
+  "core-bitset", "core-sparse-set", "core-disposable"
 ]
 ---
 
@@ -36,7 +37,11 @@ core/
 ├── time.md                     # 时间管理（delta、缩放）
 ├── ioc-container.md            # 依赖注入容器（线程安全）
 ├── canvas-wrapper.md           # Canvas包装器（浏览器验证）
-└── transform-component.md      # 变换组件（层级管理）
+├── transform-component.md      # 变换组件（层级管理）
+├── hierarchy-utils.md          # 层级工具函数（循环检测等）
+├── bitset.md                   # 位集合（ECS组件掩码）
+├── sparse-set.md               # 稀疏集合（高效整数集）
+└── disposable.md               # 可释放资源接口
 ```
 
 ## 🔑 关键特性
@@ -288,6 +293,10 @@ root → a → b → c → ... → entity // 难以维护，性能下降
 - [IOCContainer](./ioc-container.md) - 依赖注入容器
 - [CanvasWrapper](./canvas-wrapper.md) - 环境验证
 - [TransformComponent](./transform-component.md) - 变换层级
+- [HierarchyUtils](./hierarchy-utils.md) - 层级工具函数
+- [BitSet](./bitset.md) - 高性能位集合
+- [SparseSet](./sparse-set.md) - 高性能稀疏集合
+- [Disposable](./disposable.md) - 资源释放接口
 
 ## 🔍 调试建议
 

@@ -4,15 +4,52 @@ import { Transform } from './transform';
 import { ReferResource } from './refer-resource';
 import type { IScene } from '../rhi';
 import { logError, logWarning } from './errors';
+import { checkCircularReference } from './hierarchy-utils';
+
+/**
+ * 实体创建选项
+ */
+export interface EntityOptions {
+  /**
+   * 是否同步调用 Transform 的 awake 方法
+   * @default false
+   * @remarks
+   * - 设置为 true 时，Transform 会在构造函数中同步初始化，可以立即访问
+   * - 设置为 false 时，Transform 的 awake 会延迟到微任务中执行
+   */
+  syncTransformAwake?: boolean;
+
+  /**
+   * 是否创建 Transform 组件
+   * @default true
+   * @remarks
+   * - 设置为 false 时，实体不会自动创建 Transform 组件
+   * - 适用于纯数据实体或不需要空间变换的实体
+   * - 注意：没有 Transform 的实体无法使用层级结构功能
+   */
+  withTransform?: boolean;
+}
 
 /**
  * 实体类，表示场景中的一个对象
  *
  * 特性:
  * 1. 每个实体可以包含多个组件
- * 2. 每个实体默认包含一个Transform组件
- * 3. 实体可以组织成层级结构
+ * 2. 每个实体默认包含一个Transform组件（可通过选项禁用）
+ * 3. 实体可以组织成层级结构（需要Transform组件）
  * 4. 实体可以被激活/禁用，影响其所有组件和子实体
+ *
+ * @example
+ * ```typescript
+ * // 标准实体（带 Transform）
+ * const entity = new Entity('Player');
+ *
+ * // 同步初始化 Transform
+ * const entity = new Entity('Player', null, { syncTransformAwake: true });
+ *
+ * // 纯数据实体（无 Transform）
+ * const dataEntity = new Entity('GameState', null, { withTransform: false });
+ * ```
  */
 export class Entity extends ReferResource {
   /** 实体是否激活 */
@@ -30,8 +67,11 @@ export class Entity extends ReferResource {
   /** 实体上的组件映射 */
   private components: Map<string, Component> = new Map();
 
-  /** 实体的变换组件，每个实体都有一个变换组件 */
-  readonly transform: Transform;
+  /**
+   * 实体的变换组件
+   * @remarks 如果创建时设置 withTransform: false，则为 null
+   */
+  readonly transform: Transform | null;
 
   /** 实体的元数据 */
   private metadata: Map<string, any> = new Map();
@@ -40,8 +80,9 @@ export class Entity extends ReferResource {
    * 创建一个新的实体
    * @param name 实体的名称
    * @param scene 实体所属的场景
+   * @param options 实体创建选项
    */
-  constructor(name: string = 'Entity', scene: IScene | null = null) {
+  constructor(name: string = 'Entity', scene: IScene | null = null, options: EntityOptions = {}) {
     super();
     this.name = name;
     this.scene = scene;
@@ -49,16 +90,39 @@ export class Entity extends ReferResource {
     // 设置唯一的tag，避免Scene中的key冲突
     this.tag = this.id;
 
-    // 创建Transform组件，但延迟awake调用到Entity完全初始化后
-    this.transform = new Transform(this);
-    this.components.set(Transform.name, this.transform);
-    // 注意：Transform的awake在Entity构造完成后调用，避免在Entity初始化完成前触发组件生命周期
-    // 使用queueMicrotask确保在当前同步代码执行完毕后立即执行
-    queueMicrotask(() => {
-      if (!this.isDestroyed()) {
+    const { syncTransformAwake = false, withTransform = true } = options;
+
+    // 根据选项决定是否创建 Transform 组件
+    if (withTransform) {
+      // 创建Transform组件
+      this.transform = new Transform(this);
+      this.components.set(Transform.name, this.transform);
+
+      // 根据选项决定是否同步调用 Transform 的 awake
+      if (syncTransformAwake) {
+        // 同步初始化：立即调用 awake，Transform 可以立即使用
         this.transform.awake();
+      } else {
+        // 异步初始化（默认）：延迟到微任务中执行
+        // 注意：Transform的awake在Entity构造完成后调用，避免在Entity初始化完成前触发组件生命周期
+        // 使用queueMicrotask确保在当前同步代码执行完毕后立即执行
+        queueMicrotask(() => {
+          if (!this.isDisposed() && this.transform) {
+            this.transform.awake();
+          }
+        });
       }
-    });
+    } else {
+      // 不创建 Transform 组件
+      this.transform = null;
+    }
+  }
+
+  /**
+   * 检查实体是否有 Transform 组件
+   */
+  hasTransform(): boolean {
+    return this.transform !== null;
   }
 
   /**
@@ -165,26 +229,33 @@ export class Entity extends ReferResource {
    * 设置实体的父级
    * @param parent 新的父级实体
    * @returns 此实体，用于链式调用
+   * @throws 如果实体没有 Transform 组件，将抛出错误
    */
   setParent(parent: Entity | null): this {
+    // 检查是否有 Transform 组件
+    if (!this.transform) {
+      logError('[Entity] 无法设置父级：实体没有 Transform 组件', 'Entity', undefined);
+
+      return this;
+    }
+
+    if (parent && !parent.transform) {
+      logError('[Entity] 无法设置父级：父实体没有 Transform 组件', 'Entity', undefined);
+
+      return this;
+    }
+
     if (this.parent === parent) {
       return this;
     }
 
-    // 防止循环引用
-    if (parent) {
-      let p = parent;
+    // 防止循环引用 - 使用通用工具函数
+    if (parent && checkCircularReference(this, parent, (e) => e.getParent())) {
+      const errorMsg = `[Entity] 检测到循环引用: 无法将实体 ${parent.name} 设置为 ${this.name} 的父级`;
 
-      while (p) {
-        if (p === this) {
-          const errorMsg = `[Entity] 检测到循环引用: 无法将实体 ${parent.name} 设置为 ${this.name} 的父级`;
+      logError(errorMsg, 'Entity', undefined);
 
-          logError(errorMsg, 'Entity', undefined);
-
-          return this;
-        }
-        p = p.parent as Entity;
-      }
+      return this;
     }
 
     // 从原父级中移除
@@ -200,7 +271,7 @@ export class Entity extends ReferResource {
     this.parent = parent;
 
     // 设置变换父级
-    this.transform.setParent(parent ? parent.transform : null);
+    this.transform.setParent(parent?.transform ?? null);
 
     // 添加到新父级的子级列表
     if (parent) {
@@ -372,7 +443,7 @@ export class Entity extends ReferResource {
    * @returns 此实体，用于链式调用
    */
   removeComponent<T extends Component>(type: new (entity: Entity) => T): this {
-    if (type.name === 'Transform') {
+    if (type.name === 'Transform' && this.transform) {
       const errorMsg = '[Entity] 无法移除Transform组件';
 
       logError(errorMsg, 'Entity', undefined);
@@ -384,7 +455,7 @@ export class Entity extends ReferResource {
 
     if (component) {
       this.components.delete(type.name);
-      component.destroy();
+      component.dispose();
     }
 
     return this;
@@ -402,10 +473,11 @@ export class Entity extends ReferResource {
   }
 
   /**
-   * 销毁实体及其所有组件
+   * 释放实体及其所有组件
+   * @remarks 实现 IDisposable 接口
    */
-  override destroy(): void {
-    if (this.isDestroyed()) {
+  override dispose(): void {
+    if (this.isDisposed()) {
       return;
     }
 
@@ -414,7 +486,7 @@ export class Entity extends ReferResource {
 
     for (const child of childrenToRemove) {
       child.setParent(null);
-      child.destroy();
+      child.dispose();
     }
 
     // 断开与父级的连接
@@ -428,20 +500,20 @@ export class Entity extends ReferResource {
       this.scene = null;
     }
 
-    // 销毁所有组件（先销毁非Transform组件）
-    const componentsToDestroy = Array.from(this.components.values()).filter((comp) => !(comp instanceof Transform));
+    // 释放所有组件（先释放非Transform组件）
+    const componentsToDispose = Array.from(this.components.values()).filter((comp) => !(comp instanceof Transform));
 
-    for (const component of componentsToDestroy) {
-      component.destroy();
+    for (const component of componentsToDispose) {
+      component.dispose();
     }
 
-    // 最后销毁Transform组件
-    if (this.transform) {
-      this.transform.destroy();
+    // 最后释放Transform组件（如果存在）
+    if (this.transform && !this.transform.isDisposed()) {
+      this.transform.dispose();
     }
 
     this.components.clear();
-    super.destroy();
+    super.dispose();
   }
 
   /**

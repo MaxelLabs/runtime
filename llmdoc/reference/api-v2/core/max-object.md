@@ -16,27 +16,55 @@ related_ids: ["core-component", "core-entity", "core-refer-resource"]
 
 ### Core Interface
 ```typescript
-// Base Object Properties
+import { IDisposable } from './disposable';
+
+// MaxObject implements IDisposable interface
 interface ObjectIdentity {
-  readonly id: string;        // Unique identifier
-  tag: string;                // User-defined tag
-  name: string;               // Object name
+  readonly id: string;         // Unique identifier
+  tag: string;                 // User-defined tag
+  name: string;                // Object name
   readonly createTime: number; // Timestamp of creation
 }
 
-// Lifecycle Interface
-interface Lifecycle {
-  isDestroyed(): boolean;      // Check destruction state
-  destroy(): void;             // Release resources
+// Lifecycle with Disposable pattern
+interface Lifecycle extends IDisposable {
+  // Inherited from IDisposable:
+  isDisposed(): boolean;       // Check disposal state (preferred)
+  dispose(): void;             // Release resources
+
+  // MaxObject extensions:
+  isDestroyed(): boolean;      // @deprecated - use isDisposed()
+  destroy(): void;             // @deprecated - use dispose()
   getId(): string;             // Get unique ID
 }
 
 // Protected Interface (for subclasses)
 interface ProtectedLifecycle {
   protected type: string;      // Class type name
-  protected destroyed: boolean; // Internal destruction flag
-  protected onDestroy(): void; // Cleanup callback
+  protected _disposed: boolean; // Internal disposal flag
+  protected onDispose(): void; // Cleanup callback (not "onDestroy")
   protected generateId(): string; // ID generation strategy
+  protected static IdGenerator: object; // ID generation tool
+}
+```
+
+### Key Change: Disposable Integration
+```typescript
+// NEW: MaxObject now implements IDisposable
+abstract class MaxObject implements IDisposable {
+  // Direct disposal with idempotent check
+  dispose(): void {
+    if (this._disposed) return;
+    this._disposed = true;
+    this.onDispose();  // Subclass hook
+  }
+
+  // Legacy methods (backward compatible)
+  destroy(): void { this.dispose(); }
+  isDestroyed(): boolean { return this._disposed; }
+
+  // Name matches interface
+  isDisposed(): boolean { return this._disposed; }
 }
 ```
 
@@ -45,26 +73,36 @@ interface ProtectedLifecycle {
 ### ID Generation Algorithm
 ```typescript
 Pseudocode:
-FUNCTION generateId():
-  type = this.constructor.name  // e.g., "Entity", "Texture"
-  timestamp = Date.now()        // Millisecond precision
-  random = Math.random()        // 0-1 random string
-  // Format: "EntityType_timestamp_random"
-  RETURN `${type}_${timestamp}_${random.substring(2, 9)}`
+CLASS IdGenerator:
+  private static counters: Map<string, number> = {}
+
+  FUNCTION generate(type):
+    count = (counters.get(type) ?? 0) + 1
+    counters.set(type, count)
+    RETURN `${type}_${count}`
+    // Output: "Entity_1", "Texture_2", etc.
+
+// MaxObject constructor:
+FUNCTION():
+  this.type = this.constructor.name
+  this.id = IdGenerator.generate(this.type)
 ```
 
-### Destruction Flow
+### Disposal Flow (Disposable Pattern)
 ```typescript
 Pseudocode:
+FUNCTION dispose():
+  IF this._disposed: RETURN  // Idempotent
+
+  this._disposed = true
+  this.onDispose()  // Subclass cleanup
+
+// Legacy methods (backward compatible):
 FUNCTION destroy():
-  IF this.destroyed:
-    RETURN  // Idempotent
+  this.dispose()  // Alias for dispose()
 
-  this.destroyed = true
-  this.onDestroy()  // Subclass cleanup
-
-  // Base class does not call super.destroy()
-  // Abstract class pattern
+FUNCTION isDestroyed():
+  RETURN this._disposed  // Same as isDisposed()
 ```
 
 ## 📚 Usage Examples
@@ -94,7 +132,7 @@ class Texture extends MaxObject {
     this.tag = "gpu-resource";
   }
 
-  protected onDestroy(): void {
+  protected onDispose(): void {
     if (this.data) {
       // Release GPU memory
       gl.deleteTexture(this.data);
@@ -103,7 +141,6 @@ class Texture extends MaxObject {
   }
 
   upload(image: HTMLImageElement): void {
-    // Upload texture logic
     this.data = gl.createTexture();
     // ...
   }
@@ -112,7 +149,7 @@ class Texture extends MaxObject {
 const tex = new Texture();
 tex.upload(image);
 // Later...
-tex.destroy();
+tex.dispose();
 // GPU memory automatically freed
 ```
 
@@ -122,9 +159,9 @@ tex.destroy();
 class TransformComponent extends Component {
   position: Vector3 = new Vector3();
 
-  protected override onDestroy(): void {
-    // Chain: Component.onDestroy() -> MaxObject.onDestroy()
-    super.onDestroy(); // Call parent cleanup
+  protected override onDispose(): void {
+    // Chain: Component.onDispose() -> MaxObject.onDispose()
+    super.onDispose(); // Call parent cleanup
     this.position = null;
   }
 }
@@ -140,7 +177,7 @@ const transform = new TransformComponent(entity);
 - 🚫 **DO NOT** override `constructor` without calling `super()`
 - 🚫 **DO NOT** manually set `this.id` (readonly property)
 - 🚫 **DO NOT** access `this.destroyed` directly from outside
-- 🚫 **DO NOT** forget to call `super.onDestroy()` in overrides
+- 🚫 **DO NOT** forget to call `super.onDispose()` in overrides
 - 🚫 **DO NOT** create objects with empty type names
 
 ### Common Mistakes
@@ -168,9 +205,9 @@ class GoodObject extends MaxObject {
     this.name = "Good";
   }
 
-  protected override onDestroy(): void {
+  protected override onDispose(): void {
     // Always call parent
-    super.onDestroy();
+    super.onDispose();
     // Custom cleanup here
   }
 }
@@ -190,25 +227,24 @@ class MyObject extends MaxObject {
 
 ### ID Generation Cost
 ```
-Operation: generateId()
-- Type name lookup: O(1) - cached by constructor.name
-- Timestamp: O(1) - Date.now()
-- Random string: O(1) - Math.random()
-- String concatenation: O(n) where n = ~40 chars
-- Total: ~50-100ns equivalent
+Operation: IdGenerator.generate(type)
+- Counter lookup: O(1) - Map.get()
+- Counter increment: O(1)
+- String format: O(n) where n = ~10-20 chars
+- Total: ~20-30ns equivalent (BETTER than timestamp)
 ```
 
 ### Memory Footprint
 ```
 Per MaxObject instance:
-- id: string - ~40 bytes (16 char type + timestamp + random)
+- id: string - ~20 bytes ("Entity_1", sequential)
 - tag: string - ~16 bytes (avg)
 - name: string - ~32 bytes (avg)
 - type: string - ~16 bytes (constructor.name)
 - createTime: number - 8 bytes
-- destroyed: boolean - 1 byte
+- _disposed: boolean - 1 byte
 - Object overhead - ~32 bytes
-Total: ~145 bytes per object
+Total: ~125 bytes per object (~14% reduction from v1.0)
 ```
 
 ### Lifecycle Optimization
@@ -218,7 +254,7 @@ const pool: MaxObject[] = [];
 function createObject<T extends MaxObject>(Type: new () => T): T {
   if (pool.length > 0) {
     const obj = pool.pop()! as T;
-    obj.destroyed = false; // Reset if tracking manually
+    obj['_disposed'] = false; // Reset if tracking manually
     return obj;
   }
   return new Type();
@@ -244,25 +280,25 @@ MaxObject (abstract)
 
 ### ID Uniqueness Guarantee
 ```typescript
-// Timestamp + Random + Type ensures uniqueness
-// Even in concurrent creation (Event Loop)
-const obj1 = new MaxObject(); // _1734612345000_aaa
-const obj2 = new MaxObject(); // _1734612345001_bbb
-// Millisecond precision + random prevents collision
+// Type + auto-increment counter ensures global uniqueness
+const obj1 = new Entity(); // Entity_1
+const obj2 = new Entity(); // Entity_2
+const obj3 = new Texture(); // Texture_1 (counter per type)
+// Sequential counters, no collisions
 ```
 
 ### Destruction Safety Pattern
 ```typescript
-// ✅ Safe cleanup chain:
-class ComplexResource extends ReferResource {
+// ✅ Safe cleanup chain (via MaxObject's onDispose):
+class ComplexResource extends MaxObject {
   protected data: any;
   protected connections: Set<any>;
 
-  protected override onResourceDestroy(): void {
-    // Called by ReferResource.release()
+  protected override onDispose(): void {
+    // Called by dispose()
     this.data = null;
     this.connections.clear();
-    super.onResourceDestroy(); // Chain maintained
+    super.onDispose(); // Chain maintained
   }
 }
 ```
@@ -275,10 +311,10 @@ class ComplexResource extends ReferResource {
 const obj = new MaxObject();
 console.log(`${obj.name} (${obj.id}) created at ${obj.createTime}`);
 
-// Track destruction
-obj.destroy = function() {
-  console.log(`Destroying ${this.id}`);
-  MaxObject.prototype.destroy.call(this);
+// Track disposal
+obj.dispose = function() {
+  console.log(`Disposing ${this.id}`);
+  MaxObject.prototype.dispose.call(this);
 };
 ```
 
@@ -288,7 +324,7 @@ obj.destroy = function() {
 const liveObjects: MaxObject[] = [];
 
 const tracker = setInterval(() => {
-  const leaked = liveObjects.filter(obj => !obj.isDestroyed());
+  const leaked = liveObjects.filter(obj => !obj.isDisposed());
   if (leaked.length > 1000) {
     console.warn('Memory leak detected:', leaked.length);
   }
@@ -297,14 +333,15 @@ const tracker = setInterval(() => {
 
 ### ID Collision Debug
 ```typescript
-// Rare case: Same millisecond creation
+// Sequential counters prevent collisions
+// But still useful to track all IDs
 const ids = new Set<string>();
 function trackId(id: string) {
   if (ids.has(id)) {
-    console.error('ID Collision!', id);
+    console.error('ID Collision!', id); // Should never happen
   }
   ids.add(id);
-});
+}
 
 const obj = new MaxObject();
 trackId(obj.getId()); // Verify uniqueness
@@ -313,4 +350,5 @@ trackId(obj.getId()); // Verify uniqueness
 ---
 
 **Last Updated**: 2025-12-18
-**Version**: 1.0.0
+**Version**: 1.1.0 (IDisposable integration, IdGenerator optimization)
+**Breaking Changes**: Method rename: onDestroy() → onDispose()

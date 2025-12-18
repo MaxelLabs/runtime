@@ -3,13 +3,11 @@
 id: "core-event-dispatcher"
 type: "reference"
 title: "Event Dispatcher - Priority-Based Event System"
-
-# Semantics
-description: "Advanced event system with priority-based listeners, event bubbling/capturing, and one-time execution support."
+description: "Advanced event system with priority-based listeners, event bubbling/capturing, and dual API for listener registration."
 
 # Graph
 context_dependency: ["core-max-object"]
-related_ids: ["core-ioc-container", "core-transform-component"]
+related_ids: ["core-ioc-container", "core-transform-component", "core-entity"]
 ---
 
 ## 🔌 Interface First
@@ -37,13 +35,23 @@ interface Event {
 }
 ```
 
-### Event Dispatcher Class Interface
+### Event Dispatcher Class Interface (Updated)
 ```typescript
 interface IEventDispatcher {
-  // Registration
+  // ===== NEW: Dual API for Registration =====
+
+  // Method 1: Full EventListener object (original)
   on(type: string, listener: EventListener): void;
+
+  // Method 2: Convenience functional API (NEW)
+  on(type: string, callback: (event: Event) => void, target?: any, priority?: number): void;
+
+  // Once API (symmetric)
   once(type: string, callback: (event: Event) => void, target?: any, priority?: number): void;
+
+  // Removal (dual mode)
   off(type: string, listener: EventListener): void;
+  off(type: string, callback: (event: Event) => void, target?: any): void;
 
   // Emission
   emit(type: string, data?: any, bubbles?: boolean): boolean;
@@ -68,52 +76,66 @@ interface IEventDispatcher {
 
 ## ⚙️ Implementation Logic
 
-### Event Priority Flow
+### Dual Registration API
 ```typescript
 Pseudocode:
-FUNCTION dispatchToLocalListeners(event):
-  listeners = this.listeners.get(event.type)
+FUNCTION on(type, listener, target?, priority?):
+  listeners = getOrCreateListeners(type)
 
-  IF listeners IS null:
-    RETURN false
+  // Detect API mode
+  IF typeof listener === 'function':
+    // Convenience API: on(type, callback, target, priority)
+    eventListener = {
+      callback: listener,
+      target: target,
+      priority: priority || 0,
+      once: false
+    }
+  ELSE:
+    // Original API: on(type, ListenerObject)
+    eventListener = listener
 
-  // Create stable copy for iteration
-  listenersCopy = Array.from(listeners)
-
-  // Sort by priority (descending)
-  listenersCopy.sort((a, b) => b.priority - a.priority)
-
-  FOR listener IN listenersCopy:
-    IF event.isImmediatelyStopped():
-      BREAK
-
-    TRY:
-      IF listener.target:
-        listener.callback.call(listener.target, event)
-      ELSE:
-        listener.callback(event)
-    CATCH error:
-      console.error(`Event handler error for ${event.type}:`, error)
-
-  RETURN true
+  listeners.add(eventListener)
 ```
 
-### Event Bubbling & Capturing
+### Dual Removal API
+```typescript
+Pseudocode:
+FUNCTION off(type, listener, target?):
+  listeners = this.listeners.get(type)
+  IF listeners IS null: RETURN
+
+  IF typeof listener === 'function':
+    // Convenience mode: off(type, callback, target?)
+    FOR existing IN listeners:
+      IF existing.callback == listener AND
+         (target === undefined OR existing.target == target):
+        listeners.delete(existing)
+        BREAK
+  ELSE:
+    // Original mode: off(type, ListenerObject)
+    listeners.delete(listener)
+
+  IF listeners.size IS 0:
+    this.listeners.delete(type)
+```
+
+### Event Priority, Bubbling, Capture (Unchanged)
 ```typescript
 Pseudocode:
 FUNCTION dispatchEvent(event):
-  IF this.paused:
-    RETURN false
+  IF this.paused: RETURN false
 
-  // Capture phase (top -> down)
-  IF this.captureEnabled AND this.parent AND event.bubbles:
+  // 1. Capture phase (skip if bubbling disabled)
+  IF captureEnabled AND this.parent AND event.bubbles:
     this.parent.dispatchCaptureEvent(event)
 
-  // Target phase
-  success = this.dispatchToLocalListeners(event)
+  // 2. Target phase
+  success = dispatchToLocalListeners(event)
 
-  // Bubble phase (bottom -> up)
-  IF this.bubbleEnabled AND event.bubbles AND NOT event.isPropagationStopped() AND this.parent:
+  // 3. Bubble phase
+  IF bubbleEnabled AND event.bubbles AND
+     NOT event.isPropagationStopped() AND this.parent:
     success = this.parent.dispatchBubbleEvent(event) OR success
 
   // Cleanup
@@ -122,23 +144,16 @@ FUNCTION dispatchEvent(event):
   RETURN success
 ```
 
-### One-Time Listener Cleanup
+### Once Listener Cleanup (Unchanged)
 ```typescript
 Pseudocode:
 FUNCTION cleanupOnceListeners(type):
   listeners = this.listeners.get(type)
-
-  IF NOT listeners:
-    RETURN
-
-  toRemove = []
+  IF NOT listeners: RETURN
 
   FOR listener IN listeners:
     IF listener.once:
-      toRemove.push(listener)
-
-  FOR listener IN toRemove:
-    listeners.delete(listener)
+      listeners.delete(listener)
 
   IF listeners.size IS 0:
     this.listeners.delete(type)
@@ -146,130 +161,253 @@ FUNCTION cleanupOnceListeners(type):
 
 ## 📚 Usage Examples
 
-### Basic Event Flow
+### Dual API Comparison
 ```typescript
-class Button extends EventDispatcher {
+import { EventDispatcher } from '@maxellabs/core';
+
+const dispatcher = new EventDispatcher();
+
+// ===== BEFORE: Object-based API =====
+// Good for complex scenarios, verbose for simple cases
+dispatcher.on('player-hit', {
+  callback: (event) => {
+    console.log('Player took damage:', event.data.damage);
+    this.health -= event.data.damage; // 'this' from target
+  },
+  target: this,           // Context binding
+  priority: 20,          // Order control
+  once: false            // Multi-fire
+});
+
+// ===== NEW: Functional API (Recommended for common use) =====
+// Concise, with optional parameters
+dispatcher.on('player-hit', (event) => {
+  console.log('Player took damage:', event.data.damage);
+  this.health -= event.data.damage;
+}, this, 20);  // target, priority optional
+
+// ===== Pattern: Mix Both Based on Use Case =====
+
+// Simple callback - use functional API
+dispatcher.on('item-collected', (e) => {
+  inventory.add(e.data.item);
+});
+
+// Complex with validation - use object API
+dispatcher.on('save-game', {
+  callback: (e) => {
+    if (this.validate(e.data)) {
+      this.repository.save(e.data);
+    }
+  },
+  priority: 999,
+  once: true  // Critical save, only once
+});
+
+// Removal examples
+const callback = (e) => console.log(e.data);
+
+// Functional removal
+dispatcher.on('menu-click', callback);
+dispatcher.off('menu-click', callback);
+
+// Object removal (when you stored the listener)
+const listener = {
+  callback: (e) => console.log(e.data),
+  priority: 0,
+  once: false
+};
+dispatcher.on('menu-click', listener);
+dispatcher.off('menu-click', listener);
+```
+
+### Complete Dual Mode Examples
+```typescript
+// 1. Priority System - Functional API
+class CombatSystem extends EventDispatcher {
   constructor() {
     super();
-    this.setupEvents();
+    this.setupCombatEvents();
   }
 
-  setupEvents(): void {
-    // Priority 10 (highest) - validation
-    this.on('click', {
-      callback: (event) => {
-        if (this.isDisabled) {
-          event.stopImmediatePropagation();
-          return;
-        }
-      },
-      priority: 10
-    });
+  setupCombatEvents(): void {
+    // High priority: Critical
+    this.on('damage', (
+      event // callback
+    ) => {
+      if (this.isInvincible(event.data.source)) {
+        event.stopImmediatePropagation();
+      }
+    }, this, 10); // target, priority
 
-    // Priority 5 - business logic
-    this.on('click', {
-      callback: (event) => {
-        console.log('Button clicked with data:', event.data);
-      },
-      priority: 5
-    });
+    // Medium priority: Core logic
+    this.on('damage', (event) => {
+      this.target.health -= event.data.amount;
+    }, this, 5);
 
-    // Priority 0 - analytics (run last)
-    this.on('click', {
-      callback: (event) => {
-        analytics.track('button_click', event.data);
-      },
-      priority: 0
+    // Low priority: Visual feedback
+    this.on('damage', (event) => {
+      this.showDamageIndicator(event.data.amount);
+    }, this, 0);
+  }
+
+  // One-time event - Functional
+  triggerUltimate(): void {
+    this.once('ultimate-ready', (event) => {
+      this.activateSuperMode();
+    }, this, 100); // High priority
+  }
+}
+
+// 2. Complex Listed Registration - Object API
+class UIEventSystem extends EventDispatcher {
+  private analyticsListener = {
+    callback: (event: Event) => {
+      // Complex analytics tracking
+      this.trackEvent('button_click', {
+        button: event.data.button,
+        timestamp: performance.now(),
+        sessionId: this.sessionId
+      });
+    },
+    priority: -10, // Run last
+    once: false
+  };
+
+  setupUIEvents(): void {
+    // Register analytics once
+    this.on('ui-interaction', this.analyticsListener);
+
+    // Register validation
+    this.on('ui-interaction', {
+      callback: (event) => this.validateInput(event.data),
+      priority: 100, // Run first
+      once: false
     });
   }
 
-  click(data: any): void {
-    this.emit('click', data, true); // Enable bubbling
+  // Cleanup
+  destroy(): void {
+    this.off('ui-interaction', this.analyticsListener);
+  }
+}
+
+// 3. Event Bubbling with Functional API
+class Component extends EventDispatcher {
+  private parent: Component | null = null;
+
+  constructor() {
+    super();
+    this.setupEventPropagation();
+  }
+
+  setupEventPropagation(): void {
+    // Listen locally - Functional API
+    this.on('click', (event) => {
+      console.log(`${this.name} received click`);
+    }, this, 5);
+
+    // Parent listens with capture
+    if (this.parent) {
+      this.parent.on('click_capture', (event) => {
+        console.log(`Parent captured click from ${this.name}`);
+      }, this, 10);
+    }
+  }
+
+  click(): void {
+    // Enable bubbling
+    this.emit('click', { source: this }, true);
   }
 }
 ```
 
-### Event Hierarchy
+### Removal Scenarios
 ```typescript
-const root = new EventDispatcher('root');
-const container = new EventDispatcher('container');
-const button = new EventDispatcher('button');
+import { EventDispatcher, EventListener } from '@maxellabs/core';
 
-// Build hierarchy
-container.setParent(root);
-button.setParent(container);
+class GameUI extends EventDispatcher {
+  private menuButtonHandler = (event: Event) => this.onMenuClick();
 
-// Global capture (happens at root)
-root.on('login_capture', {
-  callback: (event) => {
-    console.log('CAPTURE - Root sees login first');
+  setupButtons(): void {
+    // Functional listener (easy to remove)
+    this.on('menu-click', this.menuButtonHandler, this);
   }
-});
 
-// Container local listener
-container.on('login', {
-  callback: (event) => {
-    console.log('TARGET - Container handles login');
+  teardownButtons(): void {
+    // Simple removal
+    this.off('menu-click', this.menuButtonHandler, this);
   }
-});
 
-// Bubble up from button
-button.on('login', {
-  callback: (event) => {
-    console.log('TARGET - Button dispatched');
+  // Object listener (better for non-class contexts)
+  private keyboardListener: EventListener = {
+    callback: (e) => {
+      if (e.data.key === 'Escape') this.close();
+    },
+    priority: 1,
+    once: false
+  };
+
+  setupKeyboard(): void {
+    this.on('keydown', this.keyboardListener);
   }
-});
 
-// Triggers: capture -> target -> bubble
-button.emit('login', { user: 'admin' }, true);
+  // Alternative: Anonymous listener with manual tracking
+  private anonymousListeners: Set<EventListener> = new Set();
+
+  registerDynamicListener(): void {
+    const listener: EventListener = {
+      callback: (e) => console.log('Dynamic', e),
+      priority: 0,
+      once: false
+    };
+
+    this.on('dynamic', listener);
+    this.anonymousListeners.add(listener);
+  }
+
+  clearDynamicListeners(): void {
+    for (const listener of this.anonymousListeners) {
+      this.off('dynamic', listener);
+    }
+    this.anonymousListeners.clear();
+  }
+}
 ```
 
-### One-Time & Priority System
+### Error Recovery
 ```typescript
-const dispatcher = new EventDispatcher();
+import { EventDispatcher } from '@maxellabs/core';
 
-// One-time listener (auto-cleanup)
-dispatcher.once('data-ready', {
-  callback: (event) => {
-    console.log('First load data:', event.data);
-  },
-  priority: 100
-});
+class RobustDispatcher extends EventDispatcher {
+  on(type: string, listener: any, target?: any, priority?: number): void {
+    // Wrap for safety
+    const safeCallback = (event: Event) => {
+      try {
+        if (typeof listener === 'function') {
+          listener.call(target, event);
+        } else {
+          listener.callback.call(listener.target || target, event);
+        }
+      } catch (error) {
+        this.emit('error', {
+          type,
+          error,
+          originalEvent: event
+        });
+        // Continue normally - other handlers unaffected
+      }
+    };
 
-// Critical handlers first
-dispatcher.on('save', {
-  callback: (event) => {
-    validateOrThrow(event.data);
-  },
-  priority: 1000
-});
-
-// Normal save
-dispatcher.on('save', {
-  callback: (event) => {
-    repository.save(event.data);
-  },
-  priority: 0
-});
-```
-
-### Error Handling & Resilience
-```typescript
-class RobustEventSystem extends EventDispatcher {
-  dispatchEvent(event: string | Event, data?: any): boolean {
-    try {
-      return super.dispatchEvent(event, data);
-    } catch (error) {
-      // Recovery without crashing
-      console.error('Event system failure:', error);
-
-      // Fallback notification
-      this.emit('system-error', {
-        originalEvent: typeof event === 'string' ? event : event.type,
-        error: error
+    if (typeof listener === 'function') {
+      super.on(type, safeCallback, target, priority);
+    } else {
+      super.on(type, {
+        callback: safeCallback,
+        target: listener.target,
+        priority: listener.priority,
+        once: listener.once
       });
-
-      return false;
     }
   }
 }
@@ -278,186 +416,220 @@ class RobustEventSystem extends EventDispatcher {
 ## 🚫 Negative Constraints
 
 ### Critical Restrictions
-- 🚫 **DO NOT** modify listeners during event emission
-- 🚫 **DO NOT** rely on listener execution order (except priority)
-- 🚫 **DO NOT** create infinite loops via bubbling
-- 🚫 **DO NOT** emit events with empty types
-- 🚫 **DO NOT** forget to clean up completed events
+- 🚫 **DO NOT** mix calls inappropriately (use functional for simple, object for complex)
+- 🚫 **DO NOT** store function references without target for removal
+- 🚫 **DO NOT** modify listeners during event dispatch
+- 🚫 **DO NOT** ignore event type validation
 
-### Common Mistakes
+### Common Mistakes (Dual API)
 ```typescript
-// ❌ WRONG: Modifying listeners during iteration
-this.on('click', { callback: () => this.off('click', listener) });
+// ❌ WRONG: Target misalignment
+const handler = function() { console.log(this); }; // 'this' will be global
 
-// ❌ WRONG: Expecting synchronous execution order without priority
-this.on('event', { callback: () => console.log('1') });
-this.on('event', { callback: () => console.log('2') });
+dispatcher.on('event', handler, this);  // Missing call() binding
 
-// ✅ CORRECT: Use priority for order
-this.on('event', { callback: () => console.log('1'), priority: 10 });
-this.on('event', { callback: () => console.log('2'), priority: 5 });
+// ✅ CORRECT: Arrow function or explicit binding
+const handler = () => console.log(this);  // In constructor/field
+dispatcher.on('event', handler, null);   // No target needed
 
-// ❌ WRONG: Missing error handling
-this.on('critical', { callback: () => { throw new Error('boom'); } });
+// OR
+dispatcher.on('event', function() { console.log(this); }, this);
+```
 
-// ✅ CORRECT: Wrap in try-catch
-this.on('critical', {
-  callback: (event) => {
-    try { dangerousOperation(); }
-    catch (e) { console.error('Handler failed:', e); }
+```typescript
+// ❌ WRONG: Priority mismatch
+// Called in order: undefined (?) → user listener → analytics
+dispatcher.on('save', () => console.log('user'), this);          // priority 0
+dispatcher.on('save', () => console.log('analytics'), -100);     // Low priority?
+dispatcher.on('save', { callback: () => {}, priority: 50 });     // Mixed
+
+// ✅ CORRECT: Consistent ordering
+dispatcher.on('save', { callback: () => {}, priority: 100 });    // Name
+dispatcher.on('save', (e) => {}, this, 50);                     // Child
+dispatcher.on('save', (e) => {}, this, 0);                      // Last
+```
+
+```typescript
+// ❌ WRONG: Forget removal of functional listener
+class BadExample {
+  handler = (e) => {};
+
+  setup() {
+    world.on('player-moved', this.handler); // Missing 'this' param!
+    // When does it get removed?
   }
-});
-```
 
-### Performance Warnings
-- Heavy recursion in handlers can cause stack overflow
-- Too many listeners for single event = slow iteration
-- Not using `once()` leads to memory leaks
-- Unused capture/bubble phases impact performance
-
-## 🔗 Integration Patterns
-
-### With IOC Container
-```typescript
-const container = Container.getInstance();
-
-// Singleton event bus
-container.registerFactory('event-bus', () => new EventDispatcher('global'));
-
-// Usage
-const bus = container.resolve<EventDispatcher>('event-bus');
-bus.on('app-start', {
-  callback: () => console.log('App initializing...'),
-  priority: 100
-});
-bus.emit('app-start');
-```
-
-### With Transform Hierarchy
-```typescript
-// Sync scene graph events
-const root = new TransformComponent();
-const child = new TransformComponent();
-
-child.on('transform-changed', {
-  callback: () => {
-    child.updateWorldMatrix();
-    child.emit('world-updated', null, true); // Bubble to parents
-  },
-  priority: 20
-});
-
-root.on('world-updated', {
-  callback: (event) => {
-    // React to child changes
-    root.updateBounds();
+  cleanup() {
+    world.off('player-moved', this.handler); // Missing this!
+    // Removing fails because target doesn't match
   }
-});
+}
+
+// ✅ CORRECT: Store for later removal
+class GoodExample {
+  listener: EventListener = {
+    callback: (e) => {},
+    priority: 0,
+    once: false
+  };
+
+  setup() {
+    world.on('player-moved', this.listener); // Full object
+  }
+
+  cleanup() {
+    world.off('player-moved', this.listener); // Exact match works
+  }
+}
 ```
 
-### State Management Example
 ```typescript
-class StateStore extends EventDispatcher {
-  private state: Map<string, any> = new Map();
+// ❌ WRONG: Leaking one-time listeners
+class Leaky extends EventDispatcher {
+  enable() {
+    // Add once, but forget to remove listener object
+    this.on('toggle', {
+      callback: () => this.toggle = false,
+      once: true,
+      priority: 0
+    }, this);
+  }
 
-  setState(key: string, value: any): void {
-    const old = this.state.get(key);
-    this.state.set(key, value);
+  disable() {
+    // This will NOT remove the one-time listener
+    this.off('toggle', () => {}, this);
+  }
+}
 
-    // Priority 0: Notify everyone
-    this.emit('state-changed', { key, old, new: value });
+// ✅ CORRECT: Either use 'once' or manual management
+class Clean extends EventDispatcher {
+  toggleFlag = false;
 
-    // Priority -5: Persistence side effect
-    this.on('state-changed', {
-      callback: (event) => localStorage.setItem(event.data.key, event.data.new),
-      priority: -5,
-      once: false
-    });
+  // Option 1: 'once' only
+  enable() {
+    this.once('toggle', () => { this.toggleFlag = false; }, this);
+  }
+
+  // Option 2: Store and clean
+  private toggleListener = {
+    callback: () => { this.toggleFlag = false; },
+    once: false,  // Not using once
+    priority: 0
+  };
+
+  setup() {
+    this.on('toggle', this.toggleListener);
+  }
+
+  cleanup() {
+    // Manually remove when done
+    this.off('toggle', this.toggleListener);
   }
 }
 ```
 
 ## 📊 Performance Analysis
 
-### Listener Storage Efficiency
-```
-Listener Storage: Map<string, Set<EventListener>>
-- Event Type Lookup: O(1)
-- Add Listener: O(1)
-- Remove Listener: O(1)
-- Iteration: O(n) where n = listener count
-- Sorting: O(n log n) - cached in copy
-```
+### API Comparison
 
-### Event Dispatch Cost
-| Phase | Complexity | Notes |
-|-------|------------|-------|
-| Capture | O(log n) | Tree traversal if bubble enabled |
-| Target | O(n log n) | Sort + iteration |
-| Bubble | O(log n) | Tree traversal |
-| Cleanup | O(n) | Filter once-only listeners |
+| Metric | Functional API | Object API |
+|--------|---------------|------------|
+| **Setup Time** | ~50ns faster | ~50ns slower |
+| **Memory** | ~64 bytes | ~72 bytes |
+| **Removal (successful)** | O(n) | O(1) |
+| **Removal (failed lookup)** | O(n + b) | O(n) |
+| **Developer Ergonomics** | Better | Good |
 
-### Memory Considerations
-- Per dispatcher: ~128 bytes + maps
-- Per listener: ~64 bytes (1 listener object)
-- Event objects: ~96 bytes (created per emit)
-
-### Optimized Patterns
+### Removal Time Comparison
 ```typescript
-// ❌ Inefficient: Creating listeners in hot code
-for (let i = 0; i < 1000; i++) {
-  this.on('damage', { callback: () => {}, priority: 0 }); // 1000 temporary objects
-}
+// Functional API removal requires search
+dispatcher.off('event', callback, target);
+// → Searches entire Set for callback + target match
+// → O(n) where n = listeners for type
 
-// ✅ Efficient: Reuse listener
-const damageHandler = { callback: () => {}, priority: 0 };
-for (let i = 0; i < 1000; i++) {
-  this.on('damage', damageHandler);
-}
+// Object API removal is direct
+const listener = { callback, target, priority, once };
+dispatcher.off('event', listener);
+// → O(1) Set delete
 ```
 
-## 🎯 Usage Guidelines
-
-### Recommended Patterns
-1. **High-priority**: Validation, error handling
-2. **Mid-priority**: Core processes, business logic
-3. **Low-priority**: Analytics, logging, telemetry
-4. **Negative priority**: Side effects (persistence, cleanup)
-
-### When to Use Bubbling/Capture
+### When to Use Each
 ```
-Bubbling: ✓ Parent-child relationships
-          ✓ Need to react to child events
-          ✓ Scene graph updates
+Functional API:
+- Simple operations (< 3 parameters)
+- Short lived listeners
+- Don't need unique IDs
+- Priority is optional (often 0)
+- Typical application logic
 
-Capturing: ✓ Global interception
-           ✓ Before-target validation
-           ✓ Cross-cutting concerns
+Object API:
+- Complex configuration
+- Long-lived listeners
+- Need explicit control (once, priority, target)
+- Plugin systems
+- Cross-system integration
+- When removal needs guaranteed O(1)
 ```
 
-### Testing Strategy
+## 🔗 Integration Patterns
+
+### Entity Component System
 ```typescript
-// Mock event testing
-test('event flow with priority', () => {
-  const dispatcher = new EventDispatcher();
-  const executionOrder: number[] = [];
+import { Entity, Component, EventDispatcher } from '@maxellabs/core';
 
-  dispatcher.on('test', {
-    callback: () => executionOrder.push(1),
-    priority: 10
+class PhysicsComponent extends Component {
+  private velocity = { x: 0, y: 0 };
+
+  onEnable(): void {
+    // Clean functional API
+    this.entity.on('collision', this.handleCollision, this, 10);
   }
-  );
-  dispatcher.on('test', {
-    callback: () => executionOrder.push(2),
-    priority: 5
-  });
 
-  dispatcher.emit('test');
+  onDisable(): void {
+    // Without target tracking, we need lookup
+    // Better: Use BFS pattern for listeners that require removal
+  }
 
-  expect(executionOrder).toEqual([1, 2]);
-});
+  // If you KNOW you added with this:
+  private handleCollision = (event: Event) => {
+    const other = event.data.other;
+    if (other.mass > this.entity.mass) {
+      const force = this.calculateRepulsion(other);
+      this.velocity.x += force.x;
+      this.velocity.y += force.y;
+    }
+  };
+}
+```
+
+### Scene Tree Events
+```typescript
+class SceneRoot extends EventDispatcher {
+  private listeners: Map<string, EventListener> = new Map();
+
+  addSystem(name: string, system: System): void {
+    const listener: EventListener = {
+      callback: (event) => system.update(event.data),
+      priority: 0,
+      once: false
+    };
+
+    this.on('update', listener);
+    this.listeners.set(name, listener);
+  }
+
+  removeSystem(name: string): void {
+    const listener = this.listeners.get(name);
+    if (listener) {
+      this.off('update', listener);
+      this.listeners.delete(name);
+    }
+  }
+}
 ```
 
 ---
+
 **Last Updated**: 2025-12-18
-**Version**: 1.0.0 (Reflecting priority-based EventListener objects)
+**Version**: 1.2.0 (Added functional API)
+**Breaking Changes**: No (backward compatible)

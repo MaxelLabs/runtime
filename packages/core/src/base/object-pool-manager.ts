@@ -102,14 +102,14 @@ export class ObjectPoolManager extends EventDispatcher {
    * @param id 对象池ID
    * @param pool 对象池实例
    */
-  registerPool<T>(id: string, pool: ObjectPool<T>): void {
+  registerPool<T extends object>(id: string, pool: ObjectPool<T>): void {
     try {
       if (this.pools.has(id)) {
-        // 销毁旧池以避免内存泄漏
+        // 释放旧池以避免内存泄漏
         const oldPool = this.pools.get(id);
 
         if (oldPool) {
-          oldPool.destroy();
+          oldPool.dispose();
         }
       }
 
@@ -136,16 +136,16 @@ export class ObjectPoolManager extends EventDispatcher {
    * @param options 对象池选项
    * @returns 创建的对象池
    */
-  createPool<T>(
+  createPool<T extends object>(
     id: string,
     factory: () => T,
     resetFunc: (obj: T) => void,
     options: ObjectPoolOptions = {}
   ): ObjectPool<T> {
-    try {
-      // 确保带有命名空间的ID
-      const fullId = id.includes(':') ? id : `default:${id}`;
+    // 确保带有命名空间的ID
+    const fullId = id.includes(':') ? id : `default:${id}`;
 
+    try {
       // 合并全局选项和特定选项
       const poolOptions = {
         initialCapacity: options.initialCapacity ?? this.globalOptions.initialCapacity,
@@ -164,11 +164,11 @@ export class ObjectPoolManager extends EventDispatcher {
         message: `创建对象池 '${id}' 失败`,
         error,
       });
-      logError(
-        `[ObjectPoolManager] 创建对象池 '${id}' 失败: ${error}`,
-        'ObjectPoolManager',
-        error instanceof Error ? error : undefined
-      );
+      // 使用 throw 而不是 logError，因为 logError 返回 never 类型
+      // 这样可以确保函数有明确的返回路径
+      const errorMessage = `[ObjectPoolManager] 创建对象池 '${id}' 失败: ${error}`;
+
+      throw new Error(errorMessage);
     }
   }
 
@@ -177,26 +177,26 @@ export class ObjectPoolManager extends EventDispatcher {
    * @param id 对象池ID
    * @returns 对象池实例，不存在则返回null
    */
-  getPool<T>(id: string): ObjectPool<T> | null {
+  getPool<T extends object>(id: string): ObjectPool<T> | null {
     const fullId = id.includes(':') ? id : `default:${id}`;
 
     return (this.pools.get(fullId) as ObjectPool<T>) || null;
   }
 
   /**
-   * 销毁对象池
+   * 释放对象池
    * @param id 对象池ID
-   * @returns 是否成功销毁
+   * @returns 是否成功释放
    */
-  destroyPool(id: string): boolean {
-    try {
-      const fullId = id.includes(':') ? id : `default:${id}`;
+  disposePool(id: string): boolean {
+    const fullId = id.includes(':') ? id : `default:${id}`;
 
+    try {
       if (this.pools.has(fullId)) {
         const pool = this.pools.get(fullId) as ObjectPool<any>;
 
-        // 完全销毁对象池，而不是清空
-        pool.destroy();
+        // 完全释放对象池，而不是清空
+        pool.dispose();
         this.pools.delete(fullId);
 
         this.dispatchEvent(ObjectPoolManagerEventType.POOL_DESTROYED, { poolId: fullId });
@@ -207,14 +207,13 @@ export class ObjectPoolManager extends EventDispatcher {
       return false;
     } catch (error) {
       this.dispatchEvent(ObjectPoolManagerEventType.ERROR, {
-        message: `销毁对象池 '${id}' 失败`,
+        message: `释放对象池 '${id}' 失败`,
         error,
       });
-      logError(
-        `[ObjectPoolManager] 销毁对象池 '${id}' 失败: ${error}`,
-        'ObjectPoolManager',
-        error instanceof Error ? error : undefined
-      );
+      // 记录警告而不是抛出错误，允许函数返回 false
+      logWarning(`[ObjectPoolManager] 释放对象池 '${id}' 失败: ${error}`, 'ObjectPoolManager');
+
+      return false;
     }
   }
 
@@ -288,8 +287,9 @@ export class ObjectPoolManager extends EventDispatcher {
    * @returns 是否成功预热
    */
   warmUpPool(id: string, count: number): boolean {
+    const fullId = id.includes(':') ? id : `default:${id}`;
+
     try {
-      const fullId = id.includes(':') ? id : `default:${id}`;
       const pool = this.getPool(fullId);
 
       if (!pool) {
@@ -306,11 +306,10 @@ export class ObjectPoolManager extends EventDispatcher {
         message: `预热对象池 '${id}' 失败`,
         error,
       });
-      logError(
-        `[ObjectPoolManager] 预热对象池 '${id}' 失败: ${error}`,
-        'ObjectPoolManager',
-        error instanceof Error ? error : undefined
-      );
+      // 记录警告而不是抛出错误，允许函数返回 false
+      logWarning(`[ObjectPoolManager] 预热对象池 '${id}' 失败: ${error}`, 'ObjectPoolManager');
+
+      return false;
     }
   }
 
@@ -353,22 +352,22 @@ export class ObjectPoolManager extends EventDispatcher {
   }
 
   /**
-   * 销毁所有对象池
+   * 释放所有对象池
    */
-  destroyAllPools(): void {
+  disposeAllPools(): void {
     try {
       const poolIds = Array.from(this.pools.keys());
 
       for (const id of poolIds) {
-        this.destroyPool(id);
+        this.disposePool(id);
       }
     } catch (error) {
       this.dispatchEvent(ObjectPoolManagerEventType.ERROR, {
-        message: '销毁所有对象池失败',
+        message: '释放所有对象池失败',
         error,
       });
       logError(
-        `[ObjectPoolManager] 销毁所有对象池失败: ${error}`,
+        `[ObjectPoolManager] 释放所有对象池失败: ${error}`,
         'ObjectPoolManager',
         error instanceof Error ? error : undefined
       );
@@ -487,12 +486,12 @@ export class ObjectPoolManager extends EventDispatcher {
   }
 
   /**
-   * 销毁单例实例
+   * 释放单例实例
    */
-  public static destroyInstance(): void {
+  public static disposeInstance(): void {
     if (ObjectPoolManager.instance) {
-      ObjectPoolManager.instance.destroyAllPools();
-      ObjectPoolManager.instance.destroy();
+      ObjectPoolManager.instance.disposeAllPools();
+      ObjectPoolManager.instance.dispose();
       ObjectPoolManager.instance = null as any;
     }
   }

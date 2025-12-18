@@ -8,7 +8,8 @@ context_dependency: ["core-modules"]
 related_ids: [
   "core-max-object", "core-refer-resource", "core-entity", "core-component",
   "core-event", "core-event-dispatcher", "core-object-pool", "core-object-pool-manager",
-  "core-time", "core-ioc-container", "core-canvas-wrapper", "core-transform-component"
+  "core-time", "core-ioc-container", "core-canvas-wrapper", "core-transform-component",
+  "core-hierarchy-utils", "core-bitset", "core-sparse-set", "core-disposable"
 ]
 ---
 
@@ -325,6 +326,35 @@ class SafeComponent extends Component {
 }
 ```
 
+## 🆕 新增工具模块
+
+### 扩展数据结构
+**核心模块新增三个高效工具：**
+
+1. **BitSet** - 位集合用于ECS组件掩码匹配
+   - 内存节约：布尔数组的 1/8 大小
+   - 位运算：并集(OR)、交集(AND)、差集(NOT)
+   - 适用场景：组件签名、快速集合判断
+
+2. **SparseSet/SparseMap** - 高效整数集合
+   - O(1) 添加、删除、查找
+   - 适用场景：实体ID管理、活跃实体追踪
+   - 优于Map/Set：对于密集整数键更高效
+
+3. **Disposable** - 资源释放接口
+   - RAII模式：`using(resource, workload)`
+   - 批量释放：`DisposableCollector`
+   - 异步清理：async dispose 自动处理
+
+### 与层级系统集成
+所有层级操作通过 **hierarchy-utils** 统一：
+```typescript
+import { checkCircularReference, isAncestorOf } from '@maxellabs/core';
+
+// 使用通用工具替代 Entity/Transform 的重复代码
+const isCycle = checkCircularReference(node, parent, (n) => n.getParent());
+```
+
 ## 📊 Performance Characteristics
 
 ### Time Complexity Table
@@ -338,6 +368,8 @@ class SafeComponent extends Component {
 | ObjectPool.Get | O(1) | Array.pop() or factory |
 | PoolManager.Get | O(1) | Map lookup |
 | IOC.Resolve | O(1) | Map lookup + factory check |
+| **BitSet Operations** | O(n/32) | n = bits |
+| **SparseSet Ops** | O(1) | Direct array access |
 
 ### Memory Usage Estimates
 ```

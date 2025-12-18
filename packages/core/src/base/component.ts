@@ -13,8 +13,8 @@ export enum ComponentLifecycleState {
   ENABLED = 2,
   /** 已禁用 */
   DISABLED = 3,
-  /** 已销毁 */
-  DESTROYED = 4,
+  /** 已释放 */
+  DISPOSED = 4,
 }
 
 /**
@@ -54,14 +54,14 @@ export abstract class Component extends ReferResource {
    * 获取组件是否启用
    */
   getEnabled(): boolean {
-    return this.enabled && !this.isDestroyed();
+    return this.enabled && !this.isDisposed();
   }
 
   /**
    * 设置组件启用状态
    */
   setEnabled(value: boolean): void {
-    if (this.enabled === value || this.isDestroyed()) {
+    if (this.enabled === value || this.isDisposed()) {
       return;
     }
 
@@ -170,11 +170,11 @@ export abstract class Component extends ReferResource {
   render(): void {}
 
   /**
-   * 销毁组件
+   * 释放组件资源
    * 不要直接调用此方法，通常应通过实体的removeComponent方法移除组件
    */
-  override destroy(): void {
-    if (this.isDestroyed()) {
+  override dispose(): void {
+    if (this.isDisposed()) {
       return;
     }
 
@@ -182,15 +182,15 @@ export abstract class Component extends ReferResource {
       this.disable();
     }
 
-    this.lifecycleState = ComponentLifecycleState.DESTROYED;
-    this.onDestroy();
-    super.destroy();
+    this.lifecycleState = ComponentLifecycleState.DISPOSED;
+    this.onComponentDispose();
+    super.dispose();
   }
 
   /**
-   * 当组件被销毁时调用
+   * 当组件被释放时调用
    * 子类可以重写此方法以执行清理逻辑
    * @protected
    */
-  override onDestroy(): void {}
+  protected onComponentDispose(): void {}
 }

@@ -50,13 +50,32 @@ export class EventDispatcher extends MaxObject {
   /**
    * 添加事件监听器
    * @param type 事件类型
-   * @param listener 回调函数
+   * @param listener EventListener 对象或回调函数
+   * @param target 上下文对象（仅当 listener 为回调函数时使用）
+   * @param priority 优先级（仅当 listener 为回调函数时使用，默认为 0）
    */
-  on(type: string, listener: EventListener): void {
+  on(type: string, listener: EventListener | ((event: Event) => void), target?: any, priority: number = 0): void {
     if (!this.listeners.has(type)) {
       this.listeners.set(type, new Set());
     }
-    this.listeners.get(type)!.add(listener);
+
+    // 支持两种调用方式：
+    // 1. on(type, EventListener) - 传入完整的 EventListener 对象
+    // 2. on(type, callback, target?, priority?) - 传入回调函数和可选参数
+    let eventListener: EventListener;
+
+    if (typeof listener === 'function') {
+      eventListener = {
+        callback: listener,
+        target,
+        priority,
+        once: false,
+      };
+    } else {
+      eventListener = listener;
+    }
+
+    this.listeners.get(type)!.add(eventListener);
   }
 
   /**
@@ -80,16 +99,31 @@ export class EventDispatcher extends MaxObject {
   /**
    * 移除事件监听器
    * @param type 事件类型
-   * @param listener 回调函数
+   * @param listener EventListener 对象或回调函数
+   * @param target 上下文对象（仅当 listener 为回调函数时使用，用于精确匹配）
    */
-  off(type: string, listener: EventListener): void {
+  off(type: string, listener: EventListener | ((event: Event) => void), target?: any): void {
     const listeners = this.listeners.get(type);
 
-    if (listeners) {
-      listeners.delete(listener);
-      if (listeners.size === 0) {
-        this.listeners.delete(type);
+    if (!listeners) {
+      return;
+    }
+
+    if (typeof listener === 'function') {
+      // 当传入回调函数时，需要遍历查找匹配的监听器
+      for (const existingListener of listeners) {
+        if (existingListener.callback === listener && (target === undefined || existingListener.target === target)) {
+          listeners.delete(existingListener);
+          break;
+        }
       }
+    } else {
+      // 当传入 EventListener 对象时，直接删除
+      listeners.delete(listener);
+    }
+
+    if (listeners.size === 0) {
+      this.listeners.delete(type);
     }
   }
 
@@ -428,10 +462,10 @@ export class EventDispatcher extends MaxObject {
   }
 
   /**
-   * 销毁事件分发器
+   * 释放事件分发器资源
    */
-  override destroy(): void {
-    if (this.destroyed) {
+  override dispose(): void {
+    if (this.isDisposed()) {
       return;
     }
     // 移除所有监听器
@@ -451,6 +485,6 @@ export class EventDispatcher extends MaxObject {
 
     // 清空其他属性
     this.dispatchingEvents.clear();
-    super.destroy();
+    super.dispose();
   }
 }

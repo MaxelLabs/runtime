@@ -5,37 +5,94 @@ type: "reference"
 title: "Time - Game Time Management System"
 
 # Semantics
-description: "Game time manager providing delta time, time scaling, fixed timestep, and frame tracking."
+description: "Game time manager providing delta time, time scaling, fixed timestep, and frame tracking with strict time unit conventions."
 
 # Graph
 context_dependency: []
 related_ids: ["core-event-dispatcher", "core-entity"]
 ---
 
+## 🎯 Time Unit Convention (CRITICAL)
+
+All time-related values in the Time class follow a **strict unit convention**:
+
+| Element | Unit | Source/Example |
+|---------|------|----------------|
+| **`update(deltaMs)` parameter** | Milliseconds | `time.update(timestamp - lastTime)` |
+| **Internal storage** | Seconds | `lastTime`, `sinceStartup` |
+| **Public properties** | Seconds | `deltaTime`, `fixedDeltaTime`, `currentTime` |
+| **`fps` calculation** | Derived from `deltaTime` | `1 / deltaTime` (seconds) |
+
+### Example: Game Loop
+```typescript
+let lastTime = performance.now();
+
+function gameLoop(currentTimeMs: number): void {
+  const deltaMs = currentTimeMs - lastTime;  // Milliseconds
+  time.update(deltaMs);                      // Accepts milliseconds
+
+  // All properties below return SECONDS
+  const movement = velocity * time.deltaTime;  // deltaTime is seconds
+
+  lastTime = currentTimeMs;
+  requestAnimationFrame(gameLoop);
+}
+```
+
 ## 🔌 Interface First
 
 ### Time Class Interface
 ```typescript
 class Time {
-  // Real-time properties (seconds)
-  deltaTime: number;              // Scaled delta (timeScale affected)
-  fixedDeltaTime: number;         // Fixed physics step (default 0.02s)
-  maximumDeltaTime: number;       // Frame time cap (default 0.333s)
+  // ===== PROPERTIES (All in SECONDS) =====
 
-  // Time scaling
-  timeScale: number;              // Speed multiplier (default 1.0)
+  /** Scaled delta - affected by timeScale */
+  deltaTime: number;
 
-  // Read-only properties
-  readonly currentTime: number;           // Scaled elapsed time
-  readonly timeSinceStartup: number;      // Unscaled elapsed time
-  readonly frame: number;                 // Frame count
-  readonly unscaledDelta: number;         // Raw delta (no scaling)
-  readonly fps: number;                   // Current frames per second
+  /** Fixed physics step - default: 0.02s (50Hz) */
+  fixedDeltaTime: number;
 
-  // Fixed timestep
-  fixedTimeAccumulator: number;   // Accumulates unscaled delta
-  needFixedUpdate(): boolean;     // Time for fixed step?
-  performFixedUpdate(): void;     // Consume accumulator
+  /** Frame time cap - default: 0.333s (min 3 FPS) */
+  maximumDeltaTime: number;
+
+  /** Speed multiplier: 1.0=normal, 0.5=slow-mo, 0.0=paused */
+  timeScale: number;
+
+  // ===== READ-ONLY PROPERTIES (All in SECONDS) =====
+
+  /** Scaled elapsed game time */
+  readonly currentTime: number;
+
+  /** Unscaled elapsed time since startup */
+  readonly timeSinceStartup: number;
+
+  /** Frame count (integer) */
+  readonly frame: number;
+
+  /** Raw delta without timeScale */
+  readonly unscaledDelta: number;
+
+  /** Current FPS (calculated from deltaTime) */
+  readonly fps: number;
+
+  // ===== FIXED TIMESTEP (All in SECONDS) =====
+
+  /** Accumulator in seconds */
+  fixedTimeAccumulator: number;
+
+  /** Check if fixed update should run */
+  needFixedUpdate(): boolean;
+
+  /** Consume accumulator after fixed update */
+  performFixedUpdate(): void;
+
+  // ===== LIFECYCLE METHODS =====
+
+  /** Update from MILLISECONDS, stores internally as SECONDS */
+  update(deltaTimeMs: number): void;
+
+  /** Reset all time tracking */
+  reset(): void;
 }
 ```
 

@@ -2,6 +2,11 @@ import { logError, logWarning } from './errors';
 
 /**
  * Core包对象池性能统计
+ *
+ * @remarks
+ * 对象池仅支持对象类型（object），不支持原始值类型（number, string, boolean 等）。
+ * 这是因为对象池使用 WeakSet 来追踪池对象，而 WeakSet 只能存储对象引用。
+ * 如果需要池化原始值，请将其包装在对象中使用。
  */
 export interface CoreObjectPoolStats {
   /** 对象池ID */
@@ -24,8 +29,31 @@ export interface CoreObjectPoolStats {
 
 /**
  * 通用对象池类，用于对象重用减少内存分配
+ *
+ * @remarks
+ * **重要限制**：对象池仅支持对象类型（object），不支持原始值类型（number, string, boolean 等）。
+ *
+ * 这是因为：
+ * 1. 对象池使用 WeakSet 来追踪从池中创建的对象
+ * 2. WeakSet 只能存储对象引用，无法存储原始值
+ * 3. 对于原始值类型，release() 方法的验证会失效
+ *
+ * 如果需要池化原始值，请将其包装在对象中：
+ * ```typescript
+ * // 不推荐：直接池化数字
+ * const numberPool = new ObjectPool<number>(...); // 无法正确追踪
+ *
+ * // 推荐：包装在对象中
+ * interface NumberWrapper { value: number; }
+ * const numberPool = new ObjectPool<NumberWrapper>(
+ *   () => ({ value: 0 }),
+ *   (obj) => { obj.value = 0; }
+ * );
+ * ```
+ *
+ * @typeParam T - 池化对象的类型，应该是对象类型而非原始值类型
  */
-export class ObjectPool<T> {
+export class ObjectPool<T extends object> {
   /** 对象池名称 */
   name: string;
   /** 存储空闲对象的数组 */
@@ -40,8 +68,8 @@ export class ObjectPool<T> {
   private maxSize: number;
   /** 跟踪从此池创建的所有对象 */
   private poolObjects: WeakSet<object> = new WeakSet();
-  /** 对象池是否已销毁 */
-  private isDestroyed: boolean = false;
+  /** 对象池是否已释放 */
+  private _disposed: boolean = false;
 
   // 性能统计指标
   private _totalGets: number = 0;
@@ -77,8 +105,8 @@ export class ObjectPool<T> {
    * @param count 预分配数量
    */
   preAllocate(count: number): void {
-    if (this.isDestroyed) {
-      const errorMsg = `对象池 ${this.name} 已销毁，无法预分配对象`;
+    if (this._disposed) {
+      const errorMsg = `对象池 ${this.name} 已释放，无法预分配对象`;
 
       logError(errorMsg, 'ObjectPool', undefined);
 
@@ -107,8 +135,8 @@ export class ObjectPool<T> {
    * @returns 预热结果，包含成功预热数量
    */
   warmUp(count: number): { success: boolean; count: number } {
-    if (this.isDestroyed) {
-      const errorMsg = `对象池 ${this.name} 已销毁，无法预热对象池`;
+    if (this._disposed) {
+      const errorMsg = `对象池 ${this.name} 已释放，无法预热对象池`;
 
       logError(errorMsg, 'ObjectPool', undefined);
 
@@ -175,8 +203,8 @@ export class ObjectPool<T> {
    * @throws 如果对象池已销毁或创建对象失败
    */
   get(): T {
-    if (this.isDestroyed) {
-      throw new Error(`对象池 ${this.name} 已销毁，无法获取对象`);
+    if (this._disposed) {
+      throw new Error(`对象池 ${this.name} 已释放，无法获取对象`);
     }
 
     this._totalGets++;
@@ -211,8 +239,8 @@ export class ObjectPool<T> {
    * @throws {Error} 当尝试释放 null、原始值类型或非池对象时抛出错误
    */
   release(obj: T): boolean {
-    if (this.isDestroyed) {
-      throw new Error(`对象池 ${this.name} 已销毁，无法释放对象`);
+    if (this._disposed) {
+      throw new Error(`对象池 ${this.name} 已释放，无法释放对象`);
     }
 
     // 检查是否为 null 或 undefined
@@ -274,11 +302,12 @@ export class ObjectPool<T> {
   }
 
   /**
-   * 完全销毁对象池，释放所有资源
+   * 释放对象池，释放所有资源
+   * @remarks 实现 IDisposable 接口
    */
-  destroy(): void {
+  dispose(): void {
     this.clear();
-    this.isDestroyed = true;
+    this._disposed = true;
   }
 
   /**
@@ -311,8 +340,8 @@ export class ObjectPool<T> {
    * @param maxSize 新的最大容量
    */
   setMaxSize(maxSize: number): void {
-    if (this.isDestroyed) {
-      logWarning(`对象池 ${this.name} 已销毁，无法调整容量`, 'ObjectPool');
+    if (this._disposed) {
+      logWarning(`对象池 ${this.name} 已释放，无法调整容量`, 'ObjectPool');
 
       return;
     }
@@ -340,9 +369,17 @@ export class ObjectPool<T> {
   }
 
   /**
+   * 检查对象池是否已释放
+   */
+  isDisposed(): boolean {
+    return this._disposed;
+  }
+
+  /**
    * 检查对象池是否已销毁
+   * @deprecated 请使用 isDisposed() 方法代替
    */
   getDestroyed(): boolean {
-    return this.isDestroyed;
+    return this._disposed;
   }
 }

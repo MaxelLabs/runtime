@@ -43,9 +43,11 @@ abstract class ReferResource extends MaxObject implements IReferable {
   protected url: string;
   protected size: number;
 
-  // Lifecycle (from MaxObject)
-  destroy(): void;
-  isDestroyed(): boolean;
+  // Lifecycle (from MaxObject - implements IDisposable)
+  dispose(): void;             // NEW: Preferred
+  isDisposed(): boolean;       // NEW: Preferred
+  destroy(): void;             // Legacy alias
+  isDestroyed(): boolean;      // Legacy alias
 
   // Reference Operations
   addRef(): number;
@@ -60,7 +62,7 @@ abstract class ReferResource extends MaxObject implements IReferable {
   setLoaded(loaded: boolean): void;
 
   // Subclass Hook
-  protected onResourceDestroy(): void;
+  protected onResourceDispose(): void;  // Renamed from onResourceDestroy
 }
 ```
 
@@ -74,7 +76,7 @@ CLASS ReferResource:
   protected isLoaded: boolean = false
 
   FUNCTION addRef():
-    IF isDestroyed():
+    IF isDisposed():
       WARN "Adding ref to destroyed resource"
       RETURN referenceCount
 
@@ -82,37 +84,37 @@ CLASS ReferResource:
     RETURN referenceCount
 
   FUNCTION release():
-    IF isDestroyed():
+    IF isDisposed():
       RETURN 0
 
     referenceCount = max(0, referenceCount - 1)
 
-    // Auto-destroy when ref count reaches 0 AND loaded
+    // Auto-dispose when ref count reaches 0 AND loaded
     IF referenceCount == 0 AND isLoaded:
-      this.destroy()
+      this.dispose()
 
     RETURN referenceCount
 ```
 
-### Destruction Chain
+### Disposal Chain
 ```typescript
 Pseudocode:
-FUNCTION destroy():
-  IF destroyed():
+FUNCTION dispose():
+  IF isDisposed():
     RETURN
 
   IF referenceCount > 0:
-    WARN "Destroying resource with active references"
+    WARN "Disposing resource with active references"
 
   // Subclass cleanup
-  this.onResourceDestroy()
+  this.onResourceDispose()
 
   // Reset state
   this.isLoaded = false
   this.referenceCount = 0
 
-  // MaxObject.destroy() - marks destroyed flag
-  super.destroy()
+  // MaxObject.dispose() - marks disposed flag
+  super.dispose()
 ```
 
 ### Resource Loading State Flow

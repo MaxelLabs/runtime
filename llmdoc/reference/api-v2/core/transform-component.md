@@ -90,7 +90,7 @@ FUNCTION setPosition(newPos):
       child.onTransformChanged(depth + 1)
 ```
 
-### Recursion Depth Guard
+### Recursion Depth Guard (MAX_HIERARCHY_DEPTH = 1000)
 ```typescript
 Pseudocode:
 FUNCTION onTransformChanged(depth = 0):
@@ -99,7 +99,7 @@ FUNCTION onTransformChanged(depth = 0):
     logError("Infinite recursion detected")
     RETURN
 
-  // Propagate to children
+  // Propagate to children (iterative or limited recursion)
   FOR child IN children:
     child.worldMatrixDirty = true
     child.directionsDirty = true
@@ -143,22 +143,21 @@ FUNCTION updateWorldMatrix(depth = 0):
   directionsDirty = true
 ```
 
-### Cycle Detection in Hierarchy
+### Cycle Detection (using hierarchy-utils)
 ```typescript
 Pseudocode:
+IMPORT checkCircularReference FROM hierarchy-utils
+
 FUNCTION setParent(parent):
   // Prevent self-parent
   IF parent === this:
     error("Cannot parent to self")
     RETURN
 
-  // Cycle detection: traverse up from parent
-  let current = parent
-  WHILE current IS NOT null:
-    IF current === this:
-      error("Cycle detected in hierarchy")
-      RETURN
-    current = current.parent
+  // NEW: Use hierarchy-utils for cycle detection
+  IF parent AND checkCircularReference(this, parent, (t) => t.parent):
+    logError("Transform cycle detected")
+    RETURN
 
   // Normal parent setting logic...
   remove from old parent
