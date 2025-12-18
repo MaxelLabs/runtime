@@ -10,3 +10,4 @@ export * from './refer-resource';
 export * from './time';
 export * from './IOC';
 export * from './canvas';
+export * from './errors';

@@ -1,3 +1,5 @@
+import { logError } from './errors';
+
 /**
  * 画布类，封装HTML画布元素
  */
@@ -19,11 +21,15 @@ export class Canvas {
       const element = document.getElementById(canvas) as HTMLCanvasElement;
 
       if (!element) {
-        throw new Error(`Canvas with id '${canvas}' not found.`);
+        const errorMsg = `Canvas with id '${canvas}' not found.`;
+
+        logError(errorMsg, 'Canvas', undefined);
       }
 
       if (!(element instanceof HTMLCanvasElement)) {
-        throw new Error(`Element with id '${canvas}' is not a canvas element.`);
+        const errorMsg = `Element with id '${canvas}' is not a canvas element.`;
+
+        logError(errorMsg, 'Canvas', undefined);
       }
 
       this.element = element;

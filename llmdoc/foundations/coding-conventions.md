@@ -281,9 +281,210 @@ class PerformanceManager {
 - ❌ 禁止在update函数中分配内存
 - ❌ 禁止频繁的GC压力操作
 
-## 4. 导入/导出规范
+## 4. 错误处理规范
 
-### 4.1 导入格式
+### 4.1 核心原则
+
+#### 轻量级优先
+- ❌ 禁止：过度工程化的错误处理系统（ErrorManager、错误类型层次、恢复策略等）
+- ✅ 推荐：简单的错误数组收集机制
+- ✅ 推荐：让错误自然抛出，只在关键位置catch
+
+#### 用户导向
+```typescript
+// 用户应该能够通过简单的方式判断和查看错误
+import { errors } from '@maxellabs/core';
+
+if (errors.length > 0) {
+  console.warn('发现错误:', errors);
+}
+```
+
+#### 最小化验证
+- ❌ 禁止：在底层库的每个函数入口都做参数验证
+- ❌ 禁止：到处使用 try-catch 包裹代码
+- ✅ 推荐：让错误在发生时自然抛出
+- ✅ 推荐：只在确实需要恢复的地方catch
+
+### 4.2 错误收集机制
+
+#### API 设计
+
+```typescript
+// 错误信息接口
+interface ErrorInfo {
+  message: string;
+  component?: string;
+  timestamp: number;
+  stack?: string;
+}
+
+// 核心导出
+export const errors: ErrorInfo[] = [];
+export function logError(message: string, component?: string, error?: Error): void;
+export function clearErrors(): void;
+export function getErrorCount(): number;
+```
+
+#### 使用场景
+
+**✅ 何时需要收集错误：**
+1. **异步操作失败**：网络请求、资源加载、Worker通信等
+2. **可选操作失败**：性能优化（SIMD、SharedArrayBuffer）降级
+3. **用户输入处理**：文件解析、配置加载等可能失败但不应中断程序
+4. **第三方库调用**：可能抛出未知错误的外部依赖
+
+**❌ 何时不需要收集错误（直接throw）：**
+1. **编程错误**：传入null、类型错误、API误用等
+2. **前置条件失败**：对象已销毁、状态不正确等
+3. **不可恢复的错误**：内存耗尽、环境不支持等
+
+### 4.3 实践指南
+
+#### ✅ 正确示例
+
+```typescript
+// Example 1: 可恢复的错误 - 收集
+try {
+  const texture = await loadTexture(url);
+} catch (error) {
+  logError(`Failed to load texture: ${url}`, 'TextureLoader', error);
+  // 使用默认纹理继续运行
+  texture = defaultTexture;
+}
+
+// Example 2: 编程错误 - 直接抛出
+class ObjectPool<T> {
+  release(obj: T): void {
+    if (obj == null) {
+      throw new Error('Cannot release null object');
+    }
+    // ...
+  }
+}
+
+// Example 3: 关键操作失败 - 收集但不中断
+function preAllocate(count: number): void {
+  try {
+    for (let i = 0; i < count; i++) {
+      this.pool.push(this.factory());
+    }
+  } catch (error) {
+    logError('Failed to preallocate objects', 'ObjectPool', error);
+    // 继续运行，部分对象预分配失败不影响使用
+  }
+}
+```
+
+#### ❌ 错误示例
+
+```typescript
+// ❌ 过度验证
+function setWidth(value: number) {
+  if (typeof value !== 'number') {
+    throw new ValidationError('width must be number', 'width', 'number', value);
+  }
+  if (isNaN(value)) {
+    throw new ValidationError('width cannot be NaN', 'width', 'number', value);
+  }
+  if (value < 0) {
+    throw new ValidationError('width must be non-negative', 'width', 'non-negative number', value);
+  }
+  this.element.width = value;
+}
+
+// ❌ 滥用 try-catch
+function updateMatrix() {
+  try {
+    try {
+      try {
+        // 三层嵌套的 try-catch...
+      } catch (e) { /* ... */ }
+    } catch (e) { /* ... */ }
+  } catch (e) { /* ... */ }
+}
+
+// ❌ 复杂的错误类型层次
+class MaxError extends Error { /* ... */ }
+class ObjectPoolError extends MaxError { /* ... */ }
+class ContainerError extends MaxError { /* ... */ }
+// ... 10+ 种错误类型
+```
+
+### 4.4 集成规范
+
+#### Core 包导出
+
+```typescript
+// packages/core/src/base/errors.ts
+export const errors: ErrorInfo[] = [];
+export function logError(message: string, component?: string, error?: Error): void {
+  errors.push({
+    message,
+    component,
+    timestamp: Date.now(),
+    stack: error?.stack,
+  });
+}
+export function clearErrors(): void { errors.length = 0; }
+export function getErrorCount(): number { return errors.length; }
+```
+
+#### 其他包使用方式
+
+```typescript
+import { errors, logError } from '@maxellabs/core';
+
+// 检查是否有错误
+if (errors.length > 0) {
+  console.warn('发现错误:', errors);
+}
+
+// 记录错误
+try {
+  riskyOperation();
+} catch (error) {
+  logError('Operation failed', 'MyComponent', error);
+}
+
+// 清空错误（测试或重置时）
+clearErrors();
+```
+
+### 4.5 负面清单（DO NOT）
+
+1. **❌ 不要创建 ErrorManager 单例**
+   - 理由：过度设计，增加复杂度
+
+2. **❌ 不要创建错误类型层次结构**
+   - 理由：简单的消息字符串足够
+
+3. **❌ 不要在每个函数入口验证参数**
+   - 理由：TypeScript 类型系统已提供编译时保障
+
+4. **❌ 不要添加错误恢复策略、过滤器、处理器等**
+   - 理由：用户只需要知道"有没有错"
+
+5. **❌ 不要在底层库catch所有错误**
+   - 理由：让错误向上冒泡，由使用者决定如何处理
+
+6. **❌ 不要在错误处理中使用复杂的事件系统**
+   - 理由：简单的数组访问即可
+
+### 4.6 审查清单
+
+在代码审查时，检查以下项：
+
+- [ ] 是否使用了简单的 `errors` 数组而非复杂的 ErrorManager？
+- [ ] 是否只在真正需要容错的地方使用 try-catch？
+- [ ] 是否避免了过度的参数验证？
+- [ ] 是否让编程错误直接抛出而非收集？
+- [ ] 是否避免了创建多层错误类型？
+- [ ] 用户是否能够通过 `errors.length` 判断问题？
+
+## 5. 导入/导出规范
+
+### 5.1 导入格式
 
 ```typescript
 // ✅ 类型导入
@@ -301,7 +502,7 @@ import { Renderer } from '@/renderer';
 // import Component, { type SceneNode } from './component';
 ```
 
-### 4.2 导出约定
+### 5.2 导出约定
 
 ```typescript
 // ✅ 命名空间导出
@@ -318,9 +519,9 @@ export { SceneManager, SceneNode } from './scene';
 // export default SceneManager;
 ```
 
-## 5. 代码质量控制
+## 6. 代码质量控制
 
-### 5.1 ESLint配置
+### 6.1 ESLint配置
 
 ```json
 {
@@ -343,7 +544,7 @@ export { SceneManager, SceneNode } from './scene';
 }
 ```
 
-### 5.2 Prettier配置
+### 6.2 Prettier配置
 
 ```json
 {

@@ -2,6 +2,7 @@ import type { Entity } from './entity';
 import type { ITransform, Vector3Like, QuaternionLike, Matrix4Like, TransformSpace } from '@maxellabs/specification';
 import { Vector3, Quaternion, Matrix4 } from '@maxellabs/math';
 import { Component } from './component';
+import { logError } from './errors';
 
 /**
  * 变换组件，处理实体在3D空间中的位置、旋转和缩放
@@ -262,9 +263,11 @@ export class Transform extends Component implements ITransform {
   private onTransformChanged(depth: number = 0): void {
     // 防止无限递归，超过最大深度时发出警告
     if (depth >= Transform.MAX_HIERARCHY_DEPTH) {
-      console.error(
+      logError(
         `[Transform] 层级深度超过最大限制 ${Transform.MAX_HIERARCHY_DEPTH}，可能存在循环引用。` +
-          `实体: ${this.entity.name}`
+          `实体: ${this.entity.name}`,
+        'Transform',
+        undefined
       );
 
       return;
@@ -293,8 +296,10 @@ export class Transform extends Component implements ITransform {
 
       while (p) {
         if (p === this) {
-          console.error(
-            `[Transform] 检测到循环引用: 无法将变换 ${parent.entity.name} 设置为 ${this.entity.name} 的父级`
+          logError(
+            `[Transform] 检测到循环引用: 无法将变换 ${parent.entity.name} 设置为 ${this.entity.name} 的父级`,
+            'Transform',
+            undefined
           );
 
           return;
@@ -332,7 +337,7 @@ export class Transform extends Component implements ITransform {
    */
   addChild(child: Transform): this {
     if (child === this) {
-      console.error('[Transform] 无法将变换添加为自身的子级');
+      logError('[Transform] 无法将变换添加为自身的子级', 'Transform', undefined);
 
       return this;
     }
@@ -373,9 +378,11 @@ export class Transform extends Component implements ITransform {
 
     // 防止无限递归
     if (depth >= Transform.MAX_HIERARCHY_DEPTH) {
-      console.error(
+      logError(
         `[Transform] updateWorldMatrix 递归深度超过最大限制 ${Transform.MAX_HIERARCHY_DEPTH}。` +
-          `实体: ${this.entity.name}`
+          `实体: ${this.entity.name}`,
+        'Transform',
+        undefined
       );
 
       return;

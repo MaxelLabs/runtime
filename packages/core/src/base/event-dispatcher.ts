@@ -1,5 +1,6 @@
 import { MaxObject } from './max-object';
 import { Event } from './event';
+import { logError } from './errors';
 /**
  * 事件监听器接口
  */
@@ -279,7 +280,9 @@ export class EventDispatcher extends MaxObject {
               }
               success = true;
             } catch (e) {
-              console.error(`Error in capture event handler for ${captureType}:`, e);
+              const errorMsg = `Error in capture event handler for ${captureType}: ${e}`;
+
+              logError(errorMsg, 'EventDispatcher', undefined);
             }
           }
         }

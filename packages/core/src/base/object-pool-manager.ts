@@ -1,6 +1,7 @@
 import type { CoreObjectPoolStats } from './object-pool';
 import { ObjectPool } from './object-pool';
 import { EventDispatcher } from './event-dispatcher';
+import { logError } from './errors';
 
 /**
  * 对象池管理器事件类型
@@ -122,7 +123,7 @@ export class ObjectPoolManager extends EventDispatcher {
         message: `注册对象池 '${id}' 失败`,
         error,
       });
-      console.error(`[ObjectPoolManager] 注册对象池 '${id}' 失败:`, error);
+      logError(`[ObjectPoolManager] 注册对象池 '${id}' 失败: ${error}`, 'ObjectPoolManager', undefined);
     }
   }
 
@@ -162,7 +163,7 @@ export class ObjectPoolManager extends EventDispatcher {
         message: `创建对象池 '${id}' 失败`,
         error,
       });
-      console.error(`[ObjectPoolManager] 创建对象池 '${id}' 失败:`, error);
+      logError(`[ObjectPoolManager] 创建对象池 '${id}' 失败: ${error}`, 'ObjectPoolManager', undefined);
       throw error; // 重新抛出错误，使调用者能够捕获
     }
   }
@@ -205,7 +206,7 @@ export class ObjectPoolManager extends EventDispatcher {
         message: `销毁对象池 '${id}' 失败`,
         error,
       });
-      console.error(`[ObjectPoolManager] 销毁对象池 '${id}' 失败:`, error);
+      logError(`[ObjectPoolManager] 销毁对象池 '${id}' 失败: ${error}`, 'ObjectPoolManager', undefined);
 
       return false;
     }
@@ -299,7 +300,7 @@ export class ObjectPoolManager extends EventDispatcher {
         message: `预热对象池 '${id}' 失败`,
         error,
       });
-      console.error(`[ObjectPoolManager] 预热对象池 '${id}' 失败:`, error);
+      logError(`[ObjectPoolManager] 预热对象池 '${id}' 失败: ${error}`, 'ObjectPoolManager', undefined);
 
       return false;
     }
@@ -335,7 +336,7 @@ export class ObjectPoolManager extends EventDispatcher {
         message: '清空所有对象池失败',
         error,
       });
-      console.error('[ObjectPoolManager] 清空所有对象池失败:', error);
+      logError(`[ObjectPoolManager] 清空所有对象池失败: ${error}`, 'ObjectPoolManager', undefined);
     }
   }
 
@@ -354,7 +355,7 @@ export class ObjectPoolManager extends EventDispatcher {
         message: '销毁所有对象池失败',
         error,
       });
-      console.error('[ObjectPoolManager] 销毁所有对象池失败:', error);
+      logError(`[ObjectPoolManager] 销毁所有对象池失败: ${error}`, 'ObjectPoolManager', undefined);
     }
   }
 

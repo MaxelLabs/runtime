@@ -3,6 +3,7 @@ import { ComponentLifecycleState } from './component';
 import { Transform } from './transform';
 import { ReferResource } from './refer-resource';
 import type { IScene } from '../rhi';
+import { logError } from './errors';
 
 /**
  * 实体类，表示场景中的一个对象
@@ -170,7 +171,9 @@ export class Entity extends ReferResource {
 
       while (p) {
         if (p === this) {
-          console.error(`[Entity] 检测到循环引用: 无法将实体 ${parent.name} 设置为 ${this.name} 的父级`);
+          const errorMsg = `[Entity] 检测到循环引用: 无法将实体 ${parent.name} 设置为 ${this.name} 的父级`;
+
+          logError(errorMsg, 'Entity', undefined);
 
           return this;
         }
@@ -216,7 +219,9 @@ export class Entity extends ReferResource {
    */
   addChild(child: Entity): this {
     if (child === this) {
-      console.error('[Entity] 无法将实体添加为自身的子级');
+      const errorMsg = '[Entity] 无法将实体添加为自身的子级';
+
+      logError(errorMsg, 'Entity', undefined);
 
       return this;
     }
@@ -363,7 +368,9 @@ export class Entity extends ReferResource {
    */
   removeComponent<T extends Component>(type: new (entity: Entity) => T): this {
     if (type instanceof Transform) {
-      console.error('[Entity] 无法移除Transform组件');
+      const errorMsg = '[Entity] 无法移除Transform组件';
+
+      logError(errorMsg, 'Entity', undefined);
 
       return this;
     }

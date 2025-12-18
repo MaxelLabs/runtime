@@ -1,3 +1,5 @@
+import { logError } from './errors';
+
 /**
  * Core包对象池性能统计
  */
@@ -76,7 +78,9 @@ export class ObjectPool<T> {
    */
   preAllocate(count: number): void {
     if (this.isDestroyed) {
-      console.warn(`对象池 ${this.name} 已销毁，无法预分配对象`);
+      const errorMsg = `对象池 ${this.name} 已销毁，无法预分配对象`;
+
+      logError(errorMsg, 'ObjectPool', undefined);
 
       return;
     }
@@ -91,7 +95,9 @@ export class ObjectPool<T> {
         this.pool.push(obj);
       }
     } catch (error) {
-      console.error(`对象池 ${this.name} 预分配对象时发生错误:`, error);
+      const errorMsg = `对象池 ${this.name} 预分配对象时发生错误`;
+
+      logError(errorMsg, 'ObjectPool', error instanceof Error ? error : undefined);
     }
   }
 
@@ -102,7 +108,9 @@ export class ObjectPool<T> {
    */
   warmUp(count: number): { success: boolean; count: number } {
     if (this.isDestroyed) {
-      console.warn(`对象池 ${this.name} 已销毁，无法预热对象池`);
+      const errorMsg = `对象池 ${this.name} 已销毁，无法预热对象池`;
+
+      logError(errorMsg, 'ObjectPool', undefined);
 
       return { success: false, count: 0 };
     }
@@ -123,7 +131,9 @@ export class ObjectPool<T> {
         count: warmedUpCount,
       };
     } catch (error) {
-      console.error(`对象池 ${this.name} 预热时发生错误:`, error);
+      const errorMsg = `对象池 ${this.name} 预热时发生错误`;
+
+      logError(errorMsg, 'ObjectPool', error instanceof Error ? error : undefined);
 
       return {
         success: false,
@@ -187,7 +197,9 @@ export class ObjectPool<T> {
 
       return obj;
     } catch (error) {
-      console.error(`对象池 ${this.name} 获取对象时发生错误:`, error);
+      const errorMsg = `对象池 ${this.name} 获取对象时发生错误`;
+
+      logError(errorMsg, 'ObjectPool', error instanceof Error ? error : undefined);
       throw error;
     }
   }
@@ -205,17 +217,29 @@ export class ObjectPool<T> {
 
     // 检查是否为 null 或 undefined
     if (obj == null) {
-      throw new Error(`对象池 ${this.name} 不能释放 null 或 undefined`);
+      const errorMsg = `对象池 ${this.name} 不能释放 null 或 undefined`;
+
+      logError(errorMsg, 'ObjectPool', undefined);
+
+      return false;
     }
 
     // 检查是否为原始值类型
     if (typeof obj !== 'object') {
-      throw new Error(`对象池 ${this.name} 不能释放原始值类型 (${typeof obj})。对象池仅支持对象类型。`);
+      const errorMsg = `对象池 ${this.name} 不能释放原始值类型 (${typeof obj})。对象池仅支持对象类型。`;
+
+      logError(errorMsg, 'ObjectPool', undefined);
+
+      return false;
     }
 
     // 验证对象是否由此池创建
     if (!this.isPoolObject(obj)) {
-      throw new Error(`对象池 ${this.name} 尝试释放非池对象。请确保对象来自此对象池。`);
+      const errorMsg = `对象池 ${this.name} 尝试释放非池对象。请确保对象来自此对象池。`;
+
+      logError(errorMsg, 'ObjectPool', undefined);
+
+      return false;
     }
 
     try {
@@ -232,7 +256,9 @@ export class ObjectPool<T> {
 
       return true;
     } catch (error) {
-      console.error(`对象池 ${this.name} 释放对象时发生错误:`, error);
+      const errorMsg = `对象池 ${this.name} 释放对象时发生错误`;
+
+      logError(errorMsg, 'ObjectPool', error instanceof Error ? error : undefined);
       this.activeCount = Math.max(0, this.activeCount - 1);
 
       return false;
