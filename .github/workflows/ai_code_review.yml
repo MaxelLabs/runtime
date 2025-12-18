@@ -1,0 +1,212 @@
+name: PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: PR Review with Claude
+        id: review
+        uses: anthropics/claude-code-action@v1
+        env:
+          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+        with:
+          github_token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          use_sticky_comment: true
+          show_full_output: true
+          prompt: |
+            请对当前 PR 进行全面审查.
+
+            ## 审查维度
+
+            **代码质量**：代码风格、复杂度、重复代码、命名规范、错误处理、潜在 bug
+
+            **架构设计**：项目结构一致性、依赖合理性、设计模式、关注点分离
+
+            ## 输出格式（简体中文）
+
+            请按以下格式输出审查报告, 作为：
+
+            ## 🔍 PR 代码审查报告
+
+            ### 📋 概要
+            - **变更文件数**: {changedFiles}
+            - **新增/删除行数**: +{additions} / -{deletions}
+
+            ### 🎯 审查结论
+            {APPROVE/REQUEST_CHANGES/COMMENT 及简要说明}
+
+            ### 🔴 严重问题 (Critical)
+            {严重问题列表，如无则显示"无"}
+
+            ### 🟠 重要问题 (Important)
+            {重要问题列表，如无则显示"无"}
+
+            ### 🟢 改进建议 (Suggestions)
+            {改进建议列表，如无则显示"无"}
+
+            ### 💡 总体评价
+            {对本次 PR 的整体评价}
+
+            ## 注意事项
+            1. 所有评论使用简体中文
+            2. 给出具体的文件名和行号
+            3. 对好的实践也要给予肯定
+            4. 保持客观、专业
+
+            Note: The PR branch is already checked out in the current working directory.
+
+            Use `gh pr comment` to post ONE comprehensive review comment.
+            Include all issues (critical, important, and suggestions) with file paths and line numbers in the single comment.
+            Do NOT create multiple comments or inline comments.
+            Only post GitHub comments - don't submit review text as messages.
+
+            ALWAYS Answer in 简体中文.
+          claude_args: |
+            --allowedTools "Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Read,Glob,Grep,Task" --json-schema '{"type":"object","properties":{"conclusion":{"type":"string","enum":["APPROVE","REQUEST_CHANGES","COMMENT"]},"summary":{"type":"string","maxLength":50},"critical_count":{"type":"integer"},"important_count":{"type":"integer"},"suggestion_count":{"type":"integer"}},"required":["conclusion","summary","critical_count","important_count","suggestion_count"]}'
+      - name: Notify Feishu
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+
+          # 解析结构化输出
+          STRUCTURED_OUTPUT='${{ steps.review.outputs.structured_output }}'
+          if [ -n "$STRUCTURED_OUTPUT" ] && [ "$STRUCTURED_OUTPUT" != "null" ]; then
+            CONCLUSION=$(echo "$STRUCTURED_OUTPUT" | jq -r '.conclusion // "UNKNOWN"')
+            SUMMARY=$(echo "$STRUCTURED_OUTPUT" | jq -r '.summary // "审查完成"')
+            CRITICAL=$(echo "$STRUCTURED_OUTPUT" | jq -r '.critical_count // 0')
+            IMPORTANT=$(echo "$STRUCTURED_OUTPUT" | jq -r '.important_count // 0')
+            SUGGESTION=$(echo "$STRUCTURED_OUTPUT" | jq -r '.suggestion_count // 0')
+          else
+            CONCLUSION="UNKNOWN"
+            SUMMARY="未获取到审查结果"
+            CRITICAL=0
+            IMPORTANT=0
+            SUGGESTION=0
+          fi
+
+          # 根据结论设置样式
+          case "$CONCLUSION" in
+            "APPROVE")
+              EMOJI="✅"
+              TEMPLATE="green"
+              ;;
+            "REQUEST_CHANGES")
+              EMOJI="❌"
+              TEMPLATE="red"
+              ;;
+            *)
+              EMOJI="💬"
+              TEMPLATE="blue"
+              ;;
+          esac
+
+          if [ "$STATUS" != "success" ]; then
+            EMOJI="⚠️"
+            TEMPLATE="orange"
+            SUMMARY="Action 执行异常"
+          fi
+
+          curl -X POST "https://open.feishu.cn/open-apis/bot/v2/hook/${{ secrets.FEISHU_WEBHOOK_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "msg_type": "interactive",
+              "card": {
+                "header": {
+                  "title": {
+                    "tag": "plain_text",
+                    "content": "'"${EMOJI} PR Review - ${CONCLUSION}"'"
+                  },
+                  "template": "'"${TEMPLATE}"'"
+                },
+                "elements": [
+                  {
+                    "tag": "div",
+                    "fields": [
+                      {
+                        "is_short": true,
+                        "text": {
+                          "tag": "lark_md",
+                          "content": "**仓库**\n${{ github.repository }}"
+                        }
+                      },
+                      {
+                        "is_short": true,
+                        "text": {
+                          "tag": "lark_md",
+                          "content": "**PR**\n#${{ github.event.pull_request.number }}"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "div",
+                    "text": {
+                      "tag": "lark_md",
+                      "content": "**标题**: ${{ github.event.pull_request.title }}"
+                    }
+                  },
+                  {
+                    "tag": "div",
+                    "text": {
+                      "tag": "lark_md",
+                      "content": "**审查结果**: '"${SUMMARY}"'"
+                    }
+                  },
+                  {
+                    "tag": "div",
+                    "fields": [
+                      {
+                        "is_short": true,
+                        "text": {
+                          "tag": "lark_md",
+                          "content": "🔴 严重: '"${CRITICAL}"'"
+                        }
+                      },
+                      {
+                        "is_short": true,
+                        "text": {
+                          "tag": "lark_md",
+                          "content": "🟠 重要: '"${IMPORTANT}"'"
+                        }
+                      },
+                      {
+                        "is_short": true,
+                        "text": {
+                          "tag": "lark_md",
+                          "content": "🟢 建议: '"${SUGGESTION}"'"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "action",
+                    "actions": [
+                      {
+                        "tag": "button",
+                        "text": {
+                          "tag": "plain_text",
+                          "content": "查看 PR"
+                        },
+                        "type": "primary",
+                        "url": "${{ github.event.pull_request.html_url }}"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }'
