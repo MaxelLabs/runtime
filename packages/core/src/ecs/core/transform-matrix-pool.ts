@@ -259,43 +259,82 @@ export class TransformMatrixPool {
    * @remarks
    * 批量计算所有需要更新的世界矩阵
    * 这是性能关键路径，应在每帧渲染前调用一次
+   *
+   * 使用层级遍历（BFS）确保父级先于子级更新，时间复杂度 O(n)
    */
   updateWorldMatrices(): void {
-    // 按层级顺序更新（确保父级先于子级更新）
-    // 简单实现：多次遍历直到没有脏标记
-    // TODO: 优化为拓扑排序或层级遍历
+    // 第一步：收集所有脏节点并按层级深度分组
+    // 使用层级遍历确保父级先于子级更新
 
-    let hasUpdates = true;
-    let iterations = 0;
-    const maxIterations = 100; // 防止无限循环
+    // 构建子级映射（仅针对脏节点）
+    const childrenMap = new Map<number, number[]>();
+    const rootSlots: number[] = [];
 
-    while (hasUpdates && iterations < maxIterations) {
-      hasUpdates = false;
-      iterations++;
+    for (let slot = 0; slot < this.nextSlot; slot++) {
+      if (this.dirtyFlags[slot] === 0) {
+        continue;
+      }
 
-      for (let slot = 0; slot < this.nextSlot; slot++) {
-        if (this.dirtyFlags[slot] === 0) {
-          continue;
+      const parentSlot = this.parentIndices[slot];
+
+      if (parentSlot < 0) {
+        // 无父级，是根节点
+        rootSlots.push(slot);
+      } else {
+        // 有父级，添加到父级的子列表
+        let children = childrenMap.get(parentSlot);
+        if (!children) {
+          children = [];
+          childrenMap.set(parentSlot, children);
         }
+        children.push(slot);
+      }
+    }
 
-        const parentSlot = this.parentIndices[slot];
+    // 第二步：BFS 遍历，按层级顺序更新
+    const queue: number[] = [];
 
-        // 如果有父级且父级也是脏的，跳过等待下一轮
-        if (parentSlot >= 0 && this.dirtyFlags[parentSlot] !== 0) {
-          hasUpdates = true;
-          continue;
-        }
+    // 首先处理所有根节点（无父级的脏节点）
+    for (const slot of rootSlots) {
+      // 无父级，世界矩阵 = 本地矩阵
+      this.copyMatrix(this.localMatrices, slot, this.worldMatrices, slot);
+      this.dirtyFlags[slot] = 0;
+      queue.push(slot);
+    }
 
-        // 计算世界矩阵
-        if (parentSlot < 0) {
-          // 无父级，世界矩阵 = 本地矩阵
-          this.copyMatrix(this.localMatrices, slot, this.worldMatrices, slot);
-        } else {
-          // 有父级，世界矩阵 = 父级世界矩阵 * 本地矩阵
-          this.multiplyMatrices(parentSlot, slot, slot);
-        }
+    // 处理有父级但父级不脏的节点（父级已经是最新的）
+    for (let slot = 0; slot < this.nextSlot; slot++) {
+      if (this.dirtyFlags[slot] === 0) {
+        continue;
+      }
 
+      const parentSlot = this.parentIndices[slot];
+      if (parentSlot >= 0 && this.dirtyFlags[parentSlot] === 0) {
+        // 父级不脏，可以直接计算
+        this.multiplyMatrices(parentSlot, slot, slot);
         this.dirtyFlags[slot] = 0;
+        queue.push(slot);
+      }
+    }
+
+    // BFS 遍历子节点
+    while (queue.length > 0) {
+      const currentSlot = queue.shift()!;
+      const children = childrenMap.get(currentSlot);
+
+      if (!children) {
+        continue;
+      }
+
+      for (const childSlot of children) {
+        if (this.dirtyFlags[childSlot] === 0) {
+          continue;
+        }
+
+        // 父级已更新，计算子级世界矩阵
+        this.multiplyMatrices(currentSlot, childSlot, childSlot);
+        this.dirtyFlags[childSlot] = 0;
+        queue.push(childSlot);
       }
     }
   }

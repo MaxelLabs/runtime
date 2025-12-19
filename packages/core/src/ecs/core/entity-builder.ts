@@ -37,6 +37,8 @@ import type { EntityId } from './entity-id';
 import { INVALID_ENTITY } from './entity-id';
 import type { World } from './world';
 import type { ComponentClass } from './component-registry';
+import { checkCircularReference } from '../utils/hierarchy-utils';
+import { logError } from '../utils';
 
 // ============ 内置组件定义 ============
 
@@ -351,8 +353,14 @@ export class EntityBuilder {
 
   /**
    * 设置父级
+   * @param parentEntity 父实体 ID
+   * @throws 如果设置父级会导致循环引用
    */
   parent(parentEntity: EntityId): this {
+    // 检查循环引用：如果 parentEntity 是当前实体的后代，则会形成循环
+    if (parentEntity === this.entity) {
+      throw new Error(`EntityBuilder: Cannot set entity ${this.entity} as its own parent`);
+    }
     this.pendingComponents.set(Parent, new Parent(parentEntity));
     return this;
   }
@@ -558,6 +566,24 @@ export function extendWorld(world: World): World & WorldSpawnMethods {
   };
 
   extended.setParent = function (entity: EntityId, parent: EntityId | null): void {
+    // 检查自引用
+    if (parent === entity) {
+      logError(`EntityBuilder.setParent: Cannot set entity ${entity} as its own parent`);
+    }
+
+    // 检查循环引用
+    if (parent !== null) {
+      const wouldCreateCycle = checkCircularReference(entity, parent, (e: EntityId) => {
+        const parentComp = this.getComponent(e, Parent);
+        return parentComp && parentComp.entity !== INVALID_ENTITY ? parentComp.entity : null;
+      });
+      if (wouldCreateCycle) {
+        logError(
+          `EntityBuilder.setParent: Setting entity ${parent} as parent of ${entity} would create a circular reference`
+        );
+      }
+    }
+
     // 移除旧的父子关系
     const oldParent = this.getComponent(entity, Parent);
     if (oldParent && oldParent.entity !== INVALID_ENTITY) {

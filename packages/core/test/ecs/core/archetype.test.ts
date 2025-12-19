@@ -102,7 +102,7 @@ describe('Archetype', () => {
 
       expect(() => {
         archetype.addEntity(entity, [{ x: 10 }]); // 只提供一个组件
-      }).toThrow('Component data mismatch');
+      }).toThrow('Component data count mismatch');
     });
   });
 

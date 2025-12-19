@@ -77,6 +77,9 @@ export class Query {
   /** 匹配的Archetype列表 */
   private matchedArchetypes: Archetype[] = [];
 
+  /** 匹配的Archetype集合（用于快速查重） */
+  private matchedArchetypeSet: Set<Archetype> = new Set();
+
   /** all组件的类型ID数组（用于提取组件数据） */
   private readonly allComponentTypeIds: number[];
 
@@ -150,9 +153,10 @@ export class Query {
       return false;
     }
 
-    // 避免重复添加
-    if (!this.matchedArchetypes.includes(archetype)) {
+    // 避免重复添加（使用 Set 进行 O(1) 查重）
+    if (!this.matchedArchetypeSet.has(archetype)) {
       this.matchedArchetypes.push(archetype);
+      this.matchedArchetypeSet.add(archetype);
     }
 
     return true;
@@ -164,12 +168,15 @@ export class Query {
    * @returns 是否成功移除
    */
   removeArchetype(archetype: Archetype): boolean {
-    const index = this.matchedArchetypes.indexOf(archetype);
-    if (index === -1) {
+    if (!this.matchedArchetypeSet.has(archetype)) {
       return false;
     }
 
-    this.matchedArchetypes.splice(index, 1);
+    const index = this.matchedArchetypes.indexOf(archetype);
+    if (index !== -1) {
+      this.matchedArchetypes.splice(index, 1);
+    }
+    this.matchedArchetypeSet.delete(archetype);
     return true;
   }
 
@@ -276,6 +283,7 @@ export class Query {
    */
   clear(): void {
     this.matchedArchetypes = [];
+    this.matchedArchetypeSet.clear();
   }
 
   /**

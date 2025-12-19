@@ -1,6 +1,7 @@
 import type { EntityId } from './entity-id';
 import type { BitSet } from '../utils/bitset';
 import type { ComponentTypeId } from './component-registry';
+import { logError } from '../utils';
 
 /**
  * 组件存储（按类型分组，SoA布局）
@@ -89,7 +90,11 @@ export class Archetype {
    */
   addEntity(entity: EntityId, componentData: any[]): number {
     if (componentData.length !== this.componentTypes.length) {
-      throw new Error(`Component data mismatch: expected ${this.componentTypes.length}, got ${componentData.length}`);
+      logError(
+        `Archetype.addEntity: Component data count mismatch for entity ${entity}. ` +
+          `Expected ${this.componentTypes.length} components (types: [${this.componentTypes.join(', ')}]), ` +
+          `but received ${componentData.length} components.`
+      );
     }
 
     // 分配行索引
