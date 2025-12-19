@@ -260,15 +260,30 @@ export class TransformMatrixPool {
    * 批量计算所有需要更新的世界矩阵
    * 这是性能关键路径，应在每帧渲染前调用一次
    *
+   * **算法说明**:
    * 使用层级遍历（BFS）确保父级先于子级更新，时间复杂度 O(n)
+   *
+   * **处理流程**:
+   * 1. 构建脏节点的子级映射关系
+   * 2. 处理根节点（无父级的脏节点）
+   * 3. 处理父级已更新的脏节点（父级不脏或已在本次更新中处理）
+   * 4. BFS 遍历处理剩余的子节点
+   *
+   * **边界情况**:
+   * - 根节点：直接复制本地矩阵到世界矩阵
+   * - 父级不脏：父级世界矩阵已是最新，直接计算
+   * - 父级脏：等待父级更新后再计算（通过 BFS 保证顺序）
    */
   updateWorldMatrices(): void {
-    // 第一步：收集所有脏节点并按层级深度分组
-    // 使用层级遍历确保父级先于子级更新
-
-    // 构建子级映射（仅针对脏节点）
+    // 第一步：构建子级映射（针对所有脏节点）
+    // childrenMap: 父级槽位 -> 脏子级槽位列表
     const childrenMap = new Map<number, number[]>();
+
+    // 收集根节点（无父级的脏节点）
     const rootSlots: number[] = [];
+
+    // 收集父级不脏的脏节点（可以直接计算）
+    const readySlots: number[] = [];
 
     for (let slot = 0; slot < this.nextSlot; slot++) {
       if (this.dirtyFlags[slot] === 0) {
@@ -281,20 +296,25 @@ export class TransformMatrixPool {
         // 无父级，是根节点
         rootSlots.push(slot);
       } else {
-        // 有父级，添加到父级的子列表
+        // 有父级，添加到父级的子列表（用于 BFS 遍历）
         let children = childrenMap.get(parentSlot);
         if (!children) {
           children = [];
           childrenMap.set(parentSlot, children);
         }
         children.push(slot);
+
+        // 如果父级不脏，说明父级世界矩阵已是最新，可以直接计算
+        if (this.dirtyFlags[parentSlot] === 0) {
+          readySlots.push(slot);
+        }
       }
     }
 
     // 第二步：BFS 遍历，按层级顺序更新
     const queue: number[] = [];
 
-    // 首先处理所有根节点（无父级的脏节点）
+    // 2.1 首先处理所有根节点（无父级的脏节点）
     for (const slot of rootSlots) {
       // 无父级，世界矩阵 = 本地矩阵
       this.copyMatrix(this.localMatrices, slot, this.worldMatrices, slot);
@@ -302,22 +322,22 @@ export class TransformMatrixPool {
       queue.push(slot);
     }
 
-    // 处理有父级但父级不脏的节点（父级已经是最新的）
-    for (let slot = 0; slot < this.nextSlot; slot++) {
+    // 2.2 处理父级不脏的节点（父级世界矩阵已是最新）
+    for (const slot of readySlots) {
+      // 跳过已处理的节点（可能在根节点处理中被标记）
       if (this.dirtyFlags[slot] === 0) {
         continue;
       }
 
       const parentSlot = this.parentIndices[slot];
-      if (parentSlot >= 0 && this.dirtyFlags[parentSlot] === 0) {
-        // 父级不脏，可以直接计算
-        this.multiplyMatrices(parentSlot, slot, slot);
-        this.dirtyFlags[slot] = 0;
-        queue.push(slot);
-      }
+      // 父级不脏，可以直接计算
+      this.multiplyMatrices(parentSlot, slot, slot);
+      this.dirtyFlags[slot] = 0;
+      queue.push(slot);
     }
 
-    // BFS 遍历子节点
+    // 2.3 BFS 遍历处理剩余的子节点
+    // 此时队列中的节点都已更新完成，可以安全地更新它们的子节点
     while (queue.length > 0) {
       const currentSlot = queue.shift()!;
       const children = childrenMap.get(currentSlot);
@@ -327,6 +347,7 @@ export class TransformMatrixPool {
       }
 
       for (const childSlot of children) {
+        // 跳过已处理的节点
         if (this.dirtyFlags[childSlot] === 0) {
           continue;
         }

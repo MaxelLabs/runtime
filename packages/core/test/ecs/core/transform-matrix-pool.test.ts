@@ -350,6 +350,135 @@ describe('TransformMatrixPool', () => {
       const childWorld = pool.getWorldMatrix(child);
       expect(childWorld[12]).toBe(20); // 10 * 2
     });
+
+    it('应该处理部分脏节点的层级更新', () => {
+      const pool = new TransformMatrixPool(10);
+      const parent = pool.allocate();
+      const child = pool.allocate();
+
+      pool.setParent(child, parent);
+
+      // 初始化
+      pool.setLocalFromTRS(parent, 10, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+      pool.setLocalFromTRS(child, 5, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+      pool.updateWorldMatrices();
+
+      // 只修改子节点
+      pool.setLocalFromTRS(child, 8, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+      pool.updateWorldMatrices();
+
+      const childWorld = pool.getWorldMatrix(child);
+      expect(childWorld[12]).toBe(18); // 10 + 8
+    });
+
+    it('应该处理只有父节点脏的情况', () => {
+      const pool = new TransformMatrixPool(10);
+      const parent = pool.allocate();
+      const child = pool.allocate();
+
+      pool.setParent(child, parent);
+
+      // 初始化
+      pool.setLocalFromTRS(parent, 10, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+      pool.setLocalFromTRS(child, 5, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+      pool.updateWorldMatrices();
+
+      // 只修改父节点
+      pool.setLocalFromTRS(parent, 20, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+      pool.markDirty(child); // 子节点也需要更新
+      pool.updateWorldMatrices();
+
+      const childWorld = pool.getWorldMatrix(child);
+      expect(childWorld[12]).toBe(25); // 20 + 5
+    });
+
+    it('应该处理多个独立的层级树', () => {
+      const pool = new TransformMatrixPool(10);
+
+      // 第一棵树
+      const tree1Parent = pool.allocate();
+      const tree1Child = pool.allocate();
+      pool.setParent(tree1Child, tree1Parent);
+
+      // 第二棵树
+      const tree2Parent = pool.allocate();
+      const tree2Child = pool.allocate();
+      pool.setParent(tree2Child, tree2Parent);
+
+      pool.setLocalFromTRS(tree1Parent, 10, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+      pool.setLocalFromTRS(tree1Child, 5, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+      pool.setLocalFromTRS(tree2Parent, 100, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+      pool.setLocalFromTRS(tree2Child, 50, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+
+      pool.updateWorldMatrices();
+
+      expect(pool.getWorldMatrix(tree1Child)[12]).toBe(15); // 10 + 5
+      expect(pool.getWorldMatrix(tree2Child)[12]).toBe(150); // 100 + 50
+    });
+
+    it('应该处理深层嵌套的层级结构', () => {
+      const pool = new TransformMatrixPool(20);
+      const slots: number[] = [];
+
+      // 创建 10 层深的层级结构
+      for (let i = 0; i < 10; i++) {
+        const slot = pool.allocate();
+        slots.push(slot);
+        if (i > 0) {
+          pool.setParent(slot, slots[i - 1]);
+        }
+        pool.setLocalFromTRS(slot, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+      }
+
+      pool.updateWorldMatrices();
+
+      // 最深层的节点应该累积所有父级的位移
+      const deepestWorld = pool.getWorldMatrix(slots[9]);
+      expect(deepestWorld[12]).toBe(10); // 1 * 10
+    });
+
+    it('应该处理分支结构', () => {
+      const pool = new TransformMatrixPool(10);
+
+      // 创建分支结构：parent -> child1, child2
+      const parent = pool.allocate();
+      const child1 = pool.allocate();
+      const child2 = pool.allocate();
+
+      pool.setParent(child1, parent);
+      pool.setParent(child2, parent);
+
+      pool.setLocalFromTRS(parent, 10, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+      pool.setLocalFromTRS(child1, 5, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+      pool.setLocalFromTRS(child2, 8, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+
+      pool.updateWorldMatrices();
+
+      expect(pool.getWorldMatrix(child1)[12]).toBe(15); // 10 + 5
+      expect(pool.getWorldMatrix(child2)[12]).toBe(18); // 10 + 8
+    });
+
+    it('应该处理非连续槽位的层级更新', () => {
+      const pool = new TransformMatrixPool(10);
+
+      // 分配并释放一些槽位，创建非连续的情况
+      const temp1 = pool.allocate();
+      const parent = pool.allocate();
+      const temp2 = pool.allocate();
+      const child = pool.allocate();
+
+      pool.free(temp1);
+      pool.free(temp2);
+
+      pool.setParent(child, parent);
+
+      pool.setLocalFromTRS(parent, 10, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+      pool.setLocalFromTRS(child, 5, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+
+      pool.updateWorldMatrices();
+
+      expect(pool.getWorldMatrix(child)[12]).toBe(15); // 10 + 5
+    });
   });
 
   describe('getWorldMatrix 方法', () => {
