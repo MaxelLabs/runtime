@@ -132,9 +132,11 @@ entityToRow: { 1: 0, 2: 1 }
 ```typescript
 Pseudocode:
 FUNCTION addEntity(entity, componentData):
-  // 1. 验证数据完整性
+  // 1. 验证数据完整性（记录错误但继续执行）
   IF componentData.length != componentTypes.length:
-    THROW Error("数据不匹配")
+    logError(`组件数量不匹配: 预期 ${componentTypes.length}, 实际 ${componentData.length}`)
+    // 注意：不抛出异常，继续执行以保持数据一致性
+    // 这是 v3.0.0 的错误处理策略
 
   // 2. 分配行索引
   row = entities.length
@@ -143,7 +145,7 @@ FUNCTION addEntity(entity, componentData):
   entities.push(entity)
   entityToRow.set(entity, row)
 
-  // 4. 按类型存储组件数据
+  // 4. 按类型存储组件数据（SoA布局）
   FOR i FROM 0 TO componentTypes.length:
     typeId = componentTypes[i]
     data = componentData[i]
@@ -151,6 +153,12 @@ FUNCTION addEntity(entity, componentData):
 
   RETURN row
 ```
+
+**错误处理策略（v3.0.0）**:
+- ✅ 使用 `logError` 记录错误信息
+- ✅ 继续执行，不抛出异常
+- ⚠️ 可能导致数据不一致，需要调用者确保数据正确
+- 📝 这种设计允许在开发阶段发现问题，同时不影响运行时稳定性
 
 ### 2. 删除实体
 

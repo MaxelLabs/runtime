@@ -7,6 +7,7 @@ context_dependency: ["core-ecs-architecture"]
 related_ids: [
   "core-world", "core-archetype", "core-query", "core-entity-manager",
   "core-component-registry", "core-command-buffer",
+  "core-entity-builder", "core-transform-matrix-pool",
   "core-event-dispatcher", "core-time", "core-object-pool"
 ]
 version: "3.0.0"
@@ -33,6 +34,8 @@ core/
 ├── entity-manager.md           # EntityManager - 实体ID管理 ⭐
 ├── component-registry.md       # ComponentRegistry - 组件注册表 ⭐
 ├── command-buffer.md           # CommandBuffer - 延迟命令 ⭐
+├── entity-builder.md           # EntityBuilder - 流式构建器 ⭐ NEW
+├── transform-matrix-pool.md    # TransformMatrixPool - 矩阵池 ⭐ NEW
 ├── entity-id.ts                # EntityId - ID工具函数
 ├── systems.ts                  # Systems - 系统管理
 ├── change-detection.ts         # ChangeDetection - 变更检测

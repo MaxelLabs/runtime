@@ -320,6 +320,9 @@ export class World {
    * 创建查询
    * @param filter 查询过滤器
    * @returns Query实例
+   * @remarks
+   * 创建的查询会被缓存以便在Archetype变化时自动更新。
+   * 如果查询不再需要，应调用 removeQuery() 来释放内存。
    */
   query(filter: QueryFilter): Query {
     const query = new Query(
@@ -337,6 +340,31 @@ export class World {
     this.queries.push(query);
 
     return query;
+  }
+
+  /**
+   * 移除查询（释放内存）
+   * @param query 要移除的Query实例
+   * @returns 是否成功移除
+   * @remarks
+   * 当查询不再需要时，应调用此方法来防止内存泄漏。
+   * 移除后的Query实例不应再使用。
+   */
+  removeQuery(query: Query): boolean {
+    const index = this.queries.indexOf(query);
+    if (index === -1) {
+      return false;
+    }
+    this.queries.splice(index, 1);
+    return true;
+  }
+
+  /**
+   * 获取当前缓存的查询数量
+   * @returns 查询数量
+   */
+  getQueryCount(): number {
+    return this.queries.length;
   }
 
   /**

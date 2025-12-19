@@ -9,7 +9,6 @@ export * from './component-registry';
 export * from './debug-tools';
 export * from './entity-builder';
 export * from './entity-id';
-export * from './entity-manager';
 export * from './query';
 export * from './typed-component-storage';
 export * from './systems';

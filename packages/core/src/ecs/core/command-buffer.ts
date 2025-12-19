@@ -148,6 +148,12 @@ class RemoveResourceCommand<T> implements Command {
  * - System中添加/移除组件（如给实体添加Buff）
  * - 避免在Query遍历时修改World
  *
+ * **生命周期**:
+ * - 创建 CommandBuffer
+ * - 添加命令（spawn, despawn, addComponent 等）
+ * - 调用 apply(world) 执行所有命令
+ * - 调用 clear() 重置状态以便复用
+ *
  * @example
  * ```typescript
  * function spawnBulletSystem(world: World, cmdBuffer: CommandBuffer) {
@@ -166,6 +172,7 @@ class RemoveResourceCommand<T> implements Command {
  *
  * // 在所有System执行后
  * cmdBuffer.apply(world); // 批量创建所有子弹
+ * cmdBuffer.clear(); // 重置以便下一帧复用
  * ```
  */
 export class CommandBuffer {
@@ -174,6 +181,17 @@ export class CommandBuffer {
 
   /** 是否已应用 */
   private applied: boolean = false;
+
+  /** 绑定的 World 实例（可选，用于验证） */
+  private boundWorld: World | null = null;
+
+  /**
+   * 创建 CommandBuffer
+   * @param world 可选的绑定 World 实例，如果提供则 apply() 时会验证
+   */
+  constructor(world?: World) {
+    this.boundWorld = world ?? null;
+  }
 
   /**
    * 创建实体（延迟执行）
@@ -234,28 +252,75 @@ export class CommandBuffer {
 
   /**
    * 应用所有命令到World
-   * @param world World实例
+   * @param world World实例（如果构造时绑定了World，则此参数可选）
+   * @throws 如果已应用或World实例不匹配
    * @remarks
    * 按照命令添加的顺序依次执行
    */
-  apply(world: World): void {
+  apply(world?: World): void {
     this.ensureNotApplied();
 
+    // 确定要使用的 World 实例
+    const targetWorld = world ?? this.boundWorld;
+    if (!targetWorld) {
+      throw new Error(
+        'CommandBuffer.apply: No World instance provided. Either pass a World to apply() or bind one in the constructor.'
+      );
+    }
+
+    // 如果绑定了 World，验证是否匹配
+    if (this.boundWorld && world && this.boundWorld !== world) {
+      throw new Error(
+        'CommandBuffer.apply: World instance mismatch. The provided World does not match the bound World.'
+      );
+    }
+
     for (const command of this.commands) {
-      command.execute(world);
+      command.execute(targetWorld);
     }
 
     this.applied = true;
   }
 
   /**
-   * 清空命令队列
+   * 清空命令队列并重置状态以便复用
    * @remarks
-   * 清除所有未执行的命令，重置应用状态
+   * 清除所有命令并重置应用状态，使 CommandBuffer 可以被复用。
+   * 这是推荐的复用方式，而不是创建新的 CommandBuffer 实例。
    */
   clear(): void {
-    this.commands = [];
+    this.commands.length = 0; // 保留数组引用，避免 GC
     this.applied = false;
+  }
+
+  /**
+   * 重置 CommandBuffer（包括解绑 World）
+   * @remarks
+   * 完全重置 CommandBuffer 状态，包括解除 World 绑定。
+   * 如果只需要清空命令队列，使用 clear() 更高效。
+   */
+  reset(): void {
+    this.commands.length = 0;
+    this.applied = false;
+    this.boundWorld = null;
+  }
+
+  /**
+   * 绑定 World 实例
+   * @param world World实例
+   * @remarks
+   * 绑定后，apply() 可以不传参数，且会验证传入的 World 是否匹配
+   */
+  bindWorld(world: World): void {
+    this.boundWorld = world;
+  }
+
+  /**
+   * 获取绑定的 World 实例
+   * @returns 绑定的 World 实例，如果未绑定返回 null
+   */
+  getBoundWorld(): World | null {
+    return this.boundWorld;
   }
 
   /**

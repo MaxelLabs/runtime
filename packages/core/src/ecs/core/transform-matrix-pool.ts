@@ -312,7 +312,9 @@ export class TransformMatrixPool {
     }
 
     // 第二步：BFS 遍历，按层级顺序更新
+    // 使用索引指针代替 shift()，避免 O(n²) 复杂度
     const queue: number[] = [];
+    let queueHead = 0; // 队列头指针，用于 O(1) 出队
 
     // 2.1 首先处理所有根节点（无父级的脏节点）
     for (const slot of rootSlots) {
@@ -338,8 +340,9 @@ export class TransformMatrixPool {
 
     // 2.3 BFS 遍历处理剩余的子节点
     // 此时队列中的节点都已更新完成，可以安全地更新它们的子节点
-    while (queue.length > 0) {
-      const currentSlot = queue.shift()!;
+    // 使用 queueHead 索引代替 shift()，时间复杂度从 O(n²) 降为 O(n)
+    while (queueHead < queue.length) {
+      const currentSlot = queue[queueHead++]; // O(1) 出队
       const children = childrenMap.get(currentSlot);
 
       if (!children) {

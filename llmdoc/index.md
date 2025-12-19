@@ -64,11 +64,13 @@ pnpm test
 - **ECS API v3.0** 🆕⭐
   - [Core Modules](./reference/api-v2/core/index.md) - ECS核心模块概览
   - [World](./reference/api-v2/core/world.md) - 中央调度器
-  - [Archetype](./reference/api-v2/core/archetype.md) - SoA内存布局
-  - [Query](./reference/api-v2/core/query.md) - 查询系统
+  - [Archetype](./reference/api-v2/core/archetype.md) - SoA内存布局 ⭐ UPDATED
+  - [Query](./reference/api-v2/core/query.md) - 查询系统 ⭐ UPDATED
   - [EntityManager](./reference/api-v2/core/entity-manager.md) - 实体管理
   - [ComponentRegistry](./reference/api-v2/core/component-registry.md) - 组件注册
   - [CommandBuffer](./reference/api-v2/core/command-buffer.md) - 延迟命令
+  - **[EntityBuilder](./reference/api-v2/core/entity-builder.md)** - 流式构建器 🆕 NEW
+  - **[TransformMatrixPool](./reference/api-v2/core/transform-matrix-pool.md)** - 矩阵池 🆕 NEW
 
 - **核心工具模块** ✅
   - [PBR材质系统](./reference/pbr-material-system.md) - 基于物理的渲染
