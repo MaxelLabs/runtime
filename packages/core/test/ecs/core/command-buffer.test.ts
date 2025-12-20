@@ -276,6 +276,49 @@ describe('CommandBuffer', () => {
     });
   });
 
+  describe('reset 方法', () => {
+    it('应该重置命令缓冲区状态', () => {
+      cmdBuffer.spawn();
+      cmdBuffer.spawn();
+      cmdBuffer.apply(world);
+
+      cmdBuffer.reset();
+
+      expect(cmdBuffer.isEmpty()).toBe(true);
+      expect(cmdBuffer.getCommandCount()).toBe(0);
+      expect(cmdBuffer.isApplied()).toBe(false);
+    });
+
+    it('应该允许重置后重新使用', () => {
+      cmdBuffer.spawn();
+      cmdBuffer.apply(world);
+
+      cmdBuffer.reset();
+      cmdBuffer.spawn();
+      cmdBuffer.spawn();
+      cmdBuffer.apply(world);
+
+      expect(world.getEntityCount()).toBe(3);
+    });
+
+    it('reset 和 clear 应该有相同的效果', () => {
+      const cmdBuffer1 = new CommandBuffer();
+      const cmdBuffer2 = new CommandBuffer();
+
+      cmdBuffer1.spawn();
+      cmdBuffer1.apply(world);
+      cmdBuffer1.clear();
+
+      cmdBuffer2.spawn();
+      cmdBuffer2.apply(world);
+      cmdBuffer2.reset();
+
+      expect(cmdBuffer1.isEmpty()).toBe(cmdBuffer2.isEmpty());
+      expect(cmdBuffer1.isApplied()).toBe(cmdBuffer2.isApplied());
+      expect(cmdBuffer1.getCommandCount()).toBe(cmdBuffer2.getCommandCount());
+    });
+  });
+
   describe('getCommandCount 方法', () => {
     it('应该返回正确的命令数量', () => {
       expect(cmdBuffer.getCommandCount()).toBe(0);

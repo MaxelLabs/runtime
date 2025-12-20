@@ -209,6 +209,34 @@ describe('World - ECS中央调度器', () => {
       // 注意：由于查询在创建时已经缓存了Archetype，新实体会自动匹配
       expect(query.getEntityCount()).toBeGreaterThanOrEqual(1);
     });
+
+    it('应该支持 getQueryCount 方法', () => {
+      expect(world.getQueryCount()).toBe(0);
+
+      world.query({ all: [Position] });
+      expect(world.getQueryCount()).toBe(1);
+
+      world.query({ all: [Velocity] });
+      expect(world.getQueryCount()).toBe(2);
+
+      world.query({ all: [Position, Velocity] });
+      expect(world.getQueryCount()).toBe(3);
+    });
+
+    it('应该支持 removeQuery 方法', () => {
+      const query1 = world.query({ all: [Position] });
+      world.query({ all: [Velocity] });
+
+      expect(world.getQueryCount()).toBe(2);
+
+      const result = world.removeQuery(query1);
+      expect(result).toBe(true);
+      expect(world.getQueryCount()).toBe(1);
+
+      // 移除不存在的查询应该返回 false
+      const result2 = world.removeQuery(query1);
+      expect(result2).toBe(false);
+    });
   });
 
   describe('Archetype迁移', () => {

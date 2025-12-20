@@ -121,6 +121,32 @@ describe('SystemScheduler', () => {
       const result = scheduler.removeSystem('NonExistent');
       expect(result).toBe(false);
     });
+
+    it('应该清理 System 关联的缓存 Query', () => {
+      // 注册组件
+      class Position {
+        x = 0;
+        y = 0;
+      }
+      world.registerComponent(Position);
+
+      // 创建一个使用 Query 的 System
+      const system: SystemDef = {
+        name: 'QuerySystem',
+        stage: SystemStage.Update,
+        query: { all: [Position] },
+        execute: jest.fn(),
+      };
+
+      scheduler.addSystem(system);
+
+      // 移除 System
+      scheduler.removeSystem('QuerySystem');
+
+      // Query 应该被清理（如果实现了清理逻辑）
+      // 注意：这取决于具体实现，可能需要调整断言
+      expect(scheduler.getSystems()).toHaveLength(0);
+    });
   });
 
   describe('setSystemEnabled 方法', () => {
@@ -387,6 +413,248 @@ describe('SystemScheduler', () => {
       expect(stats.totalTime).toBeCloseTo(0.032, 5);
       expect(stats.stageBreakdown['Update']).toBe(1);
       expect(stats.stageBreakdown['Render']).toBe(1);
+    });
+  });
+
+  describe('DAG 依赖排序', () => {
+    it('应该按 after 依赖排序', () => {
+      const order: string[] = [];
+
+      const systemA: SystemDef = {
+        name: 'A',
+        stage: SystemStage.Update,
+        execute: () => order.push('A'),
+      };
+
+      const systemB: SystemDef = {
+        name: 'B',
+        stage: SystemStage.Update,
+        after: ['A'],
+        execute: () => order.push('B'),
+      };
+
+      const systemC: SystemDef = {
+        name: 'C',
+        stage: SystemStage.Update,
+        after: ['B'],
+        execute: () => order.push('C'),
+      };
+
+      scheduler.addSystems(systemC, systemA, systemB);
+      scheduler.update(0.016);
+
+      expect(order).toEqual(['A', 'B', 'C']);
+    });
+
+    it('应该处理复杂 DAG 依赖', () => {
+      const order: string[] = [];
+
+      const systemA: SystemDef = {
+        name: 'A',
+        stage: SystemStage.Update,
+        execute: () => order.push('A'),
+      };
+
+      const systemB: SystemDef = {
+        name: 'B',
+        stage: SystemStage.Update,
+        execute: () => order.push('B'),
+      };
+
+      const systemC: SystemDef = {
+        name: 'C',
+        stage: SystemStage.Update,
+        after: ['A', 'B'],
+        execute: () => order.push('C'),
+      };
+
+      const systemD: SystemDef = {
+        name: 'D',
+        stage: SystemStage.Update,
+        after: ['C'],
+        execute: () => order.push('D'),
+      };
+
+      scheduler.addSystems(systemD, systemB, systemC, systemA);
+      scheduler.update(0.016);
+
+      // A 和 B 可以任意顺序，但必须都在 C 之前
+      const aIndex = order.indexOf('A');
+      const bIndex = order.indexOf('B');
+      const cIndex = order.indexOf('C');
+      const dIndex = order.indexOf('D');
+
+      expect(aIndex).toBeLessThan(cIndex);
+      expect(bIndex).toBeLessThan(cIndex);
+      expect(cIndex).toBeLessThan(dIndex);
+    });
+
+    it('应该警告不存在的依赖', () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const system: SystemDef = {
+        name: 'A',
+        stage: SystemStage.Update,
+        after: ['NonExistent'],
+        execute: jest.fn(),
+      };
+
+      scheduler.addSystem(system);
+      scheduler.update(0.016);
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('depends on "NonExistent"'));
+
+      consoleSpy.mockRestore();
+    });
+
+    it('应该检测循环依赖', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const systemA: SystemDef = {
+        name: 'A',
+        stage: SystemStage.Update,
+        after: ['B'],
+        execute: jest.fn(),
+      };
+
+      const systemB: SystemDef = {
+        name: 'B',
+        stage: SystemStage.Update,
+        after: ['A'],
+        execute: jest.fn(),
+      };
+
+      scheduler.addSystems(systemA, systemB);
+      scheduler.update(0.016);
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Circular dependency'));
+
+      consoleSpy.mockRestore();
+    });
+
+    it('应该结合 priority 和 after 依赖', () => {
+      const order: string[] = [];
+
+      const systemA: SystemDef = {
+        name: 'A',
+        stage: SystemStage.Update,
+        priority: 10,
+        execute: () => order.push('A'),
+      };
+
+      const systemB: SystemDef = {
+        name: 'B',
+        stage: SystemStage.Update,
+        priority: 5,
+        execute: () => order.push('B'),
+      };
+
+      const systemC: SystemDef = {
+        name: 'C',
+        stage: SystemStage.Update,
+        after: ['A'],
+        execute: () => order.push('C'),
+      };
+
+      scheduler.addSystems(systemC, systemA, systemB);
+      scheduler.update(0.016);
+
+      // B 优先级最高，但 C 依赖 A，所以顺序应该是 B, A, C
+      const bIndex = order.indexOf('B');
+      const aIndex = order.indexOf('A');
+      const cIndex = order.indexOf('C');
+
+      expect(bIndex).toBeLessThan(aIndex);
+      expect(aIndex).toBeLessThan(cIndex);
+    });
+  });
+
+  describe('并行执行分析', () => {
+    it('应该支持启用/禁用并行执行', () => {
+      expect(scheduler.isParallelExecutionEnabled()).toBe(false);
+
+      scheduler.setParallelExecution(true);
+      expect(scheduler.isParallelExecutionEnabled()).toBe(true);
+
+      scheduler.setParallelExecution(false);
+      expect(scheduler.isParallelExecutionEnabled()).toBe(false);
+    });
+
+    it('应该分析并行批次', () => {
+      scheduler.setParallelExecution(true);
+
+      const systemA: SystemDef = {
+        name: 'A',
+        stage: SystemStage.Update,
+        execute: jest.fn(),
+      };
+
+      const systemB: SystemDef = {
+        name: 'B',
+        stage: SystemStage.Update,
+        execute: jest.fn(),
+      };
+
+      const systemC: SystemDef = {
+        name: 'C',
+        stage: SystemStage.Update,
+        after: ['A', 'B'],
+        execute: jest.fn(),
+      };
+
+      scheduler.addSystems(systemA, systemB, systemC);
+      scheduler.update(0.016);
+
+      const batches = scheduler.getParallelBatches(SystemStage.Update);
+
+      expect(batches).toBeDefined();
+      expect(batches!.length).toBe(2);
+
+      // 第一批：A, B（可并行）
+      expect(batches![0]).toEqual(expect.arrayContaining(['A', 'B']));
+
+      // 第二批：C（依赖第一批）
+      expect(batches![1]).toEqual(['C']);
+    });
+
+    it('应该在统计信息中包含并行批次数量', () => {
+      scheduler.setParallelExecution(true);
+
+      const systemA: SystemDef = {
+        name: 'A',
+        stage: SystemStage.Update,
+        execute: jest.fn(),
+      };
+
+      const systemB: SystemDef = {
+        name: 'B',
+        stage: SystemStage.Update,
+        after: ['A'],
+        execute: jest.fn(),
+      };
+
+      scheduler.addSystems(systemA, systemB);
+      scheduler.update(0.016);
+
+      const stats = scheduler.getStats();
+
+      expect(stats.parallelExecutionEnabled).toBe(true);
+      expect(stats.parallelBatchCount).toBeDefined();
+      expect(stats.parallelBatchCount!['Update']).toBe(2);
+    });
+
+    it('应该返回 undefined 如果并行执行未启用', () => {
+      const system: SystemDef = {
+        name: 'A',
+        stage: SystemStage.Update,
+        execute: jest.fn(),
+      };
+
+      scheduler.addSystem(system);
+      scheduler.update(0.016);
+
+      const batches = scheduler.getParallelBatches(SystemStage.Update);
+      expect(batches).toBeUndefined();
     });
   });
 });

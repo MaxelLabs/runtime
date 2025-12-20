@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ECS System 调度 Demo</title>
+  <link rel="stylesheet" href="../css/demo-styles.css">
+  <style>
+    .system-card {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .system-card.enabled {
+      border-color: #4caf50;
+    }
+    .system-card.disabled {
+      border-color: #666;
+      opacity: 0.6;
+    }
+    .system-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .system-name {
+      font-weight: bold;
+      color: #61dafb;
+    }
+    .system-stage {
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #333;
+    }
+    .stage-PreUpdate { background: #ff9800; color: #000; }
+    .stage-Update { background: #4caf50; color: #fff; }
+    .stage-PostUpdate { background: #2196f3; color: #fff; }
+    .stage-Render { background: #9c27b0; color: #fff; }
+    .system-info {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    .system-controls {
+      display: flex;
+      gap: 8px;
+    }
+    .timeline {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .timeline-header {
+      font-weight: bold;
+      margin-bottom: 12px;
+      color: #61dafb;
+    }
+    .timeline-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .timeline-time {
+      width: 80px;
+      color: #888;
+    }
+    .timeline-event {
+      flex: 1;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: #333;
+    }
+    .frame-counter {
+      font-size: 24px;
+      font-weight: bold;
+      color: #4caf50;
+      margin-bottom: 16px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .stat-box {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #61dafb;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #888;
+    }
+    .dag-view {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .dag-node {
+      display: inline-block;
+      padding: 8px 16px;
+      margin: 4px;
+      border-radius: 4px;
+      background: #333;
+      border: 2px solid #555;
+    }
+    .dag-arrow {
+      color: #888;
+      margin: 0 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <header class="demo-header">
+      <h1>🔄 ECS System 调度 Demo</h1>
+      <p>展示 SystemScheduler 的阶段执行、依赖排序和并行分析功能</p>
+      <a href="../index.html" class="back-link">← 返回 Demo 列表</a>
+    </header>
+
+    <div class="demo-content">
+      <div class="demo-main">
+        <!-- 控制面板 -->
+        <div class="control-panel">
+          <h3>🎮 控制</h3>
+          <div class="button-group">
+            <button onclick="stepFrame()" class="btn btn-primary">单步执行</button>
+            <button onclick="toggleAutoRun()" id="autoRunBtn" class="btn btn-success">开始自动运行</button>
+            <button onclick="resetDemo()" class="btn btn-warning">重置</button>
+          </div>
+        </div>
+
+        <!-- 帧计数器 -->
+        <div class="frame-counter">
+          帧: <span id="frameCount">0</span>
+        </div>
+
+        <!-- 统计信息 -->
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value" id="systemCount">0</div>
+            <div class="stat-label">System 数量</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="totalTime">0.00</div>
+            <div class="stat-label">总执行时间 (ms)</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="parallelBatches">0</div>
+            <div class="stat-label">并行批次</div>
+          </div>
+        </div>
+
+        <!-- System 列表 -->
+        <h3>📋 System 列表</h3>
+        <div id="systemList"></div>
+
+        <!-- DAG 依赖视图 -->
+        <div class="dag-view">
+          <h3>🔗 执行顺序 (DAG)</h3>
+          <div id="dagView"></div>
+        </div>
+
+        <!-- 执行时间线 -->
+        <div class="timeline">
+          <div class="timeline-header">📊 执行时间线</div>
+          <div id="timeline"></div>
+        </div>
+      </div>
+
+      <div class="demo-sidebar">
+        <div class="info-panel">
+          <h3>📖 说明</h3>
+          <p>此 Demo 展示 ECS System 调度器的核心功能：</p>
+          <ul>
+            <li><strong>阶段执行</strong>: PreUpdate → Update → PostUpdate → Render</li>
+            <li><strong>优先级排序</strong>: 同阶段内按优先级排序</li>
+            <li><strong>DAG 依赖</strong>: 使用 after 声明依赖关系</li>
+            <li><strong>并行分析</strong>: 分析可并行执行的批次</li>
+          </ul>
+        </div>
+
+        <div class="info-panel">
+          <h3>🎯 操作指南</h3>
+          <ul>
+            <li>点击"单步执行"执行一帧</li>
+            <li>点击"开始自动运行"持续执行</li>
+            <li>点击 System 卡片上的按钮启用/禁用</li>
+            <li>观察执行顺序和时间线</li>
+          </ul>
+        </div>
+
+        <div class="log-panel">
+          <h3>📝 日志</h3>
+          <div id="logArea" class="log-area"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="../src/system-scheduler.ts"></script>
+</body>
+</html>

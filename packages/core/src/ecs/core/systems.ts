@@ -35,6 +35,7 @@
 import type { World } from './world';
 import type { Query, QueryFilter } from './query';
 import type { EntityId } from './entity-id';
+import { DAGScheduler } from './dag-scheduler';
 
 // ============ System 阶段 ============
 
@@ -128,6 +129,13 @@ export class SystemScheduler {
   private totalTime: number = 0;
   private frameCount: number = 0;
 
+  // 并行执行相关
+  private enableParallelExecution: boolean = false;
+  private parallelBatches: Map<SystemStage, Array<RegisteredSystem[]>> = new Map();
+
+  // 缓存的内部查询（避免每帧创建新 Query）
+  private cachedQueries: Map<string, Query> = new Map();
+
   constructor(world: World) {
     this.world = world;
 
@@ -137,6 +145,23 @@ export class SystemScheduler {
         this.stageOrder.set(stage, []);
       }
     }
+  }
+
+  /**
+   * 获取或创建缓存的查询
+   * @param key 查询的唯一标识
+   * @param filter 查询过滤器
+   * @returns Query 实例
+   * @remarks
+   * 用于内置 System 避免每帧创建新 Query
+   */
+  getOrCreateCachedQuery(key: string, filter: QueryFilter): Query {
+    let query = this.cachedQueries.get(key);
+    if (!query) {
+      query = this.world.query(filter);
+      this.cachedQueries.set(key, query);
+    }
+    return query;
   }
 
   /**
@@ -179,11 +204,18 @@ export class SystemScheduler {
 
   /**
    * 移除 System
+   * @remarks
+   * 同时清理关联的 Query 以避免内存泄漏
    */
   removeSystem(name: string): boolean {
     const system = this.systems.get(name);
     if (!system) {
       return false;
+    }
+
+    // 清理关联的 Query
+    if (system.query) {
+      this.world.removeQuery(system.query);
     }
 
     this.systems.delete(name);
@@ -280,17 +312,83 @@ export class SystemScheduler {
 
   /**
    * 排序 System
+   * @remarks
+   * 1. 按 priority 排序（数字越小越先执行）
+   * 2. 使用 DAG 拓扑排序处理 after 依赖
+   * 3. 检测并报告循环依赖
+   * 4. 分析并行执行批次（如果启用）
    */
   private sortSystems(): void {
-    for (const systems of this.stageOrder.values()) {
-      // 按优先级排序
+    for (const [stage, systems] of this.stageOrder) {
+      if (systems.length === 0) {
+        continue;
+      }
+
+      // 第一步：按 priority 排序
       systems.sort((a, b) => {
         const priorityA = a.def.priority ?? 0;
         const priorityB = b.def.priority ?? 0;
         return priorityA - priorityB;
       });
 
-      // TODO: 处理 after 依赖（拓扑排序）
+      // 第二步：处理 after 依赖（DAG 拓扑排序）
+      const hasAfterDeps = systems.some((s) => s.def.after && s.def.after.length > 0);
+      if (!hasAfterDeps) {
+        // 没有 after 依赖，跳过 DAG 排序
+        if (this.enableParallelExecution) {
+          // 所有 System 可并行执行
+          this.parallelBatches.set(stage, [systems]);
+        }
+        continue;
+      }
+
+      // 创建 DAG 调度器
+      const dag = new DAGScheduler<RegisteredSystem>();
+
+      // 添加所有节点
+      for (const system of systems) {
+        dag.addNode(system.def.name, system);
+      }
+
+      // 添加依赖关系
+      for (const system of systems) {
+        if (system.def.after) {
+          for (const afterName of system.def.after) {
+            // system 依赖 afterName，即 afterName 必须在 system 之前执行
+            const success = dag.addDependency(system.def.name, afterName);
+            if (!success) {
+              console.warn(
+                `SystemScheduler: System "${system.def.name}" depends on "${afterName}", but "${afterName}" does not exist in stage ${SystemStage[stage]}`
+              );
+            }
+          }
+        }
+      }
+
+      // 拓扑排序
+      const result = dag.topologicalSort();
+      if (!result.success) {
+        console.error(`SystemScheduler: ${result.error}`);
+        console.error(`  Stage: ${SystemStage[stage]}`);
+        console.error(`  Affected systems: ${systems.map((s) => s.def.name).join(', ')}`);
+        // 循环依赖时保持原顺序
+        continue;
+      }
+
+      // 应用排序结果
+      this.stageOrder.set(
+        stage,
+        result.sorted.map((node) => node.data)
+      );
+
+      // 第三步：分析并行执行批次（如果启用）
+      if (this.enableParallelExecution) {
+        const batches = dag.analyzeParallelBatches();
+        this.parallelBatches.set(
+          stage,
+          batches.map((batch) => batch.nodes.map((node) => node.data))
+        );
+      }
     }
   }
 
@@ -310,10 +408,19 @@ export class SystemScheduler {
     stageBreakdown: Record<string, number>;
     frameCount: number;
     totalTime: number;
+    parallelExecutionEnabled: boolean;
+    parallelBatchCount?: Record<string, number>;
   } {
     const stageBreakdown: Record<string, number> = {};
+    const parallelBatchCount: Record<string, number> = {};
+
     for (const [stage, systems] of this.stageOrder) {
       stageBreakdown[SystemStage[stage]] = systems.filter((s) => s.enabled).length;
+
+      if (this.enableParallelExecution) {
+        const batches = this.parallelBatches.get(stage);
+        parallelBatchCount[SystemStage[stage]] = batches?.length ?? 0;
+      }
     }
 
     return {
@@ -322,7 +429,48 @@ export class SystemScheduler {
       stageBreakdown,
       frameCount: this.frameCount,
       totalTime: this.totalTime,
+      parallelExecutionEnabled: this.enableParallelExecution,
+      ...(this.enableParallelExecution && { parallelBatchCount }),
     };
+  }
+
+  /**
+   * 启用/禁用并行执行
+   * @param enabled 是否启用
+   * @remarks
+   * 启用后，调度器会分析 System 依赖关系，将无依赖冲突的 System 分组为并行批次。
+   * 注意：并行执行分析会在下一次 sortSystems() 时生效。
+   */
+  setParallelExecution(enabled: boolean): void {
+    if (this.enableParallelExecution !== enabled) {
+      this.enableParallelExecution = enabled;
+      this.needsSort = true;
+    }
+  }
+
+  /**
+   * 获取并行执行状态
+   */
+  isParallelExecutionEnabled(): boolean {
+    return this.enableParallelExecution;
+  }
+
+  /**
+   * 获取指定阶段的并行批次信息（用于调试）
+   * @param stage 执行阶段
+   * @returns 并行批次列表，每个批次包含可并行执行的 System 名称
+   */
+  getParallelBatches(stage: SystemStage): string[][] | undefined {
+    if (!this.enableParallelExecution) {
+      return undefined;
+    }
+
+    const batches = this.parallelBatches.get(stage);
+    if (!batches) {
+      return undefined;
+    }
+
+    return batches.map((batch) => batch.map((system) => system.def.name));
   }
 }
 
@@ -331,8 +479,68 @@ export class SystemScheduler {
 import { Position, Rotation, Scale, Parent, Children, LocalMatrix, WorldMatrix } from './entity-builder';
 
 /**
- * Transform System
- * 计算所有实体的本地和世界矩阵
+ * 创建 Transform System
+ * @param scheduler System 调度器（用于缓存查询）
+ * @returns TransformSystem 定义
+ * @remarks
+ * 使用工厂函数而不是常量，以便访问调度器的缓存查询功能
+ */
+export function createTransformSystem(scheduler: SystemScheduler): SystemDef {
+  return {
+    name: 'Transform',
+    stage: SystemStage.PostUpdate,
+    priority: 0,
+    query: { all: [Position] },
+    execute(ctx, query) {
+      if (!query) {
+        return;
+      }
+
+      // 第一遍：更新本地矩阵
+      query.forEach((entity, [pos]) => {
+        const rot = ctx.world.getComponent(entity, Rotation);
+        const scale = ctx.world.getComponent(entity, Scale);
+        let localMatrix = ctx.world.getComponent(entity, LocalMatrix);
+
+        if (!localMatrix) {
+          ctx.world.addComponent(entity, LocalMatrix, new LocalMatrix());
+          localMatrix = ctx.world.getComponent(entity, LocalMatrix)!;
+        }
+
+        // 计算本地矩阵
+        composeMatrix(
+          localMatrix.data,
+          pos.x,
+          pos.y,
+          pos.z,
+          rot?.x ?? 0,
+          rot?.y ?? 0,
+          rot?.z ?? 0,
+          rot?.w ?? 1,
+          scale?.x ?? 1,
+          scale?.y ?? 1,
+          scale?.z ?? 1
+        );
+
+        localMatrix.dirty = false;
+      });
+
+      // 第二遍：更新世界矩阵（从根节点开始）
+      // 使用缓存的查询避免每帧创建新 Query
+      const rootQuery = scheduler.getOrCreateCachedQuery('TransformSystem_rootQuery', {
+        all: [Position],
+        none: [Parent],
+      });
+      rootQuery.forEach((entity) => {
+        updateWorldMatrixRecursive(ctx.world, entity, null);
+      });
+    },
+  };
+}
+
+/**
+ * Transform System（向后兼容的常量版本）
+ * @deprecated 使用 createTransformSystem(scheduler) 代替以避免内存泄漏
  */
 export const TransformSystem: SystemDef = {
   name: 'Transform',
@@ -374,6 +582,8 @@ export const TransformSystem: SystemDef = {
     });
 
     // 第二遍：更新世界矩阵（从根节点开始）
+    // 警告：此版本每帧创建新 Query，可能导致内存泄漏
+    // 建议使用 createTransformSystem(scheduler) 代替
     const rootQuery = ctx.world.query({ all: [Position], none: [Parent] });
     rootQuery.forEach((entity) => {
       updateWorldMatrixRecursive(ctx.world, entity, null);

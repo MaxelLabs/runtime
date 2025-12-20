@@ -12,3 +12,4 @@ export * from './entity-id';
 export * from './query';
 export * from './typed-component-storage';
 export * from './systems';
+export * from './dag-scheduler';

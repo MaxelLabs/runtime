@@ -36,5 +36,12 @@
 
 // // 接口定义
 // export * from './interface';
+
+// ECS 系统
+export * from './ecs';
+
+// 数学库
 export * as MMath from '@maxellabs/math';
+
+// 规范定义
 export * as MSpec from '@maxellabs/specification';
