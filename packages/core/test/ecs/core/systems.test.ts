@@ -360,8 +360,24 @@ describe('SystemScheduler', () => {
       expect(executeFn).toHaveBeenCalled();
     });
 
-    it('应该捕获 System 执行错误', () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    it('应该捕获 System 执行错误并通过 logError 抛出', () => {
+      const system: SystemDef = {
+        name: 'ErrorSystem',
+        stage: SystemStage.Update,
+        execute: () => {
+          throw new Error('Test error');
+        },
+      };
+
+      scheduler.addSystem(system);
+
+      // logError 会抛出异常，所以 update 应该抛出错误
+      expect(() => scheduler.update(0.016)).toThrow('Error in system "ErrorSystem":');
+    });
+
+    it('应该在抛出错误前调用错误回调', () => {
+      const errorCallback = jest.fn();
+      scheduler.setErrorCallback(errorCallback);
 
       const system: SystemDef = {
         name: 'ErrorSystem',
@@ -372,11 +388,21 @@ describe('SystemScheduler', () => {
       };
 
       scheduler.addSystem(system);
-      scheduler.update(0.016);
 
-      expect(consoleSpy).toHaveBeenCalledWith('Error in system "ErrorSystem":', expect.any(Error));
+      // 即使 logError 抛出异常，错误回调也应该被调用
+      try {
+        scheduler.update(0.016);
+      } catch {
+        // 预期会抛出异常
+      }
 
-      consoleSpy.mockRestore();
+      expect(errorCallback).toHaveBeenCalledWith(
+        expect.objectContaining({
+          systemName: 'ErrorSystem',
+          stage: SystemStage.Update,
+          error: expect.any(Error),
+        })
+      );
     });
   });
 

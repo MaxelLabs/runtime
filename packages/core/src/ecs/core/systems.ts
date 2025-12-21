@@ -390,8 +390,12 @@ export class SystemScheduler {
           this.errorCallback(errorInfo);
         }
 
-        // 始终输出到控制台
-        logError(`Error in system "${system.def.name}":`);
+        // 记录错误到全局错误收集系统并抛出
+        logError(
+          `Error in system "${system.def.name}":`,
+          'SystemScheduler',
+          error instanceof Error ? error : undefined
+        );
       }
     }
   }
