@@ -529,6 +529,18 @@ export class SystemScheduler {
    * @param enabled 是否启用
    * @remarks
    * 启用后，调度器会分析 System 依赖关系，将无依赖冲突的 System 分组为并行批次。
+   *
+   * **当前实现限制**:
+   * - JavaScript 是单线程的，当前实现仍然是串行执行
+   * - 并行批次分析主要用于：
+   *   1. 明确表达 System 之间的依赖关系
+   *   2. 为未来的 Web Worker 支持做准备
+   *   3. 支持异步 System 的并发执行（如果 System 返回 Promise）
+   *
+   * **未来计划**:
+   * - 使用 Web Workers 实现真正的并行执行
+   * - 使用 Promise.all 实现异步 System 的并发执行
+   *
    * 注意：并行执行分析会在下一次 sortSystems() 时生效。
    */
   setParallelExecution(enabled: boolean): void {

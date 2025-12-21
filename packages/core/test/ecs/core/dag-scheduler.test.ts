@@ -223,6 +223,44 @@ describe('DAGScheduler', () => {
       expect(cycle[0]).toBe(cycle[cycle.length - 1]);
     });
 
+    it('应该返回无重复节点的循环路径（除首尾闭环）', () => {
+      scheduler.addNode('A', 'Node A');
+      scheduler.addNode('B', 'Node B');
+      scheduler.addNode('C', 'Node C');
+
+      // A -> B -> C -> A (完整循环)
+      scheduler.addDependency('B', 'A');
+      scheduler.addDependency('C', 'B');
+      scheduler.addDependency('A', 'C');
+
+      const cycle = scheduler.detectCycle();
+
+      // 验证循环路径格式正确：['A', 'B', 'C', 'A'] 或类似
+      // 首尾相同，中间无重复
+      expect(cycle[0]).toBe(cycle[cycle.length - 1]);
+
+      // 除了首尾，中间不应有重复节点
+      const middlePart = cycle.slice(0, -1);
+      const uniqueMiddle = new Set(middlePart);
+      expect(uniqueMiddle.size).toBe(middlePart.length);
+    });
+
+    it('应该返回精确的循环路径格式', () => {
+      scheduler.addNode('X', 'Node X');
+      scheduler.addNode('Y', 'Node Y');
+
+      // X -> Y -> X (简单循环)
+      scheduler.addDependency('Y', 'X');
+      scheduler.addDependency('X', 'Y');
+
+      const cycle = scheduler.detectCycle();
+
+      // 循环路径应该是 ['X', 'Y', 'X'] 或 ['Y', 'X', 'Y']
+      expect(cycle.length).toBe(3);
+      expect(cycle[0]).toBe(cycle[2]);
+      expect(cycle[0]).not.toBe(cycle[1]);
+    });
+
     it('应该检测自循环', () => {
       scheduler.addNode('A', 'Node A');
       scheduler.addDependency('A', 'A');

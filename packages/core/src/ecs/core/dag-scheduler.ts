@@ -70,15 +70,55 @@ export interface ParallelBatch<T> {
 
 /**
  * DAG 调度器
+ *
+ * @remarks
+ * DAGScheduler 是一个通用的有向无环图调度器，可用于任何需要依赖排序的场景。
+ * 虽然主要用于 SystemScheduler 内部，但也可以独立使用。
+ *
+ * **独立使用场景**:
+ * - 任务调度系统
+ * - 构建系统依赖分析
+ * - 模块加载顺序计算
+ * - 任何需要拓扑排序的场景
  */
 export class DAGScheduler<T> {
   private nodes = new Map<string, DAGNode<T>>();
 
+  // 缓存机制：避免重复复制节点
+  private cachedNodesCopy: Map<string, DAGNode<T>> | null = null;
+  private cacheVersion: number = 0;
+  private currentVersion: number = 0;
+
+  /**
+   * 使缓存失效
+   * 在节点或依赖关系变更时调用
+   */
+  private invalidateCache(): void {
+    this.currentVersion++;
+  }
+
   /**
    * 复制节点数据（避免修改原始数据）
+   * 使用缓存机制优化性能，避免重复复制
    * @returns 节点副本的 Map
    */
   private copyNodes(): Map<string, DAGNode<T>> {
+    // 如果缓存有效，直接返回缓存的副本的副本（因为算法会修改副本）
+    if (this.cachedNodesCopy && this.cacheVersion === this.currentVersion) {
+      // 从缓存创建新副本（浅复制 + Set 复制）
+      const nodesCopy = new Map<string, DAGNode<T>>();
+      for (const [id, node] of this.cachedNodesCopy) {
+        nodesCopy.set(id, {
+          id: node.id,
+          data: node.data,
+          dependencies: new Set(node.dependencies),
+          dependents: new Set(node.dependents),
+        });
+      }
+      return nodesCopy;
+    }
+
+    // 创建新的缓存
     const nodesCopy = new Map<string, DAGNode<T>>();
     for (const [id, node] of this.nodes) {
       nodesCopy.set(id, {
@@ -88,7 +128,22 @@ export class DAGScheduler<T> {
         dependents: new Set(node.dependents),
       });
     }
-    return nodesCopy;
+
+    // 更新缓存
+    this.cachedNodesCopy = nodesCopy;
+    this.cacheVersion = this.currentVersion;
+
+    // 返回缓存的副本的副本
+    const result = new Map<string, DAGNode<T>>();
+    for (const [id, node] of nodesCopy) {
+      result.set(id, {
+        id: node.id,
+        data: node.data,
+        dependencies: new Set(node.dependencies),
+        dependents: new Set(node.dependents),
+      });
+    }
+    return result;
   }
 
   /**
@@ -107,6 +162,8 @@ export class DAGScheduler<T> {
       dependencies: new Set(),
       dependents: new Set(),
     });
+
+    this.invalidateCache();
   }
 
   /**
@@ -135,6 +192,7 @@ export class DAGScheduler<T> {
     fromNode.dependencies.add(to);
     toNode.dependents.add(from);
 
+    this.invalidateCache();
     return true;
   }
 
@@ -165,6 +223,7 @@ export class DAGScheduler<T> {
     }
 
     this.nodes.delete(id);
+    this.invalidateCache();
     return true;
   }
 
@@ -249,11 +308,12 @@ export class DAGScheduler<T> {
             }
           } else if (recStack.has(depId)) {
             // 找到循环，提取循环部分
-            // path 已经包含从 cycleStart 到当前节点的路径
-            // 只需要添加 depId 形成闭环，不需要重复添加
+            // path 包含从起点到当前节点的路径，depId 是形成循环的节点
+            // 例如：path = ['A', 'B', 'C']，depId = 'A'
+            // 循环路径应该是 ['A', 'B', 'C', 'A']
             const cycleStart = path.indexOf(depId);
-            cycleFound = path.slice(cycleStart);
-            cycleFound.push(depId); // 添加回到起点，形成完整循环 A->B->C->A
+            // 只取从循环起点到当前节点的部分，然后添加起点形成闭环
+            cycleFound = [...path.slice(cycleStart), depId];
             return true;
           }
         }
@@ -345,6 +405,7 @@ export class DAGScheduler<T> {
    */
   clear(): void {
     this.nodes.clear();
+    this.invalidateCache();
   }
 
   /**
