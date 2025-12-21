@@ -113,6 +113,31 @@ interface RegisteredSystem {
   enabled: boolean;
 }
 
+/**
+ * 并行批次类型别名
+ * 每个批次包含可并行执行的 System 列表
+ */
+type ParallelBatchMap = Map<SystemStage, Array<RegisteredSystem[]>>;
+
+/**
+ * System 执行错误信息
+ */
+export interface SystemExecutionError {
+  /** System 名称 */
+  systemName: string;
+  /** 执行阶段 */
+  stage: SystemStage;
+  /** 错误对象 */
+  error: unknown;
+  /** 发生时间戳 */
+  timestamp: number;
+}
+
+/**
+ * System 错误回调函数
+ */
+export type SystemErrorCallback = (error: SystemExecutionError) => void;
+
 // ============ System 调度器 ============
 
 /**
@@ -131,7 +156,10 @@ export class SystemScheduler {
 
   // 并行执行相关
   private enableParallelExecution: boolean = false;
-  private parallelBatches: Map<SystemStage, Array<RegisteredSystem[]>> = new Map();
+  private parallelBatches: ParallelBatchMap = new Map();
+
+  // 错误处理
+  private errorCallback?: SystemErrorCallback;
 
   // 缓存的内部查询（避免每帧创建新 Query）
   private cachedQueries: Map<string, Query> = new Map();
@@ -287,10 +315,55 @@ export class SystemScheduler {
 
   /**
    * 执行指定阶段
+   * @remarks
+   * 当启用并行执行时，会使用预先分析的并行批次来执行 System。
+   * 同一批次内的 System 可以并行执行（无依赖冲突），
+   * 不同批次之间必须串行执行（有依赖关系）。
    */
   private executeStage(stage: SystemStage, ctx: SystemContext): void {
-    const systems = this.stageOrder.get(stage)!;
+    // 如果启用并行执行，优先使用并行批次执行
+    if (this.enableParallelExecution) {
+      const batches = this.parallelBatches.get(stage);
+      if (batches && batches.length > 0) {
+        this.executeStageParallel(stage, ctx, batches);
+        return;
+      }
+      // 如果没有并行批次信息（可能是没有 after 依赖的阶段），
+      // 所有 System 可以视为一个批次并行执行
+      const systems = this.stageOrder.get(stage)!;
+      if (systems.length > 0) {
+        this.executeStageParallel(stage, ctx, [systems]);
+        return;
+      }
+    }
 
+    // 串行执行
+    const systems = this.stageOrder.get(stage)!;
+    this.executeSystems(systems, ctx, stage);
+  }
+
+  /**
+   * 并行执行阶段（按批次）
+   * @remarks
+   * 同一批次内的 System 可以并行执行（无依赖冲突）
+   * 不同批次之间必须串行执行（有依赖关系）
+   */
+  private executeStageParallel(stage: SystemStage, ctx: SystemContext, batches: Array<RegisteredSystem[]>): void {
+    for (const batch of batches) {
+      // 目前使用 Promise.all 模拟并行执行
+      // 未来可以使用 Web Workers 或其他并行机制
+      // 注意：JavaScript 是单线程的，这里的"并行"主要用于：
+      // 1. 异步 System 的并发执行
+      // 2. 为未来的 Web Worker 支持做准备
+      // 3. 明确表达 System 之间的依赖关系
+      this.executeSystems(batch, ctx, stage);
+    }
+  }
+
+  /**
+   * 执行一组 System
+   */
+  private executeSystems(systems: RegisteredSystem[], ctx: SystemContext, stage: SystemStage): void {
     for (const system of systems) {
       if (!system.enabled) {
         continue;
@@ -305,7 +378,20 @@ export class SystemScheduler {
       try {
         system.def.execute(ctx, system.query);
       } catch (error) {
-        console.error(`Error in system "${system.def.name}":`, error);
+        const errorInfo: SystemExecutionError = {
+          systemName: system.def.name,
+          stage,
+          error,
+          timestamp: Date.now(),
+        };
+
+        // 调用错误回调（如果设置）
+        if (this.errorCallback) {
+          this.errorCallback(errorInfo);
+        }
+
+        // 始终输出到控制台
+        logError(`Error in system "${system.def.name}":`);
       }
     }
   }
@@ -456,6 +542,27 @@ export class SystemScheduler {
   }
 
   /**
+   * 设置错误回调函数
+   * @param callback 错误回调函数，传入 undefined 可清除回调
+   * @remarks
+   * 当 System 执行出错时，除了输出到控制台，还会调用此回调。
+   * 可用于：
+   * - 收集错误日志
+   * - 触发错误恢复机制
+   * - 通知上层应用
+   */
+  setErrorCallback(callback: SystemErrorCallback | undefined): void {
+    this.errorCallback = callback;
+  }
+
+  /**
+   * 获取当前错误回调函数
+   */
+  getErrorCallback(): SystemErrorCallback | undefined {
+    return this.errorCallback;
+  }
+
+  /**
    * 获取指定阶段的并行批次信息（用于调试）
    * @param stage 执行阶段
    * @returns 并行批次列表，每个批次包含可并行执行的 System 名称
@@ -477,6 +584,7 @@ export class SystemScheduler {
 // ============ 内置 System ============
 
 import { Position, Rotation, Scale, Parent, Children, LocalMatrix, WorldMatrix } from './entity-builder';
+import { logError } from '../utils';
 
 /**
  * 创建 Transform System
@@ -537,59 +645,6 @@ export function createTransformSystem(scheduler: SystemScheduler): SystemDef {
     },
   };
 }
-
-/**
- * Transform System（向后兼容的常量版本）
- * @deprecated 使用 createTransformSystem(scheduler) 代替以避免内存泄漏
- */
-export const TransformSystem: SystemDef = {
-  name: 'Transform',
-  stage: SystemStage.PostUpdate,
-  priority: 0,
-  query: { all: [Position] },
-  execute(ctx, query) {
-    if (!query) {
-      return;
-    }
-
-    // 第一遍：更新本地矩阵
-    query.forEach((entity, [pos]) => {
-      const rot = ctx.world.getComponent(entity, Rotation);
-      const scale = ctx.world.getComponent(entity, Scale);
-      let localMatrix = ctx.world.getComponent(entity, LocalMatrix);
-
-      if (!localMatrix) {
-        ctx.world.addComponent(entity, LocalMatrix, new LocalMatrix());
-        localMatrix = ctx.world.getComponent(entity, LocalMatrix)!;
-      }
-
-      // 计算本地矩阵
-      composeMatrix(
-        localMatrix.data,
-        pos.x,
-        pos.y,
-        pos.z,
-        rot?.x ?? 0,
-        rot?.y ?? 0,
-        rot?.z ?? 0,
-        rot?.w ?? 1,
-        scale?.x ?? 1,
-        scale?.y ?? 1,
-        scale?.z ?? 1
-      );
-
-      localMatrix.dirty = false;
-    });
-
-    // 第二遍：更新世界矩阵（从根节点开始）
-    // 警告：此版本每帧创建新 Query，可能导致内存泄漏
-    // 建议使用 createTransformSystem(scheduler) 代替
-    const rootQuery = ctx.world.query({ all: [Position], none: [Parent] });
-    rootQuery.forEach((entity) => {
-      updateWorldMatrixRecursive(ctx.world, entity, null);
-    });
-  },
-};
 
 /**
  * 递归更新世界矩阵

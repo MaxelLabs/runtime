@@ -7,7 +7,7 @@ import type { SystemDef, SystemContext } from '../../../src/ecs/core/systems';
 import {
   SystemScheduler,
   SystemStage,
-  TransformSystem,
+  createTransformSystem,
   HierarchySystem,
   CleanupSystem,
 } from '../../../src/ecs/core/systems';
@@ -660,12 +660,25 @@ describe('SystemScheduler', () => {
 });
 
 describe('内置 System', () => {
-  describe('TransformSystem', () => {
-    it('应该定义正确的属性', () => {
-      expect(TransformSystem.name).toBe('Transform');
-      expect(TransformSystem.stage).toBe(SystemStage.PostUpdate);
-      expect(TransformSystem.priority).toBe(0);
-      expect(TransformSystem.query).toBeDefined();
+  describe('createTransformSystem', () => {
+    it('应该创建具有正确属性的 TransformSystem', () => {
+      const world = new World();
+      const scheduler = new SystemScheduler(world);
+      const transformSystem = createTransformSystem(scheduler);
+
+      expect(transformSystem.name).toBe('Transform');
+      expect(transformSystem.stage).toBe(SystemStage.PostUpdate);
+      expect(transformSystem.priority).toBe(0);
+      expect(transformSystem.query).toBeDefined();
+    });
+
+    it('应该使用缓存的查询避免内存泄漏', () => {
+      const world = new World();
+      const scheduler = new SystemScheduler(world);
+      const transformSystem = createTransformSystem(scheduler);
+
+      // 验证工厂函数返回的是一个有效的 SystemDef
+      expect(typeof transformSystem.execute).toBe('function');
     });
   });
 

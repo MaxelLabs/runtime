@@ -374,4 +374,146 @@ describe('DAGScheduler', () => {
       expect(scheduler.getNodeCount()).toBe(0);
     });
   });
+
+  describe('getNodeCount 方法', () => {
+    it('应该返回 0 当没有节点时', () => {
+      expect(scheduler.getNodeCount()).toBe(0);
+    });
+
+    it('应该返回正确的节点数量', () => {
+      scheduler.addNode('A', 'Node A');
+      expect(scheduler.getNodeCount()).toBe(1);
+
+      scheduler.addNode('B', 'Node B');
+      expect(scheduler.getNodeCount()).toBe(2);
+
+      scheduler.addNode('C', 'Node C');
+      expect(scheduler.getNodeCount()).toBe(3);
+    });
+
+    it('应该在移除节点后更新数量', () => {
+      scheduler.addNode('A', 'Node A');
+      scheduler.addNode('B', 'Node B');
+      expect(scheduler.getNodeCount()).toBe(2);
+
+      scheduler.removeNode('A');
+      expect(scheduler.getNodeCount()).toBe(1);
+    });
+  });
+
+  describe('边界情况测试', () => {
+    describe('空图', () => {
+      it('topologicalSort 应该返回空数组', () => {
+        const result = scheduler.topologicalSort();
+        expect(result.success).toBe(true);
+        expect(result.sorted).toHaveLength(0);
+      });
+
+      it('analyzeParallelBatches 应该返回空数组', () => {
+        const batches = scheduler.analyzeParallelBatches();
+        expect(batches).toHaveLength(0);
+      });
+
+      it('detectCycle 应该返回空数组', () => {
+        const cycle = scheduler.detectCycle();
+        expect(cycle).toHaveLength(0);
+      });
+
+      it('getAllNodesInfo 应该返回空数组', () => {
+        const info = scheduler.getAllNodesInfo();
+        expect(info).toHaveLength(0);
+      });
+    });
+
+    describe('单节点图', () => {
+      beforeEach(() => {
+        scheduler.addNode('A', 'Node A');
+      });
+
+      it('topologicalSort 应该返回单个节点', () => {
+        const result = scheduler.topologicalSort();
+        expect(result.success).toBe(true);
+        expect(result.sorted).toHaveLength(1);
+        expect(result.sorted[0].id).toBe('A');
+      });
+
+      it('analyzeParallelBatches 应该返回单个批次', () => {
+        const batches = scheduler.analyzeParallelBatches();
+        expect(batches).toHaveLength(1);
+        expect(batches[0].nodes).toHaveLength(1);
+        expect(batches[0].level).toBe(0);
+      });
+
+      it('detectCycle 应该返回空数组', () => {
+        const cycle = scheduler.detectCycle();
+        expect(cycle).toHaveLength(0);
+      });
+
+      it('getNodeInfo 应该返回正确信息', () => {
+        const info = scheduler.getNodeInfo('A');
+        expect(info).toBeDefined();
+        expect(info!.id).toBe('A');
+        expect(info!.dependencies).toHaveLength(0);
+        expect(info!.dependents).toHaveLength(0);
+      });
+    });
+
+    describe('单节点自循环', () => {
+      it('应该检测自循环', () => {
+        scheduler.addNode('A', 'Node A');
+        scheduler.addDependency('A', 'A');
+
+        const result = scheduler.topologicalSort();
+        expect(result.success).toBe(false);
+        expect(result.cycle).toBeDefined();
+        expect(result.cycle).toContain('A');
+      });
+    });
+
+    describe('两节点互相依赖', () => {
+      it('应该检测循环', () => {
+        scheduler.addNode('A', 'Node A');
+        scheduler.addNode('B', 'Node B');
+        scheduler.addDependency('A', 'B');
+        scheduler.addDependency('B', 'A');
+
+        const result = scheduler.topologicalSort();
+        expect(result.success).toBe(false);
+        expect(result.cycle).toBeDefined();
+        expect(result.cycle!.length).toBeGreaterThanOrEqual(2);
+      });
+    });
+
+    describe('大量节点', () => {
+      it('应该正确处理 100 个节点的链式依赖', () => {
+        // 创建 100 个节点的链式依赖
+        for (let i = 0; i < 100; i++) {
+          scheduler.addNode(`N${i}`, `Node ${i}`);
+        }
+        for (let i = 1; i < 100; i++) {
+          scheduler.addDependency(`N${i}`, `N${i - 1}`);
+        }
+
+        const result = scheduler.topologicalSort();
+        expect(result.success).toBe(true);
+        expect(result.sorted).toHaveLength(100);
+
+        // 验证顺序正确
+        const ids = result.sorted.map((n) => n.id);
+        for (let i = 1; i < 100; i++) {
+          expect(ids.indexOf(`N${i - 1}`)).toBeLessThan(ids.indexOf(`N${i}`));
+        }
+      });
+
+      it('应该正确分析 100 个独立节点为单批次', () => {
+        for (let i = 0; i < 100; i++) {
+          scheduler.addNode(`N${i}`, `Node ${i}`);
+        }
+
+        const batches = scheduler.analyzeParallelBatches();
+        expect(batches).toHaveLength(1);
+        expect(batches[0].nodes).toHaveLength(100);
+      });
+    });
+  });
 });

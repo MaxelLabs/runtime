@@ -10,15 +10,27 @@
  *
  * @example
  * ```typescript
- * const scheduler = new DAGScheduler<SystemDef>();
+ * // 定义 System 类型
+ * interface MySystem {
+ *   name: string;
+ *   execute: () => void;
+ * }
+ *
+ * const scheduler = new DAGScheduler<MySystem>();
  *
  * // 添加节点和依赖
+ * const physicsSys: MySystem = { name: 'Physics', execute: () => {} };
+ * const transformSys: MySystem = { name: 'Transform', execute: () => {} };
+ *
  * scheduler.addNode('Physics', physicsSys);
  * scheduler.addNode('Transform', transformSys);
  * scheduler.addDependency('Transform', 'Physics'); // Transform 依赖 Physics
  *
  * // 拓扑排序
- * const sorted = scheduler.topologicalSort(); // ['Physics', 'Transform']
+ * const result = scheduler.topologicalSort();
+ * if (result.success) {
+ *   console.log(result.sorted.map(n => n.id)); // ['Physics', 'Transform']
+ * }
  * ```
  */
 
@@ -61,6 +73,23 @@ export interface ParallelBatch<T> {
  */
 export class DAGScheduler<T> {
   private nodes = new Map<string, DAGNode<T>>();
+
+  /**
+   * 复制节点数据（避免修改原始数据）
+   * @returns 节点副本的 Map
+   */
+  private copyNodes(): Map<string, DAGNode<T>> {
+    const nodesCopy = new Map<string, DAGNode<T>>();
+    for (const [id, node] of this.nodes) {
+      nodesCopy.set(id, {
+        id: node.id,
+        data: node.data,
+        dependencies: new Set(node.dependencies),
+        dependents: new Set(node.dependents),
+      });
+    }
+    return nodesCopy;
+  }
 
   /**
    * 添加节点
@@ -144,16 +173,13 @@ export class DAGScheduler<T> {
    * @returns 排序结果
    */
   topologicalSort(): TopologicalSortResult<T> {
-    // 复制节点以避免修改原始数据
-    const nodesCopy = new Map<string, DAGNode<T>>();
-    for (const [id, node] of this.nodes) {
-      nodesCopy.set(id, {
-        id: node.id,
-        data: node.data,
-        dependencies: new Set(node.dependencies),
-        dependents: new Set(node.dependents),
-      });
+    // 处理空节点情况
+    if (this.nodes.size === 0) {
+      return { success: true, sorted: [] };
     }
+
+    // 复制节点以避免修改原始数据
+    const nodesCopy = this.copyNodes();
 
     const sorted: Array<{ id: string; data: T }> = [];
     const queue: string[] = [];
@@ -223,9 +249,11 @@ export class DAGScheduler<T> {
             }
           } else if (recStack.has(depId)) {
             // 找到循环，提取循环部分
+            // path 已经包含从 cycleStart 到当前节点的路径
+            // 只需要添加 depId 形成闭环，不需要重复添加
             const cycleStart = path.indexOf(depId);
             cycleFound = path.slice(cycleStart);
-            cycleFound.push(depId); // 添加回到起点，形成完整循环
+            cycleFound.push(depId); // 添加回到起点，形成完整循环 A->B->C->A
             return true;
           }
         }
@@ -254,16 +282,13 @@ export class DAGScheduler<T> {
    * 将节点分组为多个批次，同一批次内的节点可以并行执行
    */
   analyzeParallelBatches(): ParallelBatch<T>[] {
-    // 复制节点以避免修改原始数据
-    const nodesCopy = new Map<string, DAGNode<T>>();
-    for (const [id, node] of this.nodes) {
-      nodesCopy.set(id, {
-        id: node.id,
-        data: node.data,
-        dependencies: new Set(node.dependencies),
-        dependents: new Set(node.dependents),
-      });
+    // 处理空节点情况（与 topologicalSort 保持一致）
+    if (this.nodes.size === 0) {
+      return [];
     }
+
+    // 复制节点以避免修改原始数据
+    const nodesCopy = this.copyNodes();
 
     const batches: ParallelBatch<T>[] = [];
     let level = 0;
