@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>World 基础 Demo - ECS</title>
+  <link rel="stylesheet" href="../css/demo-styles.css">
+</head>
+<body>
+  <a href="../index.html" class="back-link">← 返回 Demo 列表</a>
+
+  <div class="demo-container">
+    <!-- 可视化区域 -->
+    <div class="visualization-panel">
+      <h1 class="demo-title">🌍 World 基础 Demo</h1>
+      <p class="demo-description">
+        展示 ECS World 的基本用法：创建实体、添加组件、查询实体。
+        点击按钮操作 World，观察实体和 Archetype 的变化。
+      </p>
+
+      <div class="visualization-canvas" id="visualization">
+        <!-- 动态生成的可视化内容 -->
+      </div>
+    </div>
+
+    <!-- 控制面板 -->
+    <div class="control-panel">
+      <div class="panel-section">
+        <h3>📊 World 统计</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="entityCount">0</div>
+            <div class="stat-label">实体数量</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="archetypeCount">1</div>
+            <div class="stat-label">Archetype 数量</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="componentCount">0</div>
+            <div class="stat-label">组件类型</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="queryCount">0</div>
+            <div class="stat-label">查询数量</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <h3>🎮 实体操作</h3>
+        <button class="btn btn-primary" onclick="createEntity()">创建实体</button>
+        <button class="btn btn-primary" onclick="createEntityWithPosition()">创建带 Position</button>
+        <button class="btn btn-primary" onclick="createEntityWithVelocity()">创建带 Velocity</button>
+        <button class="btn btn-primary" onclick="createEntityWithBoth()">创建带两者</button>
+        <button class="btn btn-danger" onclick="destroyLastEntity()">销毁最后实体</button>
+        <button class="btn btn-danger" onclick="clearAll()">清空所有</button>
+      </div>
+
+      <div class="panel-section">
+        <h3>🧩 组件操作</h3>
+        <div class="input-group">
+          <label>选择实体 ID</label>
+          <select id="entitySelect" onchange="selectEntity()">
+            <option value="">-- 选择实体 --</option>
+          </select>
+        </div>
+        <button class="btn btn-secondary" onclick="addPositionToSelected()">添加 Position</button>
+        <button class="btn btn-secondary" onclick="addVelocityToSelected()">添加 Velocity</button>
+        <button class="btn btn-secondary" onclick="addHealthToSelected()">添加 Health</button>
+        <button class="btn btn-danger" onclick="removePositionFromSelected()">移除 Position</button>
+      </div>
+
+      <div class="panel-section">
+        <h3>🔍 查询测试</h3>
+        <button class="btn btn-success" onclick="queryWithPosition()">查询有 Position 的</button>
+        <button class="btn btn-success" onclick="queryWithBoth()">查询有 Position+Velocity</button>
+        <button class="btn btn-success" onclick="queryWithoutHealth()">查询无 Health 的</button>
+      </div>
+
+      <div class="panel-section">
+        <h3>📝 操作日志</h3>
+        <div class="log-area" id="logArea">
+          <div class="log-entry info">Demo 已初始化，等待操作...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 左下角介绍面板 -->
+  <div class="info-panel">
+    <h3>🌍 ECS World 基础</h3>
+    <p class="description">
+      这是 ECS (Entity-Component-System) 架构的基础示例，展示如何使用 World 管理实体和组件。
+    </p>
+
+    <div class="tech-points">
+      <h4>💡 技术要点</h4>
+      <ul>
+        <li>World 是 ECS 的中央调度器</li>
+        <li>Entity 是唯一标识符（ID）</li>
+        <li>Component 是纯数据容器</li>
+        <li>Archetype 按组件组合分组实体</li>
+        <li>Query 用于高效查询实体</li>
+      </ul>
+    </div>
+  </div>
+
+  <script type="module" src="../src/world-basics.ts"></script>
+</body>
+</html>

@@ -8,11 +8,6 @@ export NODE_OPTIONS="--max-old-space-size=8192"
 echo "=== Checking MSpec type definitions ==="
 find packages -name "*.d.ts" -type f | head -10
 
-echo -e "\n=== Running TypeScript check on cubemap-skybox.ts ==="
-npx tsc --noEmit packages/rhi/demo/src/cubemap-skybox.ts \
-  --moduleResolution node \
-  --esModuleInterop \
-  --skipLibCheck \
-  --target ES2020 \
-  --lib ES2020,DOM \
-  --types node
+echo -e "\n=== Running TypeScript check on rhi demo ==="
+# 使用项目的 tsconfig 进行类型检查
+cd packages/rhi/demo && npx tsc --noEmit -p tsconfig.json

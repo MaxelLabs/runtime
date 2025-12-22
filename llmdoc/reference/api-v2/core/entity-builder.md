@@ -126,12 +126,16 @@ FUNCTION setParent(entity, parent):
 
 | 方法 | 错误处理 | 是否继续执行 | 一致性 |
 |------|---------|-------------|--------|
-| `parent()` | `throw new Error()` | ❌ 否 | 严格 |
-| `setParent()` | `logError()` | ✅ 是 | 宽松 |
+| `parent()` | `throw new Error()` | ❌ 否 | 严格（构建时） |
+| `setParent()` | `logError()` | ✅ 是 | 宽松（运行时） |
 
-**v3.0.0 改进建议**:
-- ❗ `parent()` 应使用 `logError` 保持一致性
-- ❗ 应添加完整的循环引用检查（使用 `checkCircularReference`）
+**v3.0.0 实现状态**:
+- ✅ `parent()`：检查自引用，抛出异常（防止无效构建）
+- ✅ `setParent()`：使用 `checkCircularReference` 完整检查，记录错误但继续执行
+- ✅ 循环引用检测：使用 Set 记录已访问节点，防止无限循环
+- ⚠️ 注意：两种方法的错误处理策略不同，这是设计选择
+  - `parent()` 在构建时调用，严格检查防止无效实体
+  - `setParent()` 在运行时调用，宽松处理避免程序崩溃
 
 ### 2. 循环引用检测算法
 

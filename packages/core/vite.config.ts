@@ -1,7 +1,6 @@
 import { resolve } from 'path';
 import { defineConfig, type PluginOption } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
-import legacy from '@vitejs/plugin-legacy';
 import ip from 'ip';
 import { getSWCPlugin } from '../../scripts/rollup-config-helper';
 import { fileURLToPath } from 'url';
@@ -10,8 +9,25 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(async ({ mode, command }) => {
   const development = mode === 'development';
+  const plugins: PluginOption[] = [
+    getSWCPlugin({
+      baseUrl: resolve(__dirname, '..', '..'),
+    }) as PluginOption,
+    tsconfigPaths() as PluginOption,
+    configureServerPlugin() as PluginOption,
+  ];
+
+  if (command === 'build') {
+    const { default: legacy } = await import('@vitejs/plugin-legacy');
+    plugins.unshift(
+      legacy({
+        targets: ['iOS >= 9'],
+        modernPolyfills: ['es/global-this'],
+      }) as PluginOption
+    );
+  }
 
   return {
     base: './',
@@ -37,18 +53,7 @@ export default defineConfig(({ mode }) => {
       __VERSION__: 0,
       __DEBUG__: development,
     },
-    plugins: [
-      legacy({
-        targets: ['iOS >= 9'],
-        modernPolyfills: ['es/global-this'],
-      }) as PluginOption,
-      // glslInner(),
-      getSWCPlugin({
-        baseUrl: resolve(__dirname, '..', '..'),
-      }) as PluginOption,
-      tsconfigPaths() as PluginOption,
-      configureServerPlugin() as PluginOption,
-    ],
+    plugins,
     resolve: {
       alias: {
         '@maxellabs/core': resolve(__dirname, '../core/src'),

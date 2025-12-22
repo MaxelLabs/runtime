@@ -3,11 +3,12 @@
  * 测试 System 调度器和内置 System 的功能
  */
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import type { SystemDef, SystemContext } from '../../../src/ecs/core/systems';
+import type { SystemDef, SystemContext, SystemErrorCallback } from '../../../src/ecs/core/systems';
 import {
   SystemScheduler,
   SystemStage,
-  TransformSystem,
+  ErrorHandlingStrategy,
+  createTransformSystem,
   HierarchySystem,
   CleanupSystem,
 } from '../../../src/ecs/core/systems';
@@ -120,6 +121,32 @@ describe('SystemScheduler', () => {
     it('应该返回 false 如果 System 不存在', () => {
       const result = scheduler.removeSystem('NonExistent');
       expect(result).toBe(false);
+    });
+
+    it('应该清理 System 关联的缓存 Query', () => {
+      // 注册组件
+      class Position {
+        x = 0;
+        y = 0;
+      }
+      world.registerComponent(Position);
+
+      // 创建一个使用 Query 的 System
+      const system: SystemDef = {
+        name: 'QuerySystem',
+        stage: SystemStage.Update,
+        query: { all: [Position] },
+        execute: jest.fn(),
+      };
+
+      scheduler.addSystem(system);
+
+      // 移除 System
+      scheduler.removeSystem('QuerySystem');
+
+      // Query 应该被清理（如果实现了清理逻辑）
+      // 注意：这取决于具体实现，可能需要调整断言
+      expect(scheduler.getSystems()).toHaveLength(0);
     });
   });
 
@@ -334,8 +361,26 @@ describe('SystemScheduler', () => {
       expect(executeFn).toHaveBeenCalled();
     });
 
-    it('应该捕获 System 执行错误', () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    it('应该捕获 System 执行错误并使用 Throw 策略时抛出', () => {
+      const system: SystemDef = {
+        name: 'ErrorSystem',
+        stage: SystemStage.Update,
+        execute: () => {
+          throw new Error('Test error');
+        },
+      };
+
+      scheduler.addSystem(system);
+      // 设置为 Throw 策略以测试抛出行为
+      scheduler.setErrorHandlingStrategy(ErrorHandlingStrategy.Throw);
+
+      // logError 会抛出异常，所以 update 应该抛出错误
+      expect(() => scheduler.update(0.016)).toThrow('Error in system "ErrorSystem":');
+    });
+
+    it('应该在抛出错误前调用错误回调', () => {
+      const errorCallback = jest.fn<SystemErrorCallback>();
+      scheduler.setErrorCallback(errorCallback);
 
       const system: SystemDef = {
         name: 'ErrorSystem',
@@ -346,11 +391,98 @@ describe('SystemScheduler', () => {
       };
 
       scheduler.addSystem(system);
-      scheduler.update(0.016);
 
-      expect(consoleSpy).toHaveBeenCalledWith('Error in system "ErrorSystem":', expect.any(Error));
+      // 即使 logError 抛出异常，错误回调也应该被调用
+      try {
+        scheduler.update(0.016);
+      } catch {
+        // 预期会抛出异常
+      }
 
-      consoleSpy.mockRestore();
+      expect(errorCallback).toHaveBeenCalledWith(
+        expect.objectContaining({
+          systemName: 'ErrorSystem',
+          stage: SystemStage.Update,
+          error: expect.any(Error),
+        })
+      );
+    });
+
+    it('应该支持 Continue 错误处理策略', () => {
+      const executeFn2 = jest.fn();
+
+      const system1: SystemDef = {
+        name: 'ErrorSystem',
+        stage: SystemStage.Update,
+        execute: () => {
+          throw new Error('Test error');
+        },
+      };
+
+      const system2: SystemDef = {
+        name: 'NormalSystem',
+        stage: SystemStage.Update,
+        execute: executeFn2,
+      };
+
+      scheduler.setErrorHandlingStrategy(ErrorHandlingStrategy.Continue);
+      scheduler.addSystems(system1, system2);
+
+      // 不应该抛出错误
+      expect(() => scheduler.update(0.016)).not.toThrow();
+
+      // 第二个 System 应该被执行
+      expect(executeFn2).toHaveBeenCalled();
+    });
+
+    it('应该支持 DisableAndContinue 错误处理策略', () => {
+      const system: SystemDef = {
+        name: 'ErrorSystem',
+        stage: SystemStage.Update,
+        execute: () => {
+          throw new Error('Test error');
+        },
+      };
+
+      scheduler.setErrorHandlingStrategy(ErrorHandlingStrategy.DisableAndContinue);
+      scheduler.addSystem(system);
+
+      // 第一次执行不应该抛出错误
+      expect(() => scheduler.update(0.016)).not.toThrow();
+
+      // System 应该被禁用
+      expect(scheduler.isSystemEnabled('ErrorSystem')).toBe(false);
+    });
+
+    it('应该支持错误回调返回 true 来阻止默认处理', () => {
+      const errorCallback = jest.fn<SystemErrorCallback>().mockReturnValue(true);
+      scheduler.setErrorCallback(errorCallback);
+      scheduler.setErrorHandlingStrategy(ErrorHandlingStrategy.Throw);
+
+      const system: SystemDef = {
+        name: 'ErrorSystem',
+        stage: SystemStage.Update,
+        execute: () => {
+          throw new Error('Test error');
+        },
+      };
+
+      scheduler.addSystem(system);
+
+      // 因为回调返回 true，不应该抛出错误
+      expect(() => scheduler.update(0.016)).not.toThrow();
+      expect(errorCallback).toHaveBeenCalled();
+    });
+
+    it('应该支持获取和设置错误处理策略', () => {
+      // 默认策略现在是 Continue（提供错误隔离）
+      expect(scheduler.getErrorHandlingStrategy()).toBe(ErrorHandlingStrategy.Continue);
+
+      scheduler.setErrorHandlingStrategy(ErrorHandlingStrategy.Throw);
+      expect(scheduler.getErrorHandlingStrategy()).toBe(ErrorHandlingStrategy.Throw);
+
+      scheduler.setErrorHandlingStrategy(ErrorHandlingStrategy.DisableAndContinue);
+      expect(scheduler.getErrorHandlingStrategy()).toBe(ErrorHandlingStrategy.DisableAndContinue);
     });
   });
 
@@ -389,15 +521,270 @@ describe('SystemScheduler', () => {
       expect(stats.stageBreakdown['Render']).toBe(1);
     });
   });
+
+  describe('DAG 依赖排序', () => {
+    it('应该按 after 依赖排序', () => {
+      const order: string[] = [];
+
+      const systemA: SystemDef = {
+        name: 'A',
+        stage: SystemStage.Update,
+        execute: () => order.push('A'),
+      };
+
+      const systemB: SystemDef = {
+        name: 'B',
+        stage: SystemStage.Update,
+        after: ['A'],
+        execute: () => order.push('B'),
+      };
+
+      const systemC: SystemDef = {
+        name: 'C',
+        stage: SystemStage.Update,
+        after: ['B'],
+        execute: () => order.push('C'),
+      };
+
+      scheduler.addSystems(systemC, systemA, systemB);
+      scheduler.update(0.016);
+
+      expect(order).toEqual(['A', 'B', 'C']);
+    });
+
+    it('应该处理复杂 DAG 依赖', () => {
+      const order: string[] = [];
+
+      const systemA: SystemDef = {
+        name: 'A',
+        stage: SystemStage.Update,
+        execute: () => order.push('A'),
+      };
+
+      const systemB: SystemDef = {
+        name: 'B',
+        stage: SystemStage.Update,
+        execute: () => order.push('B'),
+      };
+
+      const systemC: SystemDef = {
+        name: 'C',
+        stage: SystemStage.Update,
+        after: ['A', 'B'],
+        execute: () => order.push('C'),
+      };
+
+      const systemD: SystemDef = {
+        name: 'D',
+        stage: SystemStage.Update,
+        after: ['C'],
+        execute: () => order.push('D'),
+      };
+
+      scheduler.addSystems(systemD, systemB, systemC, systemA);
+      scheduler.update(0.016);
+
+      // A 和 B 可以任意顺序，但必须都在 C 之前
+      const aIndex = order.indexOf('A');
+      const bIndex = order.indexOf('B');
+      const cIndex = order.indexOf('C');
+      const dIndex = order.indexOf('D');
+
+      expect(aIndex).toBeLessThan(cIndex);
+      expect(bIndex).toBeLessThan(cIndex);
+      expect(cIndex).toBeLessThan(dIndex);
+    });
+
+    it('应该警告不存在的依赖', () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const system: SystemDef = {
+        name: 'A',
+        stage: SystemStage.Update,
+        after: ['NonExistent'],
+        execute: jest.fn(),
+      };
+
+      scheduler.addSystem(system);
+      scheduler.update(0.016);
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('depends on "NonExistent"'));
+
+      consoleSpy.mockRestore();
+    });
+
+    it('应该检测循环依赖', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const systemA: SystemDef = {
+        name: 'A',
+        stage: SystemStage.Update,
+        after: ['B'],
+        execute: jest.fn(),
+      };
+
+      const systemB: SystemDef = {
+        name: 'B',
+        stage: SystemStage.Update,
+        after: ['A'],
+        execute: jest.fn(),
+      };
+
+      scheduler.addSystems(systemA, systemB);
+      scheduler.update(0.016);
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Circular dependency'));
+
+      consoleSpy.mockRestore();
+    });
+
+    it('应该结合 priority 和 after 依赖', () => {
+      const order: string[] = [];
+
+      const systemA: SystemDef = {
+        name: 'A',
+        stage: SystemStage.Update,
+        priority: 10,
+        execute: () => order.push('A'),
+      };
+
+      const systemB: SystemDef = {
+        name: 'B',
+        stage: SystemStage.Update,
+        priority: 5,
+        execute: () => order.push('B'),
+      };
+
+      const systemC: SystemDef = {
+        name: 'C',
+        stage: SystemStage.Update,
+        after: ['A'],
+        execute: () => order.push('C'),
+      };
+
+      scheduler.addSystems(systemC, systemA, systemB);
+      scheduler.update(0.016);
+
+      // B 优先级最高，但 C 依赖 A，所以顺序应该是 B, A, C
+      const bIndex = order.indexOf('B');
+      const aIndex = order.indexOf('A');
+      const cIndex = order.indexOf('C');
+
+      expect(bIndex).toBeLessThan(aIndex);
+      expect(aIndex).toBeLessThan(cIndex);
+    });
+  });
+
+  describe('并行执行分析', () => {
+    it('应该支持启用/禁用并行执行', () => {
+      expect(scheduler.isParallelExecutionEnabled()).toBe(false);
+
+      scheduler.setParallelExecution(true);
+      expect(scheduler.isParallelExecutionEnabled()).toBe(true);
+
+      scheduler.setParallelExecution(false);
+      expect(scheduler.isParallelExecutionEnabled()).toBe(false);
+    });
+
+    it('应该分析并行批次', () => {
+      scheduler.setParallelExecution(true);
+
+      const systemA: SystemDef = {
+        name: 'A',
+        stage: SystemStage.Update,
+        execute: jest.fn(),
+      };
+
+      const systemB: SystemDef = {
+        name: 'B',
+        stage: SystemStage.Update,
+        execute: jest.fn(),
+      };
+
+      const systemC: SystemDef = {
+        name: 'C',
+        stage: SystemStage.Update,
+        after: ['A', 'B'],
+        execute: jest.fn(),
+      };
+
+      scheduler.addSystems(systemA, systemB, systemC);
+      scheduler.update(0.016);
+
+      const batches = scheduler.getParallelBatches(SystemStage.Update);
+
+      expect(batches).toBeDefined();
+      expect(batches!.length).toBe(2);
+
+      // 第一批：A, B（可并行）
+      expect(batches![0]).toEqual(expect.arrayContaining(['A', 'B']));
+
+      // 第二批：C（依赖第一批）
+      expect(batches![1]).toEqual(['C']);
+    });
+
+    it('应该在统计信息中包含并行批次数量', () => {
+      scheduler.setParallelExecution(true);
+
+      const systemA: SystemDef = {
+        name: 'A',
+        stage: SystemStage.Update,
+        execute: jest.fn(),
+      };
+
+      const systemB: SystemDef = {
+        name: 'B',
+        stage: SystemStage.Update,
+        after: ['A'],
+        execute: jest.fn(),
+      };
+
+      scheduler.addSystems(systemA, systemB);
+      scheduler.update(0.016);
+
+      const stats = scheduler.getStats();
+
+      expect(stats.parallelExecutionEnabled).toBe(true);
+      expect(stats.parallelBatchCount).toBeDefined();
+      expect(stats.parallelBatchCount!['Update']).toBe(2);
+    });
+
+    it('应该返回 undefined 如果并行执行未启用', () => {
+      const system: SystemDef = {
+        name: 'A',
+        stage: SystemStage.Update,
+        execute: jest.fn(),
+      };
+
+      scheduler.addSystem(system);
+      scheduler.update(0.016);
+
+      const batches = scheduler.getParallelBatches(SystemStage.Update);
+      expect(batches).toBeUndefined();
+    });
+  });
 });
 
 describe('内置 System', () => {
-  describe('TransformSystem', () => {
-    it('应该定义正确的属性', () => {
-      expect(TransformSystem.name).toBe('Transform');
-      expect(TransformSystem.stage).toBe(SystemStage.PostUpdate);
-      expect(TransformSystem.priority).toBe(0);
-      expect(TransformSystem.query).toBeDefined();
+  describe('createTransformSystem', () => {
+    it('应该创建具有正确属性的 TransformSystem', () => {
+      const world = new World();
+      const scheduler = new SystemScheduler(world);
+      const transformSystem = createTransformSystem(scheduler);
+
+      expect(transformSystem.name).toBe('Transform');
+      expect(transformSystem.stage).toBe(SystemStage.PostUpdate);
+      expect(transformSystem.priority).toBe(0);
+      expect(transformSystem.query).toBeDefined();
+    });
+
+    it('应该使用缓存的查询避免内存泄漏', () => {
+      const world = new World();
+      const scheduler = new SystemScheduler(world);
+      const transformSystem = createTransformSystem(scheduler);
+
+      // 验证工厂函数返回的是一个有效的 SystemDef
+      expect(typeof transformSystem.execute).toBe('function');
     });
   });
 

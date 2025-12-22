@@ -2,330 +2,232 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>RHI Demo - Maxellabs 3D Engine</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <link rel="stylesheet" href="https://gw.alipayobjects.com/as/g/antui/antui/10.1.32/dpl/antui.css"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>@maxellabs/core ECS Demo</title>
+  <link rel="stylesheet" href="css/demo-styles.css">
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      margin: 0;
-      padding: 20px;
-      min-height: 100vh;
-    }
-    
-    .header {
-      text-align: center;
-      color: white;
-      margin-bottom: 40px;
-    }
-    
-    .header h1 {
-      font-size: 2.5em;
-      margin: 0;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-    
-    .header p {
-      font-size: 1.2em;
-      margin: 10px 0;
-      opacity: 0.9;
-    }
-    
-    .demo-grid {
+    .demo-gallery {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-      max-width: 1200px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+      padding: 24px;
+      max-width: 1400px;
       margin: 0 auto;
     }
-    
     .demo-card {
-      background: rgba(255, 255, 255, 0.95);
+      background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+      border: 1px solid #333;
       border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 24px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
     }
-    
     .demo-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+      transform: translateY(-4px);
+      border-color: #61dafb;
+      box-shadow: 0 8px 24px rgba(97, 218, 251, 0.15);
     }
-    
-    .demo-card h3 {
-      margin: 0 0 10px 0;
-      color: #333;
-      font-size: 1.3em;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .demo-card-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
     }
-    
-    .demo-card p {
-      color: #666;
+    .demo-card-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #61dafb;
+      margin-bottom: 8px;
+    }
+    .demo-card-description {
+      font-size: 14px;
+      color: #888;
       line-height: 1.6;
-      margin: 10px 0;
     }
-    
-    .demo-card .tech-tags {
+    .demo-card-tags {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
-      margin: 15px 0;
+      gap: 8px;
+      margin-top: 16px;
     }
-    
-    .tech-tag {
-      background: #f0f0f0;
-      color: #555;
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 0.8em;
-      font-weight: 500;
-    }
-    
-    .demo-link {
-      display: inline-block;
-      background: linear-gradient(45deg, #667eea, #764ba2);
-      color: white;
-      padding: 12px 24px;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      margin-top: 10px;
-    }
-    
-    .demo-link:hover {
-      background: linear-gradient(45deg, #764ba2, #667eea);
-      transform: scale(1.05);
-      text-decoration: none;
-      color: white;
-    }
-    
-    .category {
-      grid-column: 1 / -1;
-      text-align: center;
-      margin: 30px 0 10px 0;
-    }
-    
-    .category h2 {
-      color: white;
-      font-size: 1.8em;
-      margin: 0;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-    
-    .difficulty {
-      display: inline-block;
+    .demo-tag {
+      font-size: 11px;
       padding: 4px 8px;
       border-radius: 4px;
-      font-size: 0.8em;
+      background: #333;
+      color: #aaa;
+    }
+    .demo-tag.core { background: #4caf50; color: #fff; }
+    .demo-tag.system { background: #2196f3; color: #fff; }
+    .demo-tag.query { background: #ff9800; color: #000; }
+    .demo-tag.builder { background: #9c27b0; color: #fff; }
+    .hero {
+      text-align: center;
+      padding: 60px 24px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-bottom: 1px solid #333;
+    }
+    .hero-title {
+      font-size: 48px;
       font-weight: bold;
-      margin-left: 10px;
+      color: #61dafb;
+      margin-bottom: 16px;
     }
-    
-    .difficulty.beginner {
-      background: #4CAF50;
-      color: white;
+    .hero-subtitle {
+      font-size: 18px;
+      color: #888;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
     }
-    
-    .difficulty.intermediate {
-      background: #FF9800;
-      color: white;
+    .hero-badge {
+      display: inline-block;
+      margin-top: 24px;
+      padding: 8px 16px;
+      background: #333;
+      border-radius: 20px;
+      font-size: 14px;
+      color: #4caf50;
     }
-    
-    .difficulty.advanced {
-      background: #F44336;
-      color: white;
+    .section-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #fff;
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
     }
-    
     .footer {
       text-align: center;
-      color: white;
-      margin-top: 50px;
-      opacity: 0.8;
+      padding: 40px 24px;
+      color: #666;
+      font-size: 14px;
+      border-top: 1px solid #333;
+      margin-top: 40px;
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>🚀 Core Demo Gallery</h1>
-    <p>Maxellabs 3D Engine - 核心模块演示</p>
-    <p>探索现代图形渲染技术的强大功能</p>
+  <div class="hero">
+    <div class="hero-title">🎮 @maxellabs/core ECS Demo</div>
+    <div class="hero-subtitle">
+      探索 Entity-Component-System 架构的核心功能，包括实体管理、组件系统、查询引擎和调度器
+    </div>
+    <div class="hero-badge">✅ 1037 Tests Passing</div>
   </div>
 
-  <div class="demo-grid">
-    <!-- 基础功能Demo -->
-    <div class="category">
-      <h2>🎯 基础功能Demo</h2>
-    </div>
-    
-    <div class="demo-card">
-      <h3>🔺 三角形渲染 <span class="difficulty beginner">入门</span></h3>
-      <p>最基础的渲染示例，展示如何渲染一个彩色三角形。每个顶点都有不同的颜色，GPU会自动进行颜色插值。</p>
-      <div class="tech-tags">
-        <span class="tech-tag">顶点着色器</span>
-        <span class="tech-tag">片段着色器</span>
-        <span class="tech-tag">顶点缓冲区</span>
-        <span class="tech-tag">颜色插值</span>
+  <div class="section-title">📚 核心功能演示</div>
+
+  <div class="demo-gallery">
+    <!-- World 基础 Demo -->
+    <a href="html/world-basics.html" class="demo-card">
+      <div class="demo-card-icon">🌍</div>
+      <div class="demo-card-title">World 基础</div>
+      <div class="demo-card-description">
+        展示 ECS World 的核心功能：实体创建/销毁、组件添加/移除、基础查询操作。
+        了解 Archetype 如何自动管理实体的组件组合。
       </div>
-      <a class="demo-link" href="html/triangle.html">🎮 运行Demo</a>
-    </div>
-
-    <div class="demo-card">
-      <h3>🎨 纹理映射 <span class="difficulty beginner">入门</span></h3>
-      <p>展示纹理采样和多种纹理效果，包括程序化纹理生成、多纹理混合和动态纹理坐标变换。</p>
-      <div class="tech-tags">
-        <span class="tech-tag">纹理采样</span>
-        <span class="tech-tag">多纹理混合</span>
-        <span class="tech-tag">程序化纹理</span>
-        <span class="tech-tag">动态效果</span>
+      <div class="demo-card-tags">
+        <span class="demo-tag core">Core</span>
+        <span class="demo-tag">Entity</span>
+        <span class="demo-tag">Component</span>
       </div>
-      <a class="demo-link" href="html/texture.html">🎮 运行Demo</a>
-    </div>
+    </a>
 
-    <div class="demo-card">
-      <h3>⚡ 基础渲染 <span class="difficulty intermediate">中级</span></h3>
-      <p>综合展示基础渲染功能，包括顶点变换、纹理映射、动画效果和用户交互。</p>
-      <div class="tech-tags">
-        <span class="tech-tag">矩阵变换</span>
-        <span class="tech-tag">动画循环</span>
-        <span class="tech-tag">用户交互</span>
-        <span class="tech-tag">实时渲染</span>
+    <!-- System 调度 Demo -->
+    <a href="html/system-scheduler.html" class="demo-card">
+      <div class="demo-card-icon">🔄</div>
+      <div class="demo-card-title">System 调度</div>
+      <div class="demo-card-description">
+        展示 SystemScheduler 的阶段执行、优先级排序、DAG 依赖管理和并行执行分析。
+        理解 System 如何按顺序协调工作。
       </div>
-      <a class="demo-link" href="html/basic.html">🎮 运行Demo</a>
-    </div>
-
-    <div class="demo-card">
-      <h3>🔄 渲染流程概念 <span class="difficulty beginner">入门</span></h3>
-      <p>展示Core包完整渲染流程概念，包括Engine生命周期、Scene管理、Component架构的协作过程。</p>
-      <div class="tech-tags">
-        <span class="tech-tag">Engine核心</span>
-        <span class="tech-tag">Scene管理</span>
-        <span class="tech-tag">组件架构</span>
-        <span class="tech-tag">渲染管线</span>
+      <div class="demo-card-tags">
+        <span class="demo-tag system">System</span>
+        <span class="demo-tag">DAG</span>
+        <span class="demo-tag">Parallel</span>
       </div>
-      <a class="demo-link" href="html/renderFlow.html">🎮 运行Demo</a>
-    </div>
+    </a>
 
-    <!-- 高级渲染Demo -->
-    <div class="category">
-      <h2>🔥 高级渲染Demo</h2>
-    </div>
-
-    <div class="demo-card">
-      <h3>💡 光照模型 <span class="difficulty intermediate">中级</span></h3>
-      <p>展示Phong和PBR光照模型，支持实时参数调整。包括环境光、漫反射、镜面反射和完整的PBR材质计算。</p>
-      <div class="tech-tags">
-        <span class="tech-tag">Phong光照</span>
-        <span class="tech-tag">PBR渲染</span>
-        <span class="tech-tag">法线变换</span>
-        <span class="tech-tag">相机控制</span>
+    <!-- EntityBuilder Demo -->
+    <a href="html/entity-builder.html" class="demo-card">
+      <div class="demo-card-icon">🏗️</div>
+      <div class="demo-card-title">EntityBuilder</div>
+      <div class="demo-card-description">
+        展示 EntityBuilder 的链式 API、内置组件（Position、Rotation、Scale）、
+        标签系统和父子层级关系管理。
       </div>
-      <a class="demo-link" href="html/lighting.html">🎮 运行Demo</a>
-    </div>
-
-    <div class="demo-card">
-      <h3>🌅 阴影映射 <span class="difficulty advanced">高级</span></h3>
-      <p>实时阴影映射技术演示，支持硬阴影、软阴影和PCF滤波。包含阴影贴图可视化和多种阴影质量选项。</p>
-      <div class="tech-tags">
-        <span class="tech-tag">阴影映射</span>
-        <span class="tech-tag">深度纹理</span>
-        <span class="tech-tag">PCF滤波</span>
-        <span class="tech-tag">软阴影</span>
+      <div class="demo-card-tags">
+        <span class="demo-tag builder">Builder</span>
+        <span class="demo-tag">Hierarchy</span>
+        <span class="demo-tag">Tags</span>
       </div>
-      <a class="demo-link" href="html/shadow.html">🎮 运行Demo</a>
-    </div>
+    </a>
 
-    <div class="demo-card">
-      <h3>🔬 延迟渲染 <span class="difficulty advanced">高级</span></h3>
-      <p>延迟渲染管线实现，支持多光源场景和复杂光照计算。展示G-Buffer技术和光照累积过程。</p>
-      <div class="tech-tags">
-        <span class="tech-tag">延迟渲染</span>
-        <span class="tech-tag">G-Buffer</span>
-        <span class="tech-tag">多光源</span>
-        <span class="tech-tag">光照累积</span>
+    <!-- Query 高级用法 Demo -->
+    <a href="html/query-advanced.html" class="demo-card">
+      <div class="demo-card-icon">🔍</div>
+      <div class="demo-card-title">Query 高级用法</div>
+      <div class="demo-card-description">
+        展示 Query 的过滤器组合（all、any、none）、遍历方法（forEach、collect、first）
+        和性能特性。
       </div>
-      <a class="demo-link" href="html/deferred.html">🎮 运行Demo</a>
-    </div>
-
-    <div class="demo-card">
-      <h3>🎭 后处理效果 <span class="difficulty advanced">高级</span></h3>
-      <p>展示各种后处理效果，如泛光、景深、色调映射和抗锯齿技术。支持实时参数调整和效果预览对比。</p>
-      <div class="tech-tags">
-        <span class="tech-tag">泛光效果</span>
-        <span class="tech-tag">景深模糊</span>
-        <span class="tech-tag">色调映射</span>
-        <span class="tech-tag">FXAA</span>
+      <div class="demo-card-tags">
+        <span class="demo-tag query">Query</span>
+        <span class="demo-tag">Filter</span>
+        <span class="demo-tag">Performance</span>
       </div>
-      <a class="demo-link" href="html/postprocess.html">🎮 运行Demo</a>
-    </div>
+    </a>
+  </div>
 
-    <!-- 性能测试Demo -->
-    <div class="category">
-      <h2>⚡ 性能测试Demo</h2>
-    </div>
+  <div class="section-title">📖 技术文档</div>
 
-    <div class="demo-card">
-      <h3>📊 性能基准 <span class="difficulty intermediate">中级</span></h3>
-      <p>渲染性能基准测试，评估不同场景下的渲染性能和GPU利用率。</p>
-      <div class="tech-tags">
-        <span class="tech-tag">性能监控</span>
-        <span class="tech-tag">FPS测试</span>
-        <span class="tech-tag">GPU利用率</span>
-        <span class="tech-tag">内存使用</span>
+  <div class="demo-gallery">
+    <!-- 架构概览 -->
+    <div class="demo-card" style="cursor: default;">
+      <div class="demo-card-icon">📐</div>
+      <div class="demo-card-title">ECS 架构</div>
+      <div class="demo-card-description">
+        <strong>核心模块：</strong><br>
+        • World - 中央调度器<br>
+        • EntityManager - 实体 ID 管理<br>
+        • Archetype - SoA 组件存储<br>
+        • Query - 高效实体查询<br>
+        • SystemScheduler - DAG 调度
       </div>
-      <a class="demo-link" href="html/performance.html" style="opacity: 0.6; pointer-events: none;">🚧 开发中</a>
     </div>
 
-    <div class="demo-card">
-      <h3>🔄 实例化渲染 <span class="difficulty advanced">高级</span></h3>
-      <p>展示实例化渲染技术，高效渲染大量相似物体，提升渲染性能。</p>
-      <div class="tech-tags">
-        <span class="tech-tag">实例化</span>
-        <span class="tech-tag">批处理</span>
-        <span class="tech-tag">GPU实例</span>
-        <span class="tech-tag">性能优化</span>
+    <!-- API 参考 -->
+    <div class="demo-card" style="cursor: default;">
+      <div class="demo-card-icon">📚</div>
+      <div class="demo-card-title">API 参考</div>
+      <div class="demo-card-description">
+        <strong>主要类型：</strong><br>
+        • EntityId - 32位实体标识<br>
+        • ComponentClass - 组件类型<br>
+        • QueryFilter - 查询过滤器<br>
+        • SystemDef - System 定义<br>
+        • SystemStage - 执行阶段
       </div>
-      <a class="demo-link" href="html/instancing.html" style="opacity: 0.6; pointer-events: none;">🚧 开发中</a>
+    </div>
+
+    <!-- 性能优化 -->
+    <div class="demo-card" style="cursor: default;">
+      <div class="demo-card-icon">⚡</div>
+      <div class="demo-card-title">性能优化</div>
+      <div class="demo-card-description">
+        <strong>优化策略：</strong><br>
+        • SoA 内存布局提升缓存命中<br>
+        • Archetype 分组减少查询开销<br>
+        • Query 缓存避免重复计算<br>
+        • DAG 拓扑排序优化执行顺序
+      </div>
     </div>
   </div>
 
   <div class="footer">
-    <p>💻 基于 Maxellabs 3D Engine RHI 构建</p>
-    <p>🔧 支持 WebGL 2.0 / WebGPU</p>
-    <p>📚 查看 <a href="README.md" style="color: #FFD93D;">开发规范文档</a> 了解更多</p>
+    <p>@maxellabs/core - 高性能 ECS 框架</p>
+    <p>基于 Archetype 的 SoA 存储 | DAG 调度器 | TypeScript 原生支持</p>
   </div>
-
-  <script>
-    // 添加一些交互效果
-    document.addEventListener('DOMContentLoaded', () => {
-      const cards = document.querySelectorAll('.demo-card');
-      
-      cards.forEach((card, index) => {
-        // 添加进入动画
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-        
-        setTimeout(() => {
-          card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-          card.style.opacity = '1';
-          card.style.transform = 'translateY(0)';
-        }, index * 100);
-      });
-      
-      // 添加点击统计
-      const demoLinks = document.querySelectorAll('.demo-link');
-      demoLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-          const demoName = e.target.closest('.demo-card').querySelector('h3').textContent;
-          console.log(`🎮 启动Demo: ${demoName}`);
-        });
-      });
-    });
-  </script>
 </body>
 </html>
