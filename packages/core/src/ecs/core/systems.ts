@@ -137,9 +137,9 @@ export interface SystemExecutionError {
  * 错误处理策略
  */
 export enum ErrorHandlingStrategy {
-  /** 抛出错误，中断执行（默认行为） */
+  /** 抛出错误，中断执行 */
   Throw = 'throw',
-  /** 继续执行其他 System */
+  /** 继续执行其他 System（默认行为，提供错误隔离） */
   Continue = 'continue',
   /** 禁用出错的 System 并继续执行 */
   DisableAndContinue = 'disable-and-continue',
@@ -173,7 +173,7 @@ export class SystemScheduler {
 
   // 错误处理
   private errorCallback?: SystemErrorCallback;
-  private errorHandlingStrategy: ErrorHandlingStrategy = ErrorHandlingStrategy.Throw;
+  private errorHandlingStrategy: ErrorHandlingStrategy = ErrorHandlingStrategy.Continue;
 
   // 缓存的内部查询（避免每帧创建新 Query）
   private cachedQueries: Map<string, Query> = new Map();
@@ -359,19 +359,24 @@ export class SystemScheduler {
   /**
    * 并行执行阶段（按批次）
    * @remarks
-   * 同一批次内的 System 可以并行执行（无依赖冲突）
+   * 同一批次内的 System 理论上可以并行执行（无依赖冲突）
    * 不同批次之间必须串行执行（有依赖关系）
    *
-   * **当前实现**:
-   * - 同步 System：串行执行（JavaScript 单线程限制）
-   * - 异步 System：使用 Promise.all 实现真正的并发执行
+   * **当前实现限制**:
+   * JavaScript 是单线程的，当前实现仍然是串行执行。
+   * 启用并行执行模式的主要价值在于：
+   * 1. 明确表达 System 之间的依赖关系
+   * 2. 为未来的 Web Worker 支持做准备
+   * 3. 提供并行批次分析信息用于调试和优化
    *
    * **未来计划**:
    * - 使用 Web Workers 实现 CPU 密集型 System 的真正并行
+   * - 支持异步 System 的并发执行（如果 System 返回 Promise）
    */
   private executeStageParallel(stage: SystemStage, ctx: SystemContext, batches: Array<RegisteredSystem[]>): void {
+    // 注意：由于 JavaScript 单线程限制，当前实现仍然是串行执行
+    // 批次信息主要用于依赖分析和未来的 Web Worker 支持
     for (const batch of batches) {
-      // 同一批次内的 System 可以并行执行
       this.executeSystems(batch, ctx, stage);
     }
   }
@@ -635,9 +640,12 @@ export class SystemScheduler {
    * 设置错误处理策略
    * @param strategy 错误处理策略
    * @remarks
-   * - `Throw`: 抛出错误，中断当前帧的执行（默认行为）
-   * - `Continue`: 记录错误但继续执行其他 System
+   * - `Continue`: 记录错误但继续执行其他 System（默认行为，提供错误隔离）
+   * - `Throw`: 抛出错误，中断当前帧的执行
    * - `DisableAndContinue`: 禁用出错的 System 并继续执行
+   *
+   * 默认使用 `Continue` 策略，确保单个 System 的错误不会影响其他 System 的执行。
+   * 如果需要严格的错误处理（如开发环境），可以切换到 `Throw` 策略。
    *
    * 注意：如果设置了错误回调且回调返回 `true`，则不会应用此策略。
    */

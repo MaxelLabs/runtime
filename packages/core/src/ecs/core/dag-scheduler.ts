@@ -84,9 +84,7 @@ export interface ParallelBatch<T> {
 export class DAGScheduler<T> {
   private nodes = new Map<string, DAGNode<T>>();
 
-  // 缓存机制：避免重复复制节点
-  private cachedNodesCopy: Map<string, DAGNode<T>> | null = null;
-  private cacheVersion: number = 0;
+  // 缓存版本控制：用于检测节点是否发生变化
   private currentVersion: number = 0;
 
   /**
@@ -99,26 +97,11 @@ export class DAGScheduler<T> {
 
   /**
    * 复制节点数据（避免修改原始数据）
-   * 使用缓存机制优化性能，避免重复复制
+   * 直接从原始数据创建副本，避免双重复制的性能开销
    * @returns 节点副本的 Map
    */
   private copyNodes(): Map<string, DAGNode<T>> {
-    // 如果缓存有效，直接返回缓存的副本的副本（因为算法会修改副本）
-    if (this.cachedNodesCopy && this.cacheVersion === this.currentVersion) {
-      // 从缓存创建新副本（浅复制 + Set 复制）
-      const nodesCopy = new Map<string, DAGNode<T>>();
-      for (const [id, node] of this.cachedNodesCopy) {
-        nodesCopy.set(id, {
-          id: node.id,
-          data: node.data,
-          dependencies: new Set(node.dependencies),
-          dependents: new Set(node.dependents),
-        });
-      }
-      return nodesCopy;
-    }
-
-    // 创建新的缓存
+    // 直接从原始数据创建副本（浅复制 + Set 复制）
     const nodesCopy = new Map<string, DAGNode<T>>();
     for (const [id, node] of this.nodes) {
       nodesCopy.set(id, {
@@ -128,22 +111,7 @@ export class DAGScheduler<T> {
         dependents: new Set(node.dependents),
       });
     }
-
-    // 更新缓存
-    this.cachedNodesCopy = nodesCopy;
-    this.cacheVersion = this.currentVersion;
-
-    // 返回缓存的副本的副本
-    const result = new Map<string, DAGNode<T>>();
-    for (const [id, node] of nodesCopy) {
-      result.set(id, {
-        id: node.id,
-        data: node.data,
-        dependencies: new Set(node.dependencies),
-        dependents: new Set(node.dependents),
-      });
-    }
-    return result;
+    return nodesCopy;
   }
 
   /**
