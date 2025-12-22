@@ -62,7 +62,9 @@ describe('Visual Components', () => {
 
     it('should store enabled flag', () => {
       const mat = MaterialRef.fromData({ assetId: 'mat', enabled: false });
-      expect(mat.enabled).toBe(false);
+      // 注意：由于 MaterialRef 继承自 Component，enabled 属性与基类冲突，
+      // 所以 IMaterialRef.enabled 被映射到 materialEnabled 属性
+      expect(mat.materialEnabled).toBe(false);
     });
   });
 

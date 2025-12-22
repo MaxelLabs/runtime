@@ -17,12 +17,13 @@
  */
 
 import type { IName, ITag, ITags, IDisabled, IMetadata, IStatic } from '@maxellabs/specification';
+import { Component } from '../base';
 
 /**
  * Name Component - 名称组件
- * @description 实现 IName 接口,存储实体的可读名称
+ * @description 继承 Component 基类，实现 IName 接口，存储实体的可读名称
  */
-export class Name implements IName {
+export class Name extends Component implements IName {
   /** 名称值 */
   value: string = '';
 
@@ -36,13 +37,23 @@ export class Name implements IName {
     component.value = data.value;
     return component;
   }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 Name 实例
+   */
+  override clone(): Name {
+    const cloned = new Name();
+    cloned.value = this.value;
+    return cloned;
+  }
 }
 
 /**
  * Tag Component - 标签组件
- * @description 实现 ITag 接口,为实体添加单个字符串标签
+ * @description 继承 Component 基类，实现 ITag 接口，为实体添加单个字符串标签
  */
-export class Tag implements ITag {
+export class Tag extends Component implements ITag {
   /** 标签值 */
   value: string = '';
 
@@ -56,13 +67,23 @@ export class Tag implements ITag {
     component.value = data.value;
     return component;
   }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 Tag 实例
+   */
+  override clone(): Tag {
+    const cloned = new Tag();
+    cloned.value = this.value;
+    return cloned;
+  }
 }
 
 /**
  * Tags Component - 多标签组件
- * @description 实现 ITags 接口,为实体添加多个标签
+ * @description 继承 Component 基类，实现 ITags 接口，为实体添加多个标签
  */
-export class Tags implements ITags {
+export class Tags extends Component implements ITags {
   /** 标签集合 */
   values: string[] = [];
 
@@ -76,16 +97,23 @@ export class Tags implements ITags {
     component.values = [...data.values];
     return component;
   }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 Tags 实例
+   */
+  override clone(): Tags {
+    const cloned = new Tags();
+    cloned.values = [...this.values];
+    return cloned;
+  }
 }
 
 /**
  * Metadata Component - 元数据组件
- * @description 实现 IMetadata 接口,存储实体的元数据信息
+ * @description 继承 Component 基类，实现 IMetadata 接口，存储实体的元数据信息
  */
-export class Metadata implements IMetadata {
-  /** 名称 */
-  name?: string;
-
+export class Metadata extends Component implements IMetadata {
   /** 描述 */
   description?: string;
 
@@ -116,13 +144,34 @@ export class Metadata implements IMetadata {
     }
     return component;
   }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 Metadata 实例
+   */
+  override clone(): Metadata {
+    const cloned = new Metadata();
+    if (this.name !== undefined) {
+      cloned.name = this.name;
+    }
+    if (this.description !== undefined) {
+      cloned.description = this.description;
+    }
+    if (this.tags !== undefined) {
+      cloned.tags = [...this.tags];
+    }
+    if (this.customData !== undefined) {
+      cloned.customData = { ...this.customData };
+    }
+    return cloned;
+  }
 }
 
 /**
  * Disabled Component - 禁用组件
- * @description 实现 IDisabled 接口,标记实体被禁用
+ * @description 继承 Component 基类，实现 IDisabled 接口，标记实体被禁用
  */
-export class Disabled implements IDisabled {
+export class Disabled extends Component implements IDisabled {
   /** 禁用原因 */
   reason?: string;
 
@@ -138,11 +187,23 @@ export class Disabled implements IDisabled {
     }
     return component;
   }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 Disabled 实例
+   */
+  override clone(): Disabled {
+    const cloned = new Disabled();
+    if (this.reason !== undefined) {
+      cloned.reason = this.reason;
+    }
+    return cloned;
+  }
 }
 
 /**
  * Static Component - 静态标记组件
- * @description 实现 IStatic 接口,标记实体为静态 (变换不会改变,可以优化)
+ * @description 继承 Component 基类，实现 IStatic 接��，标记实体为静态 (变换不会改变,可以优化)
  *
  * @remarks
  * 这是一个纯标记组件（Tag Component），不包含任何数据字段。
@@ -160,7 +221,7 @@ export class Disabled implements IDisabled {
  * const staticTag = Static.fromData();
  * ```
  */
-export class Static implements IStatic {
+export class Static extends Component implements IStatic {
   /**
    * 创建 Static 组件实例
    *
@@ -171,6 +232,14 @@ export class Static implements IStatic {
    * @returns Static 组件实例
    */
   static fromData(): Static {
+    return new Static();
+  }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 Static 实例
+   */
+  override clone(): Static {
     return new Static();
   }
 }

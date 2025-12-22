@@ -19,9 +19,6 @@
 // // 几何体系统
 // export * from './geometry';
 
-// // 组件系统
-// export * from './components';
-
 // // 材质系统
 // export * from './material';
 
@@ -39,6 +36,19 @@
 
 // ECS 系统
 export * from './ecs';
+
+export * from './base';
+
+export * from './events';
+
+export * from './infrastructure';
+
+export * from './utils';
+
+export * from './components';
+
+// RHI 系统
+export * from './rhi';
 
 // 数学库
 export * as MMath from '@maxellabs/math';

@@ -3,4 +3,4 @@
  * @packageDocumentation
  */
 
-export { Component, type IComponentData } from './component';
+export * from './component';

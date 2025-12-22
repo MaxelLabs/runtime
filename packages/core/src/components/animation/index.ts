@@ -5,28 +5,23 @@
  * @packageDocumentation
  *
  * @remarks
- * ## 设计决策：fromData 接受 Specification 接口类型
+ * ## 设计决策
  *
- * 所有组件的 `fromData()` 方法直接接受 Specification 中定义的接口类型（如 `IAnimationState`），
- * 而不是 `Partial<T>` 类型。这是基于以下考虑：
- *
- * 1. **类型安全**: Specification 接口定义了数据的完整契约，fromData 应该验证输入符合契约
- * 2. **数据来源明确**: 组件数据通常来自序列化的场景文件或 API，这些数据应该是完整的
- * 3. **职责分离**: 如果需要部分数据创建，应该在调用方处理默认值，而不是在组件内部
- * 4. **与 Specification 对齐**: 保持与 specification 包的类型一致性
- *
- * 如果确实需要从部分数据创建组件，可以：
- * - 使用 `new Component()` 创建默认实例，然后手动赋值
- * - 在调用方使用展开运算符合并默认值：`Component.fromData({ ...defaults, ...partialData })`
+ * 所有动画组件都继承自 Component 基类，提供：
+ * - 引用计数管理（继承自 ReferResource）
+ * - 组件启用/禁用状态
+ * - 组件脏标记（用于优化更新）
+ * - 组件所属实体引用
  */
 
 import type { IAnimationState, IAnimationClipRef, ITimeline, ITweenState, EasingType } from '@maxellabs/specification';
+import { Component } from '../base';
 
 /**
  * AnimationState Component - 动画状态组件
- * @description 实现 IAnimationState 接口,存储实体的动画播放状态
+ * @description 继承 Component 基类，实现 IAnimationState 接口，存储实体的动画播放状态
  */
-export class AnimationState implements IAnimationState {
+export class AnimationState extends Component implements IAnimationState {
   /** 当前播放的动画 ID */
   currentClipId: string = '';
 
@@ -67,13 +62,27 @@ export class AnimationState implements IAnimationState {
     component.playing = data.playing;
     return component;
   }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 AnimationState 实例
+   */
+  override clone(): AnimationState {
+    const cloned = new AnimationState();
+    cloned.currentClipId = this.currentClipId;
+    cloned.time = this.time;
+    cloned.speed = this.speed;
+    cloned.loop = this.loop;
+    cloned.playing = this.playing;
+    return cloned;
+  }
 }
 
 /**
  * AnimationClipRef Component - 动画片段引用组件
- * @description 实现 IAnimationClipRef 接口,引用外部动画资源
+ * @description 继承 Component 基类，实现 IAnimationClipRef 接口，引用外部动画资源
  */
-export class AnimationClipRef implements IAnimationClipRef {
+export class AnimationClipRef extends Component implements IAnimationClipRef {
   /** 动画资源 ID */
   assetId: string = '';
 
@@ -91,13 +100,24 @@ export class AnimationClipRef implements IAnimationClipRef {
     component.duration = data.duration;
     return component;
   }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 AnimationClipRef 实例
+   */
+  override clone(): AnimationClipRef {
+    const cloned = new AnimationClipRef();
+    cloned.assetId = this.assetId;
+    cloned.duration = this.duration;
+    return cloned;
+  }
 }
 
 /**
  * Timeline Component - 时间轴组件
- * @description 实现 ITimeline 接口,存储多个动画轨道的时间轴数据
+ * @description 继承 Component 基类，实现 ITimeline 接口，存储多个动画轨道的时间轴数据
  */
-export class Timeline implements ITimeline {
+export class Timeline extends Component implements ITimeline {
   /** 当前时间 (秒) */
   currentTime: number = 0;
 
@@ -127,6 +147,20 @@ export class Timeline implements ITimeline {
     component.trackIds = [...data.trackIds];
     return component;
   }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 Timeline 实例
+   */
+  override clone(): Timeline {
+    const cloned = new Timeline();
+    cloned.currentTime = this.currentTime;
+    cloned.duration = this.duration;
+    cloned.playing = this.playing;
+    cloned.speed = this.speed;
+    cloned.trackIds = [...this.trackIds];
+    return cloned;
+  }
 }
 
 // 重新导出 EasingType
@@ -134,9 +168,9 @@ export type { EasingType };
 
 /**
  * TweenState Component - 补间动画状态组件
- * @description 实现 ITweenState 接口,简单的属性补间动画状态
+ * @description 继承 Component 基类，实现 ITweenState 接口，简单的属性补间动画状态
  */
-export class TweenState implements ITweenState {
+export class TweenState extends Component implements ITweenState {
   /** 起始值 */
   from: number = 0;
 
@@ -169,5 +203,20 @@ export class TweenState implements ITweenState {
     component.easing = data.easing;
     component.playing = data.playing;
     return component;
+  }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 TweenState 实例
+   */
+  override clone(): TweenState {
+    const cloned = new TweenState();
+    cloned.from = this.from;
+    cloned.to = this.to;
+    cloned.progress = this.progress;
+    cloned.duration = this.duration;
+    cloned.easing = this.easing;
+    cloned.playing = this.playing;
+    return cloned;
   }
 }

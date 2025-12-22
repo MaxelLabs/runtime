@@ -85,7 +85,9 @@ describe('Data Components', () => {
 
     it('should handle empty IMetadata data', () => {
       const metadata = Metadata.fromData({});
-      expect(metadata.name).toBeUndefined();
+      // 注意：由于 Metadata 继承自 Component（继承自 MaxObject），
+      // name 属性有默认值 ''（空字符串），而不是 undefined
+      expect(metadata.name).toBe('');
       expect(metadata.description).toBeUndefined();
       expect(metadata.tags).toBeUndefined();
       expect(metadata.customData).toBeUndefined();
@@ -113,13 +115,13 @@ describe('Data Components', () => {
     });
 
     it('should create marker component from IStatic data', () => {
-      const data: IStatic = {};
-      const staticMark = Static.fromData(data);
+      // Static 是标记组件，fromData 不需要参数
+      const staticMark = Static.fromData();
       expect(staticMark).toBeInstanceOf(Static);
     });
 
     it('should create marker component', () => {
-      const staticMark = Static.fromData({});
+      const staticMark = Static.fromData();
       expect(staticMark).toBeInstanceOf(Static);
     });
   });

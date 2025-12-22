@@ -28,22 +28,22 @@
  */
 
 // Base Component - 组件基类
-export { Component, type IComponentData } from './base';
+export * from './base';
 
 // Transform Components - 变换相关组件
-export { LocalTransform, WorldTransform, Parent, Children } from './transform';
+export * from './transform';
 
 // Visual Components - 视觉渲染相关组件
-export { MeshRef, MaterialRef, TextureRef, Color, Visible, Layer, CastShadow, ReceiveShadow } from './visual';
+export * from './visual';
 
 // Data Components - 元数据和标签组件
-export { Name, Tag, Tags, Metadata, Disabled, Static } from './data';
+export * from './data';
 
 // Physics Components - 物理模拟相关组件
-export { Velocity, Acceleration, AngularVelocity, Mass, Gravity, Damping } from './physics';
+export * from './physics';
 
 // Animation Components - 动画相关组件
-export { AnimationState, AnimationClipRef, Timeline, TweenState } from './animation';
+export * from './animation';
 
 /**
  * 组件类型辅助类型

@@ -5,19 +5,21 @@
  * @packageDocumentation
  *
  * @remarks
- * ## 设计决策：fromData 接受 Specification 接口类型
+ * ## 设计决策：fromData 接受 Partial<T> 类型
  *
- * 所有组件的 `fromData()` 方法直接接受 Specification 中定义的接口类型（如 `ITransform`），
- * 而不是 `Partial<T>` 类型。这是基于以下考虑：
+ * 所有组件的 `fromData()` 方法接受 `Partial<T>` 类型，允许从部分数据创建组件。
+ * 这是基于以下考虑：
  *
- * 1. **类型安全**: Specification 接口定义了数据的完整契约，fromData 应该验证输入符合契约
- * 2. **数据来源明确**: 组件数据通常来自序列化的场景文件或 API，这些数据应该是完整的
- * 3. **职责分离**: 如果需要部分数据创建，应该在调用方处理默认值，而不是在组件内部
- * 4. **与 Specification 对齐**: 保持与 specification 包的类型一致性
+ * 1. **灵活性**: 允许调用方只提供需要修改的字段，其他字段使用默认值
+ * 2. **实际使用场景**: 组件数据可能来自不完整的序列化数据或增量更新
+ * 3. **防御性编程**: 实现中使用空值检查，确保即使传入不完整数据也不会导致运行时错误
+ * 4. **类型安全**: 使用 `Partial<T>` 明确表达了方法可以接受部分数据的意图
  *
- * 如果确实需要从部分数据创建组件，可以：
- * - 使用 `new Component()` 创建默认实例，然后手动赋值
- * - 在调用方使用展开运算符合并默认值：`Component.fromData({ ...defaults, ...partialData })`
+ * 所有组件都继承自 Component 基类，提供：
+ * - 引用计数管理（继承自 ReferResource）
+ * - 组件启用/禁用状态
+ * - 组件脏标记（用于优化更新）
+ * - 组件所属实体引用
  */
 
 import type {
@@ -29,12 +31,13 @@ import type {
   Matrix4Like,
   TransformSpace,
 } from '@maxellabs/specification';
+import { Component } from '../base';
 
 /**
  * LocalTransform Component - 本地变换组件
- * @description 实现 ITransform 接口,存储实体的本地空间变换
+ * @description 继承 Component 基类，实现 ITransform 接口，存储实体的本地空间变换
  */
-export class LocalTransform implements ITransform {
+export class LocalTransform extends Component implements ITransform {
   /** 位置 */
   position: Vector3Like = { x: 0, y: 0, z: 0 };
 
@@ -53,19 +56,27 @@ export class LocalTransform implements ITransform {
   /** 变换空间 (可选) */
   space?: TransformSpace;
 
-  /** 脏标记 (ECS 优化用) */
-  dirty: boolean = true;
-
   /**
-   * 从 ITransform 规范数据创建组件
-   * @param data ITransform 规范数据
+   * 从部分 ITransform 规范数据创建组件
+   * @param data 部分 ITransform 规范数据，缺失字段将使用默认值
    * @returns LocalTransform 组件实例
    *
    * @remarks
-   * 此方法会对输入数据进行空值检查，如果必需字段缺失则使用默认值。
-   * 这确保了即使传入不完整的数据也不会导致运行时错误。
+   * 此方法接受部分数据，对输入进行空值检查，缺失字段使用默认值：
+   * - position: 默认 { x: 0, y: 0, z: 0 }
+   * - rotation: 默认 { x: 0, y: 0, z: 0, w: 1 }（单位四元数）
+   * - scale: 默认 { x: 1, y: 1, z: 1 }
+   *
+   * @example
+   * ```typescript
+   * // 只设置位置，其他使用默认值
+   * const transform = LocalTransform.fromData({ position: { x: 1, y: 2, z: 3 } });
+   *
+   * // 创建默认变换
+   * const defaultTransform = LocalTransform.fromData({});
+   * ```
    */
-  static fromData(data: ITransform): LocalTransform {
+  static fromData(data: Partial<ITransform>): LocalTransform {
     const component = new LocalTransform();
 
     // 位置：使用空值检查，缺失时使用默认值
@@ -109,15 +120,39 @@ export class LocalTransform implements ITransform {
       component.space = data.space;
     }
 
+    // 标记为脏，需要更新
+    component.markDirty();
+
     return component;
+  }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 LocalTransform 实例
+   */
+  override clone(): LocalTransform {
+    const cloned = new LocalTransform();
+    cloned.position = { ...this.position };
+    cloned.rotation = { ...this.rotation };
+    cloned.scale = { ...this.scale };
+    if (this.matrix) {
+      cloned.matrix = { ...this.matrix };
+    }
+    if (this.anchor) {
+      cloned.anchor = { ...this.anchor };
+    }
+    if (this.space !== undefined) {
+      cloned.space = this.space;
+    }
+    return cloned;
   }
 }
 
 /**
  * WorldTransform Component - 世界变换组件
- * @description 实现 ITransform 接口,存储计算后的世界空间变换
+ * @description 继承 Component 基类，实现 ITransform 接口，存储计算后的世界空间变换
  */
-export class WorldTransform implements ITransform {
+export class WorldTransform extends Component implements ITransform {
   /** 世界位置 */
   position: Vector3Like = { x: 0, y: 0, z: 0 };
 
@@ -134,14 +169,26 @@ export class WorldTransform implements ITransform {
   space?: TransformSpace;
 
   /**
-   * 从 ITransform 规范数据创建组件
-   * @param data ITransform 规范数据
+   * 从部分 ITransform 规范数据��建组件
+   * @param data 部分 ITransform 规范数据，缺失字段将使用默认值
    * @returns WorldTransform 组件实例
    *
    * @remarks
-   * 此方法会对输入数据进行空值检查，如果必需字段缺失则使用默认值。
+   * 此方法接受部分数据，对输入进行空值检查，缺失字段使用默认值：
+   * - position: 默认 { x: 0, y: 0, z: 0 }
+   * - rotation: 默认 { x: 0, y: 0, z: 0, w: 1 }（单位四元数）
+   * - scale: 默认 { x: 1, y: 1, z: 1 }
+   *
+   * @example
+   * ```typescript
+   * // 只设置位置，其他使用默认值
+   * const transform = WorldTransform.fromData({ position: { x: 1, y: 2, z: 3 } });
+   *
+   * // 创建默认变换
+   * const defaultTransform = WorldTransform.fromData({});
+   * ```
    */
-  static fromData(data: ITransform): WorldTransform {
+  static fromData(data: Partial<ITransform>): WorldTransform {
     const component = new WorldTransform();
 
     // 位置：使用空值检查，缺失时使用默认值
@@ -183,13 +230,31 @@ export class WorldTransform implements ITransform {
 
     return component;
   }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 WorldTransform 实例
+   */
+  override clone(): WorldTransform {
+    const cloned = new WorldTransform();
+    cloned.position = { ...this.position };
+    cloned.rotation = { ...this.rotation };
+    cloned.scale = { ...this.scale };
+    if (this.matrix) {
+      cloned.matrix = { ...this.matrix };
+    }
+    if (this.space !== undefined) {
+      cloned.space = this.space;
+    }
+    return cloned;
+  }
 }
 
 /**
  * Parent Component - 父级组件
- * @description 实现 IParent 接口,存储父级实体引用
+ * @description 继承 Component 基类，实现 IParent 接口，存储父级实体引用
  */
-export class Parent implements IParent {
+export class Parent extends Component implements IParent {
   /** 父级实体 ID */
   entity: number = -1;
 
@@ -203,13 +268,23 @@ export class Parent implements IParent {
     component.entity = data.entity;
     return component;
   }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 Parent 实例
+   */
+  override clone(): Parent {
+    const cloned = new Parent();
+    cloned.entity = this.entity;
+    return cloned;
+  }
 }
 
 /**
  * Children Component - 子级组件
- * @description 实现 IChildren 接口,存储子级实体列表
+ * @description 继承 Component 基类，实现 IChildren 接口，存储子级实体列表
  */
-export class Children implements IChildren {
+export class Children extends Component implements IChildren {
   /** 子级实体 ID 列表 */
   entities: number[] = [];
 
@@ -222,5 +297,15 @@ export class Children implements IChildren {
     const component = new Children();
     component.entities = [...data.entities];
     return component;
+  }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 Children 实例
+   */
+  override clone(): Children {
+    const cloned = new Children();
+    cloned.entities = [...this.entities];
+    return cloned;
   }
 }

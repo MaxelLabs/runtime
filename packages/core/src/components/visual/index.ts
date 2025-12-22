@@ -32,12 +32,13 @@ import type {
   ICastShadow,
   IReceiveShadow,
 } from '@maxellabs/specification';
+import { Component } from '../base/component';
 
 /**
  * MeshRef Component - 网格引用组件
- * @description 实现 IMeshRef 接口,引用外部网格资源
+ * @description 继承 Component 基类，实现 IMeshRef 接口，引用外部网格资源
  */
-export class MeshRef implements IMeshRef {
+export class MeshRef extends Component implements IMeshRef {
   /** 网格资源 ID */
   assetId: string = '';
 
@@ -63,21 +64,37 @@ export class MeshRef implements IMeshRef {
     }
     return component;
   }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 MeshRef 实例
+   */
+  override clone(): MeshRef {
+    const cloned = new MeshRef();
+    cloned.assetId = this.assetId;
+    if (this.meshName !== undefined) {
+      cloned.meshName = this.meshName;
+    }
+    if (this.submeshIndex !== undefined) {
+      cloned.submeshIndex = this.submeshIndex;
+    }
+    return cloned;
+  }
 }
 
 /**
  * MaterialRef Component - 材质引用组件
- * @description 实现 IMaterialRef 接口,引用外部材质资源
+ * @description 继承 Component 基类，实现 IMaterialRef 接口，引用外部材质资源
  */
-export class MaterialRef implements IMaterialRef {
+export class MaterialRef extends Component implements IMaterialRef {
   /** 材质资源 ID */
   assetId: string = '';
 
   /** 材质参数覆盖 */
   overrides?: Record<string, unknown>;
 
-  /** 是否启用 */
-  enabled?: boolean;
+  /** 材质是否启用（注意：这是 IMaterialRef 接口的属性，与 Component.enabled 不同） */
+  materialEnabled?: boolean;
 
   /**
    * 从 IMaterialRef 规范数据创建组件
@@ -91,17 +108,33 @@ export class MaterialRef implements IMaterialRef {
       component.overrides = { ...data.overrides };
     }
     if (data.enabled !== undefined) {
-      component.enabled = data.enabled;
+      component.materialEnabled = data.enabled;
     }
     return component;
+  }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 MaterialRef 实例
+   */
+  override clone(): MaterialRef {
+    const cloned = new MaterialRef();
+    cloned.assetId = this.assetId;
+    if (this.overrides !== undefined) {
+      cloned.overrides = { ...this.overrides };
+    }
+    if (this.materialEnabled !== undefined) {
+      cloned.materialEnabled = this.materialEnabled;
+    }
+    return cloned;
   }
 }
 
 /**
  * TextureRef Component - 纹理引用组件
- * @description 实现 BaseTextureRef 接口,引用外部纹理资源
+ * @description 继承 Component 基类，实现 BaseTextureRef 接口，引用外部纹理资源
  */
-export class TextureRef implements BaseTextureRef {
+export class TextureRef extends Component implements BaseTextureRef {
   /** 纹理资源 ID */
   assetId: string = '';
 
@@ -151,13 +184,42 @@ export class TextureRef implements BaseTextureRef {
     }
     return component;
   }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 TextureRef 实例
+   */
+  override clone(): TextureRef {
+    const cloned = new TextureRef();
+    cloned.assetId = this.assetId;
+    if (this.slot !== undefined) {
+      cloned.slot = this.slot;
+    }
+    if (this.uvChannel !== undefined) {
+      cloned.uvChannel = this.uvChannel;
+    }
+    if (this.transform !== undefined) {
+      cloned.transform = {
+        scale: this.transform.scale ? { ...this.transform.scale } : undefined,
+        offset: this.transform.offset ? { ...this.transform.offset } : undefined,
+        rotation: this.transform.rotation,
+      };
+    }
+    if (this.sampler !== undefined) {
+      cloned.sampler = { ...this.sampler };
+    }
+    if (this.intensity !== undefined) {
+      cloned.intensity = this.intensity;
+    }
+    return cloned;
+  }
 }
 
 /**
  * Color Component - 颜色组件
- * @description 实现 ColorLike 接口, RGBA 颜色数据
+ * @description 继承 Component 基类，实现 ColorLike 接口，RGBA 颜色数据
  */
-export class Color implements ColorLike {
+export class Color extends Component implements ColorLike {
   /** 红色通道 (0-1) */
   r: number = 1;
 
@@ -183,13 +245,26 @@ export class Color implements ColorLike {
     component.a = data.a;
     return component;
   }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 Color 实例
+   */
+  override clone(): Color {
+    const cloned = new Color();
+    cloned.r = this.r;
+    cloned.g = this.g;
+    cloned.b = this.b;
+    cloned.a = this.a;
+    return cloned;
+  }
 }
 
 /**
  * Visible Component - 可见性组件
- * @description 实现 IVisible 接口,控制实体渲染可见性
+ * @description 继承 Component 基类，实现 IVisible 接口，控制实体渲染可见性
  */
-export class Visible implements IVisible {
+export class Visible extends Component implements IVisible {
   /** 是否可见 */
   value: boolean = true;
 
@@ -203,13 +278,23 @@ export class Visible implements IVisible {
     component.value = data.value;
     return component;
   }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 Visible 实例
+   */
+  override clone(): Visible {
+    const cloned = new Visible();
+    cloned.value = this.value;
+    return cloned;
+  }
 }
 
 /**
  * Layer Component - 渲染层级组件
- * @description 实现 ILayer 接口,控制实体所属渲染层
+ * @description 继承 Component 基类，实现 ILayer 接口，控制实体所属渲染层
  */
-export class Layer implements ILayer {
+export class Layer extends Component implements ILayer {
   /** 层级掩码 (32位) */
   mask: number = 1;
 
@@ -223,13 +308,23 @@ export class Layer implements ILayer {
     component.mask = data.mask;
     return component;
   }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 Layer 实例
+   */
+  override clone(): Layer {
+    const cloned = new Layer();
+    cloned.mask = this.mask;
+    return cloned;
+  }
 }
 
 /**
  * CastShadow Component - 投射阴影组件
- * @description 实现 ICastShadow 接口,控制实体是否投射阴影
+ * @description 继承 Component 基类，实现 ICastShadow 接口，控制实体是否投射阴影
  */
-export class CastShadow implements ICastShadow {
+export class CastShadow extends Component implements ICastShadow {
   /** 是否投射阴影 */
   value: boolean = true;
 
@@ -243,13 +338,23 @@ export class CastShadow implements ICastShadow {
     component.value = data.value;
     return component;
   }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 CastShadow 实例
+   */
+  override clone(): CastShadow {
+    const cloned = new CastShadow();
+    cloned.value = this.value;
+    return cloned;
+  }
 }
 
 /**
  * ReceiveShadow Component - 接收阴影组件
- * @description 实现 IReceiveShadow 接口,控制实体是否接收阴影
+ * @description 继承 Component 基类，实现 IReceiveShadow 接口，控制实体是否接收阴影
  */
-export class ReceiveShadow implements IReceiveShadow {
+export class ReceiveShadow extends Component implements IReceiveShadow {
   /** 是否接收阴影 */
   value: boolean = true;
 
@@ -262,5 +367,15 @@ export class ReceiveShadow implements IReceiveShadow {
     const component = new ReceiveShadow();
     component.value = data.value;
     return component;
+  }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的 ReceiveShadow 实例
+   */
+  override clone(): ReceiveShadow {
+    const cloned = new ReceiveShadow();
+    cloned.value = this.value;
+    return cloned;
   }
 }

@@ -5,7 +5,7 @@
  * @packageDocumentation
  */
 
-import { ReferResource } from '../../ecs/base/refer-resource';
+import { ReferResource } from '../../base';
 
 /**
  * 组件数据接口

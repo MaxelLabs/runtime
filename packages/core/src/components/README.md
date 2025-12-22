@@ -1,14 +1,15 @@
 # ECS 数据组件
 
-> **面向数据的组件设计** - 纯数据结构(POD)组件,配合静态 `fromData()` 方法实现数据解析
+> **面向数据的组件设计** - 所有组件继承 Component 基类，配合静态 `fromData()` 方法实现数据解析
 
 ## 📂 目录结构
 
 ```
 components/
-├── transform/          # 变换组件 (Position, Rotation, Scale, etc.)
-├── visual/             # 视觉组件 (Mesh, Material, Color, etc.)
-├── data/               # 数据组件 (Metadata, Tags, etc.)
+├── base/               # 基类 (Component)
+├── transform/          # 变换组件 (LocalTransform, WorldTransform, Parent, Children)
+├── visual/             # 视觉组件 (MeshRef, MaterialRef, Color, etc.)
+├── data/               # 数据组件 (Name, Tag, Tags, Metadata, etc.)
 ├── animation/          # 动画组件 (AnimationState, Timeline, etc.)
 ├── physics/            # 物理组件 (Velocity, RigidBody, etc.)
 └── index.ts            # 统一导出
@@ -16,82 +17,90 @@ components/
 
 ## 🎯 设计原则
 
-### 1. 组件是纯数据结构(POD)
+### 1. 所有组件继承 Component 基类
 
 ```typescript
-// ✅ 正确: 纯数据结构
-class Position {
-  x: number = 0;
-  y: number = 0;
-  z: number = 0;
+import { Component } from '../base/component';
+import type { ITransform } from '@maxellabs/specification';
 
-  static fromData(data: Partial<Position>): Position {
-    const pos = new Position();
-    if (data.x !== undefined) pos.x = data.x;
-    if (data.y !== undefined) pos.y = data.y;
-    if (data.z !== undefined) pos.z = data.z;
-    return pos;
+// ✅ 正确: 继承 Component 基类，实现 Specification 接口
+class LocalTransform extends Component implements ITransform {
+  position: Vector3Like = { x: 0, y: 0, z: 0 };
+  rotation: QuaternionLike = { x: 0, y: 0, z: 0, w: 1 };
+  scale: Vector3Like = { x: 1, y: 1, z: 1 };
+
+  static fromData(data: ITransform): LocalTransform {
+    const component = new LocalTransform();
+    if (data.position) {
+      component.position = { ...data.position };
+    }
+    // ... 其他字段
+    return component;
+  }
+
+  override clone(): LocalTransform {
+    const cloned = new LocalTransform();
+    cloned.position = { ...this.position };
+    // ... 其他字段
+    return cloned;
   }
 }
 
-// ❌ 错误: 包含业务逻辑
+// ❌ 错误: 不继承 Component 基类
 class BadPosition {
   x: number = 0;
-
-  // 不应该有方法逻辑
-  normalize(): void { ... }
-  update(delta: number): void { ... }
+  y: number = 0;
+  z: number = 0;
 }
 ```
 
 ### 2. 使用静态 fromData() 方法
 
-每个组件类必须实现 `static fromData()` 方法用于数据解析:
+每个组件类必须实现 `static fromData()` 方法用于数据解析，接受 Specification 接口类型：
 
 ```typescript
-interface ComponentFromData<T> {
+interface IComponentFactory<T, D> {
   /**
-   * 从数据对象创建组件实例
-   * @param data 部分数据对象
+   * 从 Specification 接口数据创建组件实例
+   * @param data Specification 接口数据
    * @returns 完整的组件实例
    */
-  fromData(data: Partial<T>): T;
+  fromData(data: D): T;
 }
 ```
 
-### 3. 支持部分数据(Partial)
+### 3. fromData 接受 Specification 接口类型
 
-`fromData()` 接收 `Partial<T>` 类型,允许只提供部分字段:
+`fromData()` 接收 Specification 中定义的接口类型（如 `ITransform`、`IName`），而不是 `Partial<T>` 类型：
 
 ```typescript
-// 完整数据
-const pos1 = Position.fromData({ x: 10, y: 20, z: 30 });
+import type { ITransform, IName } from '@maxellabs/specification';
 
-// 部分数据 (使用默认值)
-const pos2 = Position.fromData({ x: 10 }); // y=0, z=0
+// ✅ 正确: 使用 Specification 接口类型
+static fromData(data: ITransform): LocalTransform { ... }
+static fromData(data: IName): Name { ... }
 
-// 空数据 (全部默认值)
-const pos3 = Position.fromData({}); // x=0, y=0, z=0
+// ❌ 错误: 使用 Partial<T>
+static fromData(data: Partial<LocalTransform>): LocalTransform { ... }
 ```
 
-### 4. 类型安全
+**设计理由：**
+1. **类型安全**: Specification 接口定义了数据���完整契约
+2. **数据来源明确**: 组件数据通常来自序列化的场景文件或 API
+3. **职责分离**: 如果需要部分数据创建，应该在调用方处理默认值
+4. **与 Specification 对齐**: 保持与 specification 包的类型一致性
 
-使用 TypeScript 泛型确保类型安全:
+### 4. 必须实现 clone() 方法
+
+每个组件必须重写 `clone()` 方法以支持深拷贝：
 
 ```typescript
-// 泛型辅助类型
-type ComponentData<T> = Partial<T>;
-
-// 使用示例
-function createEntity<T>(
-  world: World,
-  componentType: ComponentClass<T>,
-  data: ComponentData<T>
-): EntityId {
-  const entity = world.createEntity();
-  const component = (componentType as any).fromData(data);
-  world.addComponent(entity, componentType, component);
-  return entity;
+override clone(): LocalTransform {
+  const cloned = new LocalTransform();
+  cloned.position = { ...this.position };
+  cloned.rotation = { ...this.rotation };
+  cloned.scale = { ...this.scale };
+  return cloned;
 }
 ```
 
@@ -100,30 +109,45 @@ function createEntity<T>(
 ### 基础组件模板
 
 ```typescript
+import { Component } from '../base/component';
+import type { IMyData } from '@maxellabs/specification';
+
 /**
  * 组件名称
- * @description 组件功能描述
+ * @description 继承 Component 基类，实现 IMyData 接口
  */
-export class MyComponent {
+export class MyComponent extends Component implements IMyData {
   // 字段定义 (必须有默认值)
   field1: number = 0;
   field2: string = '';
   field3: boolean = false;
 
   /**
-   * 从数据创建组件实例
-   * @param data 部分数据对象
+   * 从 Specification 数据创建组件实例
+   * @param data IMyData 规范数据
    * @returns 组件实例
    */
-  static fromData(data: Partial<MyComponent>): MyComponent {
+  static fromData(data: IMyData): MyComponent {
     const component = new MyComponent();
 
-    // 方式1: 逐字段赋值 (类型安全)
+    // 逐字段赋值 (类型安全)
     if (data.field1 !== undefined) component.field1 = data.field1;
     if (data.field2 !== undefined) component.field2 = data.field2;
     if (data.field3 !== undefined) component.field3 = data.field3;
 
     return component;
+  }
+
+  /**
+   * 克隆组件
+   * @returns 克隆的组件实例
+   */
+  override clone(): MyComponent {
+    const cloned = new MyComponent();
+    cloned.field1 = this.field1;
+    cloned.field2 = this.field2;
+    cloned.field3 = this.field3;
+    return cloned;
   }
 }
 ```
@@ -131,17 +155,18 @@ export class MyComponent {
 ### 复杂组件模板
 
 ```typescript
-import { Vector3 } from '@maxellabs/math';
+import { Component } from '../base/component';
+import type { IComplexData, Vector3Like } from '@maxellabs/specification';
 
 /**
  * 复杂组件 (包含嵌套对象)
  */
-export class ComplexComponent {
+export class ComplexComponent extends Component implements IComplexData {
   name: string = '';
-  position: Vector3 = new Vector3(0, 0, 0);
-  metadata: Record<string, any> = {};
+  position: Vector3Like = { x: 0, y: 0, z: 0 };
+  metadata: Record<string, unknown> = {};
 
-  static fromData(data: Partial<ComplexComponent>): ComplexComponent {
+  static fromData(data: IComplexData): ComplexComponent {
     const component = new ComplexComponent();
 
     if (data.name !== undefined) {
@@ -150,19 +175,27 @@ export class ComplexComponent {
 
     // 嵌套对象: 深拷贝
     if (data.position !== undefined) {
-      component.position.set(
-        data.position.x ?? 0,
-        data.position.y ?? 0,
-        data.position.z ?? 0
-      );
+      component.position = {
+        x: data.position.x ?? 0,
+        y: data.position.y ?? 0,
+        z: data.position.z ?? 0,
+      };
     }
 
-    // 复杂对象: 浅拷贝或深拷贝
+    // 复杂对象: 浅拷贝
     if (data.metadata !== undefined) {
       component.metadata = { ...data.metadata };
     }
 
     return component;
+  }
+
+  override clone(): ComplexComponent {
+    const cloned = new ComplexComponent();
+    cloned.name = this.name;
+    cloned.position = { ...this.position };
+    cloned.metadata = { ...this.metadata };
+    return cloned;
   }
 }
 ```
@@ -172,34 +205,52 @@ export class ComplexComponent {
 ### 禁止事项
 
 - 🚫 **不要在组件中定义业务逻辑方法** - 逻辑应该在 System 中实现
-- 🚫 **不要在组件中存储 Entity 引用** - 使用查询系统获取相关实体
-- 🚫 **不要在组件中使用继承** - 使用组合而非继承
+- 🚫 **不要忘记继承 Component 基类** - 所有组件必须继承 Component
 - 🚫 **不要忘记提供默认值** - 所有字段必须有默认值
 - 🚫 **不要在 fromData 中做复杂计算** - 保持简单的数据赋值
+- 🚫 **不要忘记实现 clone() 方法** - 必须支持深拷贝
+- 🚫 **不要使用 Partial<T> 作为 fromData 参数** - 使用 Specification 接口类型
 
 ### 常见错误
 
 ```typescript
+// ❌ 错误: 没有继承 Component 基类
+class BadComponent1 implements IMyData {
+  value: number = 0;
+}
+
 // ❌ 错误: 没有默认值
-class BadComponent1 {
+class BadComponent2 extends Component {
   value: number; // 错误! 必须有默认值
 }
 
 // ❌ 错误: 包含业务逻辑
-class BadComponent2 {
+class BadComponent3 extends Component {
   value: number = 0;
 
-  calculate(): void { ... } // 错误! 不应该有方法
+  calculate(): void { ... } // 错误! 不应该有方法（clone 除外）
 }
 
-// ❌ 错误: 存储引用
-class BadComponent3 {
-  target: EntityId; // 错误! 不应该存储实体引用
+// ❌ 错误: 使用 Partial<T> 作为参数类型
+class BadComponent4 extends Component {
+  static fromData(data: Partial<BadComponent4>): BadComponent4 { ... }
 }
 
-// ✅ 正确: 使用组合
-class GoodComponent {
-  targetTag: string = ''; // 通过标签查找
+// ✅ 正确: 继承 Component，使用 Specification 接口
+class GoodComponent extends Component implements IMyData {
+  value: number = 0;
+
+  static fromData(data: IMyData): GoodComponent {
+    const component = new GoodComponent();
+    component.value = data.value;
+    return component;
+  }
+
+  override clone(): GoodComponent {
+    const cloned = new GoodComponent();
+    cloned.value = this.value;
+    return cloned;
+  }
 }
 ```
 
@@ -209,46 +260,49 @@ class GoodComponent {
 
 ```typescript
 import { World } from '@maxellabs/core';
-import { Position, Velocity, MeshRef } from '@maxellabs/core/components';
+import { LocalTransform, MeshRef } from '@maxellabs/core/components';
+import type { ITransform, IMeshRef } from '@maxellabs/specification';
 
 const world = new World();
 
-// 方式1: 使用 fromData
+// 方式1: 使用 fromData（推荐）
 const entity1 = world.createEntity();
-world.addComponent(entity1, Position, Position.fromData({ x: 10, y: 0, z: 0 }));
-world.addComponent(entity1, Velocity, Velocity.fromData({ x: 1, y: 0, z: 0 }));
+const transformData: ITransform = {
+  position: { x: 10, y: 0, z: 0 },
+  rotation: { x: 0, y: 0, z: 0, w: 1 },
+  scale: { x: 1, y: 1, z: 1 },
+};
+world.addComponent(entity1, LocalTransform, LocalTransform.fromData(transformData));
 
-// 方式2: 直接传递数据 (World 内部调用 fromData)
-const entity2 = world.createEntity();
-world.addComponent(entity2, Position, { x: 20, y: 5, z: 0 });
-world.addComponent(entity2, Velocity, { x: 2, y: 1, z: 0 });
-
-// 方式3: 使用 EntityBuilder
-const entity3 = new EntityBuilder(world)
-  .with(Position, { x: 30, y: 10, z: 0 })
-  .with(Velocity, { x: 3, y: 2, z: 0 })
-  .with(MeshRef, { assetId: 'cube' })
+// 方式2: 使用 EntityBuilder
+const entity2 = new EntityBuilder(world)
+  .with(LocalTransform, LocalTransform.fromData({
+    position: { x: 30, y: 10, z: 0 },
+    rotation: { x: 0, y: 0, z: 0, w: 1 },
+    scale: { x: 1, y: 1, z: 1 },
+  }))
+  .with(MeshRef, MeshRef.fromData({ assetId: 'cube' }))
   .build();
 ```
 
 ### 批量创建
 
 ```typescript
+import type { ITransform, IMeshRef } from '@maxellabs/specification';
+
 // 从配置数据批量创建实体
 interface EntityConfig {
-  position: Partial<Position>;
-  velocity: Partial<Velocity>;
-  mesh?: string;
+  transform: ITransform;
+  mesh?: IMeshRef;
 }
 
 function spawnEntities(world: World, configs: EntityConfig[]): EntityId[] {
   return configs.map(config => {
     const entity = world.createEntity();
-    world.addComponent(entity, Position, Position.fromData(config.position));
-    world.addComponent(entity, Velocity, Velocity.fromData(config.velocity));
+    world.addComponent(entity, LocalTransform, LocalTransform.fromData(config.transform));
 
     if (config.mesh) {
-      world.addComponent(entity, MeshRef, MeshRef.fromData({ assetId: config.mesh }));
+      world.addComponent(entity, MeshRef, MeshRef.fromData(config.mesh));
     }
 
     return entity;
@@ -257,11 +311,34 @@ function spawnEntities(world: World, configs: EntityConfig[]): EntityId[] {
 
 // 使用
 const entities = spawnEntities(world, [
-  { position: { x: 0, y: 0, z: 0 }, velocity: { x: 1, y: 0, z: 0 }, mesh: 'cube' },
-  { position: { x: 10, y: 0, z: 0 }, velocity: { x: -1, y: 0, z: 0 } },
-  { position: { x: 20, y: 0, z: 0 }, velocity: { x: 0, y: 1, z: 0 } },
+  {
+    transform: {
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { x: 0, y: 0, z: 0, w: 1 },
+      scale: { x: 1, y: 1, z: 1 },
+    },
+    mesh: { assetId: 'cube' },
+  },
+  {
+    transform: {
+      position: { x: 10, y: 0, z: 0 },
+      rotation: { x: 0, y: 0, z: 0, w: 1 },
+      scale: { x: 1, y: 1, z: 1 },
+    },
+  },
 ]);
 ```
+
+## 🔧 Component 基类功能
+
+所有组件继承自 `Component` 基类，提供以下功能：
+
+- **引用计数管理** - 继承自 `ReferResource`
+- **启用/禁用状态** - `enabled` 属性
+- **脏标记** - `dirty` 属性和 `markDirty()` / `clearDirty()` 方法
+- **实体关联** - `entityId` 属性
+- **生命周期钩子** - `onAttach()` / `onDetach()` 方法
+- **克隆支持** - `clone()` 方法
 
 ## 🔗 相关文档
 
