@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { SparseSet, SparseMap } from '../../../src/ecs/utils/sparse-set';
+import { SparseSet, SparseMap } from '../../../src/utils/sparse-set';
 
 describe('SparseSet - 稀疏集合', () => {
   let set: SparseSet;

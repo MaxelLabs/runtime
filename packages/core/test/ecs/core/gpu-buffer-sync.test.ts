@@ -10,7 +10,7 @@ import {
   getGlobalGPUSync,
   resetGlobalGPUSync,
   type IRHIDeviceMinimal,
-} from '../../../src/ecs/core/gpu-buffer-sync';
+} from '../../../src/ecs/gpu-buffer-sync';
 
 // Mock RHI Device
 function createMockDevice(): IRHIDeviceMinimal {

@@ -3,16 +3,9 @@
  * 测试 System 调度器和内置 System 的功能
  */
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import type { SystemDef, SystemContext, SystemErrorCallback } from '../../../src/ecs/core/systems';
-import {
-  SystemScheduler,
-  SystemStage,
-  ErrorHandlingStrategy,
-  createTransformSystem,
-  HierarchySystem,
-  CleanupSystem,
-} from '../../../src/ecs/core/systems';
-import { World } from '../../../src/ecs/core/world';
+import type { SystemDef, SystemContext, SystemErrorCallback } from '../../../src/ecs/systems';
+import { SystemScheduler, SystemStage, ErrorHandlingStrategy } from '../../../src/ecs/systems';
+import { World } from '../../../src/ecs/world';
 
 describe('SystemStage', () => {
   it('应该定义所有阶段', () => {
@@ -761,46 +754,6 @@ describe('SystemScheduler', () => {
 
       const batches = scheduler.getParallelBatches(SystemStage.Update);
       expect(batches).toBeUndefined();
-    });
-  });
-});
-
-describe('内置 System', () => {
-  describe('createTransformSystem', () => {
-    it('应该创建具有正确属性的 TransformSystem', () => {
-      const world = new World();
-      const scheduler = new SystemScheduler(world);
-      const transformSystem = createTransformSystem(scheduler);
-
-      expect(transformSystem.name).toBe('Transform');
-      expect(transformSystem.stage).toBe(SystemStage.PostUpdate);
-      expect(transformSystem.priority).toBe(0);
-      expect(transformSystem.query).toBeDefined();
-    });
-
-    it('应该使用缓存的查询避免内存泄漏', () => {
-      const world = new World();
-      const scheduler = new SystemScheduler(world);
-      const transformSystem = createTransformSystem(scheduler);
-
-      // 验证工厂函数返回的是一个有效的 SystemDef
-      expect(typeof transformSystem.execute).toBe('function');
-    });
-  });
-
-  describe('HierarchySystem', () => {
-    it('应该定义正确的属性', () => {
-      expect(HierarchySystem.name).toBe('Hierarchy');
-      expect(HierarchySystem.stage).toBe(SystemStage.PostUpdate);
-      expect(HierarchySystem.priority).toBe(-10);
-    });
-  });
-
-  describe('CleanupSystem', () => {
-    it('应该定义正确的属性', () => {
-      expect(CleanupSystem.name).toBe('Cleanup');
-      expect(CleanupSystem.stage).toBe(SystemStage.FrameEnd);
-      expect(CleanupSystem.priority).toBe(100);
     });
   });
 });

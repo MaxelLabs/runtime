@@ -8,8 +8,8 @@ import {
   TypedComponentStorage,
   NumericComponentTypes,
   createNumericStorage,
-} from '../../../src/ecs/core/typed-component-storage';
-import { EntityId } from '../../../src/ecs/core/entity-id';
+} from '../../../src/ecs/typed-component-storage';
+import { EntityId } from '../../../src/ecs/entity-id';
 
 describe('TypedComponentStorage', () => {
   describe('构造函数', () => {

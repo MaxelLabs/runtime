@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { World } from '../../../src/ecs/core/world';
-import { EntityId } from '../../../src/ecs/core/entity-id';
-import { CommandBuffer } from '../../../src/ecs/core/command-buffer';
+import { World } from '../../../src/ecs/world';
+import { EntityId } from '../../../src/ecs/entity-id';
+import { CommandBuffer } from '../../../src/ecs/command-buffer';
 
 // 测试组件类
 class Position {

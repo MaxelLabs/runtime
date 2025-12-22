@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { EntityId, INVALID_ENTITY, MAX_INDEX } from '../../../src/ecs/core/entity-id';
-import { EntityManager } from '../../../src/ecs/core/entity-manager';
+import { EntityId, INVALID_ENTITY, MAX_INDEX } from '../../../src/ecs/entity-id';
+import { EntityManager } from '../../../src/ecs/entity-manager';
 
 describe('EntityId - 实体ID工具', () => {
   describe('create - 创建ID', () => {

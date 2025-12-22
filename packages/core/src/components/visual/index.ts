@@ -14,10 +14,20 @@
  * 2. **数据来源明确**: 组件数据通常来自序列化的场景文件或 API，这些数据应该是完整的
  * 3. **职责分离**: 如果需要部分数据创建，应该在调用方处理默认值，而不是在组件内部
  * 4. **与 Specification 对齐**: 保持与 specification 包的类型一致性
+ * 5. **API 一致性**: 与 Transform 组件保持相同的设计模式
  *
  * 如果确实需要从部分数据创建组件，可以：
  * - 使用 `new Component()` 创建默认实例，然后手动赋值
  * - 在调用方使用展开运算符合并默认值：`Component.fromData({ ...defaults, ...partialData })`
+ *
+ * ## 关于 enabled 属性命名
+ *
+ * 某些组件（如 MaterialRef）需要区分两种启用状态：
+ * - `enabled`: 继承自 Component 基类，控制组件本身是否启用
+ * - `materialEnabled` 等: 接口定义的特定启用状态
+ *
+ * 为避免命名冲突，specification 包中的接口使用明确的命名（如 `materialEnabled`）
+ * 而不是继承 `Enableable` trait。
  */
 
 import type {
@@ -85,6 +95,17 @@ export class MeshRef extends Component implements IMeshRef {
 /**
  * MaterialRef Component - 材质引用组件
  * @description 继承 Component 基类，实现 IMaterialRef 接口，引用外部材质资源
+ *
+ * @remarks
+ * ## 关于 enabled 属性
+ *
+ * 此组件有两个独立的启用状态：
+ * - `enabled`: 继承自 Component 基类，控制组件本身是否启用
+ * - `materialEnabled`: IMaterialRef 接口定义，控制材质是否启用
+ *
+ * 这两个属性语义不同，不应混淆：
+ * - 当 `enabled = false` 时，整个组件被禁用，系统可能跳过处理此组件
+ * - 当 `materialEnabled = false` 时，组件仍然活跃，但材质效果被禁用
  */
 export class MaterialRef extends Component implements IMaterialRef {
   /** 材质资源 ID */
@@ -93,7 +114,7 @@ export class MaterialRef extends Component implements IMaterialRef {
   /** 材质参数覆盖 */
   overrides?: Record<string, unknown>;
 
-  /** 材质是否启用（注意：这是 IMaterialRef 接口的属性，与 Component.enabled 不同） */
+  /** 材质是否启用（独立于组件的 enabled 状态） */
   materialEnabled?: boolean;
 
   /**
@@ -107,8 +128,8 @@ export class MaterialRef extends Component implements IMaterialRef {
     if (data.overrides !== undefined) {
       component.overrides = { ...data.overrides };
     }
-    if (data.enabled !== undefined) {
-      component.materialEnabled = data.enabled;
+    if (data.materialEnabled !== undefined) {
+      component.materialEnabled = data.materialEnabled;
     }
     return component;
   }
@@ -188,6 +209,8 @@ export class TextureRef extends Component implements BaseTextureRef {
   /**
    * 克隆组件
    * @returns 克隆的 TextureRef 实例
+   * @remarks
+   * 使用深拷贝确保嵌套对象不会共享引用
    */
   override clone(): TextureRef {
     const cloned = new TextureRef();
@@ -206,7 +229,14 @@ export class TextureRef extends Component implements BaseTextureRef {
       };
     }
     if (this.sampler !== undefined) {
-      cloned.sampler = { ...this.sampler };
+      // 深拷贝 sampler 对象，确保所有属性都被复制
+      // TextureSampler 接口定义的属性：wrapS, wrapT, minFilter, magFilter
+      cloned.sampler = {
+        wrapS: this.sampler.wrapS,
+        wrapT: this.sampler.wrapT,
+        minFilter: this.sampler.minFilter,
+        magFilter: this.sampler.magFilter,
+      };
     }
     if (this.intensity !== undefined) {
       cloned.intensity = this.intensity;

@@ -3,9 +3,9 @@
  * 测试延迟命令队列功能
  */
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { CommandBuffer } from '../../../src/ecs/core/command-buffer';
-import { World } from '../../../src/ecs/core/world';
-import type { EntityId } from '../../../src/ecs/core/entity-id';
+import { CommandBuffer } from '../../../src/ecs/command-buffer';
+import { World } from '../../../src/ecs/world';
+import type { EntityId } from '../../../src/ecs/entity-id';
 
 // 测试用组件
 class Position {

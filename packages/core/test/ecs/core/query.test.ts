@@ -4,11 +4,11 @@
  */
 import { describe, it, expect } from '@jest/globals';
 
-import type { QueryFilter } from '../../../src/ecs/core/query';
-import { Query } from '../../../src/ecs/core/query';
-import { Archetype } from '../../../src/ecs/core/archetype';
-import { BitSet } from '../../../src/ecs/utils/bitset';
-import { EntityId } from '../../../src/ecs/core/entity-id';
+import type { QueryFilter } from '../../../src/ecs/query';
+import { Query } from '../../../src/ecs/query';
+import { Archetype } from '../../../src/ecs/archetype';
+import { BitSet } from '../../../src/utils/bitset';
+import { EntityId } from '../../../src/ecs/entity-id';
 
 // 模拟组件类
 class Position {

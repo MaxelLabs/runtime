@@ -13,8 +13,8 @@ import {
   PerformanceMonitor,
   Debug,
   globalPerformanceMonitor,
-} from '../../../src/ecs/core/debug-tools';
-import { World } from '../../../src/ecs/core/world';
+} from '../../../src/ecs/debug-tools';
+import { World } from '../../../src/ecs/world';
 import {
   Name,
   Tag,
@@ -25,7 +25,7 @@ import {
   Children,
   Active,
   extendWorld,
-} from '../../../src/ecs/core/entity-builder';
+} from '../../../src/ecs/entity-builder';
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 
 describe('Debug Tools', () => {

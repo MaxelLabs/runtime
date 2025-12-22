@@ -4,9 +4,9 @@
  */
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import type { EventListener } from '../../../src/ecs/events/event-dispatcher';
-import { EventDispatcher } from '../../../src/ecs/events/event-dispatcher';
-import type { Event } from '../../../src/ecs/events/event';
+import type { EventListener } from '../../../src/events/event-dispatcher';
+import { EventDispatcher } from '../../../src/events/event-dispatcher';
+import type { Event } from '../../../src/events/event';
 
 describe('EventDispatcher - 事件分发器', () => {
   let dispatcher: EventDispatcher;

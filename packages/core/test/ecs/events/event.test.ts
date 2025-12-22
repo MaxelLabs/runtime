@@ -3,7 +3,7 @@
  * 测试基本事件对象功能
  */
 import { describe, it, expect } from '@jest/globals';
-import { Event } from '../../../src/ecs/events/event';
+import { Event } from '../../../src/events/event';
 
 describe('Event', () => {
   describe('构造函数', () => {

@@ -10,7 +10,7 @@ import {
   getAncestors,
   getHierarchyDepth,
   findCommonAncestor,
-} from '../../../src/ecs/utils/hierarchy-utils';
+} from '../../../src/utils/hierarchy-utils';
 
 // 测试用节点类
 class TestNode {

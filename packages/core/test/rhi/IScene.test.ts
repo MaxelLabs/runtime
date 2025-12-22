@@ -12,10 +12,10 @@ import type {
   SceneEventListener,
   SceneOptions,
 } from '../../src/rhi/IScene';
-import type { EntityId } from '../../src/ecs/core/entity-id';
-import { INVALID_ENTITY } from '../../src/ecs/core/entity-id';
-import { World } from '../../src/ecs/core/world';
-import type { ComponentClass } from '../../src/ecs/core/component-registry';
+import type { EntityId } from '../../src/ecs/entity-id';
+import { INVALID_ENTITY } from '../../src/ecs/entity-id';
+import { World } from '../../src/ecs/world';
+import type { ComponentClass } from '../../src/ecs/component-registry';
 
 // 测试用组件
 class PositionComponent {

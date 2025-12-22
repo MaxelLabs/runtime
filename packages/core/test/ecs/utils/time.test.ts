@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { Time } from '../../../src/ecs/utils/time';
+import { Time } from '../../../src/utils/time';
 
 describe('Time - 时间管理', () => {
   let time: Time;

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { Container, ServiceKeys } from '../../../src/ecs/infrastructure/IOC';
+import { Container, ServiceKeys } from '../../../src/infrastructure/IOC';
 
 // 测试用服务类
 class Logger {

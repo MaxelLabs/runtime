@@ -15,7 +15,6 @@ import type {
   BooleanValue,
   NumberValue,
   AssetReferable,
-  Enableable,
   Durable,
   Playable,
   Speedy,
@@ -138,11 +137,17 @@ export interface IMeshRef extends AssetReferable {
 
 /**
  * 材质引用接口
- * @description 引用外部材质资源，继承自 AssetReferable 和 Enableable traits
+ * @description 引用外部材质资源，继承自 AssetReferable trait
+ *
+ * @remarks
+ * 注意：此接口不继承 Enableable trait，因为 ECS 组件基类已有 enabled 属性。
+ * 使用 materialEnabled 字段来表示材质的启用状态，避免与组件基类的 enabled 属性冲突。
  */
-export interface IMaterialRef extends AssetReferable, Enableable {
+export interface IMaterialRef extends AssetReferable {
   /** 材质参数覆盖 */
   overrides?: Record<string, unknown>;
+  /** 材质是否启用（独立于组件的 enabled 状态） */
+  materialEnabled?: boolean;
 }
 
 // ============================================================================

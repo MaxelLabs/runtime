@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { MaxObject } from '../../../src/ecs/base/max-object';
+import { MaxObject } from '../../../src/base/max-object';
 
 // 测试用子类
 class TestMaxObject extends MaxObject {

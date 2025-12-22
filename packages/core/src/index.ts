@@ -1,57 +1,48 @@
-// // 基础框架
-// export * from './base';
-
-// // 引擎核心
-// export * from './engine';
-
-// // 场景管理
-// export * from './scene';
-
-// // 资源管理
-// export * from './resource';
-
-// // 输入系统
-// export * from './input';
-
-// // 相机系统
-// export * from './camera';
-
-// // 几何体系统
-// export * from './geometry';
-
-// // 材质系统
-// export * from './material';
-
-// // 光照系统
-// export * from './light';
-
-// // 纹理系统
-// export * from './texture';
-
-// // 着色器系统
-// export * from './shader';
-
-// // 接口定义
-// export * from './interface';
+/**
+ * @maxellabs/core 核心模块导出
+ *
+ * @packageDocumentation
+ *
+ * @remarks
+ * 此模块导出引擎核心功能，包括：
+ * - ECS 系统（实体、组件、系统）
+ * - 基础框架（MaxObject、ReferResource）
+ * - 事件系统
+ * - 基础设施（IOC 容器、Canvas 包装器）
+ * - 工具函数
+ * - 组件库
+ * - RHI 渲染硬件接口
+ *
+ * @example
+ * ```typescript
+ * import { World, Component, SystemScheduler } from '@maxellabs/core';
+ * import { MMath, MSpec } from '@maxellabs/core';
+ * ```
+ */
 
 // ECS 系统
 export * from './ecs';
 
+// 基础框架
 export * from './base';
 
+// 事件系统
 export * from './events';
 
+// 基础设施
 export * from './infrastructure';
 
+// 工具函数
 export * from './utils';
 
+// 组件库
 export * from './components';
 
-// RHI 系统
+// RHI 渲染硬件接口
 export * from './rhi';
 
-// 数学库
+// 数学库（命名空间导出）
 export * as MMath from '@maxellabs/math';
 
-// 规范定义
+// 规范定义（命名空间导出）
 export * as MSpec from '@maxellabs/specification';

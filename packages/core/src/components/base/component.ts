@@ -126,10 +126,13 @@ export class Component extends ReferResource {
    * 克隆组件
    * 子类应重写此方法以实现深拷贝
    * @returns 克隆的组件实例
+   * @remarks
+   * 子类重写时应调用 super.clone() 或确保复制所有基类属性
    */
   clone(): Component {
     const cloned = new (this.constructor as new () => Component)();
     cloned._enabled = this._enabled;
+    cloned._dirty = this._dirty;
     return cloned;
   }
 

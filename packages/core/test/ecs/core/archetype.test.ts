@@ -3,9 +3,9 @@
  * 测试 Archetype 的 SoA 存储和实体管理功能
  */
 import { describe, it, expect } from '@jest/globals';
-import { Archetype } from '../../../src/ecs/core/archetype';
-import { BitSet } from '../../../src/ecs/utils/bitset';
-import { EntityId } from '../../../src/ecs/core/entity-id';
+import { Archetype } from '../../../src/ecs/archetype';
+import { BitSet } from '../../../src/utils/bitset';
+import { EntityId } from '../../../src/ecs/entity-id';
 
 describe('Archetype', () => {
   // 创建测试用的组件类型 ID

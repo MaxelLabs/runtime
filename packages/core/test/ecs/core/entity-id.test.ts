@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from '@jest/globals';
 
-import { EntityId, INVALID_ENTITY, MAX_INDEX, MAX_GENERATION } from '../../../src/ecs/core/entity-id';
+import { EntityId, INVALID_ENTITY, MAX_INDEX, MAX_GENERATION } from '../../../src/ecs/entity-id';
 
 describe('EntityId', () => {
   describe('常量', () => {

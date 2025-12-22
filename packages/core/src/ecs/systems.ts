@@ -445,7 +445,7 @@ export class SystemScheduler {
 
       case ErrorHandlingStrategy.Throw:
       default:
-        // 记录错误到全局错误收集系统并抛出
+        // 记录错误到全局错误收集系统
         logError(
           `Error in system "${system.def.name}":`,
           'SystemScheduler',

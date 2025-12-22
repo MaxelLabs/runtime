@@ -3,7 +3,7 @@
  * 测试对象池管理器功能
  */
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { ObjectPoolManager, ObjectPoolManagerEventType } from '../../../src/ecs/utils/object-pool-manager';
+import { ObjectPoolManager, ObjectPoolManagerEventType } from '../../../src/utils/object-pool-manager';
 
 // 测试用对象类
 class TestObject {

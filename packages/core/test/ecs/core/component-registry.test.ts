@@ -3,9 +3,9 @@
  * 测试组件注册表功能
  */
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import type { ComponentClass } from '../../../src/ecs/core/component-registry';
-import { ComponentRegistry } from '../../../src/ecs/core/component-registry';
-import { BitSet } from '../../../src/ecs/utils/bitset';
+import type { ComponentClass } from '../../../src/ecs/component-registry';
+import { ComponentRegistry } from '../../../src/ecs/component-registry';
+import { BitSet } from '../../../src/utils/bitset';
 
 // 测试用组件
 class Position {

@@ -18,9 +18,9 @@ import {
   WorldMatrix,
   extendWorld,
   createWorldSync,
-} from '../../../src/ecs/core/entity-builder';
-import { World } from '../../../src/ecs/core/world';
-import { INVALID_ENTITY } from '../../../src/ecs/core/entity-id';
+} from '../../../src/ecs/entity-builder';
+import { World } from '../../../src/ecs/world';
+import { INVALID_ENTITY } from '../../../src/ecs/entity-id';
 
 describe('内置组件', () => {
   describe('Name', () => {

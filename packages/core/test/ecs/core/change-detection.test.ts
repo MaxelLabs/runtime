@@ -11,8 +11,8 @@ import {
   withDirtyFlag,
   getGlobalChangeTracker,
   resetGlobalChangeTracker,
-} from '../../../src/ecs/core/change-detection';
-import { EntityId } from '../../../src/ecs/core/entity-id';
+} from '../../../src/ecs/change-detection';
+import { EntityId } from '../../../src/ecs/entity-id';
 
 // 测试用组件类
 class Position {

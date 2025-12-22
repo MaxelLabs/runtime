@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from '@jest/globals';
-import type { IDisposable } from '../../../src/ecs/base/disposable';
+import type { IDisposable } from '../../../src/base/disposable';
 import {
   Disposable,
   dispose,
@@ -13,7 +13,7 @@ import {
   usingAsync,
   combineDisposables,
   DisposableCollector,
-} from '../../../src/ecs/base/disposable';
+} from '../../../src/base/disposable';
 
 // 测试用 Disposable 实现
 class TestDisposable extends Disposable {

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { errors, logError, clearErrors, getErrorCount } from '../../../src/ecs/utils/errors';
+import { errors, logError, clearErrors, getErrorCount } from '../../../src/utils/errors';
 
 describe('errors - 错误收集机制', () => {
   beforeEach(() => {

@@ -9,7 +9,7 @@ import {
   INVALID_SLOT,
   getGlobalMatrixPool,
   resetGlobalMatrixPool,
-} from '../../../src/ecs/core/transform-matrix-pool';
+} from '../../../src/ecs/transform-matrix-pool';
 
 describe('TransformMatrixPool', () => {
   describe('构造函数', () => {

@@ -3,9 +3,9 @@
  * 测试优化后的 Archetype 实现
  */
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { OptimizedArchetype } from '../../../src/ecs/core/optimized-archetype';
-import { EntityId } from '../../../src/ecs/core/entity-id';
-import { ComponentRegistry } from '../../../src/ecs/core/component-registry';
+import { OptimizedArchetype } from '../../../src/ecs/optimized-archetype';
+import { EntityId } from '../../../src/ecs/entity-id';
+import { ComponentRegistry } from '../../../src/ecs/component-registry';
 
 // 测试用组件类
 class Position {

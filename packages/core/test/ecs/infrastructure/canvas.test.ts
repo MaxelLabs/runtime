@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { Canvas } from '../../../src/ecs/infrastructure/canvas';
-import { clearErrors, errors } from '../../../src/ecs/utils/errors';
+import { Canvas } from '../../../src/infrastructure/canvas';
+import { clearErrors, errors } from '../../../src/utils/errors';
 
 // Mock DOM环境
 const createMockCanvas = (id: string = 'testCanvas', width: number = 800, height: number = 600): any => {

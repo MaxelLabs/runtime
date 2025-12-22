@@ -5,15 +5,20 @@
  * @packageDocumentation
  *
  * @remarks
- * ## 设计决策：fromData 接受 Partial<T> 类型
+ * ## 设计决策：fromData 接受 Specification 接口类型
  *
- * 所有组件的 `fromData()` 方法接受 `Partial<T>` 类型，允许从部分数据创建组件。
- * 这是基于以下考虑：
+ * 所有组件的 `fromData()` 方法直接接受 Specification 中定义的接口类型（如 `ITransform`），
+ * 而不是 `Partial<T>` 类型。这是基于以下考虑：
  *
- * 1. **灵活性**: 允许调用方只提供需要修改的字段，其他字段使用默认值
- * 2. **实际使用场景**: 组件数据可能来自不完整的序列化数据或增量更新
- * 3. **防御性编程**: 实现中使用空值检查，确保即使传入不完整数据也不会导致运行时错误
- * 4. **类型安全**: 使用 `Partial<T>` 明确表达了方法可以接受部分数据的意图
+ * 1. **类型安全**: Specification 接口定义了数据的完整契约，fromData 应该验证输入符合契约
+ * 2. **数据来源明确**: 组件数据通常来自序列化的场景文件或 API，这些数据应该是完整的
+ * 3. **职责分离**: 如果需要部分数据创建，应该在调用方处理默认值，而不是在组件内部
+ * 4. **与 Specification 对齐**: 保持与 specification 包的类型一致性
+ * 5. **API 一致性**: 与 Visual 组件（如 MeshRef、MaterialRef）保持相同的设计模式
+ *
+ * 如果确实需要从部分数据创建组件，可以：
+ * - 使用 `new Component()` 创建默认实例，然后手动赋值
+ * - 在调用方使用展开运算符合并默认值：`Component.fromData({ ...defaults, ...partialData })`
  *
  * 所有组件都继承自 Component 基类，提供：
  * - 引用计数管理（继承自 ReferResource）
@@ -32,6 +37,13 @@ import type {
   TransformSpace,
 } from '@maxellabs/specification';
 import { Component } from '../base';
+
+/**
+ * 表示无父级实体的常量
+ * @remarks
+ * 使用 -1 作为无父级的标识，因为有效的实体 ID 从 0 开始
+ */
+export const NO_PARENT_ENTITY = -1;
 
 /**
  * LocalTransform Component - 本地变换组件
@@ -57,26 +69,20 @@ export class LocalTransform extends Component implements ITransform {
   space?: TransformSpace;
 
   /**
-   * 从部分 ITransform 规范数据创建组件
-   * @param data 部分 ITransform 规范数据，缺失字段将使用默认值
+   * 从 ITransform 规范数据创建组件
+   * @param data ITransform 规范数据
    * @returns LocalTransform 组件实例
-   *
-   * @remarks
-   * 此方法接受部分数据，对输入进行空值检查，缺失字段使用默认值：
-   * - position: 默认 { x: 0, y: 0, z: 0 }
-   * - rotation: 默认 { x: 0, y: 0, z: 0, w: 1 }（单位四元数）
-   * - scale: 默认 { x: 1, y: 1, z: 1 }
    *
    * @example
    * ```typescript
-   * // 只设置位置，其他使用默认值
-   * const transform = LocalTransform.fromData({ position: { x: 1, y: 2, z: 3 } });
-   *
-   * // 创建默认变换
-   * const defaultTransform = LocalTransform.fromData({});
+   * const transform = LocalTransform.fromData({
+   *   position: { x: 1, y: 2, z: 3 },
+   *   rotation: { x: 0, y: 0, z: 0, w: 1 },
+   *   scale: { x: 1, y: 1, z: 1 }
+   * });
    * ```
    */
-  static fromData(data: Partial<ITransform>): LocalTransform {
+  static fromData(data: ITransform): LocalTransform {
     const component = new LocalTransform();
 
     // 位置：使用空值检查，缺失时使用默认值
@@ -107,15 +113,15 @@ export class LocalTransform extends Component implements ITransform {
       };
     }
 
-    if (data.matrix) {
+    // 可选字段
+    if (data.matrix !== undefined) {
       component.matrix = { ...data.matrix };
     }
 
-    if (data.anchor) {
+    if (data.anchor !== undefined) {
       component.anchor = { ...data.anchor };
     }
 
-    // 处理 space 字段，避免数据丢失
     if (data.space !== undefined) {
       component.space = data.space;
     }
@@ -169,26 +175,20 @@ export class WorldTransform extends Component implements ITransform {
   space?: TransformSpace;
 
   /**
-   * 从部分 ITransform 规范数据��建组件
-   * @param data 部分 ITransform 规范数据，缺失字段将使用默认值
+   * 从 ITransform 规范数据创建组件
+   * @param data ITransform 规范数据
    * @returns WorldTransform 组件实例
-   *
-   * @remarks
-   * 此方法接受部分数据，对输入进行空值检查，缺失字段使用默认值：
-   * - position: 默认 { x: 0, y: 0, z: 0 }
-   * - rotation: 默认 { x: 0, y: 0, z: 0, w: 1 }（单位四元数）
-   * - scale: 默认 { x: 1, y: 1, z: 1 }
    *
    * @example
    * ```typescript
-   * // 只设置位置，其他使用默认值
-   * const transform = WorldTransform.fromData({ position: { x: 1, y: 2, z: 3 } });
-   *
-   * // 创建默认变换
-   * const defaultTransform = WorldTransform.fromData({});
+   * const transform = WorldTransform.fromData({
+   *   position: { x: 1, y: 2, z: 3 },
+   *   rotation: { x: 0, y: 0, z: 0, w: 1 },
+   *   scale: { x: 1, y: 1, z: 1 }
+   * });
    * ```
    */
-  static fromData(data: Partial<ITransform>): WorldTransform {
+  static fromData(data: ITransform): WorldTransform {
     const component = new WorldTransform();
 
     // 位置：使用空值检查，缺失时使用默认值
@@ -219,14 +219,17 @@ export class WorldTransform extends Component implements ITransform {
       };
     }
 
-    if (data.matrix) {
+    // 可选字段
+    if (data.matrix !== undefined) {
       component.matrix = { ...data.matrix };
     }
 
-    // 处理 space 字段，避免数据丢失
     if (data.space !== undefined) {
       component.space = data.space;
     }
+
+    // 标记为脏，需要更新
+    component.markDirty();
 
     return component;
   }
@@ -255,8 +258,13 @@ export class WorldTransform extends Component implements ITransform {
  * @description 继承 Component 基类，实现 IParent 接口，存储父级实体引用
  */
 export class Parent extends Component implements IParent {
-  /** 父级实体 ID */
-  entity: number = -1;
+  /**
+   * 父级实体 ID
+   * @remarks
+   * 使用 NO_PARENT_ENTITY (-1) 表示无父级
+   * @see NO_PARENT_ENTITY
+   */
+  entity: number = NO_PARENT_ENTITY;
 
   /**
    * 从 IParent 规范数据创建组件

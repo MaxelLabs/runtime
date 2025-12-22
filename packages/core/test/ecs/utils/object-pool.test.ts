@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { ObjectPool } from '../../../src/ecs/utils/object-pool';
-import { clearErrors, errors } from '../../../src/ecs/utils/errors';
+import { ObjectPool } from '../../../src/utils/object-pool';
+import { clearErrors, errors } from '../../../src/utils/errors';
 
 // 测试用对象类
 class TestObject {

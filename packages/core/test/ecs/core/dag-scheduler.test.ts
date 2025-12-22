@@ -3,7 +3,7 @@
  * 测试 DAG 拓扑排序和依赖管理
  */
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { DAGScheduler } from '../../../src/ecs/core/dag-scheduler';
+import { DAGScheduler } from '../../../src/ecs/dag-scheduler';
 
 describe('DAGScheduler', () => {
   let scheduler: DAGScheduler<string>;

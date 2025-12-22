@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { BitSet } from '../../../src/ecs/utils/bitset';
+import { BitSet } from '../../../src/utils/bitset';
 
 describe('BitSet - 位集合', () => {
   let bitset: BitSet;

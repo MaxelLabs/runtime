@@ -9,9 +9,9 @@ import {
   INVALID_RENDER_SLOT,
   getGlobalRenderData,
   resetGlobalRenderData,
-} from '../../../src/ecs/core/render-data-storage';
-import { EntityId } from '../../../src/ecs/core/entity-id';
-import type { IRHIDeviceMinimal } from '../../../src/ecs/core/gpu-buffer-sync';
+} from '../../../src/ecs/render-data-storage';
+import { EntityId } from '../../../src/ecs/entity-id';
+import type { IRHIDeviceMinimal } from '../../../src/ecs/gpu-buffer-sync';
 
 // Mock RHI Device
 function createMockDevice(): IRHIDeviceMinimal {
