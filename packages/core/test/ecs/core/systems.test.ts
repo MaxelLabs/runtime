@@ -361,7 +361,7 @@ describe('SystemScheduler', () => {
       expect(executeFn).toHaveBeenCalled();
     });
 
-    it('应该捕获 System 执行错误并通过 logError 抛出', () => {
+    it('应该捕获 System 执行错误并使用 Throw 策略时抛出', () => {
       const system: SystemDef = {
         name: 'ErrorSystem',
         stage: SystemStage.Update,
@@ -371,6 +371,8 @@ describe('SystemScheduler', () => {
       };
 
       scheduler.addSystem(system);
+      // 设置为 Throw 策略以测试抛出行为
+      scheduler.setErrorHandlingStrategy(ErrorHandlingStrategy.Throw);
 
       // logError 会抛出异常，所以 update 应该抛出错误
       expect(() => scheduler.update(0.016)).toThrow('Error in system "ErrorSystem":');
@@ -473,10 +475,11 @@ describe('SystemScheduler', () => {
     });
 
     it('应该支持获取和设置错误处理策略', () => {
-      expect(scheduler.getErrorHandlingStrategy()).toBe(ErrorHandlingStrategy.Throw);
-
-      scheduler.setErrorHandlingStrategy(ErrorHandlingStrategy.Continue);
+      // 默认策略现在是 Continue（提供错误隔离）
       expect(scheduler.getErrorHandlingStrategy()).toBe(ErrorHandlingStrategy.Continue);
+
+      scheduler.setErrorHandlingStrategy(ErrorHandlingStrategy.Throw);
+      expect(scheduler.getErrorHandlingStrategy()).toBe(ErrorHandlingStrategy.Throw);
 
       scheduler.setErrorHandlingStrategy(ErrorHandlingStrategy.DisableAndContinue);
       expect(scheduler.getErrorHandlingStrategy()).toBe(ErrorHandlingStrategy.DisableAndContinue);
