@@ -13,6 +13,7 @@ import type {
   InteractionProperties,
   MaterialProperties,
   RenderingProperties,
+  Nameable,
 } from '../core';
 
 /**
@@ -133,16 +134,14 @@ export enum CommonConstraintType {
 
 /**
  * 通用元素基础接口
+ *
+ * @description 组合 Nameable trait
  */
-export interface CommonElement extends Omit<UsdPrim, 'metadata' | 'children'> {
+export interface CommonElement extends Omit<UsdPrim, 'metadata' | 'children'>, Nameable {
   /**
    * 元素ID
    */
   id: string;
-  /**
-   * 元素名称
-   */
-  name: string;
   /**
    * 元素类型
    */

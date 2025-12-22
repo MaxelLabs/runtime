@@ -3,7 +3,7 @@
  * 粒子物理、碰撞和力场的定义
  */
 
-import type { Vector3Like } from '../core';
+import type { Vector3Like, RequiredEnableable } from '../core';
 
 /**
  * 粒子物理
@@ -30,12 +30,10 @@ export interface ParticlePhysics {
 
 /**
  * 粒子碰撞
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface ParticleCollision {
-  /**
-   * 启用碰撞
-   */
-  enabled: boolean;
+export interface ParticleCollision extends RequiredEnableable {
   /**
    * 碰撞层
    */

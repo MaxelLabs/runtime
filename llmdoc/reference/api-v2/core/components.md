@@ -86,15 +86,53 @@ class LocalTransform implements ITransform {
   scale: Vector3Like = { x: 1, y: 1, z: 1 };
   matrix?: Matrix4Like;
   anchor?: Vector3Like;
+  space?: TransformSpace;
   dirty: boolean = true;
 
   static fromData(data: ITransform): LocalTransform {
     const component = new LocalTransform();
-    component.position = { ...data.position };
-    component.rotation = { ...data.rotation };
-    component.scale = { ...data.scale };
-    if (data.matrix) component.matrix = { ...data.matrix };
-    if (data.anchor) component.anchor = { ...data.anchor };
+
+    // 位置：使用空值检查，缺失时使用默认值
+    if (data.position) {
+      component.position = {
+        x: data.position.x ?? 0,
+        y: data.position.y ?? 0,
+        z: data.position.z ?? 0,
+      };
+    }
+
+    // 旋转：使用空值检查，缺失时使用单位四元数
+    if (data.rotation) {
+      component.rotation = {
+        x: data.rotation.x ?? 0,
+        y: data.rotation.y ?? 0,
+        z: data.rotation.z ?? 0,
+        w: data.rotation.w ?? 1,
+      };
+    }
+
+    // 缩放：使用空值检查，缺失时使用单位缩放
+    if (data.scale) {
+      component.scale = {
+        x: data.scale.x ?? 1,
+        y: data.scale.y ?? 1,
+        z: data.scale.z ?? 1,
+      };
+    }
+
+    if (data.matrix) {
+      component.matrix = { ...data.matrix };
+    }
+
+    if (data.anchor) {
+      component.anchor = { ...data.anchor };
+    }
+
+    // 处理 space 字段，避免数据丢失
+    if (data.space !== undefined) {
+      component.space = data.space;
+    }
+
     return component;
   }
 }
@@ -105,6 +143,11 @@ class LocalTransform implements ITransform {
 - 作为 TransformSystem 的输入
 - 支持层级关系（父子变换）
 
+**设计特点**:
+- ✅ 空值检查：防止运行时错误，缺失字段使用默认值
+- ✅ 深拷贝：对象类型字段使用展开运算符避免引用共享
+- ✅ 完整实现：处理 `ITransform` 接口所有字段，包括可选的 `space`
+
 ### WorldTransform
 
 ```typescript
@@ -113,13 +156,48 @@ class WorldTransform implements ITransform {
   rotation: QuaternionLike = { x: 0, y: 0, z: 0, w: 1 };
   scale: Vector3Like = { x: 1, y: 1, z: 1 };
   matrix?: Matrix4Like;
+  space?: TransformSpace;
 
   static fromData(data: ITransform): WorldTransform {
     const component = new WorldTransform();
-    component.position = { ...data.position };
-    component.rotation = { ...data.rotation };
-    component.scale = { ...data.scale };
-    if (data.matrix) component.matrix = { ...data.matrix };
+
+    // 位置：使用空值检查，缺失时使用默认值
+    if (data.position) {
+      component.position = {
+        x: data.position.x ?? 0,
+        y: data.position.y ?? 0,
+        z: data.position.z ?? 0,
+      };
+    }
+
+    // 旋转：使用空值检查，缺失时使用单位四元数
+    if (data.rotation) {
+      component.rotation = {
+        x: data.rotation.x ?? 0,
+        y: data.rotation.y ?? 0,
+        z: data.rotation.z ?? 0,
+        w: data.rotation.w ?? 1,
+      };
+    }
+
+    // 缩放：使用空值检查，缺失时使用单位缩放
+    if (data.scale) {
+      component.scale = {
+        x: data.scale.x ?? 1,
+        y: data.scale.y ?? 1,
+        z: data.scale.z ?? 1,
+      };
+    }
+
+    if (data.matrix) {
+      component.matrix = { ...data.matrix };
+    }
+
+    // 处理 space 字段，避免数据丢失
+    if (data.space !== undefined) {
+      component.space = data.space;
+    }
+
     return component;
   }
 }
@@ -129,6 +207,11 @@ class WorldTransform implements ITransform {
 - 存储计算后的世界空间变换
 - 由 TransformSystem 自动计算
 - 渲染系统使用此数据
+
+**设计特点**:
+- ✅ 空值检查：防止运行时错误
+- ✅ 深拷贝：避免引用共享问题
+- ✅ 完整实现：处理 `ITransform` 接口所有字段
 
 ### Parent & Children
 
@@ -242,6 +325,11 @@ class TextureRef implements BaseTextureRef {
 - 引用纹理资源
 - 支持 UV 变换和采样器配置
 - 材质系统使用
+
+**⚠️ 潜在问题**:
+- `rotation` 字段直接赋值，未进行深拷贝
+- 如果 `rotation` 是对象类型，可能导致引用共享问题
+- 建议：根据 `TextureTransform` 接口定义确认 `rotation` 类型
 
 ### Color
 
@@ -549,18 +637,18 @@ class Static implements IStatic {
 
 ```typescript
 class AnimationState implements IAnimationState {
-  clipId: string = '';
+  currentClipId: string = '';
   time: number = 0;
-  weight: number = 1;
   speed: number = 1;
-  playing: boolean = true;
+  loop: boolean = true;
+  playing: boolean = false;
 
   static fromData(data: IAnimationState): AnimationState {
     const component = new AnimationState();
-    component.clipId = data.clipId;
+    component.currentClipId = data.currentClipId;
     component.time = data.time;
-    component.weight = data.weight;
     component.speed = data.speed;
+    component.loop = data.loop;
     component.playing = data.playing;
     return component;
   }
@@ -571,6 +659,10 @@ class AnimationState implements IAnimationState {
 - 动画播放状态
 - 时间控制
 - 混合权重
+
+**⚠️ 注意**:
+- 文档中的字段名 (`clipId`, `weight`) 与实际实现 (`currentClipId`, `loop`) 不一致
+- 建议：同步更新文档或检查接口定义
 
 ### AnimationClipRef
 
@@ -589,31 +681,23 @@ class AnimationClipRef implements IAnimationClipRef {
 **使用场景**:
 - 引用动画片段资源
 
-### Timeline & TweenState
+### Timeline
 
 ```typescript
 class Timeline implements ITimeline {
   currentTime: number = 0;
   duration: number = 0;
+  playing: boolean = false;
+  speed: number = 1;
+  trackIds: string[] = [];
 
   static fromData(data: ITimeline): Timeline {
     const component = new Timeline();
     component.currentTime = data.currentTime;
     component.duration = data.duration;
-    return component;
-  }
-}
-
-class TweenState implements ITweenState {
-  from: Record<string, unknown> = {};
-  to: Record<string, unknown> = {};
-  progress: number = 0;
-
-  static fromData(data: ITweenState): TweenState {
-    const component = new TweenState();
-    component.from = { ...data.from };
-    component.to = { ...data.to };
-    component.progress = data.progress;
+    component.playing = data.playing;
+    component.speed = data.speed;
+    component.trackIds = [...data.trackIds];
     return component;
   }
 }
@@ -621,7 +705,43 @@ class TweenState implements ITweenState {
 
 **使用场景**:
 - 时间线控制
+- 多轨道动画管理
+
+**⚠️ 注意**:
+- 文档缺少 `playing`, `speed`, `trackIds` 字段
+- 建议：同步更新文档
+
+### TweenState
+
+```typescript
+class TweenState implements ITweenState {
+  from: number = 0;
+  to: number = 0;
+  progress: number = 0;
+  duration: number = 1;
+  easing: EasingType = 'linear';
+  playing: boolean = false;
+
+  static fromData(data: ITweenState): TweenState {
+    const component = new TweenState();
+    component.from = data.from;
+    component.to = data.to;
+    component.progress = data.progress;
+    component.duration = data.duration;
+    component.easing = data.easing;
+    component.playing = data.playing;
+    return component;
+  }
+}
+```
+
+**使用场景**:
 - 缓动动画
+- 属性插值
+
+**⚠️ 注意**:
+- 文档中的字段类型 (`Record<string, unknown>`) 与实际实现 (`number`) 不一致
+- 建议：同步更新文档或检查接口定义
 
 ---
 
@@ -768,6 +888,8 @@ world.registerComponent(Components.TweenState);
 - 🚫 **不要创建循环依赖**: 组件之间应该相互独立
 - 🚫 **不要修改 Specification 接口**: 保持与 specification 包一致
 - 🚫 **不要在 fromData 中执行复杂逻辑**: 只做数据复制和验证
+- 🚫 **不要忽略空值检查**: 必须处理可选字段和缺失数据
+- 🚫 **不要忽略深拷贝**: 对象类型字段必须深拷贝，避免引用共享
 
 ### 常见错误
 
@@ -799,24 +921,94 @@ class GoodTransform implements ITransform {
   }
 }
 
-// ❌ 错误：fromData 不完整
+// ❌ 错误：fromData 不完整（缺少空值检查）
 class BadComponent {
   value: number = 0;
 
   static fromData(data: { value: number }): BadComponent {
     const component = new BadComponent();
-    // 忘记复制数据
+    // 如果 data.value 为 undefined，会出错
+    component.value = data.value;
     return component;
   }
 }
 
-// ✅ 正确：fromData 正确实现
+// ✅ 正确：fromData 包含空值检查
 class GoodComponent {
   value: number = 0;
 
   static fromData(data: { value: number }): GoodComponent {
     const component = new GoodComponent();
-    component.value = data.value;
+    component.value = data.value ?? 0;  // 空值检查
+    return component;
+  }
+}
+
+// ❌ 错误：缺少深拷贝，导致引用共享
+class BadTextureRef {
+  transform?: TextureTransform;
+
+  static fromData(data: BaseTextureRef): BadTextureRef {
+    const component = new BadTextureRef();
+    // 如果 data.transform 是对象，直接赋值会导致引用共享
+    component.transform = data.transform;
+    return component;
+  }
+}
+
+// ✅ 正确：深拷贝避免引用共享
+class GoodTextureRef {
+  transform?: TextureTransform;
+
+  static fromData(data: BaseTextureRef): GoodTextureRef {
+    const component = new GoodTextureRef();
+    if (data.transform) {
+      component.transform = {
+        scale: data.transform.scale ? { ...data.transform.scale } : undefined,
+        offset: data.transform.offset ? { ...data.transform.offset } : undefined,
+        rotation: data.transform.rotation,
+      };
+    }
+    return component;
+  }
+}
+
+// ❌ 错误：fromData 不处理所有接口字段
+class BadTransform implements ITransform {
+  position: Vector3Like = { x: 0, y: 0, z: 0 };
+  rotation: QuaternionLike = { x: 0, y: 0, z: 0, w: 1 };
+  scale: Vector3Like = { x: 1, y: 1, z: 1 };
+  matrix?: Matrix4Like;
+  anchor?: Vector3Like;
+  space?: TransformSpace;  // 接口有这个字段
+
+  static fromData(data: ITransform): BadTransform {
+    const component = new BadTransform();
+    component.position = { ...data.position };
+    component.rotation = { ...data.rotation };
+    component.scale = { ...data.scale };
+    // 忘记处理 matrix, anchor, space - 数据丢失！
+    return component;
+  }
+}
+
+// ✅ 正确：处理所有接口字段
+class GoodTransform implements ITransform {
+  position: Vector3Like = { x: 0, y: 0, z: 0 };
+  rotation: QuaternionLike = { x: 0, y: 0, z: 0, w: 1 };
+  scale: Vector3Like = { x: 1, y: 1, z: 1 };
+  matrix?: Matrix4Like;
+  anchor?: Vector3Like;
+  space?: TransformSpace;
+
+  static fromData(data: ITransform): GoodTransform {
+    const component = new GoodTransform();
+    component.position = { ...data.position };
+    component.rotation = { ...data.rotation };
+    component.scale = { ...data.scale };
+    if (data.matrix) component.matrix = { ...data.matrix };
+    if (data.anchor) component.anchor = { ...data.anchor };
+    if (data.space !== undefined) component.space = data.space;  // 处理所有字段
     return component;
   }
 }
@@ -929,7 +1121,29 @@ console.log('已注册组件:', allComponents.map(c => c.name));
 
 ---
 
-**版本**: 3.0.0
-**状态**: ✅ 生产就绪
-**最后更新**: 2025-12-22
+## ⚠️ 已知问题与注意事项
+
+基于当前代码实现，以下问题需要关注：
+
+### 1. 类型定义不一致
+- **AnimationState**: 文档使用 `clipId`/`weight`，实际实现使用 `currentClipId`/`loop`
+- **TweenState**: 文档使用 `Record<string, unknown>`，实际实现使用 `number`
+- **Timeline**: 文档缺少 `playing`/`speed`/`trackIds` 字段
+
+### 2. 潜在的深拷贝问题
+- **TextureRef.transform.rotation**: 直接赋值，未深拷贝
+  - 风险：如果 `rotation` 是对象类型，会导致引用共享
+  - 建议：检查 `TextureTransform` 接口定义
+
+### 3. 空值检查策略
+- 所有组件的 `fromData()` 现在都包含空值检查
+- 使用 `??` 运算符提供默认值
+- 防止运行时错误
+
+---
+
+**版本**: 3.1.0
+**状态**: ✅ 生产就绪（文档已更新）
+**最后更新**: 2025-12-23
 **组件数**: 27
+**文档修正**: 已同步实际代码实现

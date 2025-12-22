@@ -3,7 +3,15 @@
  * 定义所有系统共通的精灵相关类型
  */
 
-import type { ElementType, AnimationProperties, BaseAtlasRegion, BaseAtlasMetadata, Size2D } from '../core';
+import type {
+  ElementType,
+  AnimationProperties,
+  BaseAtlasRegion,
+  BaseAtlasMetadata,
+  Size2D,
+  Nameable,
+  Loopable,
+} from '../core';
 import type { CommonElement } from './elements';
 import type { NineSliceConfig } from './image';
 import type { AnimationStateMachine } from '../animation';
@@ -122,12 +130,10 @@ export interface SpriteAtlasMetadata extends BaseAtlasMetadata {
 
 /**
  * 精灵动画
+ *
+ * @description 组合 Nameable, Loopable traits
  */
-export interface SpriteAnimation {
-  /**
-   * 动画名称
-   */
-  name: string;
+export interface SpriteAnimation extends Nameable, Loopable {
   /**
    * 帧序列（帧索引）
    */
@@ -136,10 +142,6 @@ export interface SpriteAnimation {
    * 帧率
    */
   frameRate: number;
-  /**
-   * 是否循环
-   */
-  loop: boolean;
   /**
    * 动画持续时间
    */

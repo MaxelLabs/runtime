@@ -3,7 +3,7 @@
  * 包含完整设计系统的核心接口
  */
 import type { BuildTarget, PerformanceConfiguration } from '../package';
-import type { CacheStrategy } from '../core';
+import type { CacheStrategy, Nameable, RequiredEnableable } from '../core';
 import type { CommonMetadata } from '../core';
 import type { DesignComponentLibrary, NamingConvention } from './components';
 import type { DesignIconLibrary } from './icons';
@@ -14,12 +14,10 @@ import type { DesignTheme, DesignStyleLibrary } from './themes';
 
 /**
  * 设计系统
+ *
+ * @description 组合 Nameable trait
  */
-export interface DesignSystem {
-  /**
-   * 系统名称
-   */
-  name: string;
+export interface DesignSystem extends Nameable {
   /**
    * 系统版本
    */
@@ -240,12 +238,10 @@ export interface ValidationConfig {
 
 /**
  * 验证规则
+ *
+ * @description 组合 Nameable, RequiredEnableable traits
  */
-export interface ValidationRule {
-  /**
-   * 规则名称
-   */
-  name: string;
+export interface ValidationRule extends Nameable, RequiredEnableable {
   /**
    * 规则类型
    */
@@ -254,10 +250,6 @@ export interface ValidationRule {
    * 规则配置
    */
   config?: Record<string, any>;
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
 }
 
 /**

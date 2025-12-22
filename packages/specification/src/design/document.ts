@@ -3,7 +3,7 @@
  * 包含设计文档管理和配置
  */
 
-import type { CommonMetadata } from '../core/interfaces';
+import type { CommonMetadata, Nameable, RequiredEnableable } from '../core';
 import type { DesignPage } from './page';
 import type { DesignSystem } from './systems';
 import type { AssetLibrary } from './assets';
@@ -11,16 +11,14 @@ import type { CollaborationInfo } from './collaboration';
 
 /**
  * 设计文档
+ *
+ * @description 组合 Nameable trait
  */
-export interface DesignDocument {
+export interface DesignDocument extends Nameable {
   /**
    * 文档 ID
    */
   id: string;
-  /**
-   * 文档名称
-   */
-  name: string;
   /**
    * 文档类型
    */
@@ -174,20 +172,14 @@ export enum ExportFormat {
 
 /**
  * 文档插件配置
+ *
+ * @description 组合 Nameable, RequiredEnableable traits
  */
-export interface DocumentPluginConfig {
+export interface DocumentPluginConfig extends Nameable, RequiredEnableable {
   /**
    * 插件 ID
    */
   id: string;
-  /**
-   * 插件名称
-   */
-  name: string;
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
   /**
    * 插件配置
    */

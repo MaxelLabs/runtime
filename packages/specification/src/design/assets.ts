@@ -3,16 +3,14 @@
  * 包含资产库、资产分类和资产管理相关类型
  */
 
-import type { AssetType, LicenseType, BaseLicense, BaseCategory } from '../core';
+import type { AssetType, LicenseType, BaseLicense, BaseCategory, Nameable, Describable } from '../core';
 
 /**
  * 资产库
+ *
+ * @description 组合 Nameable trait
  */
-export interface AssetLibrary {
-  /**
-   * 库名称
-   */
-  name: string;
+export interface AssetLibrary extends Nameable {
   /**
    * 资产列表
    */
@@ -25,16 +23,14 @@ export interface AssetLibrary {
 
 /**
  * 设计资产
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface DesignAsset {
+export interface DesignAsset extends Nameable, Describable {
   /**
    * 资产 ID
    */
   id: string;
-  /**
-   * 资产名称
-   */
-  name: string;
   /**
    * 资产类型
    */
@@ -59,10 +55,6 @@ export interface DesignAsset {
    * 缩略图
    */
   thumbnail?: string;
-  /**
-   * 资产描述
-   */
-  description?: string;
   /**
    * 许可信息
    */
@@ -96,17 +88,13 @@ export interface AssetCategory extends BaseCategory {
 /**
  * 资产许可
  *
- * @description 继承自 BaseLicense，添加资产特有的名称、版权和归属字段
+ * @description 继承自 BaseLicense，组合 Nameable trait，添加资产特有的版权和归属字段
  */
-export interface AssetLicense extends BaseLicense {
+export interface AssetLicense extends BaseLicense, Nameable {
   /**
    * 许可类型（覆盖为具体类型）
    */
   type: LicenseType;
-  /**
-   * 许可名称
-   */
-  name: string;
   /**
    * 版权信息
    */

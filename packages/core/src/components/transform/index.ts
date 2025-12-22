@@ -27,6 +27,7 @@ import type {
   Vector3Like,
   QuaternionLike,
   Matrix4Like,
+  TransformSpace,
 } from '@maxellabs/specification';
 
 /**
@@ -49,6 +50,9 @@ export class LocalTransform implements ITransform {
   /** 锚点 (可选) */
   anchor?: Vector3Like;
 
+  /** 变换空间 (可选) */
+  space?: TransformSpace;
+
   /** 脏标记 (ECS 优化用) */
   dirty: boolean = true;
 
@@ -56,28 +60,41 @@ export class LocalTransform implements ITransform {
    * 从 ITransform 规范数据创建组件
    * @param data ITransform 规范数据
    * @returns LocalTransform 组件实例
+   *
+   * @remarks
+   * 此方法会对输入数据进行空值检查，如果必需字段缺失则使用默认值。
+   * 这确保了即使传入不完整的数据也不会导致运行时错误。
    */
   static fromData(data: ITransform): LocalTransform {
     const component = new LocalTransform();
 
-    component.position = {
-      x: data.position.x,
-      y: data.position.y,
-      z: data.position.z,
-    };
+    // 位置：使用空值检查，缺失时使用默认值
+    if (data.position) {
+      component.position = {
+        x: data.position.x ?? 0,
+        y: data.position.y ?? 0,
+        z: data.position.z ?? 0,
+      };
+    }
 
-    component.rotation = {
-      x: data.rotation.x,
-      y: data.rotation.y,
-      z: data.rotation.z,
-      w: data.rotation.w,
-    };
+    // 旋转：使用空值检查，缺失时使用单位四元数
+    if (data.rotation) {
+      component.rotation = {
+        x: data.rotation.x ?? 0,
+        y: data.rotation.y ?? 0,
+        z: data.rotation.z ?? 0,
+        w: data.rotation.w ?? 1,
+      };
+    }
 
-    component.scale = {
-      x: data.scale.x,
-      y: data.scale.y,
-      z: data.scale.z,
-    };
+    // 缩放：使用空值检查，缺失时使用单位缩放
+    if (data.scale) {
+      component.scale = {
+        x: data.scale.x ?? 1,
+        y: data.scale.y ?? 1,
+        z: data.scale.z ?? 1,
+      };
+    }
 
     if (data.matrix) {
       component.matrix = { ...data.matrix };
@@ -85,6 +102,11 @@ export class LocalTransform implements ITransform {
 
     if (data.anchor) {
       component.anchor = { ...data.anchor };
+    }
+
+    // 处理 space 字段，避免数据丢失
+    if (data.space !== undefined) {
+      component.space = data.space;
     }
 
     return component;
@@ -108,35 +130,55 @@ export class WorldTransform implements ITransform {
   /** 世界变换矩阵 */
   matrix?: Matrix4Like;
 
+  /** 变换空间 (可选) */
+  space?: TransformSpace;
+
   /**
    * 从 ITransform 规范数据创建组件
    * @param data ITransform 规范数据
    * @returns WorldTransform 组件实例
+   *
+   * @remarks
+   * 此方法会对输入数据进行空值检查，如果必需字段缺失则使用默认值。
    */
   static fromData(data: ITransform): WorldTransform {
     const component = new WorldTransform();
 
-    component.position = {
-      x: data.position.x,
-      y: data.position.y,
-      z: data.position.z,
-    };
+    // 位置：使用空值检查，缺失时使用默认值
+    if (data.position) {
+      component.position = {
+        x: data.position.x ?? 0,
+        y: data.position.y ?? 0,
+        z: data.position.z ?? 0,
+      };
+    }
 
-    component.rotation = {
-      x: data.rotation.x,
-      y: data.rotation.y,
-      z: data.rotation.z,
-      w: data.rotation.w,
-    };
+    // 旋转：使用空值检查，缺失时使用单位四元数
+    if (data.rotation) {
+      component.rotation = {
+        x: data.rotation.x ?? 0,
+        y: data.rotation.y ?? 0,
+        z: data.rotation.z ?? 0,
+        w: data.rotation.w ?? 1,
+      };
+    }
 
-    component.scale = {
-      x: data.scale.x,
-      y: data.scale.y,
-      z: data.scale.z,
-    };
+    // 缩放：使用空值检查，缺失时使用单位缩放
+    if (data.scale) {
+      component.scale = {
+        x: data.scale.x ?? 1,
+        y: data.scale.y ?? 1,
+        z: data.scale.z ?? 1,
+      };
+    }
 
     if (data.matrix) {
       component.matrix = { ...data.matrix };
+    }
+
+    // 处理 space 字段，避免数据丢失
+    if (data.space !== undefined) {
+      component.space = data.space;
     }
 
     return component;

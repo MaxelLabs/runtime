@@ -3,23 +3,21 @@
  * 包含图标库管理、图标定义和分类系统
  */
 
-import type { LicenseType, BaseLicense, SortDirection } from '../core';
+import type { LicenseType, BaseLicense, SortDirection, Nameable, Describable } from '../core';
 import type { CommonMetadata } from '../core/interfaces';
 import type { DesignIconVariant, DesignIconCategory } from './base';
 import type { IconStyle } from './enums';
 
 /**
  * 设计图标
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface DesignIcon {
+export interface DesignIcon extends Nameable, Describable {
   /**
    * 图标 ID
    */
   id: string;
-  /**
-   * 图标名称
-   */
-  name: string;
   /**
    * 图标分类
    */
@@ -40,10 +38,6 @@ export interface DesignIcon {
    * 图标变体
    */
   variants?: DesignIconVariant[];
-  /**
-   * 图标描述
-   */
-  description?: string;
   /**
    * 图标作者
    */
@@ -110,12 +104,10 @@ export interface IconUsageStats {
 
 /**
  * 设计图标库
+ *
+ * @description 组合 Nameable trait
  */
-export interface DesignIconLibrary {
-  /**
-   * 库名称
-   */
-  name: string;
+export interface DesignIconLibrary extends Nameable {
   /**
    * 库版本
    */
@@ -431,20 +423,14 @@ export type { SortDirection } from '../core';
 
 /**
  * 图标集合
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface IconCollection {
+export interface IconCollection extends Nameable, Describable {
   /**
    * 集合 ID
    */
   id: string;
-  /**
-   * 集合名称
-   */
-  name: string;
-  /**
-   * 集合描述
-   */
-  description?: string;
   /**
    * 图标列表
    */

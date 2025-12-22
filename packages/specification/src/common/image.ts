@@ -4,7 +4,7 @@
  */
 
 import type { CommonElement } from './elements';
-import type { ElementType } from '../core';
+import type { ElementType, RequiredEnableable } from '../core';
 
 /**
  * 图像格式
@@ -156,8 +156,10 @@ export enum ImageFilterType {
 
 /**
  * 图像滤镜
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface ImageFilter {
+export interface ImageFilter extends RequiredEnableable {
   /**
    * 滤镜类型
    */
@@ -170,10 +172,6 @@ export interface ImageFilter {
    * 滤镜参数
    */
   parameters?: Record<string, any>;
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
 }
 
 /**

@@ -3,17 +3,15 @@
  * 粒子系统、发射器和物理的定义
  */
 
-import type { BlendMode, RenderMode, SortMode } from '../core/enums';
+import type { BlendMode, RenderMode, SortMode, Nameable, Loopable } from '../core';
 import type { ParticlePhysics } from './particlePhysics';
 
 /**
  * 粒子系统
+ *
+ * @description 组合 Nameable trait
  */
-export interface ParticleSystem {
-  /**
-   * 系统名称
-   */
-  name: string;
+export interface ParticleSystem extends Nameable {
   /**
    * 发射器
    */
@@ -34,8 +32,10 @@ export interface ParticleSystem {
 
 /**
  * 粒子发射器
+ *
+ * @description 组合 Loopable trait
  */
-export interface ParticleEmitter {
+export interface ParticleEmitter extends Loopable {
   /**
    * 发射形状
    */
@@ -52,10 +52,6 @@ export interface ParticleEmitter {
    * 生命周期
    */
   lifetime: number;
-  /**
-   * 循环
-   */
-  loop: boolean;
 }
 
 /**

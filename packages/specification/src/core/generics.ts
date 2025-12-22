@@ -5,6 +5,7 @@
 
 import type { InterpolationMode, BlendMode } from './enums';
 import type { Vector2Like } from './math';
+import type { Enableable, RequiredEnableable, OptionalNameable, Nameable, Describable } from './traits';
 
 // ============================================================================
 // Keyframe 泛型基类
@@ -85,21 +86,14 @@ export interface MinimalKeyframe {
  * 基础动画轨道接口
  * 所有动画轨道类型的泛型基类
  *
+ * @description 组合 Nameable, Enableable traits
  * @template K 关键帧类型，只需满足最小关键帧约束
  */
-export interface BaseAnimationTrack<K extends MinimalKeyframe = BaseKeyframe> {
-  /**
-   * 轨道名称
-   */
-  name: string;
+export interface BaseAnimationTrack<K extends MinimalKeyframe = BaseKeyframe> extends Nameable, Enableable {
   /**
    * 关键帧列表
    */
   keyframes: K[];
-  /**
-   * 是否启用
-   */
-  enabled?: boolean;
   /**
    * 权重
    */
@@ -143,16 +137,14 @@ export interface BlendableAnimationTrack<K extends MinimalKeyframe = BaseKeyfram
 /**
  * 基础状态接口
  * 所有状态类型的泛型基类
+ *
+ * @description 组合 Nameable trait
  */
-export interface BaseState {
+export interface BaseState extends Nameable {
   /**
    * 状态ID
    */
   id: string;
-  /**
-   * 状态名称
-   */
-  name: string;
 }
 
 /**
@@ -197,13 +189,10 @@ export interface TransitionableState extends BaseState {
  * 基础属性接口
  * 所有属性类型的泛型基类
  *
+ * @description 组合 Nameable trait
  * @template T 属性值的类型
  */
-export interface BaseProperty<T = any> {
-  /**
-   * 属性名称
-   */
-  name: string;
+export interface BaseProperty<T = any> extends Nameable {
   /**
    * 属性类型
    */
@@ -250,16 +239,14 @@ export interface AnimatableProperty<T = any> extends BaseProperty<T> {
 /**
  * 基础约束接口
  * 所有约束类型的泛型基类
+ *
+ * @description 组合 Enableable trait
  */
-export interface BaseConstraint {
+export interface BaseConstraint extends Enableable {
   /**
    * 约束类型
    */
   type: string;
-  /**
-   * 是否启用
-   */
-  enabled?: boolean;
   /**
    * 权重
    */
@@ -365,20 +352,27 @@ export interface BaseTextureRef {
 /**
  * 基础控制器接口
  * 所有控制器类型的泛型基类
+ *
+ * @description 组合 Enableable, OptionalNameable traits
  */
-export interface BaseController {
+export interface BaseController extends Enableable, OptionalNameable {
   /**
    * 控制器ID
    */
   id?: string;
+}
+
+/**
+ * 必选启用的控制器接口
+ * 用于需要明确启用状态的控制器
+ *
+ * @description 组合 RequiredEnableable, OptionalNameable traits
+ */
+export interface RequiredController extends RequiredEnableable, OptionalNameable {
   /**
-   * 控制器名称
+   * 控制器ID
    */
-  name?: string;
-  /**
-   * 是否启用
-   */
-  enabled?: boolean;
+  id?: string;
 }
 
 /**
@@ -582,10 +576,10 @@ export interface Offset2D {
 /**
  * 基础图集区域接口
  * 统一 TextureAtlasRegion 和 SpriteFrame 的公共部分
+ *
+ * @description 组合 Nameable trait
  */
-export interface BaseAtlasRegion {
-  /** 区域名称 */
-  name: string;
+export interface BaseAtlasRegion extends Nameable {
   /** X 坐标 */
   x: number;
   /** Y 坐标 */
@@ -653,18 +647,15 @@ export interface BaseLicense {
  * 基础分类接口
  * 统一 ComponentCategory、DesignIconCategory、AssetCategory 的公共部分
  *
- * @description 各模块应扩展此接口添加特定字段：
+ * @description 组合 Nameable, Describable traits
+ * 各模块应扩展此接口添加特定字段：
  * - ComponentCategory: icon, order
  * - DesignIconCategory: 无额外字段
  * - AssetCategory: icon, order
  */
-export interface BaseCategory {
+export interface BaseCategory extends Nameable, Describable {
   /** 分类 ID */
   id: string;
-  /** 分类名称 */
-  name: string;
-  /** 分类描述 */
-  description?: string;
   /** 父分类 ID */
   parent?: string;
 }

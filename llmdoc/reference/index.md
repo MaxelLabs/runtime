@@ -24,6 +24,8 @@
 - [Engine Architecture](architecture/) - 引擎架构设计
 - [Math Architecture](architecture/) - 数学模块架构
 - [RHI Architecture](architecture/) - 渲染硬件接口架构
+- [**Traits 模式**](traits-pattern.md) - **核心**：组合式接口设计模式（开发宪法）
+- [**Core Components**](api-v2/core/components.md) - **核心**：ECS 数据组件系统
 
 ### 📦 核心工具模块 ✅
 - [**PBR材质系统**](pbr-material-system.md) - **核心**：基于物理的渲染实现

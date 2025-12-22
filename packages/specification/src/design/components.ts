@@ -3,26 +3,28 @@
  * 包含组件库管理、组件定义和实例化
  */
 
-import type { CommonMetadata, AnimationProperties, InteractionProperties, EventType, BaseCategory } from '../core';
+import type {
+  CommonMetadata,
+  AnimationProperties,
+  InteractionProperties,
+  EventType,
+  BaseCategory,
+  Nameable,
+  Describable,
+} from '../core';
 import type { DesignComponentProperty, DesignComponentVariant } from './base';
 import type { DesignElement } from './elements';
 
 /**
  * 设计组件
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface DesignComponent {
+export interface DesignComponent extends Nameable, Describable {
   /**
    * 组件 ID
    */
   id: string;
-  /**
-   * 组件名称
-   */
-  name: string;
-  /**
-   * 组件描述
-   */
-  description?: string;
   /**
    * 组件分类
    */
@@ -75,12 +77,10 @@ export interface DesignComponent {
 
 /**
  * 组件状态
+ *
+ * @description 组合 Nameable trait
  */
-export interface ComponentState {
-  /**
-   * 状态名称
-   */
-  name: string;
+export interface ComponentState extends Nameable {
   /**
    * 状态类型
    */
@@ -134,12 +134,10 @@ export interface ComponentTransition {
 
 /**
  * 设计组件库
+ *
+ * @description 组合 Nameable trait
  */
-export interface DesignComponentLibrary {
-  /**
-   * 库名称
-   */
-  name: string;
+export interface DesignComponentLibrary extends Nameable {
   /**
    * 库版本
    */
@@ -354,16 +352,14 @@ export interface ComponentUsageStats {
 
 /**
  * 组件使用场景
+ *
+ * @description 组合 Nameable trait
  */
-export interface ComponentUsageContext {
+export interface ComponentUsageContext extends Nameable {
   /**
    * 场景类型
    */
   type: ContextType;
-  /**
-   * 场景名称
-   */
-  name: string;
   /**
    * 使用次数
    */

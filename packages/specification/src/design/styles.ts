@@ -15,6 +15,8 @@ import type {
   StrokePosition,
   StyleType,
   ColorLike,
+  Nameable,
+  Describable,
 } from '../core';
 
 // 从 common 模块导入通用类型
@@ -276,16 +278,14 @@ export interface DesignTextStyle {
 
 /**
  * 设计样式定义
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface DesignStyleDefinition {
+export interface DesignStyleDefinition extends Nameable, Describable {
   /**
    * 样式 ID
    */
   id: string;
-  /**
-   * 样式名称
-   */
-  name: string;
   /**
    * 样式类型
    */
@@ -294,10 +294,6 @@ export interface DesignStyleDefinition {
    * 样式属性
    */
   properties: DesignStyle;
-  /**
-   * 样式描述
-   */
-  description?: string;
   /**
    * 混合模式（使用通用BlendMode）
    */

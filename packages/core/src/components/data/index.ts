@@ -145,15 +145,32 @@ export class Disabled implements IDisabled {
  * @description 实现 IStatic 接口,标记实体为静态 (变换不会改变,可以优化)
  *
  * @remarks
- * 这是一个纯标记组件,不需要数据
+ * 这是一个纯标记组件（Tag Component），不包含任何数据字段。
+ * 它的存在本身就表示实体具有"静态"属性，可用于：
+ * - 跳过变换更新计算
+ * - 启用静态批处理优化
+ * - 标记不需要物理模拟的对象
+ *
+ * @example
+ * ```typescript
+ * // 方式1：直接创建
+ * const staticTag = new Static();
+ *
+ * // 方式2：使用工厂方法（保持 API 一致性）
+ * const staticTag = Static.fromData();
+ * ```
  */
 export class Static implements IStatic {
   /**
-   * 从 IStatic 规范数据创建组件
-   * @param _data IStatic 规范数据 (标记接口,无字段)
+   * 创建 Static 组件实例
+   *
+   * @remarks
+   * 作为标记组件，此方法不需要任何参数。
+   * 保留此方法是为了与其他组件保持 API 一致性。
+   *
    * @returns Static 组件实例
    */
-  static fromData(_data: IStatic): Static {
+  static fromData(): Static {
     return new Static();
   }
 }

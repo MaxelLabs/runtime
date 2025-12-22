@@ -3,7 +3,7 @@
  * 包含调色板、颜色模式和可访问性相关类型
  */
 
-import type { ColorLike } from '../core';
+import type { ColorLike, Nameable, Describable } from '../core';
 
 /**
  * 设计颜色系统
@@ -42,12 +42,10 @@ export interface DesignColorSystem {
 
 /**
  * 设计调色板
+ *
+ * @description 组合 Nameable trait
  */
-export interface DesignColorPalette {
-  /**
-   * 调色板名称
-   */
-  name: string;
+export interface DesignColorPalette extends Nameable {
   /**
    * 颜色变体（使用统一Color）
    */
@@ -64,16 +62,10 @@ export interface DesignColorPalette {
 
 /**
  * 颜色用途
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface ColorUsage {
-  /**
-   * 用途名称
-   */
-  name: string;
-  /**
-   * 用途描述
-   */
-  description?: string;
+export interface ColorUsage extends Nameable, Describable {
   /**
    * 推荐场景
    */
@@ -148,12 +140,10 @@ export enum WCAGLevel {
 
 /**
  * 颜色模式
+ *
+ * @description 组合 Nameable trait
  */
-export interface DesignColorMode {
-  /**
-   * 模式名称
-   */
-  name: string;
+export interface DesignColorMode extends Nameable {
   /**
    * 模式类型
    */

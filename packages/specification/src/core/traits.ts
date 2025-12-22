@@ -75,11 +75,20 @@ export interface AssetReferable {
 
 /**
  * 可启用的
- * @description 具有启用/禁用状态的实体
+ * @description 具有启用/禁用状态的实体（可选）
  */
 export interface Enableable {
   /** 是否启用 */
   enabled?: boolean;
+}
+
+/**
+ * 必须启用的
+ * @description 具有必选启用/禁用状态的实体
+ */
+export interface RequiredEnableable {
+  /** 是否启用 */
+  enabled: boolean;
 }
 
 // ============================================================================

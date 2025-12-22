@@ -6,7 +6,9 @@
 
 ## 文档分类
 
-### 核心系统
+### 架构模式（开发宪法）
+- [**traits-pattern.md**](./traits-pattern.md) - **核心**：组合式接口设计模式（开发宪法）
+- [**core-components.md**](./api-v2/core/components.md) - **核心**：ECS 数据组件系统规范
 - [graphics-bible.md](./graphics-bible.md) - 图形渲染核心规范和最佳实践
 - [rhi-demo-constitution.md](./rhi-demo-constitution.md) - RHI演示系统架构和约定
 - [technical-debt.md](./technical-debt.md) - 技术债务记录和解决方案

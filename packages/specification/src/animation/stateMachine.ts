@@ -7,6 +7,7 @@
  */
 
 import type { AnimationParameter } from '../common';
+import type { Nameable } from '../core';
 
 // 重新导出从 common/animation.ts 移动的类型（向后兼容）
 export type {
@@ -25,12 +26,10 @@ import type { AnimationTransition, AnimationState, InterruptionSource } from '..
 
 /**
  * 动画状态机（使用通用类型）
+ *
+ * @description 组合 Nameable trait
  */
-export interface AnimationStateMachine {
-  /**
-   * 状态机名称
-   */
-  name: string;
+export interface AnimationStateMachine extends Nameable {
   /**
    * 状态列表（使用通用类型）
    */

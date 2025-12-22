@@ -3,7 +3,15 @@
  * 定义所有系统共通的纹理相关类型
  */
 
-import type { ResourceLoadState, BaseAtlasRegion, BaseAtlasMetadata, Size2D, UVCoordinates } from '../core';
+import type {
+  ResourceLoadState,
+  BaseAtlasRegion,
+  BaseAtlasMetadata,
+  Size2D,
+  UVCoordinates,
+  Nameable,
+  RequiredEnableable,
+} from '../core';
 import type { CacheConfiguration } from '../package';
 import type { RHITextureFormat, RHIFilterMode, RHIAddressMode, RHITextureDataType } from './rhi';
 
@@ -49,12 +57,10 @@ export enum TextureUsage {
 
 /**
  * 通用纹理配置
+ *
+ * @description 组合 Nameable trait
  */
-export interface CommonTextureConfig {
-  /**
-   * 纹理名称
-   */
-  name: string;
+export interface CommonTextureConfig extends Nameable {
   /**
    * 纹理宽度
    */
@@ -169,8 +175,10 @@ export interface TextureData {
 
 /**
  * 通用纹理
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface CommonTexture {
+export interface CommonTexture extends RequiredEnableable {
   /**
    * 纹理ID
    */
@@ -199,10 +207,6 @@ export interface CommonTexture {
    * 内存使用量（字节）
    */
   memoryUsage: number;
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
   /**
    * 纹理标签
    */
@@ -343,8 +347,10 @@ export enum TextureStreamStrategy {
 
 /**
  * 纹理压缩配置
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface TextureCompressionConfig {
+export interface TextureCompressionConfig extends RequiredEnableable {
   /**
    * 压缩格式
    */
@@ -353,10 +359,6 @@ export interface TextureCompressionConfig {
    * 压缩质量 (0-1)
    */
   quality: number;
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
   /**
    * 平台特定设置
    */

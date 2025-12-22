@@ -25,6 +25,10 @@ import type {
   UnifiedKeyframe,
   UnifiedAnimationTrack,
   BaseTextureRef,
+  Nameable,
+  RequiredEnableable,
+  Durable,
+  Describable,
 } from '../core';
 
 /**
@@ -182,12 +186,10 @@ export enum ShaderNodeType {
 
 /**
  * 着色器输入
+ *
+ * @description 组合 Nameable trait
  */
-export interface ShaderInput {
-  /**
-   * 输入名称
-   */
-  name: string;
+export interface ShaderInput extends Nameable {
   /**
    * 输入类型
    */
@@ -208,12 +210,10 @@ export interface ShaderInput {
 
 /**
  * 着色器输出
+ *
+ * @description 组合 Nameable trait
  */
-export interface ShaderOutput {
-  /**
-   * 输出名称
-   */
-  name: string;
+export interface ShaderOutput extends Nameable {
   /**
    * 输出类型
    */
@@ -435,12 +435,10 @@ export interface MaterialRenderState {
 
 /**
  * 混合状态
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface BlendState {
-  /**
-   * 启用混合
-   */
-  enabled: boolean;
+export interface BlendState extends RequiredEnableable {
   /**
    * 源混合因子
    */
@@ -513,12 +511,10 @@ export interface DepthBias {
 
 /**
  * 模板状态
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface StencilState {
-  /**
-   * 启用模板测试
-   */
-  enabled: boolean;
+export interface StencilState extends RequiredEnableable {
   /**
    * 读取掩码
    */
@@ -699,12 +695,10 @@ export enum ConditionType {
 
 /**
  * 材质库
+ *
+ * @description 组合 Nameable trait
  */
-export interface MaterialLibrary {
-  /**
-   * 库名称
-   */
-  name: string;
+export interface MaterialLibrary extends Nameable {
   /**
    * 库版本
    */
@@ -725,20 +719,14 @@ export interface MaterialLibrary {
 
 /**
  * 材质分类
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface MaterialCategory {
+export interface MaterialCategory extends Nameable, Describable {
   /**
    * 分类ID
    */
   id: string;
-  /**
-   * 分类名称
-   */
-  name: string;
-  /**
-   * 分类描述
-   */
-  description?: string;
   /**
    * 父分类
    */
@@ -769,12 +757,10 @@ export interface ProceduralMaterial extends IMaterial {
 
 /**
  * 程序化参数
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface ProceduralParameter {
-  /**
-   * 参数名称
-   */
-  name: string;
+export interface ProceduralParameter extends Nameable, Describable {
   /**
    * 参数类型
    */
@@ -795,10 +781,6 @@ export interface ProceduralParameter {
    * 步长
    */
   step?: any;
-  /**
-   * 描述
-   */
-  description?: string;
 }
 
 /**
@@ -833,16 +815,10 @@ export enum GeneratorType {
 
 /**
  * 材质动画
+ *
+ * @description 组合 Nameable, Durable traits
  */
-export interface MaterialAnimation {
-  /**
-   * 动画名称
-   */
-  name: string;
-  /**
-   * 动画时长
-   */
-  duration: number;
+export interface MaterialAnimation extends Nameable, Durable {
   /**
    * 动画轨道
    */

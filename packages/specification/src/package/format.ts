@@ -10,6 +10,10 @@ import type {
   CacheStrategy,
   GeometryOptimization,
   AssetType,
+  Nameable,
+  Describable,
+  RequiredEnableable,
+  Durable,
 } from '../core';
 import type { DesignDocument } from '../design';
 import type { Workflow } from '../workflow';
@@ -51,20 +55,14 @@ export interface MaxellabsPackage {
 
 /**
  * 包元数据
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface PackageMetadata {
-  /**
-   * 包名称
-   */
-  name: string;
+export interface PackageMetadata extends Nameable, Describable {
   /**
    * 包版本
    */
   version: string;
-  /**
-   * 包描述
-   */
-  description?: string;
   /**
    * 作者信息
    */
@@ -117,12 +115,10 @@ export interface PackageMetadata {
 
 /**
  * 作者信息
+ *
+ * @description 组合 Nameable trait
  */
-export interface AuthorInfo {
-  /**
-   * 作者姓名
-   */
-  name: string;
+export interface AuthorInfo extends Nameable {
   /**
    * 作者邮箱
    */
@@ -157,12 +153,10 @@ export interface RepositoryInfo {
 
 /**
  * 包依赖
+ *
+ * @description 组合 Nameable trait
  */
-export interface PackageDependency {
-  /**
-   * 依赖包名称
-   */
-  name: string;
+export interface PackageDependency extends Nameable {
   /**
    * 依赖版本
    */
@@ -228,12 +222,10 @@ export enum Platform {
 
 /**
  * 浏览器支持
+ *
+ * @description 组合 Nameable trait
  */
-export interface BrowserSupport {
-  /**
-   * 浏览器名称
-   */
-  name: string;
+export interface BrowserSupport extends Nameable {
   /**
    * 最小版本
    */
@@ -264,16 +256,14 @@ export interface AssetManifest {
 
 /**
  * 资产条目
+ *
+ * @description 组合 Nameable trait
  */
-export interface AssetEntry {
+export interface AssetEntry extends Nameable {
   /**
    * 资产 ID
    */
   id: string;
-  /**
-   * 资产名称
-   */
-  name: string;
   /**
    * 资产类型
    */
@@ -692,12 +682,10 @@ export interface LoaderConfiguration {
 
 /**
  * 缓存配置
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface CacheConfiguration {
-  /**
-   * 启用缓存
-   */
-  enabled: boolean;
+export interface CacheConfiguration extends RequiredEnableable {
   /**
    * 缓存大小限制（MB）
    */
@@ -853,12 +841,10 @@ export interface SecurityConfiguration {
 
 /**
  * 内容安全策略
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface ContentSecurityPolicy {
-  /**
-   * 启用 CSP
-   */
-  enabled: boolean;
+export interface ContentSecurityPolicy extends RequiredEnableable {
   /**
    * CSP 指令
    */
@@ -871,12 +857,10 @@ export interface ContentSecurityPolicy {
 
 /**
  * 子资源完整性
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface SubresourceIntegrity {
-  /**
-   * 启用 SRI
-   */
-  enabled: boolean;
+export interface SubresourceIntegrity extends RequiredEnableable {
   /**
    * 哈希算法
    */
@@ -928,12 +912,10 @@ export interface AccessControl {
 
 /**
  * 调试配置
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface DebugConfiguration {
-  /**
-   * 启用调试
-   */
-  enabled: boolean;
+export interface DebugConfiguration extends RequiredEnableable {
   /**
    * 日志级别
    */
@@ -1031,12 +1013,10 @@ export interface ValidationWarning {
 
 /**
  * 验证统计
+ *
+ * @description 组合 Durable trait（duration 表示验证时间）
  */
-export interface ValidationStatistics {
-  /**
-   * 验证时间
-   */
-  duration: number;
+export interface ValidationStatistics extends Durable {
   /**
    * 检查项目数
    */

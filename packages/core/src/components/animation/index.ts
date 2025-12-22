@@ -3,17 +3,24 @@
  * 基于 specification 的动画相关数据组件
  *
  * @packageDocumentation
+ *
+ * @remarks
+ * ## 设计决策：fromData 接受 Specification 接口类型
+ *
+ * 所有组件的 `fromData()` 方法直接接受 Specification 中定义的接口类型（如 `IAnimationState`），
+ * 而不是 `Partial<T>` 类型。这是基于以下考虑：
+ *
+ * 1. **类型安全**: Specification 接口定义了数据的完整契约，fromData 应该验证输入符合契约
+ * 2. **数据来源明确**: 组件数据通常来自序列化的场景文件或 API，这些数据应该是完整的
+ * 3. **职责分离**: 如果需要部分数据创建，应该在调用方处理默认值，而不是在组件内部
+ * 4. **与 Specification 对齐**: 保持与 specification 包的类型一致性
+ *
+ * 如果确实需要从部分数据创建组件，可以：
+ * - 使用 `new Component()` 创建默认实例，然后手动赋值
+ * - 在调用方使用展开运算符合并默认值：`Component.fromData({ ...defaults, ...partialData })`
  */
 
-import type {
-  AnimationState as SpecAnimationState,
-  AnimationTimeline,
-  IAnimationState,
-  IAnimationClipRef,
-  ITimeline,
-  ITweenState,
-  EasingType,
-} from '@maxellabs/specification';
+import type { IAnimationState, IAnimationClipRef, ITimeline, ITweenState, EasingType } from '@maxellabs/specification';
 
 /**
  * AnimationState Component - 动画状态组件
@@ -37,8 +44,19 @@ export class AnimationState implements IAnimationState {
 
   /**
    * 从 IAnimationState 规范数据创建组件
-   * @param data IAnimationState 规范数据
+   * @param data IAnimationState 规范数据（ECS 组件接口）
    * @returns AnimationState 组件实例
+   *
+   * @example
+   * ```typescript
+   * const state = AnimationState.fromData({
+   *   currentClipId: 'walk',
+   *   time: 0,
+   *   speed: 1,
+   *   loop: true,
+   *   playing: true
+   * });
+   * ```
    */
   static fromData(data: IAnimationState): AnimationState {
     const component = new AnimationState();
@@ -47,21 +65,6 @@ export class AnimationState implements IAnimationState {
     component.speed = data.speed;
     component.loop = data.loop;
     component.playing = data.playing;
-    return component;
-  }
-
-  /**
-   * 从规范的 AnimationState 创建组件
-   * @param data 规范的 AnimationState 数据
-   * @returns AnimationState 组件实例
-   */
-  static fromSpec(data: SpecAnimationState): AnimationState {
-    const component = new AnimationState();
-    component.currentClipId = data.clip;
-    component.time = data.startTime ?? 0;
-    component.speed = data.speed;
-    component.loop = data.loop;
-    component.playing = data.active ?? false;
     return component;
   }
 }
@@ -122,21 +125,6 @@ export class Timeline implements ITimeline {
     component.playing = data.playing;
     component.speed = data.speed;
     component.trackIds = [...data.trackIds];
-    return component;
-  }
-
-  /**
-   * 从规范的 AnimationTimeline 创建组件
-   * @param data 规范的 AnimationTimeline 数据
-   * @returns Timeline 组件实例
-   */
-  static fromSpec(data: AnimationTimeline): Timeline {
-    const component = new Timeline();
-    component.currentTime = 0;
-    component.duration = data.duration;
-    component.playing = false;
-    component.speed = data.speed;
-    component.trackIds = data.tracks.map((t) => t.name);
     return component;
   }
 }

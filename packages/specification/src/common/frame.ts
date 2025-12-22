@@ -29,6 +29,11 @@ import type {
   EventType,
   UnifiedKeyframe,
   UnifiedAnimationTrack,
+  Durable,
+  Loopable,
+  Speedy,
+  Nameable,
+  RequiredEnableable,
 } from '../core';
 
 /**
@@ -177,16 +182,10 @@ export interface AnimationTrack extends Omit<UnifiedAnimationTrack<AnimationKeyf
 
 /**
  * 帧动画剪辑
+ *
+ * @description 组合 Nameable, Durable, Loopable traits
  */
-export interface FrameAnimationClip {
-  /**
-   * 动画名称
-   */
-  name: string;
-  /**
-   * 持续时间（秒）
-   */
-  duration: number;
+export interface FrameAnimationClip extends Nameable, Durable, Loopable {
   /**
    * 帧率
    */
@@ -195,10 +194,6 @@ export interface FrameAnimationClip {
    * 动画轨道
    */
   tracks: AnimationTrack[];
-  /**
-   * 是否循环
-   */
-  loop: boolean;
   /**
    * 循环次数（-1为无限循环）
    */
@@ -214,8 +209,10 @@ export interface FrameAnimationClip {
 }
 /**
  * 帧动画控制器
+ *
+ * @description 组合 Speedy trait
  */
-export interface FrameAnimationController {
+export interface FrameAnimationController extends Speedy {
   /**
    * 当前播放的动画
    */
@@ -233,10 +230,6 @@ export interface FrameAnimationController {
    */
   time: number;
   /**
-   * 播放速度
-   */
-  speed: number;
-  /**
    * 是否自动播放
    */
   autoPlay: boolean;
@@ -252,12 +245,10 @@ export interface FrameAnimationController {
 
 /**
  * 动画层
+ *
+ * @description 组合 Nameable trait
  */
-export interface AnimationLayer {
-  /**
-   * 层名称
-   */
-  name: string;
+export interface AnimationLayer extends Nameable {
   /**
    * 层权重
    */
@@ -278,8 +269,10 @@ export interface AnimationLayer {
 
 /**
  * 通用帧元素
+ *
+ * @description 组合 Loopable trait
  */
-export interface CommonFrameElement extends CommonElement {
+export interface CommonFrameElement extends CommonElement, Loopable {
   type: ElementType.Frame;
   /**
    * 帧动画类型
@@ -306,10 +299,6 @@ export interface CommonFrameElement extends CommonElement {
    */
   playbackSpeed: number;
   /**
-   * 是否循环
-   */
-  loop: boolean;
-  /**
    * 帧缓存
    */
   frameCache?: FrameCache;
@@ -334,12 +323,10 @@ export interface FrameCache extends CacheConfiguration {
 
 /**
  * 帧预加载设置
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface FramePreloadSettings {
-  /**
-   * 是否启用预加载
-   */
-  enabled: boolean;
+export interface FramePreloadSettings extends RequiredEnableable {
   /**
    * 预加载策略
    */
@@ -367,8 +354,10 @@ export interface SequenceFrameElement extends CommonFrameElement {
 
 /**
  * 帧序列
+ *
+ * @description 组合 Loopable trait
  */
-export interface FrameSequence {
+export interface FrameSequence extends Loopable {
   /**
    * 帧列表
    */
@@ -377,10 +366,6 @@ export interface FrameSequence {
    * 帧率
    */
   frameRate: number;
-  /**
-   * 是否循环
-   */
-  loop: boolean;
   /**
    * 序列名称
    */

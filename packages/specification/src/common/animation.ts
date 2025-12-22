@@ -32,8 +32,13 @@ import type {
   EasingFunction,
   PlayState,
   BaseAnimationConfig,
-  BaseController,
+  RequiredController,
   BaseParameter,
+  Speedy,
+  Loopable,
+  Durable,
+  Nameable,
+  RequiredEnableable,
 } from '../core';
 
 // ============================================================================
@@ -208,8 +213,10 @@ export interface AnimationTransition {
 
 /**
  * 动画状态统一定义
+ *
+ * @description 组合 Speedy 和 Loopable traits
  */
-export interface AnimationState {
+export interface AnimationState extends Speedy, Loopable {
   /**
    * 状态ID
    */
@@ -222,14 +229,6 @@ export interface AnimationState {
    * 动画剪辑
    */
   clip: string;
-  /**
-   * 播放速度
-   */
-  speed: number;
-  /**
-   * 是否循环
-   */
-  loop: boolean;
   /**
    * 权重
    */
@@ -330,8 +329,10 @@ export interface CommonAnimationConfig extends BaseAnimationConfig {
 
 /**
  * 动画控制器（扩展核心控制器）
+ *
+ * @description 扩展 RequiredController（已包含 RequiredEnableable, OptionalNameable）
  */
-export interface AnimationController extends BaseController {
+export interface AnimationController extends RequiredController {
   /**
    * 当前播放状态
    */
@@ -344,10 +345,6 @@ export interface AnimationController extends BaseController {
    * 播放速度
    */
   playbackSpeed: number;
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
   /**
    * 动画权重
    */
@@ -364,12 +361,10 @@ export interface AnimationController extends BaseController {
 
 /**
  * 动画混合器
+ *
+ * @description 组合 Nameable, RequiredEnableable traits
  */
-export interface AnimationMixer {
-  /**
-   * 混合器名称
-   */
-  name: string;
+export interface AnimationMixer extends Nameable, RequiredEnableable {
   /**
    * 动画层列表
    */
@@ -379,10 +374,6 @@ export interface AnimationMixer {
    */
   globalWeight: number;
   /**
-   * 是否启用
-   */
-  enabled: boolean;
-  /**
    * 更新模式
    */
   updateMode: 'normal' | 'unscaled-time' | 'manual';
@@ -390,12 +381,10 @@ export interface AnimationMixer {
 
 /**
  * 动画混合器层
+ *
+ * @description 组合 Nameable trait
  */
-export interface AnimationMixerLayer {
-  /**
-   * 层名称
-   */
-  name: string;
+export interface AnimationMixerLayer extends Nameable {
   /**
    * 层权重
    */
@@ -436,16 +425,14 @@ export interface AnimationParameter extends BaseParameter {
 
 /**
  * 动画时间轴
+ *
+ * @description 组合 Durable, Loopable, Speedy traits
  */
-export interface AnimationTimeline {
+export interface AnimationTimeline extends Durable, Loopable, Speedy {
   /**
    * 时间轴名称
    */
   name: string;
-  /**
-   * 总持续时间
-   */
-  duration: number;
   /**
    * 动画轨道列表
    */
@@ -454,24 +441,14 @@ export interface AnimationTimeline {
    * 时间轴事件
    */
   events: AnimationEvent[];
-  /**
-   * 是否循环
-   */
-  loop: boolean;
-  /**
-   * 播放速度
-   */
-  speed: number;
 }
 
 /**
  * 动画时间轴轨道
+ *
+ * @description 组合 Nameable, RequiredEnableable traits
  */
-export interface AnimationTimelineTrack {
-  /**
-   * 轨道名称
-   */
-  name: string;
+export interface AnimationTimelineTrack extends Nameable, RequiredEnableable {
   /**
    * 目标对象ID
    */
@@ -484,10 +461,6 @@ export interface AnimationTimelineTrack {
    * 关键帧列表
    */
   keyframes: AnimationKeyframe[];
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
   /**
    * 权重
    */

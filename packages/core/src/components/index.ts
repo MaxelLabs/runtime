@@ -27,6 +27,9 @@
  * ```
  */
 
+// Base Component - 组件基类
+export { Component, type IComponentData } from './base';
+
 // Transform Components - 变换相关组件
 export { LocalTransform, WorldTransform, Parent, Children } from './transform';
 
