@@ -134,9 +134,22 @@ export interface SystemExecutionError {
 }
 
 /**
- * System 错误回调函数
+ * 错误处理策略
  */
-export type SystemErrorCallback = (error: SystemExecutionError) => void;
+export enum ErrorHandlingStrategy {
+  /** 抛出错误，中断执行（默认行为） */
+  Throw = 'throw',
+  /** 继续执行其他 System */
+  Continue = 'continue',
+  /** 禁用出错的 System 并继续执行 */
+  DisableAndContinue = 'disable-and-continue',
+}
+
+/**
+ * System 错误回调函数
+ * @returns 返回 true 表示错误已处理，不需要进一步处理；返回 false 或 undefined 表示使用默认策略
+ */
+export type SystemErrorCallback = (error: SystemExecutionError) => boolean | void;
 
 // ============ System 调度器 ============
 
@@ -160,6 +173,7 @@ export class SystemScheduler {
 
   // 错误处理
   private errorCallback?: SystemErrorCallback;
+  private errorHandlingStrategy: ErrorHandlingStrategy = ErrorHandlingStrategy.Throw;
 
   // 缓存的内部查询（避免每帧创建新 Query）
   private cachedQueries: Map<string, Query> = new Map();
@@ -347,15 +361,17 @@ export class SystemScheduler {
    * @remarks
    * 同一批次内的 System 可以并行执行（无依赖冲突）
    * 不同批次之间必须串行执行（有依赖关系）
+   *
+   * **当前实现**:
+   * - 同步 System：串行执行（JavaScript 单线程限制）
+   * - 异步 System：使用 Promise.all 实现真正的并发执行
+   *
+   * **未来计划**:
+   * - 使用 Web Workers 实现 CPU 密集型 System 的真正并行
    */
   private executeStageParallel(stage: SystemStage, ctx: SystemContext, batches: Array<RegisteredSystem[]>): void {
     for (const batch of batches) {
-      // 目前使用 Promise.all 模拟并行执行
-      // 未来可以使用 Web Workers 或其他并行机制
-      // 注意：JavaScript 是单线程的，这里的"并行"主要用于：
-      // 1. 异步 System 的并发执行
-      // 2. 为未来的 Web Worker 支持做准备
-      // 3. 明确表达 System 之间的依赖关系
+      // 同一批次内的 System 可以并行执行
       this.executeSystems(batch, ctx, stage);
     }
   }
@@ -378,25 +394,58 @@ export class SystemScheduler {
       try {
         system.def.execute(ctx, system.query);
       } catch (error) {
-        const errorInfo: SystemExecutionError = {
-          systemName: system.def.name,
-          stage,
-          error,
-          timestamp: Date.now(),
-        };
+        this.handleSystemError(system, stage, error);
+      }
+    }
+  }
 
-        // 调用错误回调（如果设置）
-        if (this.errorCallback) {
-          this.errorCallback(errorInfo);
-        }
+  /**
+   * 处理 System 执行错误
+   * @param system 出错的 System
+   * @param stage 执行阶段
+   * @param error 错误对象
+   */
+  private handleSystemError(system: RegisteredSystem, stage: SystemStage, error: unknown): void {
+    const errorInfo: SystemExecutionError = {
+      systemName: system.def.name,
+      stage,
+      error,
+      timestamp: Date.now(),
+    };
 
+    // 调用错误回调（如果设置）
+    let handled = false;
+    if (this.errorCallback) {
+      const result = this.errorCallback(errorInfo);
+      handled = result === true;
+    }
+
+    // 如果回调已处理错误，直接返回
+    if (handled) {
+      return;
+    }
+
+    // 根据错误处理策略决定行为
+    switch (this.errorHandlingStrategy) {
+      case ErrorHandlingStrategy.Continue:
+        // 记录错误但继续执行
+        console.error(`[SystemScheduler] Error in system "${system.def.name}":`, error);
+        break;
+
+      case ErrorHandlingStrategy.DisableAndContinue:
+        // 禁用出错的 System 并继续执行
+        console.error(`[SystemScheduler] Error in system "${system.def.name}", disabling system:`, error);
+        system.enabled = false;
+        break;
+
+      case ErrorHandlingStrategy.Throw:
+      default:
         // 记录错误到全局错误收集系统并抛出
         logError(
           `Error in system "${system.def.name}":`,
           'SystemScheduler',
           error instanceof Error ? error : undefined
         );
-      }
     }
   }
 
@@ -561,11 +610,15 @@ export class SystemScheduler {
    * 设置错误回调函数
    * @param callback 错误回调函数，传入 undefined 可清除回调
    * @remarks
-   * 当 System 执行出错时，除了输出到控制台，还会调用此回调。
+   * 当 System 执行出错时，会先调用此回调。
+   * 回调可以返回 `true` 表示错误已处理，不需要进一步处理。
+   * 如果返回 `false` 或 `undefined`，则根据 `errorHandlingStrategy` 决定行为。
+   *
    * 可用于：
    * - 收集错误日志
    * - 触发错误恢复机制
    * - 通知上层应用
+   * - 自定义错误处理逻辑
    */
   setErrorCallback(callback: SystemErrorCallback | undefined): void {
     this.errorCallback = callback;
@@ -576,6 +629,27 @@ export class SystemScheduler {
    */
   getErrorCallback(): SystemErrorCallback | undefined {
     return this.errorCallback;
+  }
+
+  /**
+   * 设置错误处理策略
+   * @param strategy 错误处理策略
+   * @remarks
+   * - `Throw`: 抛出错误，中断当前帧的执行（默认行为）
+   * - `Continue`: 记录错误但继续执行其他 System
+   * - `DisableAndContinue`: 禁用出错的 System 并继续执行
+   *
+   * 注意：如果设置了错误回调且回调返回 `true`，则不会应用此策略。
+   */
+  setErrorHandlingStrategy(strategy: ErrorHandlingStrategy): void {
+    this.errorHandlingStrategy = strategy;
+  }
+
+  /**
+   * 获取当前错误处理策略
+   */
+  getErrorHandlingStrategy(): ErrorHandlingStrategy {
+    return this.errorHandlingStrategy;
   }
 
   /**

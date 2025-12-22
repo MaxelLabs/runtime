@@ -3,10 +3,11 @@
  * 测试 System 调度器和内置 System 的功能
  */
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import type { SystemDef, SystemContext } from '../../../src/ecs/core/systems';
+import type { SystemDef, SystemContext, SystemErrorCallback } from '../../../src/ecs/core/systems';
 import {
   SystemScheduler,
   SystemStage,
+  ErrorHandlingStrategy,
   createTransformSystem,
   HierarchySystem,
   CleanupSystem,
@@ -376,7 +377,7 @@ describe('SystemScheduler', () => {
     });
 
     it('应该在抛出错误前调用错误回调', () => {
-      const errorCallback = jest.fn();
+      const errorCallback = jest.fn<SystemErrorCallback>();
       scheduler.setErrorCallback(errorCallback);
 
       const system: SystemDef = {
@@ -403,6 +404,82 @@ describe('SystemScheduler', () => {
           error: expect.any(Error),
         })
       );
+    });
+
+    it('应该支持 Continue 错误处理策略', () => {
+      const executeFn2 = jest.fn();
+
+      const system1: SystemDef = {
+        name: 'ErrorSystem',
+        stage: SystemStage.Update,
+        execute: () => {
+          throw new Error('Test error');
+        },
+      };
+
+      const system2: SystemDef = {
+        name: 'NormalSystem',
+        stage: SystemStage.Update,
+        execute: executeFn2,
+      };
+
+      scheduler.setErrorHandlingStrategy(ErrorHandlingStrategy.Continue);
+      scheduler.addSystems(system1, system2);
+
+      // 不应该抛出错误
+      expect(() => scheduler.update(0.016)).not.toThrow();
+
+      // 第二个 System 应该被执行
+      expect(executeFn2).toHaveBeenCalled();
+    });
+
+    it('应该支持 DisableAndContinue 错误处理策略', () => {
+      const system: SystemDef = {
+        name: 'ErrorSystem',
+        stage: SystemStage.Update,
+        execute: () => {
+          throw new Error('Test error');
+        },
+      };
+
+      scheduler.setErrorHandlingStrategy(ErrorHandlingStrategy.DisableAndContinue);
+      scheduler.addSystem(system);
+
+      // 第一次执行不应该抛出错误
+      expect(() => scheduler.update(0.016)).not.toThrow();
+
+      // System 应该被禁用
+      expect(scheduler.isSystemEnabled('ErrorSystem')).toBe(false);
+    });
+
+    it('应该支持错误回调返回 true 来阻止默认处理', () => {
+      const errorCallback = jest.fn<SystemErrorCallback>().mockReturnValue(true);
+      scheduler.setErrorCallback(errorCallback);
+      scheduler.setErrorHandlingStrategy(ErrorHandlingStrategy.Throw);
+
+      const system: SystemDef = {
+        name: 'ErrorSystem',
+        stage: SystemStage.Update,
+        execute: () => {
+          throw new Error('Test error');
+        },
+      };
+
+      scheduler.addSystem(system);
+
+      // 因为回调返回 true，不应该抛出错误
+      expect(() => scheduler.update(0.016)).not.toThrow();
+      expect(errorCallback).toHaveBeenCalled();
+    });
+
+    it('应该支持获取和设置错误处理策略', () => {
+      expect(scheduler.getErrorHandlingStrategy()).toBe(ErrorHandlingStrategy.Throw);
+
+      scheduler.setErrorHandlingStrategy(ErrorHandlingStrategy.Continue);
+      expect(scheduler.getErrorHandlingStrategy()).toBe(ErrorHandlingStrategy.Continue);
+
+      scheduler.setErrorHandlingStrategy(ErrorHandlingStrategy.DisableAndContinue);
+      expect(scheduler.getErrorHandlingStrategy()).toBe(ErrorHandlingStrategy.DisableAndContinue);
     });
   });
 
