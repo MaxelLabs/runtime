@@ -3,7 +3,7 @@
  * 包含资产库、资产分类和资产管理相关类型
  */
 
-import type { AssetType, LicenseType } from '../core';
+import type { AssetType, LicenseType, BaseLicense, BaseCategory } from '../core';
 
 /**
  * 资产库
@@ -79,24 +79,10 @@ export interface DesignAsset {
 
 /**
  * 资产分类
+ *
+ * @description 继承自 BaseCategory，添加图标和排序字段
  */
-export interface AssetCategory {
-  /**
-   * 分类 ID
-   */
-  id: string;
-  /**
-   * 分类名称
-   */
-  name: string;
-  /**
-   * 父分类
-   */
-  parent?: string;
-  /**
-   * 分类描述
-   */
-  description?: string;
+export interface AssetCategory extends BaseCategory {
   /**
    * 分类图标
    */
@@ -109,20 +95,18 @@ export interface AssetCategory {
 
 /**
  * 资产许可
+ *
+ * @description 继承自 BaseLicense，添加资产特有的名称、版权和归属字段
  */
-export interface AssetLicense {
+export interface AssetLicense extends BaseLicense {
   /**
-   * 许可类型
+   * 许可类型（覆盖为具体类型）
    */
   type: LicenseType;
   /**
    * 许可名称
    */
   name: string;
-  /**
-   * 许可URL
-   */
-  url?: string;
   /**
    * 版权信息
    */

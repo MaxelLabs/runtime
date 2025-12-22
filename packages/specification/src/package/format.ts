@@ -3,7 +3,14 @@
  * 基于 USDZ 扩展的 Maxellabs 包格式 (.maxz)
  */
 
-import type { UsdStage, CompressionAlgorithm, DeviceType, CacheStrategy, GeometryOptimization } from '../core';
+import type {
+  UsdStage,
+  CompressionAlgorithm,
+  DeviceType,
+  CacheStrategy,
+  GeometryOptimization,
+  AssetType,
+} from '../core';
 import type { DesignDocument } from '../design';
 import type { Workflow } from '../workflow';
 
@@ -306,21 +313,12 @@ export interface AssetEntry {
 }
 
 /**
- * 包资产条目类型（扩展基础AssetType）
+ * 包特有的资产类型（扩展核心 AssetType）
+ *
+ * @description 仅包含包格式特有的资产类型
+ * 基础资产类型请使用 core/base.ts 中的 AssetType
  */
-export enum AssetEntryType {
-  // 基础类型（来自 AssetType）
-  Design = 'design',
-  Image = 'image',
-  Video = 'video',
-  Audio = 'audio',
-  Font = 'font',
-  Icon = 'icon',
-  Component = 'component',
-  Code = 'code',
-  Documentation = 'documentation',
-  Configuration = 'configuration',
-
+export enum PackageSpecificAssetType {
   // USD 特定格式
   USD = 'usd',
   USDA = 'usda',
@@ -333,6 +331,14 @@ export enum AssetEntryType {
   Shader = 'shader',
   Animation = 'animation',
 }
+
+/**
+ * 完整资产条目类型（AssetType + PackageSpecificAssetType）
+ *
+ * @description 包资产清单中使用的完整类型
+ * 包含核心资产类型和包特有的 USD/3D 资产类型
+ */
+export type AssetEntryType = AssetType | PackageSpecificAssetType;
 
 /**
  * 压缩信息
@@ -631,6 +637,11 @@ export interface RendererConfiguration {
 
 /**
  * 渲染器类型
+ *
+ * @description 配置层面的渲染器类型，包含所有可能的渲染方式
+ * 与 common/rhi/types/enums.ts 中的 RHIBackend 的区别：
+ * - RHIBackend: RHI 层级，仅包含 3D 硬件后端 (WebGL, WebGL2, WebGPU)
+ * - RendererType: 配置层级，包含所有渲染方式 (含 2D: Canvas2D, SVG)
  */
 export enum RendererType {
   WebGL = 'webgl',

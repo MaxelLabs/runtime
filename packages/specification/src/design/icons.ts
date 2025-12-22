@@ -3,7 +3,7 @@
  * 包含图标库管理、图标定义和分类系统
  */
 
-import type { LicenseType } from '../core';
+import type { LicenseType, BaseLicense, SortDirection } from '../core';
 import type { CommonMetadata } from '../core/interfaces';
 import type { DesignIconVariant, DesignIconCategory } from './base';
 import type { IconStyle } from './enums';
@@ -68,20 +68,14 @@ export interface DesignIcon {
 
 /**
  * 图标许可
+ *
+ * @description 继承自 BaseLicense，添加图标特有的商业使用和归属字段
  */
-export interface IconLicense {
+export interface IconLicense extends BaseLicense {
   /**
-   * 许可类型
+   * 许可类型（覆盖为具体类型）
    */
   type: LicenseType;
-  /**
-   * 许可URL
-   */
-  url?: string;
-  /**
-   * 许可描述
-   */
-  description?: string;
   /**
    * 商业使用
    */
@@ -276,6 +270,11 @@ export enum IconColorMode {
 
 /**
  * 图标导出格式
+ *
+ * @description 图标专用导出格式，包含字体和图标特有格式
+ * 与其他导出格式枚举的区别：
+ * - ExportFormat (document.ts): 图像/文档导出格式
+ * - ExportFormatType (systems.ts): 代码/配置导出格式
  */
 export enum IconExportFormat {
   SVG = 'svg',
@@ -427,13 +426,8 @@ export enum IconSortField {
   Size = 'size',
 }
 
-/**
- * 排序方向
- */
-export enum SortDirection {
-  Ascending = 'asc',
-  Descending = 'desc',
-}
+// SortDirection 已从 core/enums.ts 导入，不再重复定义
+export type { SortDirection } from '../core';
 
 /**
  * 图标集合

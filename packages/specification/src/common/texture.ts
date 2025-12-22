@@ -3,71 +3,25 @@
  * 定义所有系统共通的纹理相关类型
  */
 
-import type { ResourceLoadState } from '../core';
+import type { ResourceLoadState, BaseAtlasRegion, BaseAtlasMetadata, Size2D, UVCoordinates } from '../core';
 import type { CacheConfiguration } from '../package';
-import type { RHITextureFormat, RHIFilterMode, RHIAddressMode } from './rhi';
-
-/**
- * RHI纹理数据类型
- */
-export enum RHITextureDataType {
-  /**
-   * 无符号字节
-   */
-  UnsignedByte = 'unsigned-byte',
-  /**
-   * 字节
-   */
-  Byte = 'byte',
-  /**
-   * 无符号短整型
-   */
-  UnsignedShort = 'unsigned-short',
-  /**
-   * 短整型
-   */
-  Short = 'short',
-  /**
-   * 无符号整型
-   */
-  UnsignedInt = 'unsigned-int',
-  /**
-   * 整型
-   */
-  Int = 'int',
-  /**
-   * 半精度浮点
-   */
-  HalfFloat = 'half-float',
-  /**
-   * 单精度浮点
-   */
-  Float = 'float',
-}
+import type { RHITextureFormat, RHIFilterMode, RHIAddressMode, RHITextureDataType } from './rhi';
 
 /**
  * 纹理目标
+ *
+ * @deprecated 请使用 RHITextureType 代替
  */
 export enum TextureTarget {
-  /**
-   * 2D纹理
-   */
+  /** 2D纹理 */
   Texture2D = 'texture-2d',
-  /**
-   * 立方体纹理
-   */
+  /** 立方体纹理 */
   TextureCube = 'texture-cube',
-  /**
-   * 3D纹理
-   */
+  /** 3D纹理 */
   Texture3D = 'texture-3d',
-  /**
-   * 2D数组纹理
-   */
+  /** 2D数组纹理 */
   Texture2DArray = 'texture-2d-array',
-  /**
-   * 立方体数组纹理
-   */
+  /** 立方体数组纹理 */
   TextureCubeArray = 'texture-cube-array',
 }
 
@@ -92,48 +46,6 @@ export enum TextureUsage {
    */
   RenderTarget = 'render-target',
 }
-
-/**
- * RHI后端类型
- */
-export enum RHIBackend {
-  /** 未知或不支持的后端 */
-  UNKNOWN = 0,
-  /** WebGL 1.0 */
-  WebGL = 1,
-  /** WebGL 2.0 */
-  WebGL2 = 2,
-  /** WebGPU */
-  WebGPU = 3,
-}
-
-/**
- * 纹理维度
- */
-export enum RHITextureDimension {
-  /** 1D纹理 */
-  TEX_1D = 0,
-  /** 2D纹理 */
-  TEX_2D = 1,
-  /** 3D纹理 */
-  TEX_3D = 2,
-  /** 立方体贴图 */
-  TEX_CUBE = 3,
-  /** 2D纹理数组 */
-  TEX_2D_ARRAY = 4,
-  /** 立方体贴图数组 */
-  TEX_CUBE_ARRAY = 5,
-}
-
-/**
- * 寻址模式
- */
-// RHIAddressMode 已迁移到 common/rhi/types/enums.ts
-
-/**
- * 过滤模式
- */
-// RHIFilterMode 已迁移到 common/rhi/types/enums.ts
 
 /**
  * 通用纹理配置
@@ -321,95 +233,29 @@ export interface TextureAtlas {
 
 /**
  * 纹理图集区域
+ *
+ * @description 扩展 BaseAtlasRegion，添加必须的 rotated 和 trimmed 字段
  */
-export interface TextureAtlasRegion {
-  /**
-   * 区域名称
-   */
-  name: string;
-  /**
-   * X坐标
-   */
-  x: number;
-  /**
-   * Y坐标
-   */
-  y: number;
-  /**
-   * 宽度
-   */
-  width: number;
-  /**
-   * 高度
-   */
-  height: number;
-  /**
-   * 是否旋转
-   */
+export interface TextureAtlasRegion extends BaseAtlasRegion {
+  /** 是否旋转（覆盖为必填） */
   rotated: boolean;
-  /**
-   * 是否修剪
-   */
+  /** 是否修剪（覆盖为必填） */
   trimmed: boolean;
-  /**
-   * 原始尺寸
-   */
-  originalSize?: {
-    width: number;
-    height: number;
-  };
-  /**
-   * 修剪偏移
-   */
-  trimOffset?: {
-    x: number;
-    y: number;
-  };
-  /**
-   * UV坐标
-   */
-  uv: {
-    u: number;
-    v: number;
-    u2: number;
-    v2: number;
-  };
+  /** UV坐标（覆盖为必填） */
+  uv: UVCoordinates;
 }
 
 /**
  * 纹理图集元数据
+ *
+ * @description 扩展 BaseAtlasMetadata，添加纹理图集特有的字段
  */
-export interface TextureAtlasMetadata {
-  /**
-   * 应用程序
-   */
-  app: string;
-  /**
-   * 版本
-   */
-  version: string;
-  /**
-   * 图像格式
-   */
-  format: string;
-  /**
-   * 图集尺寸
-   */
-  size: {
-    width: number;
-    height: number;
-  };
-  /**
-   * 缩放比例
-   */
-  scale: number;
-  /**
-   * 智能更新
-   */
+export interface TextureAtlasMetadata extends BaseAtlasMetadata {
+  /** 图集尺寸（覆盖为必填） */
+  size: Size2D;
+  /** 智能更新 */
   smartUpdate: boolean;
-  /**
-   * 发布哈希
-   */
+  /** 发布哈希 */
   publishHash?: string;
 }
 

@@ -2,10 +2,22 @@
  * Maxellabs 通用动画
  * 定义所有系统共通的动画相关类型
  *
- * 注意:
- * 1. AnimationKeyframe, AnimationEvent, AnimationMask 等基础类型定义在 frame.ts
- * 2. AnimationState, AnimationTransition 等状态机相关类型定义在此处
- * 以避免 common <-> animation 的循环依赖
+ * @module common/animation
+ * @description 动画状态机和高级动画控制类型
+ *
+ * ## 模块依赖关系
+ *
+ * ```
+ * common/frame.ts (AnimationKeyframe, AnimationTrack, AnimationEvent, AnimationMask)
+ *        ↓
+ * common/animation.ts (重新导出 + AnimationState, AnimationController 等)
+ * ```
+ *
+ * ## 设计说明
+ * - 基础动画类型 (AnimationKeyframe, AnimationEvent, AnimationMask) 定义在 frame.ts
+ * - 本模块定义状态机相关类型 (AnimationState, AnimationTransition)
+ * - 从 frame.ts 重新导出基础类型以保持向后兼容
+ * - 这种设计避免了 common <-> animation 的循环依赖
  */
 
 // 从 frame.ts 导入基础类型

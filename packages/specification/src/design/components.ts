@@ -3,7 +3,7 @@
  * 包含组件库管理、组件定义和实例化
  */
 
-import type { CommonMetadata, AnimationProperties, InteractionProperties, EventType } from '../core';
+import type { CommonMetadata, AnimationProperties, InteractionProperties, EventType, BaseCategory } from '../core';
 import type { DesignComponentProperty, DesignComponentVariant } from './base';
 import type { DesignElement } from './elements';
 
@@ -164,24 +164,10 @@ export interface DesignComponentLibrary {
 
 /**
  * 组件分类
+ *
+ * @description 继承自 BaseCategory，添加图标和排序字段
  */
-export interface ComponentCategory {
-  /**
-   * 分类 ID
-   */
-  id: string;
-  /**
-   * 分类名称
-   */
-  name: string;
-  /**
-   * 分类描述
-   */
-  description?: string;
-  /**
-   * 父分类
-   */
-  parent?: string;
+export interface ComponentCategory extends BaseCategory {
   /**
    * 分类图标
    */

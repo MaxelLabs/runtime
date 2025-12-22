@@ -1,0 +1,266 @@
+/**
+ * Visual Components
+ * 基于 specification 的视觉渲染相关数据组件
+ *
+ * @packageDocumentation
+ *
+ * @remarks
+ * ## 设计决策：fromData 接受 Specification 接口类型
+ *
+ * 所有组件的 `fromData()` 方法直接接受 Specification 中定义的接口类型（如 `IMeshRef`、`ColorLike`），
+ * 而不是 `Partial<T>` 类型。这是基于以下考虑：
+ *
+ * 1. **类型安全**: Specification 接口定义了数据的完整契约，fromData 应该验证输入符合契约
+ * 2. **数据来源明确**: 组件数据通常来自序列化的场景文件或 API，这些数据应该是完整的
+ * 3. **职责分离**: 如果需要部分数据创建，应该在调用方处理默认值，而不是在组件内部
+ * 4. **与 Specification 对齐**: 保持与 specification 包的类型一致性
+ *
+ * 如果确实需要从部分数据创建组件，可以：
+ * - 使用 `new Component()` 创建默认实例，然后手动赋值
+ * - 在调用方使用展开运算符合并默认值：`Component.fromData({ ...defaults, ...partialData })`
+ */
+
+import type {
+  ColorLike,
+  BaseTextureRef,
+  TextureTransform,
+  TextureSampler,
+  IMeshRef,
+  IMaterialRef,
+  IVisible,
+  ILayer,
+  ICastShadow,
+  IReceiveShadow,
+} from '@maxellabs/specification';
+
+/**
+ * MeshRef Component - 网格引用组件
+ * @description 实现 IMeshRef 接口,引用外部网格资源
+ */
+export class MeshRef implements IMeshRef {
+  /** 网格资源 ID */
+  assetId: string = '';
+
+  /** 网格名称 (用于多网格资源) */
+  meshName?: string;
+
+  /** 子网格索引 */
+  submeshIndex?: number;
+
+  /**
+   * 从 IMeshRef 规范数据创建组件
+   * @param data IMeshRef 规范数据
+   * @returns MeshRef 组件实例
+   */
+  static fromData(data: IMeshRef): MeshRef {
+    const component = new MeshRef();
+    component.assetId = data.assetId;
+    if (data.meshName !== undefined) {
+      component.meshName = data.meshName;
+    }
+    if (data.submeshIndex !== undefined) {
+      component.submeshIndex = data.submeshIndex;
+    }
+    return component;
+  }
+}
+
+/**
+ * MaterialRef Component - 材质引用组件
+ * @description 实现 IMaterialRef 接口,引用外部材质资源
+ */
+export class MaterialRef implements IMaterialRef {
+  /** 材质资源 ID */
+  assetId: string = '';
+
+  /** 材质参数覆盖 */
+  overrides?: Record<string, unknown>;
+
+  /** 是否启用 */
+  enabled?: boolean;
+
+  /**
+   * 从 IMaterialRef 规范数据创建组件
+   * @param data IMaterialRef 规范数据
+   * @returns MaterialRef 组件实例
+   */
+  static fromData(data: IMaterialRef): MaterialRef {
+    const component = new MaterialRef();
+    component.assetId = data.assetId;
+    if (data.overrides !== undefined) {
+      component.overrides = { ...data.overrides };
+    }
+    if (data.enabled !== undefined) {
+      component.enabled = data.enabled;
+    }
+    return component;
+  }
+}
+
+/**
+ * TextureRef Component - 纹理引用组件
+ * @description 实现 BaseTextureRef 接口,引用外部纹理资源
+ */
+export class TextureRef implements BaseTextureRef {
+  /** 纹理资源 ID */
+  assetId: string = '';
+
+  /** 纹理槽/用途 */
+  slot?: string;
+
+  /** UV 通道 */
+  uvChannel?: number;
+
+  /** UV 变换 */
+  transform?: TextureTransform;
+
+  /** 采样器配置 */
+  sampler?: TextureSampler;
+
+  /** 强度/影响度 */
+  intensity?: number;
+
+  /**
+   * 从 BaseTextureRef 规范数据创建组件
+   * @param data BaseTextureRef 规范数据
+   * @returns TextureRef 组件实例
+   */
+  static fromData(data: BaseTextureRef): TextureRef {
+    const component = new TextureRef();
+    component.assetId = data.assetId;
+    if (data.slot !== undefined) {
+      component.slot = data.slot;
+    }
+    if (data.uvChannel !== undefined) {
+      component.uvChannel = data.uvChannel;
+    }
+    if (data.transform !== undefined) {
+      // 深拷贝 transform 对象
+      component.transform = {
+        scale: data.transform.scale ? { ...data.transform.scale } : undefined,
+        offset: data.transform.offset ? { ...data.transform.offset } : undefined,
+        rotation: data.transform.rotation,
+      };
+    }
+    if (data.sampler !== undefined) {
+      // 深拷贝 sampler 对象
+      component.sampler = { ...data.sampler };
+    }
+    if (data.intensity !== undefined) {
+      component.intensity = data.intensity;
+    }
+    return component;
+  }
+}
+
+/**
+ * Color Component - 颜色组件
+ * @description 实现 ColorLike 接口, RGBA 颜色数据
+ */
+export class Color implements ColorLike {
+  /** 红色通道 (0-1) */
+  r: number = 1;
+
+  /** 绿色通道 (0-1) */
+  g: number = 1;
+
+  /** 蓝色通道 (0-1) */
+  b: number = 1;
+
+  /** 透明度通道 (0-1) */
+  a: number = 1;
+
+  /**
+   * 从 ColorLike 规范数据创建组件
+   * @param data ColorLike 规范数据
+   * @returns Color 组件实例
+   */
+  static fromData(data: ColorLike): Color {
+    const component = new Color();
+    component.r = data.r;
+    component.g = data.g;
+    component.b = data.b;
+    component.a = data.a;
+    return component;
+  }
+}
+
+/**
+ * Visible Component - 可见性组件
+ * @description 实现 IVisible 接口,控制实体渲染可见性
+ */
+export class Visible implements IVisible {
+  /** 是否可见 */
+  value: boolean = true;
+
+  /**
+   * 从 IVisible 规范数据创建组件
+   * @param data IVisible 规范数据
+   * @returns Visible 组件实例
+   */
+  static fromData(data: IVisible): Visible {
+    const component = new Visible();
+    component.value = data.value;
+    return component;
+  }
+}
+
+/**
+ * Layer Component - 渲染层级组件
+ * @description 实现 ILayer 接口,控制实体所属渲染层
+ */
+export class Layer implements ILayer {
+  /** 层级掩码 (32位) */
+  mask: number = 1;
+
+  /**
+   * 从 ILayer 规范数据创建组件
+   * @param data ILayer 规范数据
+   * @returns Layer 组件实例
+   */
+  static fromData(data: ILayer): Layer {
+    const component = new Layer();
+    component.mask = data.mask;
+    return component;
+  }
+}
+
+/**
+ * CastShadow Component - 投射阴影组件
+ * @description 实现 ICastShadow 接口,控制实体是否投射阴影
+ */
+export class CastShadow implements ICastShadow {
+  /** 是否投射阴影 */
+  value: boolean = true;
+
+  /**
+   * 从 ICastShadow 规范数据创建组件
+   * @param data ICastShadow 规范数据
+   * @returns CastShadow 组件实例
+   */
+  static fromData(data: ICastShadow): CastShadow {
+    const component = new CastShadow();
+    component.value = data.value;
+    return component;
+  }
+}
+
+/**
+ * ReceiveShadow Component - 接收阴影组件
+ * @description 实现 IReceiveShadow 接口,控制实体是否接收阴影
+ */
+export class ReceiveShadow implements IReceiveShadow {
+  /** 是否接收阴影 */
+  value: boolean = true;
+
+  /**
+   * 从 IReceiveShadow 规范数据创建组件
+   * @param data IReceiveShadow 规范数据
+   * @returns ReceiveShadow 组件实例
+   */
+  static fromData(data: IReceiveShadow): ReceiveShadow {
+    const component = new ReceiveShadow();
+    component.value = data.value;
+    return component;
+  }
+}

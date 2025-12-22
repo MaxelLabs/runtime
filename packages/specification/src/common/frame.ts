@@ -2,10 +2,23 @@
  * Maxellabs 通用帧动画元素
  * 定义所有系统共通的帧动画相关类型
  *
- * 注意: 这是动画系统的基础模块，AnimationKeyframe、AnimationTrack、AnimationEvent
- * 等基础类型定义在此处，其他动画模块从这里导入
+ * @module common/frame
+ * @description 动画系统的基础模块
  *
- * Phase 2 重构: AnimationKeyframe 和 AnimationTrack 现在基于 core/generics.ts 中的统一泛型
+ * ## 模块依赖关系
+ *
+ * ```
+ * core/generics.ts (UnifiedKeyframe, UnifiedAnimationTrack)
+ *        ↓
+ * common/frame.ts (AnimationKeyframe, AnimationTrack, AnimationEvent, AnimationMask)
+ *        ↓
+ * common/animation.ts (重新导出 + AnimationState, AnimationController 等)
+ * ```
+ *
+ * ## 设计说明
+ * - AnimationKeyframe、AnimationEvent、AnimationMask 等基础类型定义在此处
+ * - animation.ts 从这里导入并重新导出，避免循环依赖
+ * - 使用 core/generics.ts 中的 UnifiedKeyframe 和 UnifiedAnimationTrack 作为基础
  */
 
 import type { CommonElement } from './elements';

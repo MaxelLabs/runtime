@@ -382,6 +382,11 @@ export interface ExportFormatConfig {
 
 /**
  * 导出格式类型
+ *
+ * @description 设计系统导出格式，专注于代码和配置格式
+ * 与其他导出格式枚举的区别：
+ * - ExportFormat (document.ts): 图像/文档导出格式 (PNG, JPG, PDF)
+ * - IconExportFormat (icons.ts): 图标导出格式 (Font, ICO, WebP)
  */
 export enum ExportFormatType {
   JSON = 'json',

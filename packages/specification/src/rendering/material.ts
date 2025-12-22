@@ -222,6 +222,11 @@ export interface ShaderOutput {
 
 /**
  * RHI着色器数据类型
+ *
+ * @description 着色器参数的数据类型，仅包含 GPU 可处理的类型
+ * 与 core/enums.ts 中的 DataType 有部分重叠，但用途不同：
+ * - DataType: 通用数据类型，包含 String, Object, Array 等非 GPU 类型
+ * - RHIShaderDataType: 着色器特化类型，包含 Matrix 等 GPU 专用类型
  */
 export enum RHIShaderDataType {
   /**

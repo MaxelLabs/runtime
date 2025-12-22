@@ -3,7 +3,7 @@
  * 定义所有系统共通的精灵相关类型
  */
 
-import type { ElementType, AnimationProperties } from '../core';
+import type { ElementType, AnimationProperties, BaseAtlasRegion, BaseAtlasMetadata, Size2D } from '../core';
 import type { CommonElement } from './elements';
 import type { NineSliceConfig } from './image';
 import type { AnimationStateMachine } from '../animation';
@@ -78,61 +78,16 @@ export enum SpriteAlignment {
 
 /**
  * 精灵帧
+ *
+ * @description 扩展 BaseAtlasRegion，添加精灵动画特有的 duration 和 sourceSize 字段
  */
-export interface SpriteFrame {
+export interface SpriteFrame extends BaseAtlasRegion {
   /**
-   * 帧名称
+   * 原始尺寸（使用 sourceSize 别名以保持向后兼容）
    */
-  name: string;
+  sourceSize?: Size2D;
   /**
-   * 在图集中的X坐标
-   */
-  x: number;
-  /**
-   * 在图集中的Y坐标
-   */
-  y: number;
-  /**
-   * 帧宽度
-   */
-  width: number;
-  /**
-   * 帧高度
-   */
-  height: number;
-  /**
-   * 是否旋转
-   */
-  rotated?: boolean;
-  /**
-   * 是否修剪
-   */
-  trimmed?: boolean;
-  /**
-   * 原始尺寸
-   */
-  sourceSize?: {
-    width: number;
-    height: number;
-  };
-  /**
-   * 修剪偏移
-   */
-  trimOffset?: {
-    x: number;
-    y: number;
-  };
-  /**
-   * UV坐标
-   */
-  uv?: {
-    u: number;
-    v: number;
-    u2: number;
-    v2: number;
-  };
-  /**
-   * 持续时间（用于动画）
+   * 持续时间（用于动画，单位：秒）
    */
   duration?: number;
 }
@@ -141,58 +96,27 @@ export interface SpriteFrame {
  * 精灵图集
  */
 export interface SpriteAtlas {
-  /**
-   * 图集纹理路径
-   */
+  /** 图集纹理路径 */
   texture: string;
-  /**
-   * 图集尺寸
-   */
-  size: {
-    width: number;
-    height: number;
-  };
-  /**
-   * 帧列表
-   */
+  /** 图集尺寸 */
+  size: Size2D;
+  /** 帧列表 */
   frames: SpriteFrame[];
-  /**
-   * 图集元数据
-   */
+  /** 图集元数据 */
   metadata?: SpriteAtlasMetadata;
 }
 
 /**
  * 精灵图集元数据
+ *
+ * @description 扩展 BaseAtlasMetadata，添加精灵图集特有的字段
  */
-export interface SpriteAtlasMetadata {
-  /**
-   * 应用程序名称
-   */
-  app: string;
-  /**
-   * 版本
-   */
-  version: string;
-  /**
-   * 图像格式
-   */
-  format: string;
-  /**
-   * 缩放比例
-   */
-  scale: number;
-  /**
-   * 每行帧数
-   */
+export interface SpriteAtlasMetadata extends BaseAtlasMetadata {
+  /** 每行帧数 */
   framesPerRow?: number;
-  /**
-   * 总帧数
-   */
+  /** 总帧数 */
   totalFrames?: number;
-  /**
-   * 创建时间
-   */
+  /** 创建时间 */
   createdAt?: string;
 }
 
@@ -315,13 +239,8 @@ export interface CommonSpriteElement extends CommonElement {
  * 精灵九宫格配置（扩展通用NineSliceConfig）
  */
 export interface SpriteNineSliceConfig extends NineSliceConfig {
-  /**
-   * 目标尺寸
-   */
-  targetSize: {
-    width: number;
-    height: number;
-  };
+  /** 目标尺寸 */
+  targetSize: Size2D;
 }
 
 /**

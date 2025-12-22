@@ -4,6 +4,9 @@
  *
  * Phase 5 重构: 移除与 core/enums.ts EasingFunction 重复的值
  * 基础缓动函数请使用 EasingFunction (from core)
+ *
+ * 注意: ExpoIn/Out, CircIn/Out, CubicBezier 已存在于 EasingFunction 中
+ * 此处只保留动画系统特有的缓动类型
  */
 
 import type { EasingFunction } from '../core';
@@ -11,22 +14,14 @@ import type { EasingFunction } from '../core';
 /**
  * 扩展的缓动函数类型（动画特有的类型，补充 EasingFunction）
  *
- * @description 只包含 EasingFunction 未覆盖的类型
- * 基础缓动函数请使用 core/enums.ts 中的 EasingFunction
+ * @description 只包含 EasingFunction 未覆盖的动画特有类型
+ * 基础缓动函数（包括 Expo、Circ、CubicBezier 等）请使用 core/enums.ts 中的 EasingFunction
  */
 export enum ExtendedEasingType {
-  // 动画特有的缓动类型
-  CubicBezier = 'cubic-bezier',
+  /** 弹簧物理缓动 */
   Spring = 'spring',
+  /** 阶梯式缓动 */
   Steps = 'steps',
-
-  // 补充 EasingFunction 中缺失的 Expo 和 Circ 系列
-  ExpoIn = 'expo-in',
-  ExpoOut = 'expo-out',
-  ExpoInOut = 'expo-in-out',
-  CircIn = 'circ-in',
-  CircOut = 'circ-out',
-  CircInOut = 'circ-in-out',
 }
 
 /**

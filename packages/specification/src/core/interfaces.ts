@@ -5,8 +5,9 @@
 
 import type { UsdValue } from './usd';
 import type { EasingFunction, MaterialType, BorderStyle, ClickFeedbackType, VisualEffectType } from './enums';
-import type { VersionInfo } from './base';
+import type { TransformSpace } from './enums';
 import type { ColorLike, Matrix4Like, QuaternionLike, Vector3Like } from './math';
+import type { Nameable, Describable, Taggable, Extensible, Versionable, Auditable } from './traits';
 
 /**
  * 视觉效果
@@ -76,6 +77,10 @@ export interface ClickEffect {
 
 /**
  * 基础变换接口（核心3D变换）
+ *
+ * @remarks
+ * 实现此接口的组件可以添加运行时专用字段（如 dirty 标记），
+ * 这些字段不属于序列化数据，仅用于运行时优化。
  */
 export interface ITransform {
   /**
@@ -289,20 +294,6 @@ export interface RenderingProperties {
 }
 
 /**
- * 边界球
- */
-export interface BoundingSphere {
-  /**
-   * 球心坐标
-   */
-  center: Vector3Like;
-  /**
-   * 半径
-   */
-  radius: number;
-}
-
-/**
  * 3D边界框（核心版本）
  */
 export interface CoreBoundingBox {
@@ -434,68 +425,9 @@ export interface SelectionEffect {
 
 /**
  * 通用元数据接口
+ * @description 组合多个 traits 构建完整的元数据接口
  */
-export interface CommonMetadata {
-  /**
-   * 名称
-   */
-  name: string;
-  /**
-   * 描述
-   */
-  description?: string;
-  /**
-   * 版本信息
-   */
-  version: VersionInfo;
-  /**
-   * 创建者
-   */
-  creator?: string;
-  /**
-   * 创建时间
-   */
-  createdAt?: string;
-  /**
-   * 最后修改时间
-   */
-  lastModified?: string;
-  /**
-   * 标签
-   */
-  tags?: string[];
-  /**
-   * 自定义数据
-   */
-  customData?: Record<string, any>;
-}
-// ========== 枚举类型 ==========
-
-/**
- * 变换空间
- */
-export enum TransformSpace {
-  /**
-   * 世界空间
-   */
-  World = 'world',
-  /**
-   * 本地空间
-   */
-  Local = 'local',
-  /**
-   * 父级空间
-   */
-  Parent = 'parent',
-  /**
-   * 屏幕空间
-   */
-  Screen = 'screen',
-  /**
-   * 视图空间
-   */
-  View = 'view',
-}
+export interface CommonMetadata extends Nameable, Describable, Versionable, Auditable, Taggable, Extensible {}
 
 /**
  * 通用变换函数

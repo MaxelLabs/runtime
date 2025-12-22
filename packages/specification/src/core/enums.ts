@@ -558,6 +558,32 @@ export enum TransformType {
 }
 
 /**
+ * 变换空间
+ */
+export enum TransformSpace {
+  /**
+   * 世界空间
+   */
+  World = 'world',
+  /**
+   * 本地空间
+   */
+  Local = 'local',
+  /**
+   * 父级空间
+   */
+  Parent = 'parent',
+  /**
+   * 屏幕空间
+   */
+  Screen = 'screen',
+  /**
+   * 视图空间
+   */
+  View = 'view',
+}
+
+/**
  * 约束类型
  */
 export enum ConstraintType {
@@ -690,4 +716,16 @@ export interface GeometryOptimization {
   removeUnusedVertices?: boolean;
   compression?: boolean;
   compressionLevel?: number;
+}
+
+/**
+ * 排序方向
+ *
+ * @description 通用排序方向枚举，适用于所有需要排序的场景
+ */
+export enum SortDirection {
+  /** 升序 */
+  Ascending = 'asc',
+  /** 降序 */
+  Descending = 'desc',
 }

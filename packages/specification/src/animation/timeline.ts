@@ -3,7 +3,7 @@
  * 时间轴和属性动画的定义
  */
 
-import type { EasingFunction, TransformType, PlaybackDirection } from '../core';
+import type { EasingFunction, TransformType, PlaybackDirection, FillModeType } from '../core';
 import type { AnimationTimeline } from '../common';
 
 /**
@@ -23,9 +23,9 @@ export interface Timeline extends Omit<AnimationTimeline, 'tracks' | 'events'> {
    */
   direction: PlaybackDirection;
   /**
-   * 填充模式
+   * 填充模式（动画结束后的状态）
    */
-  fillMode: FillMode;
+  fillMode: FillModeType;
   /**
    * 延迟时间
    */

@@ -540,3 +540,131 @@ export type VectorKeyframe = UnifiedKeyframe<Vector2Like>;
  * 任意值关键帧
  */
 export type AnyKeyframe = UnifiedKeyframe<any>;
+
+// ============================================================================
+// Atlas 泛型基类（用于消除 TextureAtlas 和 SpriteAtlas 的重复定义）
+// ============================================================================
+
+/**
+ * UV 坐标接口
+ */
+export interface UVCoordinates {
+  /** U 起始坐标 */
+  u: number;
+  /** V 起始坐标 */
+  v: number;
+  /** U 结束坐标 */
+  u2: number;
+  /** V 结束坐标 */
+  v2: number;
+}
+
+/**
+ * 尺寸接口
+ */
+export interface Size2D {
+  /** 宽度 */
+  width: number;
+  /** 高度 */
+  height: number;
+}
+
+/**
+ * 2D 偏移接口
+ */
+export interface Offset2D {
+  /** X 偏移 */
+  x: number;
+  /** Y 偏移 */
+  y: number;
+}
+
+/**
+ * 基础图集区域接口
+ * 统一 TextureAtlasRegion 和 SpriteFrame 的公共部分
+ */
+export interface BaseAtlasRegion {
+  /** 区域名称 */
+  name: string;
+  /** X 坐标 */
+  x: number;
+  /** Y 坐标 */
+  y: number;
+  /** 宽度 */
+  width: number;
+  /** 高度 */
+  height: number;
+  /** 是否旋转 */
+  rotated?: boolean;
+  /** 是否修剪 */
+  trimmed?: boolean;
+  /** 原始尺寸 */
+  originalSize?: Size2D;
+  /** 修剪偏移 */
+  trimOffset?: Offset2D;
+  /** UV 坐标 */
+  uv?: UVCoordinates;
+}
+
+/**
+ * 基础图集元数据接口
+ * 统一 TextureAtlasMetadata 和 SpriteAtlasMetadata 的公共部分
+ */
+export interface BaseAtlasMetadata {
+  /** 应用程序名称 */
+  app: string;
+  /** 版本 */
+  version: string;
+  /** 图像格式 */
+  format: string;
+  /** 图集尺寸 */
+  size?: Size2D;
+  /** 缩放比例 */
+  scale: number;
+}
+
+// ============================================================================
+// License 泛型基类（用于消除许可证接口的重复定义）
+// ============================================================================
+
+/**
+ * 基础许可证接口
+ * 统一 FontLicense、IconLicense、AssetLicense 的公共部分
+ *
+ * @description 各模块应扩展此接口添加特定字段：
+ * - FontLicense: 无额外字段
+ * - IconLicense: commercial, attribution
+ * - AssetLicense: name, copyright, attribution
+ */
+export interface BaseLicense {
+  /** 许可类型（使用 LicenseType 枚举） */
+  type: string;
+  /** 许可 URL */
+  url?: string;
+  /** 许可描述 */
+  description?: string;
+}
+
+// ============================================================================
+// Category 泛型基类（用于消除分类接口的重复定义）
+// ============================================================================
+
+/**
+ * 基础分类接口
+ * 统一 ComponentCategory、DesignIconCategory、AssetCategory 的公共部分
+ *
+ * @description 各模块应扩展此接口添加特定字段：
+ * - ComponentCategory: icon, order
+ * - DesignIconCategory: 无额外字段
+ * - AssetCategory: icon, order
+ */
+export interface BaseCategory {
+  /** 分类 ID */
+  id: string;
+  /** 分类名称 */
+  name: string;
+  /** 分类描述 */
+  description?: string;
+  /** 父分类 ID */
+  parent?: string;
+}

@@ -8,7 +8,8 @@ related_ids: [
   "core-world", "core-archetype", "core-query", "core-entity-manager",
   "core-component-registry", "core-command-buffer",
   "core-entity-builder", "core-transform-matrix-pool",
-  "core-event-dispatcher", "core-time", "core-object-pool"
+  "core-event-dispatcher", "core-time", "core-object-pool",
+  "dag-scheduler", "core-systems", "core-components"
 ]
 version: "3.0.0"
 last_updated: "2025-12-19"
@@ -36,8 +37,11 @@ core/
 ├── command-buffer.md           # CommandBuffer - 延迟命令 ⭐
 ├── entity-builder.md           # EntityBuilder - 流式构建器 ⭐ NEW
 ├── transform-matrix-pool.md    # TransformMatrixPool - 矩阵池 ⭐ NEW
+├── dag-scheduler.md            # DAGScheduler - 拓扑排序调度器 ⭐ NEW
+├── systems.md                  # SystemScheduler - 系统调度器 ⭐ NEW
+├── components.md               # Components - 数据组件集合 ⭐ NEW
 ├── entity-id.ts                # EntityId - ID工具函数
-├── systems.ts                  # Systems - 系统管理
+├── systems.ts                  # Systems - 系统管理实现
 ├── change-detection.ts         # ChangeDetection - 变更检测
 ├── gpu-buffer-sync.ts          # GPUBufferSync - GPU同步
 └── render-data-storage.ts      # RenderDataStorage - 渲染数据
@@ -72,6 +76,9 @@ core/
 - **Query**: 基于 BitSet 的快速实体查询，支持复杂过滤
 - **EntityManager**: 版本化实体 ID，防止悬空引用
 - **CommandBuffer**: 延迟命令，遍历中安全修改结构
+- **DAGScheduler**: 拓扑排序调度器，支持依赖管理和并行分析
+- **SystemScheduler**: 分阶段系统执行，支持错误隔离和条件执行
+- **Components**: 基于 Specification 的纯数据组件集合
 
 ### 🟡 旧架构 (v2.x) - 兼容
 - **Entity/Component**: GameObject 模式，类 Unity 设计

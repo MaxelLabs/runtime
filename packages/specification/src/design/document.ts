@@ -156,6 +156,11 @@ export interface DocumentExportSettings {
 
 /**
  * 导出格式
+ *
+ * @description 文档导出格式，专注于图像和设计文档格式
+ * 与其他导出格式枚举的区别：
+ * - ExportFormatType (systems.ts): 代码/配置导出格式 (CSS, JS, TS)
+ * - IconExportFormat (icons.ts): 图标导出格式 (Font, ICO, WebP)
  */
 export enum ExportFormat {
   PNG = 'png',
