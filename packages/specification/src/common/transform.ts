@@ -15,6 +15,7 @@ import type {
   UnifiedKeyframe,
   UnifiedAnimationTrack,
   ITransform,
+  RequiredEnableable,
 } from '../core';
 
 /**
@@ -129,8 +130,10 @@ export enum TransformConstraintType {
 }
 /**
  * 变换约束
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface TransformConstraint {
+export interface TransformConstraint extends RequiredEnableable {
   /**
    * 约束类型
    */
@@ -143,10 +146,6 @@ export interface TransformConstraint {
    * 约束权重 (0-1)
    */
   weight: number;
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
   /**
    * 约束偏移
    */

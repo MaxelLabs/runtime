@@ -3,7 +3,7 @@
  * 从设计到上线的全流程数据描述
  */
 
-import type { AssetType, Permission, UsdPrim, UsdValue } from '../core';
+import type { AssetType, Permission, UsdPrim, UsdValue, Nameable, Describable } from '../core';
 
 /**
  * 工作流程基础接口
@@ -108,16 +108,14 @@ export enum WorkflowStatus {
 
 /**
  * 工作流程阶段
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface WorkflowStage {
+export interface WorkflowStage extends Nameable, Describable {
   /**
    * 阶段 ID
    */
   id: string;
-  /**
-   * 阶段名称
-   */
-  name: string;
   /**
    * 阶段类型
    */
@@ -126,10 +124,6 @@ export interface WorkflowStage {
    * 阶段状态
    */
   status: WorkflowStageStatus;
-  /**
-   * 阶段描述
-   */
-  description?: string;
   /**
    * 依赖阶段
    */
@@ -207,16 +201,14 @@ export enum WorkflowStageStatus {
 
 /**
  * 工作流程任务
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface WorkflowTask {
+export interface WorkflowTask extends Nameable, Describable {
   /**
    * 任务 ID
    */
   id: string;
-  /**
-   * 任务名称
-   */
-  name: string;
   /**
    * 任务类型
    */
@@ -225,10 +217,6 @@ export interface WorkflowTask {
    * 任务状态
    */
   status: WorkflowTaskStatus;
-  /**
-   * 任务描述
-   */
-  description?: string;
   /**
    * 分配给
    */
@@ -383,12 +371,10 @@ export interface TaskConfiguration {
 
 /**
  * 工具配置
+ *
+ * @description 组合 Nameable trait
  */
-export interface ToolConfiguration {
-  /**
-   * 工具名称
-   */
-  name: string;
+export interface ToolConfiguration extends Nameable {
   /**
    * 工具版本
    */
@@ -405,12 +391,10 @@ export interface ToolConfiguration {
 
 /**
  * 脚本配置
+ *
+ * @description 组合 Nameable trait
  */
-export interface ScriptConfiguration {
-  /**
-   * 脚本名称
-   */
-  name: string;
+export interface ScriptConfiguration extends Nameable {
   /**
    * 脚本类型
    */
@@ -608,16 +592,14 @@ export interface TeamPermission {
 
 /**
  * 集成配置
+ *
+ * @description 组合 Nameable trait
  */
-export interface IntegrationConfiguration {
+export interface IntegrationConfiguration extends Nameable {
   /**
    * 集成类型
    */
   type: IntegrationType;
-  /**
-   * 集成名称
-   */
-  name: string;
   /**
    * 集成配置
    */
@@ -747,12 +729,10 @@ export interface AssetTransformation {
 
 /**
  * 转换规则
+ *
+ * @description 组合 Nameable trait
  */
-export interface TransformationRule {
-  /**
-   * 规则名称
-   */
-  name: string;
+export interface TransformationRule extends Nameable {
   /**
    * 源格式
    */
@@ -787,12 +767,10 @@ export interface AssetOptimization {
 
 /**
  * 优化规则
+ *
+ * @description 组合 Nameable trait
  */
-export interface OptimizationRule {
-  /**
-   * 规则名称
-   */
-  name: string;
+export interface OptimizationRule extends Nameable {
   /**
    * 资产类型
    */
@@ -823,12 +801,10 @@ export interface AssetDistribution {
 
 /**
  * 分发目标
+ *
+ * @description 组合 Nameable trait
  */
-export interface DistributionTarget {
-  /**
-   * 目标名称
-   */
-  name: string;
+export interface DistributionTarget extends Nameable {
   /**
    * 目标类型
    */
@@ -1044,12 +1020,10 @@ export interface DeploymentConfiguration {
 
 /**
  * 部署环境
+ *
+ * @description 组合 Nameable trait
  */
-export interface DeploymentEnvironment {
-  /**
-   * 环境名称
-   */
-  name: string;
+export interface DeploymentEnvironment extends Nameable {
   /**
    * 环境类型
    */
@@ -1076,12 +1050,10 @@ export enum EnvironmentType {
 
 /**
  * 部署目标
+ *
+ * @description 组合 Nameable trait
  */
-export interface DeploymentTarget {
-  /**
-   * 目标名称
-   */
-  name: string;
+export interface DeploymentTarget extends Nameable {
   /**
    * 目标类型
    */
@@ -1251,12 +1223,10 @@ export interface AssetReference {
 
 /**
  * 质量检查
+ *
+ * @description 组合 Nameable trait
  */
-export interface QualityCheck {
-  /**
-   * 检查名称
-   */
-  name: string;
+export interface QualityCheck extends Nameable {
   /**
    * 检查类型
    */

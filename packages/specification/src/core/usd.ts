@@ -3,6 +3,8 @@
  * 基于 OpenUSD 格式的核心数据类型和 Prim 系统
  */
 
+import type { Nameable } from './traits';
+
 /**
  * USD 基础数据类型
  */
@@ -83,12 +85,10 @@ export interface UsdPrim {
 
 /**
  * USD 变体集合
+ *
+ * @description 组合 Nameable trait
  */
-export interface UsdVariantSet {
-  /**
-   * 变体集合名称
-   */
-  name: string;
+export interface UsdVariantSet extends Nameable {
   /**
    * 当前选择的变体
    */
@@ -101,12 +101,10 @@ export interface UsdVariantSet {
 
 /**
  * USD 变体
+ *
+ * @description 组合 Nameable trait
  */
-export interface UsdVariant {
-  /**
-   * 变体名称
-   */
-  name: string;
+export interface UsdVariant extends Nameable {
   /**
    * 变体内容
    */
@@ -287,12 +285,10 @@ export interface UsdCompositionArc {
 
 /**
  * USD 属性规范
+ *
+ * @description 组合 Nameable trait
  */
-export interface UsdPropertySpec {
-  /**
-   * 属性名称
-   */
-  name: string;
+export interface UsdPropertySpec extends Nameable {
   /**
    * 属性类型
    */
@@ -333,12 +329,10 @@ export enum UsdVariability {
 
 /**
  * USD 关系规范
+ *
+ * @description 组合 Nameable trait
  */
-export interface UsdRelationshipSpec {
-  /**
-   * 关系名称
-   */
-  name: string;
+export interface UsdRelationshipSpec extends Nameable {
   /**
    * 是否自定义
    */

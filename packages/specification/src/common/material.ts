@@ -12,6 +12,8 @@ import type {
   LoopMode,
   Vector2Like,
   BaseTextureRef,
+  Nameable,
+  RequiredEnableable,
 } from '../core';
 
 /**
@@ -70,24 +72,18 @@ export interface CommonTextureRef extends Omit<BaseTextureRef, 'slot'> {
 
 /**
  * 通用材质基础接口
+ *
+ * @description 组合 Nameable, RequiredEnableable traits
  */
-export interface CommonMaterialBase {
+export interface CommonMaterialBase extends Nameable, RequiredEnableable {
   /**
    * 材质ID
    */
   id: string;
   /**
-   * 材质名称
-   */
-  name: string;
-  /**
    * 材质类型
    */
   type: MaterialType;
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
   /**
    * 材质标签
    */
@@ -138,8 +134,10 @@ export interface CommonMaterialProperties {
 
 /**
  * UV动画配置
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface UVAnimation {
+export interface UVAnimation extends RequiredEnableable {
   /**
    * U方向速度
    */
@@ -148,10 +146,6 @@ export interface UVAnimation {
    * V方向速度
    */
   speedV: number;
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
   /**
    * 播放模式
    */
@@ -182,12 +176,10 @@ export interface CommonMaterial extends CommonMaterialBase {
 
 /**
  * 材质变体
+ *
+ * @description 组合 Nameable trait
  */
-export interface MaterialVariant {
-  /**
-   * 变体名称
-   */
-  name: string;
+export interface MaterialVariant extends Nameable {
   /**
    * 基础材质ID
    */

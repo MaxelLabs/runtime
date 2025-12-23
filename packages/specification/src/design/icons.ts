@@ -3,23 +3,21 @@
  * 包含图标库管理、图标定义和分类系统
  */
 
-import type { LicenseType } from '../core';
+import type { LicenseType, BaseLicense, SortDirection, Nameable, Describable } from '../core';
 import type { CommonMetadata } from '../core/interfaces';
 import type { DesignIconVariant, DesignIconCategory } from './base';
 import type { IconStyle } from './enums';
 
 /**
  * 设计图标
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface DesignIcon {
+export interface DesignIcon extends Nameable, Describable {
   /**
    * 图标 ID
    */
   id: string;
-  /**
-   * 图标名称
-   */
-  name: string;
   /**
    * 图标分类
    */
@@ -40,10 +38,6 @@ export interface DesignIcon {
    * 图标变体
    */
   variants?: DesignIconVariant[];
-  /**
-   * 图标描述
-   */
-  description?: string;
   /**
    * 图标作者
    */
@@ -68,20 +62,14 @@ export interface DesignIcon {
 
 /**
  * 图标许可
+ *
+ * @description 继承自 BaseLicense，添加图标特有的商业使用和归属字段
  */
-export interface IconLicense {
+export interface IconLicense extends BaseLicense {
   /**
-   * 许可类型
+   * 许可类型（覆盖为具体类型）
    */
   type: LicenseType;
-  /**
-   * 许可URL
-   */
-  url?: string;
-  /**
-   * 许可描述
-   */
-  description?: string;
   /**
    * 商业使用
    */
@@ -116,12 +104,10 @@ export interface IconUsageStats {
 
 /**
  * 设计图标库
+ *
+ * @description 组合 Nameable trait
  */
-export interface DesignIconLibrary {
-  /**
-   * 库名称
-   */
-  name: string;
+export interface DesignIconLibrary extends Nameable {
   /**
    * 库版本
    */
@@ -276,6 +262,11 @@ export enum IconColorMode {
 
 /**
  * 图标导出格式
+ *
+ * @description 图标专用导出格式，包含字体和图标特有格式
+ * 与其他导出格式枚举的区别：
+ * - ExportFormat (document.ts): 图像/文档导出格式
+ * - ExportFormatType (systems.ts): 代码/配置导出格式
  */
 export enum IconExportFormat {
   SVG = 'svg',
@@ -427,30 +418,19 @@ export enum IconSortField {
   Size = 'size',
 }
 
-/**
- * 排序方向
- */
-export enum SortDirection {
-  Ascending = 'asc',
-  Descending = 'desc',
-}
+// SortDirection 已从 core/enums.ts 导入，不再重复定义
+export type { SortDirection } from '../core';
 
 /**
  * 图标集合
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface IconCollection {
+export interface IconCollection extends Nameable, Describable {
   /**
    * 集合 ID
    */
   id: string;
-  /**
-   * 集合名称
-   */
-  name: string;
-  /**
-   * 集合描述
-   */
-  description?: string;
   /**
    * 图标列表
    */

@@ -4,6 +4,7 @@
  */
 
 import type { CommonElement } from './elements';
+import type { RequiredEnableable } from '../core';
 
 /**
  * 交互事件类型
@@ -339,12 +340,10 @@ export interface DragInfo {
 
 /**
  * 交互配置
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface InteractionConfig {
-  /**
-   * 是否启用交互
-   */
-  enabled: boolean;
+export interface InteractionConfig extends RequiredEnableable {
   /**
    * 事件冒泡
    */

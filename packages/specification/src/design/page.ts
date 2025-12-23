@@ -4,22 +4,20 @@
  */
 
 import type { CommonBounds } from '../common';
-import type { GradientStop, GradientType } from '../core';
+import type { GradientStop, GradientType, Nameable } from '../core';
 import type { ExportFormat } from './document';
 import type { DesignElement } from './elements';
 
 /**
  * 设计页面
+ *
+ * @description 组合 Nameable trait
  */
-export interface DesignPage {
+export interface DesignPage extends Nameable {
   /**
    * 页面 ID
    */
   id: string;
-  /**
-   * 页面名称
-   */
-  name: string;
   /**
    * 页面类型
    */

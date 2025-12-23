@@ -3,7 +3,7 @@
  * 时间轴和属性动画的定义
  */
 
-import type { EasingFunction, TransformType, PlaybackDirection } from '../core';
+import type { EasingFunction, TransformType, PlaybackDirection, FillModeType, Nameable, Durable } from '../core';
 import type { AnimationTimeline } from '../common';
 
 /**
@@ -23,9 +23,9 @@ export interface Timeline extends Omit<AnimationTimeline, 'tracks' | 'events'> {
    */
   direction: PlaybackDirection;
   /**
-   * 填充模式
+   * 填充模式（动画结束后的状态）
    */
-  fillMode: FillMode;
+  fillMode: FillModeType;
   /**
    * 延迟时间
    */
@@ -42,12 +42,10 @@ export interface Timeline extends Omit<AnimationTimeline, 'tracks' | 'events'> {
 
 /**
  * 时间轴动画
+ *
+ * @description 组合 Nameable, Durable traits
  */
-export interface TimelineAnimation {
-  /**
-   * 动画名称
-   */
-  name: string;
+export interface TimelineAnimation extends Nameable, Durable {
   /**
    * 目标选择器
    */
@@ -56,10 +54,6 @@ export interface TimelineAnimation {
    * 开始时间（毫秒）
    */
   startTime: number;
-  /**
-   * 持续时间（毫秒）
-   */
-  duration: number;
   /**
    * 缓动函数（使用core类型）
    */

@@ -16,8 +16,8 @@ import type {
   RHISamplerDescriptor,
   RHIQuerySetDescriptor,
   RHIFeatureFlags,
+  RHIBackend,
 } from './types';
-import type { RHIBackend } from '../texture';
 
 /**
  * 渲染设备信息

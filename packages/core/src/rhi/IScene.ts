@@ -11,10 +11,8 @@
  * @see packages/core/src/ecs/core/query.ts - Query 系统
  */
 
-import type { EntityId } from '../ecs/core/entity-id';
-import type { World } from '../ecs/core/world';
-import type { ComponentClass } from '../ecs/core/component-registry';
-import type { IDisposable } from '../ecs/base/disposable';
+import type { IDisposable } from '../base';
+import type { EntityId, World, ComponentClass } from '../ecs';
 
 /**
  * 场景元数据组件 - 存储实体的场景相关信息

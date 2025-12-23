@@ -9,10 +9,12 @@ import type { AnimationStateMachine } from './stateMachine';
 
 /**
  * 扩展的动画控制器（添加状态机支持）
+ *
+ * @description 扩展 AnimationController，添加必选 name 属性
  */
 export interface ExtendedAnimationController extends AnimationController {
   /**
-   * 控制器名称
+   * 控制器名称（覆盖父类的可选 name 为必选）
    */
   name: string;
   /**

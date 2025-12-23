@@ -3,7 +3,18 @@
  * 基于 USDZ 扩展的 Maxellabs 包格式 (.maxz)
  */
 
-import type { UsdStage, CompressionAlgorithm, DeviceType, CacheStrategy, GeometryOptimization } from '../core';
+import type {
+  UsdStage,
+  CompressionAlgorithm,
+  DeviceType,
+  CacheStrategy,
+  GeometryOptimization,
+  AssetType,
+  Nameable,
+  Describable,
+  RequiredEnableable,
+  Durable,
+} from '../core';
 import type { DesignDocument } from '../design';
 import type { Workflow } from '../workflow';
 
@@ -44,20 +55,14 @@ export interface MaxellabsPackage {
 
 /**
  * 包元数据
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface PackageMetadata {
-  /**
-   * 包名称
-   */
-  name: string;
+export interface PackageMetadata extends Nameable, Describable {
   /**
    * 包版本
    */
   version: string;
-  /**
-   * 包描述
-   */
-  description?: string;
   /**
    * 作者信息
    */
@@ -110,12 +115,10 @@ export interface PackageMetadata {
 
 /**
  * 作者信息
+ *
+ * @description 组合 Nameable trait
  */
-export interface AuthorInfo {
-  /**
-   * 作者姓名
-   */
-  name: string;
+export interface AuthorInfo extends Nameable {
   /**
    * 作者邮箱
    */
@@ -150,12 +153,10 @@ export interface RepositoryInfo {
 
 /**
  * 包依赖
+ *
+ * @description 组合 Nameable trait
  */
-export interface PackageDependency {
-  /**
-   * 依赖包名称
-   */
-  name: string;
+export interface PackageDependency extends Nameable {
   /**
    * 依赖版本
    */
@@ -221,12 +222,10 @@ export enum Platform {
 
 /**
  * 浏览器支持
+ *
+ * @description 组合 Nameable trait
  */
-export interface BrowserSupport {
-  /**
-   * 浏览器名称
-   */
-  name: string;
+export interface BrowserSupport extends Nameable {
   /**
    * 最小版本
    */
@@ -257,16 +256,14 @@ export interface AssetManifest {
 
 /**
  * 资产条目
+ *
+ * @description 组合 Nameable trait
  */
-export interface AssetEntry {
+export interface AssetEntry extends Nameable {
   /**
    * 资产 ID
    */
   id: string;
-  /**
-   * 资产名称
-   */
-  name: string;
   /**
    * 资产类型
    */
@@ -306,21 +303,12 @@ export interface AssetEntry {
 }
 
 /**
- * 包资产条目类型（扩展基础AssetType）
+ * 包特有的资产类型（扩展核心 AssetType）
+ *
+ * @description 仅包含包格式特有的资产类型
+ * 基础资产类型请使用 core/base.ts 中的 AssetType
  */
-export enum AssetEntryType {
-  // 基础类型（来自 AssetType）
-  Design = 'design',
-  Image = 'image',
-  Video = 'video',
-  Audio = 'audio',
-  Font = 'font',
-  Icon = 'icon',
-  Component = 'component',
-  Code = 'code',
-  Documentation = 'documentation',
-  Configuration = 'configuration',
-
+export enum PackageSpecificAssetType {
   // USD 特定格式
   USD = 'usd',
   USDA = 'usda',
@@ -333,6 +321,14 @@ export enum AssetEntryType {
   Shader = 'shader',
   Animation = 'animation',
 }
+
+/**
+ * 完整资产条目类型（AssetType + PackageSpecificAssetType）
+ *
+ * @description 包资产清单中使用的完整类型
+ * 包含核心资产类型和包特有的 USD/3D 资产类型
+ */
+export type AssetEntryType = AssetType | PackageSpecificAssetType;
 
 /**
  * 压缩信息
@@ -631,6 +627,11 @@ export interface RendererConfiguration {
 
 /**
  * 渲染器类型
+ *
+ * @description 配置层面的渲染器类型，包含所有可能的渲染方式
+ * 与 common/rhi/types/enums.ts 中的 RHIBackend 的区别：
+ * - RHIBackend: RHI 层级，仅包含 3D 硬件后端 (WebGL, WebGL2, WebGPU)
+ * - RendererType: 配置层级，包含所有渲染方式 (含 2D: Canvas2D, SVG)
  */
 export enum RendererType {
   WebGL = 'webgl',
@@ -681,12 +682,10 @@ export interface LoaderConfiguration {
 
 /**
  * 缓存配置
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface CacheConfiguration {
-  /**
-   * 启用缓存
-   */
-  enabled: boolean;
+export interface CacheConfiguration extends RequiredEnableable {
   /**
    * 缓存大小限制（MB）
    */
@@ -842,12 +841,10 @@ export interface SecurityConfiguration {
 
 /**
  * 内容安全策略
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface ContentSecurityPolicy {
-  /**
-   * 启用 CSP
-   */
-  enabled: boolean;
+export interface ContentSecurityPolicy extends RequiredEnableable {
   /**
    * CSP 指令
    */
@@ -860,12 +857,10 @@ export interface ContentSecurityPolicy {
 
 /**
  * 子资源完整性
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface SubresourceIntegrity {
-  /**
-   * 启用 SRI
-   */
-  enabled: boolean;
+export interface SubresourceIntegrity extends RequiredEnableable {
   /**
    * 哈希算法
    */
@@ -917,12 +912,10 @@ export interface AccessControl {
 
 /**
  * 调试配置
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface DebugConfiguration {
-  /**
-   * 启用调试
-   */
-  enabled: boolean;
+export interface DebugConfiguration extends RequiredEnableable {
   /**
    * 日志级别
    */
@@ -1020,12 +1013,10 @@ export interface ValidationWarning {
 
 /**
  * 验证统计
+ *
+ * @description 组合 Durable trait（duration 表示验证时间）
  */
-export interface ValidationStatistics {
-  /**
-   * 验证时间
-   */
-  duration: number;
+export interface ValidationStatistics extends Durable {
   /**
    * 检查项目数
    */

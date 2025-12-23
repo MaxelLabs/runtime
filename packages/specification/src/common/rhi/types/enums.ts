@@ -557,3 +557,43 @@ export enum RHIUniformType {
   /** 立方体阴影纹理采样器 */
   SAMPLER_CUBE_SHADOW = 'samplerCubeShadow',
 }
+
+// ============================================================================
+// 从 common/texture.ts 迁移的类型
+// ============================================================================
+
+/**
+ * RHI纹理数据类型
+ */
+export enum RHITextureDataType {
+  /** 无符号字节 */
+  UnsignedByte = 'unsigned-byte',
+  /** 字节 */
+  Byte = 'byte',
+  /** 无符号短整型 */
+  UnsignedShort = 'unsigned-short',
+  /** 短整型 */
+  Short = 'short',
+  /** 无符号整型 */
+  UnsignedInt = 'unsigned-int',
+  /** 整型 */
+  Int = 'int',
+  /** 半精度浮点 */
+  HalfFloat = 'half-float',
+  /** 单精度浮点 */
+  Float = 'float',
+}
+
+/**
+ * RHI后端类型
+ */
+export enum RHIBackend {
+  /** 未知或不支持的后端 */
+  UNKNOWN = 0,
+  /** WebGL 1.0 */
+  WebGL = 1,
+  /** WebGL 2.0 */
+  WebGL2 = 2,
+  /** WebGPU */
+  WebGPU = 3,
+}

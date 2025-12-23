@@ -3,19 +3,17 @@
  * 包含主题配置、样式库和主题覆盖相关类型
  */
 
-import type { CommonMetadata, ColorLike } from '../core';
+import type { CommonMetadata, ColorLike, Nameable, Describable } from '../core';
 import type { DesignTypographySystem } from './typography';
 import type { DesignSpacingSystem } from './spacing';
 import type { DesignStyleDefinition } from './styles';
 
 /**
  * 设计主题
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface DesignTheme {
-  /**
-   * 主题名称
-   */
-  name: string;
+export interface DesignTheme extends Nameable, Describable {
   /**
    * 主题类型
    */
@@ -36,10 +34,6 @@ export interface DesignTheme {
    * 组件样式覆盖
    */
   componentStyles?: Record<string, any>;
-  /**
-   * 主题描述
-   */
-  description?: string;
   /**
    * 是否为默认主题
    */
@@ -68,12 +62,10 @@ export enum ThemeType {
 
 /**
  * 设计样式库
+ *
+ * @description 组合 Nameable trait
  */
-export interface DesignStyleLibrary {
-  /**
-   * 库名称
-   */
-  name: string;
+export interface DesignStyleLibrary extends Nameable {
   /**
    * 库版本
    */
@@ -90,12 +82,10 @@ export interface DesignStyleLibrary {
 
 /**
  * 主题变量
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface ThemeVariable {
-  /**
-   * 变量名称
-   */
-  name: string;
+export interface ThemeVariable extends Nameable, Describable {
   /**
    * 变量值
    */
@@ -104,10 +94,6 @@ export interface ThemeVariable {
    * 变量类型
    */
   type: ThemeVariableType;
-  /**
-   * 变量描述
-   */
-  description?: string;
   /**
    * 默认值
    */

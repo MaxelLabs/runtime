@@ -4,7 +4,7 @@
  */
 
 import type { CommonBounds } from '../common';
-import type { CoreBoundingBox, UsdPrim, UsdValue } from '../core';
+import type { CoreBoundingBox, UsdPrim, UsdValue, RequiredEnableable } from '../core';
 
 /**
  * 几何体基础接口
@@ -223,8 +223,10 @@ export enum MaterialPurpose {
 
 /**
  * LOD配置
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface LODConfiguration {
+export interface LODConfiguration extends RequiredEnableable {
   /**
    * LOD级别列表
    */
@@ -237,10 +239,6 @@ export interface LODConfiguration {
    * 淡入淡出过渡
    */
   fadeTransition?: FadeTransition;
-  /**
-   * 是否启用LOD
-   */
-  enabled: boolean;
   /**
    * LOD偏差
    */
@@ -264,20 +262,23 @@ export interface LODConfiguration {
   /**
    * 动态LOD调整
    */
-  dynamicAdjustment?: {
-    /**
-     * 是否启用
-     */
-    enabled: boolean;
-    /**
-     * 性能目标FPS
-     */
-    targetFPS: number;
-    /**
-     * 调整灵敏度
-     */
-    sensitivity: number;
-  };
+  dynamicAdjustment?: DynamicLODAdjustment;
+}
+
+/**
+ * 动态LOD调整配置
+ *
+ * @description 组合 RequiredEnableable trait
+ */
+export interface DynamicLODAdjustment extends RequiredEnableable {
+  /**
+   * 性能目标FPS
+   */
+  targetFPS: number;
+  /**
+   * 调整灵敏度
+   */
+  sensitivity: number;
 }
 
 /**
@@ -326,12 +327,10 @@ export enum DistanceMode {
 
 /**
  * 淡入淡出过渡
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface FadeTransition {
-  /**
-   * 启用淡入淡出
-   */
-  enabled: boolean;
+export interface FadeTransition extends RequiredEnableable {
   /**
    * 过渡距离
    */
@@ -714,8 +713,10 @@ export interface InstanceAttributes {
 
 /**
  * 几何体变形
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface GeometryDeformation {
+export interface GeometryDeformation extends RequiredEnableable {
   /**
    * 变形类型
    */
@@ -728,10 +729,6 @@ export interface GeometryDeformation {
    * 影响权重
    */
   weight: number;
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
 }
 
 /**

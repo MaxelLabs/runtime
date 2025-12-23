@@ -3,7 +3,7 @@
  * 包含间距比例、使用场景和断点系统相关类型
  */
 
-import type { DeviceType } from '../core';
+import type { DeviceType, Nameable, Describable } from '../core';
 
 /**
  * 设计间距系统
@@ -29,20 +29,14 @@ export interface DesignSpacingSystem {
 
 /**
  * 间距用途
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface SpacingUsage {
-  /**
-   * 用途名称
-   */
-  name: string;
+export interface SpacingUsage extends Nameable, Describable {
   /**
    * 用途值
    */
   value: number;
-  /**
-   * 用途描述
-   */
-  description?: string;
   /**
    * 使用场景
    */
@@ -95,12 +89,10 @@ export enum BreakpointUnit {
 
 /**
  * 断点用途
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface BreakpointUsage {
-  /**
-   * 用途名称
-   */
-  name: string;
+export interface BreakpointUsage extends Nameable, Describable {
   /**
    * 最小宽度
    */
@@ -109,10 +101,6 @@ export interface BreakpointUsage {
    * 最大宽度
    */
   maxWidth?: number;
-  /**
-   * 用途描述
-   */
-  description?: string;
   /**
    * 设备类型
    */

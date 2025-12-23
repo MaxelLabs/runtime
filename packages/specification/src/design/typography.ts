@@ -4,7 +4,7 @@
  */
 
 // 从 core 模块导入基础类型
-import type { CommonMetadata, WritingMode } from '../core';
+import type { CommonMetadata, WritingMode, BaseLicense, LicenseType, Nameable, Describable } from '../core';
 
 // 从 common 模块导入通用类型
 import type { TextOverflow, TextDirection, FontStyle } from '../common/text';
@@ -90,30 +90,22 @@ export interface DesignFontFile {
 
 /**
  * 字体许可
+ *
+ * @description 继承自 BaseLicense，无额外字段
  */
-export interface FontLicense {
+export interface FontLicense extends BaseLicense {
   /**
-   * 许可类型
+   * 许可类型（覆盖为具体类型）
    */
-  type: string;
-  /**
-   * 许可URL
-   */
-  url?: string;
-  /**
-   * 许可描述
-   */
-  description?: string;
+  type: LicenseType;
 }
 
 /**
  * 设计字体族
+ *
+ * @description 组合 Nameable, Describable traits
  */
-export interface DesignFontFamily {
-  /**
-   * 字体名称
-   */
-  name: string;
+export interface DesignFontFamily extends Nameable, Describable {
   /**
    * 字体文件
    */
@@ -122,10 +114,6 @@ export interface DesignFontFamily {
    * 回退字体
    */
   fallback?: string[];
-  /**
-   * 字体描述
-   */
-  description?: string;
   /**
    * 字体分类
    */

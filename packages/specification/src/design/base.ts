@@ -4,7 +4,7 @@
  */
 
 import type { ComponentPropertyType, IconStyle } from './enums';
-import type { ConstraintConfig, BaseComponentProperty, ConstraintType } from '../core';
+import type { ConstraintConfig, BaseComponentProperty, ConstraintType, BaseCategory, Nameable } from '../core';
 
 /**
  * 设计约束（扩展核心约束配置）
@@ -54,12 +54,10 @@ export interface DesignComponentProperty extends BaseComponentProperty {
 
 /**
  * 组件变体（设计特有）
+ *
+ * @description 组合 Nameable trait
  */
-export interface DesignComponentVariant {
-  /**
-   * 变体名称
-   */
-  name: string;
+export interface DesignComponentVariant extends Nameable {
   /**
    * 变体属性
    */
@@ -68,12 +66,10 @@ export interface DesignComponentVariant {
 
 /**
  * 图标变体（设计特有）
+ *
+ * @description 组合 Nameable trait
  */
-export interface DesignIconVariant {
-  /**
-   * 变体名称
-   */
-  name: string;
+export interface DesignIconVariant extends Nameable {
   /**
    * 变体样式
    */
@@ -86,22 +82,7 @@ export interface DesignIconVariant {
 
 /**
  * 图标分类（设计特有）
+ *
+ * @description 继承自 BaseCategory，无额外字段
  */
-export interface DesignIconCategory {
-  /**
-   * 分类 ID
-   */
-  id: string;
-  /**
-   * 分类名称
-   */
-  name: string;
-  /**
-   * 分类描述
-   */
-  description?: string;
-  /**
-   * 父分类
-   */
-  parent?: string;
-}
+export type DesignIconCategory = BaseCategory;

@@ -5,21 +5,30 @@
 
 import type { UsdValue } from './usd';
 import type { EasingFunction, MaterialType, BorderStyle, ClickFeedbackType, VisualEffectType } from './enums';
-import type { VersionInfo } from './base';
+import type { TransformSpace } from './enums';
 import type { ColorLike, Matrix4Like, QuaternionLike, Vector3Like } from './math';
+import type {
+  Nameable,
+  Describable,
+  Taggable,
+  Extensible,
+  Versionable,
+  Auditable,
+  RequiredEnableable,
+  Durable,
+  Enableable,
+} from './traits';
 
 /**
  * 视觉效果
+ *
+ * @description 组合 Durable trait
  */
-export interface VisualEffect {
+export interface VisualEffect extends Durable {
   /**
    * 效果类型
    */
   type: VisualEffectType;
-  /**
-   * 持续时间（毫秒）
-   */
-  duration: number;
   /**
    * 效果参数
    */
@@ -28,12 +37,10 @@ export interface VisualEffect {
 
 /**
  * 震动模式
+ *
+ * @description 组合 Durable trait（duration 为毫秒）
  */
-export interface VibrationPattern {
-  /**
-   * 震动持续时间（毫秒）
-   */
-  duration: number;
+export interface VibrationPattern extends Durable {
   /**
    * 震动强度 (0-1)
    */
@@ -46,12 +53,10 @@ export interface VibrationPattern {
 
 /**
  * 点击效果
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface ClickEffect {
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
+export interface ClickEffect extends RequiredEnableable {
   /**
    * 反馈类型
    */
@@ -76,6 +81,10 @@ export interface ClickEffect {
 
 /**
  * 基础变换接口（核心3D变换）
+ *
+ * @remarks
+ * 实现此接口的组件可以添加运行时专用字段（如 dirty 标记），
+ * 这些字段不属于序列化数据，仅用于运行时优化。
  */
 export interface ITransform {
   /**
@@ -124,12 +133,10 @@ export interface GradientStop {
 
 /**
  * 核心材质属性（基础版本）
+ *
+ * @description 组合 Nameable trait
  */
-export interface MaterialProperties {
-  /**
-   * 材质名称
-   */
-  name: string;
+export interface MaterialProperties extends Nameable {
   /**
    * 材质类型
    */
@@ -289,20 +296,6 @@ export interface RenderingProperties {
 }
 
 /**
- * 边界球
- */
-export interface BoundingSphere {
-  /**
-   * 球心坐标
-   */
-  center: Vector3Like;
-  /**
-   * 半径
-   */
-  radius: number;
-}
-
-/**
  * 3D边界框（核心版本）
  */
 export interface CoreBoundingBox {
@@ -348,12 +341,10 @@ export interface InteractionProperties {
 
 /**
  * 悬停效果
+ *
+ * @description 组合 RequiredEnableable trait
  */
-export interface HoverEffect {
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
+export interface HoverEffect extends RequiredEnableable {
   /**
    * 悬停延迟（毫秒）
    */
@@ -434,68 +425,9 @@ export interface SelectionEffect {
 
 /**
  * 通用元数据接口
+ * @description 组合多个 traits 构建完整的元数据接口
  */
-export interface CommonMetadata {
-  /**
-   * 名称
-   */
-  name: string;
-  /**
-   * 描述
-   */
-  description?: string;
-  /**
-   * 版本信息
-   */
-  version: VersionInfo;
-  /**
-   * 创建者
-   */
-  creator?: string;
-  /**
-   * 创建时间
-   */
-  createdAt?: string;
-  /**
-   * 最后修改时间
-   */
-  lastModified?: string;
-  /**
-   * 标签
-   */
-  tags?: string[];
-  /**
-   * 自定义数据
-   */
-  customData?: Record<string, any>;
-}
-// ========== 枚举类型 ==========
-
-/**
- * 变换空间
- */
-export enum TransformSpace {
-  /**
-   * 世界空间
-   */
-  World = 'world',
-  /**
-   * 本地空间
-   */
-  Local = 'local',
-  /**
-   * 父级空间
-   */
-  Parent = 'parent',
-  /**
-   * 屏幕空间
-   */
-  Screen = 'screen',
-  /**
-   * 视图空间
-   */
-  View = 'view',
-}
+export interface CommonMetadata extends Nameable, Describable, Versionable, Auditable, Taggable, Extensible {}
 
 /**
  * 通用变换函数
@@ -530,16 +462,10 @@ export interface ConstraintConfig {
 /**
  * 通用动画配置基础接口
  * 适用于所有动画系统的基础配置
+ *
+ * @description 组合 Nameable, Durable traits
  */
-export interface BaseAnimationConfig {
-  /**
-   * 动画名称
-   */
-  name: string;
-  /**
-   * 持续时间（秒）
-   */
-  duration: number;
+export interface BaseAnimationConfig extends Nameable, Durable {
   /**
    * 延迟时间（秒）
    */
@@ -616,10 +542,10 @@ export interface FullEventConfig {
  * 完整播放控制器状态
  * 适用于动画、媒体播放等所有需要控制的模块
  *
- * @description 继承自 generics.ts 中的 PlayableController，添加完整状态
+ * @description 组合 RequiredEnableable trait
  * 注意: 基础的 BaseController 定义在 generics.ts 中
  */
-export interface FullControllerState {
+export interface FullControllerState extends RequiredEnableable {
   /**
    * 当前播放状态
    */
@@ -632,10 +558,6 @@ export interface FullControllerState {
    * 播放速度
    */
   playbackSpeed: number;
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
   /**
    * 权重
    */
@@ -653,12 +575,10 @@ export interface FullControllerState {
 /**
  * 通用组件属性定义
  * 适用于设计系统、UI组件等
+ *
+ * @description 组合 Nameable trait
  */
-export interface BaseComponentProperty {
-  /**
-   * 属性名称
-   */
-  name: string;
+export interface BaseComponentProperty extends Nameable {
   /**
    * 属性类型
    */
@@ -676,12 +596,10 @@ export interface BaseComponentProperty {
 /**
  * 通用样式配置
  * 适用于设计、UI、渲染等所有需要样式的模块
+ *
+ * @description 组合 Nameable, Enableable traits
  */
-export interface BaseStyle {
-  /**
-   * 样式名称
-   */
-  name: string;
+export interface BaseStyle extends Nameable, Enableable {
   /**
    * 样式类型
    */
@@ -690,21 +608,15 @@ export interface BaseStyle {
    * 样式值
    */
   value: any;
-  /**
-   * 是否启用
-   */
-  enabled?: boolean;
 }
 
 /**
  * 通用参数定义
  * 适用于动画、组件、系统等所有需要参数的模块
+ *
+ * @description 组合 Nameable trait
  */
-export interface BaseParameter {
-  /**
-   * 参数名称
-   */
-  name: string;
+export interface BaseParameter extends Nameable {
   /**
    * 参数类型
    */
