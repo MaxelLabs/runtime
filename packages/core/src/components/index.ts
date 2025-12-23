@@ -45,6 +45,9 @@ export * from './physics';
 // Animation Components - 动画相关组件
 export * from './animation';
 
+// Layout Components - 布局相关组件
+export * from './layout';
+
 /**
  * 组件类型辅助类型
  * @internal

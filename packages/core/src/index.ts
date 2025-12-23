@@ -38,7 +38,10 @@ export * from './utils';
 // 组件库
 export * from './components';
 
-// RHI 渲染硬件接口
+// 逻辑系统 (Phase 4)
+export * from './systems';
+
+// RHI 接口
 export * from './rhi';
 
 // 数学库（命名空间导出）
