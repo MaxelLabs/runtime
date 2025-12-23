@@ -1,4 +1,4 @@
-import { BitSet } from '../utils/bitset';
+import { BitSet } from '../utils';
 
 /**
  * 组件类型（构造函数）
