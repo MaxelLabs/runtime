@@ -52,6 +52,7 @@ related_ids: ["doc-standard", "constitution-core-runtime"]
 
 | Document | ID | Content | Use Case |
 |----------|----|---------|----------|
+| **Specification Package** | `ref-specification` | Complete @maxellabs/specification reference (interfaces, enums, types) | **Type Reference** |
 | **Data Models & Components** | `data-models-core` | Complete ECS component implementations with interfaces (ITransform, IMeshRef, etc.) | **Component Reference** |
 | **Shared Utilities** | `reference-shared-utilities` | BitSet, ObjectPool, SparseSet, Time, GLUtils, Std140Layout | **Utility Reference** |
 | **Tech Stack** | `tech-stack-monorepo` | Build system (Rollup+SWC), testing (Jest), TypeScript config, PNPM workspace | **Build Reference** |
@@ -59,8 +60,9 @@ related_ids: ["doc-standard", "constitution-core-runtime"]
 **Core Component Categories:**
 - **Transform**: LocalTransform, WorldTransform, Parent, Children
 - **Visual**: MeshRef, MaterialRef, TextureRef, Color, Visible, Layer, CastShadow, ReceiveShadow
+- **Camera**: Camera, CameraTarget
+- **Light**: DirectionalLight, PointLight, SpotLight, AmbientLight
 - **Data**: Name, Tag, Tags, Metadata, Disabled, Static
-- **Physics**: Velocity, Acceleration, AngularVelocity, Mass, Gravity, Damping
 - **Animation**: AnimationState, AnimationClipRef, Timeline, TweenState
 - **Layout**: Anchor, FlexContainer, FlexItem, LayoutResult, SizeConstraint, Margin, Padding
 
@@ -73,6 +75,10 @@ related_ids: ["doc-standard", "constitution-core-runtime"]
 | Document | ID | Content | Use Case |
 |----------|----|---------|----------|
 | **System Overview** | `architecture-system-overview` | Monorepo structure, initialization flow, ECS architecture, API exposure, design patterns | **System Design** |
+| **Core Architecture** | `arch-core-unified` | Core 包统一架构，统合 Engine/Effects/Charts/Design 四大应用的共享能力 | **Core 开发** |
+| **Component Architecture** | `architecture-components` | Complete component system (Transform, Visual, Camera, Light, Layout, Animation, Data) with fromData() patterns | **Component Reference** |
+| **Scene & Systems** | `architecture-scene-systems` | Scene class, ComponentRegistry, SystemScheduler, execution flow (CameraSystem, RenderSystem) | **System Design** |
+| **Resource Management** | `architecture-resources` | ResourceManager, lifecycle, reference counting, loader system | **Resource Reference** |
 | **Logic Systems** | `architecture-logic-systems` | System execution stages (FrameStart/Update/PostUpdate), dependencies, TransformSystem/LayoutSystem/AnimationSystem flow | **System Scheduling** |
 
 **Key Architecture Patterns:**
@@ -80,6 +86,7 @@ related_ids: ["doc-standard", "constitution-core-runtime"]
 2. **Deep Copy & Reference Isolation**: Prevent shared references
 3. **Null-Safe Field Handling**: Defensive fromData with defaults
 4. **SoA Memory Layout**: Structure of Arrays for cache efficiency
+5. **Unified fromData()**: All components use same pattern
 
 ---
 
@@ -101,13 +108,17 @@ llmdoc/
 │
 ├── reference/                        ← Specifications & Contracts
 │   ├── constitution.md               ← CRITICAL: Read first
+│   ├── specification.md              ← @maxellabs/specification reference
 │   ├── data-models-core.md           ← Component specs & implementations
-│   ├── layout-components.md          ← Layout components (Anchor, Flexbox)
 │   ├── shared-utilities.md           ← Utility reference
 │   └── tech-stack.md                 ← Build & tooling
 │
 ├── architecture/                     ← System Design
 │   ├── system-overview.md            ← High-level architecture
+│   ├── core-architecture.md          ← Core package unified architecture
+│   ├── components.md                 ← Component system reference
+│   ├── scene-systems.md              ← Scene & system architecture
+│   ├── resources.md                  ← Resource management
 │   └── logic-systems.md              ← System execution stages & dependencies
 │
 └── guides/                           ← Procedures
@@ -123,27 +134,56 @@ llmdoc/
 ```
 constitution-core-runtime
     ↓ (defines rules for)
-data-models-core
+ref-specification
+    ↓ (provides interfaces)
+architecture-components
     ↓ (implements)
-architecture-system-overview
+architecture-scene-systems
     ↓ (uses)
-tech-stack-monorepo
+architecture-resources
     ↓ (provides)
-reference-shared-utilities
+tech-stack-monorepo
     ↓ (follows)
 doc-standard
 ```
 
-**Related Component Flows:**
+**Component Data Flow:**
 
 ```
-Specification Interface (ITransform)
+Editor/JSON (ISceneData)
     ↓
-Data Models & Components (LocalTransform.fromData)
+Specification Interfaces (ICameraData, ILightData, etc.)
     ↓
-Architecture (World.addComponent)
+Component.fromData() (Camera.fromData, DirectionalLight.fromData)
     ↓
-Utilities (ObjectPool, SparseSet for optimization)
+Scene/World (addComponent, entity management)
+    ↓
+Systems (CameraSystem, RenderSystem, LayoutSystem)
+    ↓
+RHI Device (WebGL/WebGPU rendering)
+```
+
+**Type Definition Hierarchy:**
+
+```
+@maxellabs/specification (Source of Truth)
+    ├─ Core interfaces (IDisposable, IReferable)
+    ├─ Math types (Vector3Like, QuaternionLike)
+    ├─ Component data (ICameraData, ILightData)
+    ├─ Scene format (ISceneData, IEntityData)
+    └─ Resource types (IMeshResource, ITextureResource)
+         ↓
+@maxellabs/core (Implementation)
+    ├─ Components (Camera, DirectionalLight, etc.)
+    ├─ Scene (Scene class)
+    ├─ Systems (CameraSystem, RenderSystem)
+    └─ Resources (ResourceManager)
+         ↓
+Application Packages (Usage)
+    ├─ Engine (3D rendering)
+    ├─ Effects (Animation/particles)
+    ├─ Charts (Data visualization)
+    └─ Design (UI tools)
 ```
 
 ---
@@ -152,15 +192,19 @@ Utilities (ObjectPool, SparseSet for optimization)
 
 | Task | Primary Document | Secondary Documents |
 |------|------------------|---------------------|
-| **Implement new component** | `data-models-core` | `constitution-core-runtime` |
-| **Understand ECS architecture** | `architecture-system-overview` | `data-models-core` |
-| **Implement new System** | `architecture-logic-systems` | `architecture-system-overview` |
-| **UI Layout with Anchor/Flex** | `reference-layout-components` | `architecture-logic-systems` |
+| **Implement new component** | `architecture-components` | `ref-specification`, `constitution-core-runtime` |
+| **Understand ECS architecture** | `architecture-system-overview` | `architecture-scene-systems` |
+| **Implement new System** | `architecture-scene-systems` | `architecture-logic-systems` |
+| **UI Layout with Anchor/Flex** | `architecture-components` | `architecture-scene-systems` |
+| **Add Camera/Light components** | `architecture-components` | `ref-specification` |
 | **Build the project** | `tech-stack-monorepo` | - |
 | **Write documentation** | `doc-standard` | `llmdoc/index.md` |
-| **Debug component issues** | `constitution-core-runtime` | `data-models-core` |
-| **Optimize performance** | `reference-shared-utilities` | `architecture-system-overview` |
+| **Debug component issues** | `constitution-core-runtime` | `architecture-components` |
+| **Optimize performance** | `reference-shared-utilities` | `architecture-scene-systems` |
 | **Add utility functions** | `reference-shared-utilities` | `doc-standard` |
+| **Load scene from JSON** | `architecture-scene-systems` | `ref-specification` |
+| **Manage GPU resources** | `architecture-resources` | `architecture-scene-systems` |
+| **Create custom loaders** | `architecture-resources` | `ref-specification` |
 
 ---
 
@@ -170,14 +214,16 @@ Before writing code or documentation, verify:
 
 **For Code:**
 - [ ] Read `constitution-core-runtime` for relevant rules
-- [ ] Check `data-models-core` for existing patterns
-- [ ] Implement `fromData()` with proper typing
+- [ ] Check `ref-specification` for existing interfaces
+- [ ] Check `architecture-components` for existing patterns
+- [ ] Implement `fromData()` with `Partial<T>` parameter
 - [ ] Use deep copy: `{...obj}`, `[...arr]`
 - [ ] Add null checks with `??` defaults
 - [ ] Implement `clone()` method
 - [ ] Mark `dirty` flag on changes
 - [ ] No `any` types
 - [ ] No shallow copies
+- [ ] Follow `fromData()` pattern consistently
 
 **For Documentation:**
 - [ ] Read `doc-standard` for format requirements
@@ -186,6 +232,7 @@ Before writing code or documentation, verify:
 - [ ] Use pseudocode instead of prose
 - [ ] List Negative Constraints
 - [ ] Include cross-references (related_ids)
+- [ ] Update `llmdoc/index.md` if adding new docs
 
 ---
 
@@ -202,6 +249,29 @@ Before writing code or documentation, verify:
 8. **NO** ignored parameters in fromData
 9. **NO** mutable default configurations
 10. **NO** documentation without JSDoc for public methods
+11. **NO** `fromSpec()` method (use `fromData()` only)
+12. **NO** empty fromData for marker components (use simplified version)
+
+### Component Architecture (From Components Doc)
+1. **NO** components without `fromData()` static method
+2. **NO** `fromData()` without `Partial<T>` parameter
+3. **NO** missing deep copy for nested objects
+4. **NO** missing default values for required fields
+5. **NO** components that don't extend Component base
+6. **NO** inconsistent interface implementation
+
+### Scene & Systems (From Scene-Systems Doc)
+1. **NO** Scene directly manipulating RHI (delegate to systems)
+2. **NO** circular dependencies between systems
+3. **NO** systems without metadata
+4. **NO** systems without proper stage/priority
+5. **NO** missing ComponentRegistry registration
+
+### Resource Management (From Resources Doc)
+1. **NO** resources without reference counting
+2. **NO** missing error handling in loaders
+3. **NO** GPU resources without proper cleanup
+4. **NO** concurrent loads without promise sharing
 
 ### Documentation Standards (From Doc Standard)
 1. **NO** missing YAML frontmatter
@@ -209,16 +279,20 @@ Before writing code or documentation, verify:
 3. **NO** "In this document we will..." fluff
 4. **NO** relative file paths in documentation
 5. **NO** audience/read_time fields (use id/type)
+6. **NO** documentation without cross-references
 
 ---
 
 ## 🚀 Next Steps
 
 1. **New to the project?** → Start with `constitution-core-runtime`
-2. **Building components?** → Check `data-models-core` for patterns
-3. **Writing docs?** → Follow `doc-standard` strictly
-4. **Optimizing?** → Review `reference-shared-utilities`
-5. **System design?** → Read `architecture-system-overview`
+2. **Understanding architecture?** → Read `architecture-core-unified` then `architecture-components`
+3. **Building components?** → Follow `architecture-components` patterns
+4. **Implementing Scene/Systems?** → Read `architecture-scene-systems`
+5. **Managing resources?** → Check `architecture-resources`
+6. **Working with types?** → Reference `ref-specification`
+7. **Writing docs?** → Follow `doc-standard` strictly
+8. **Optimizing?** → Review `reference-shared-utilities`
 
 ---
 

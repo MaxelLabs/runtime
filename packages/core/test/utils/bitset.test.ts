@@ -157,6 +157,38 @@ describe('BitSet - 位集合', () => {
       expect(result.has(4)).toBe(true);
     });
 
+    it('or - 不同大小的 BitSet（this 更大）', () => {
+      const a = new BitSet(128);
+      const b = new BitSet(32);
+
+      a.set(1);
+      a.set(100); // 超出 b 的范围
+
+      b.set(2);
+
+      const result = a.or(b);
+
+      expect(result.has(1)).toBe(true);
+      expect(result.has(2)).toBe(true);
+      expect(result.has(100)).toBe(true);
+    });
+
+    it('or - 不同大小的 BitSet（other 更大）', () => {
+      const a = new BitSet(32);
+      const b = new BitSet(128);
+
+      a.set(1);
+
+      b.set(2);
+      b.set(100); // 超出 a 的范围
+
+      const result = a.or(b);
+
+      expect(result.has(1)).toBe(true);
+      expect(result.has(2)).toBe(true);
+      expect(result.has(100)).toBe(true);
+    });
+
     it('orInPlace - 应该原地执行或运算', () => {
       const a = new BitSet();
       const b = new BitSet();
@@ -192,6 +224,40 @@ describe('BitSet - 位集合', () => {
       expect(result.has(3)).toBe(true);
     });
 
+    it('xor - 不同大小的 BitSet（this 更大）', () => {
+      const a = new BitSet(128);
+      const b = new BitSet(32);
+
+      a.set(1);
+      a.set(100); // 超出 b 的范围
+
+      b.set(1);
+      b.set(2);
+
+      const result = a.xor(b);
+
+      expect(result.has(1)).toBe(false); // 1 XOR 1 = 0
+      expect(result.has(2)).toBe(true); // 0 XOR 1 = 1
+      expect(result.has(100)).toBe(true); // 1 XOR 0 = 1
+    });
+
+    it('xor - 不同大小的 BitSet（other 更大）', () => {
+      const a = new BitSet(32);
+      const b = new BitSet(128);
+
+      a.set(1);
+      a.set(2);
+
+      b.set(1);
+      b.set(100); // 超出 a 的范围
+
+      const result = a.xor(b);
+
+      expect(result.has(1)).toBe(false); // 1 XOR 1 = 0
+      expect(result.has(2)).toBe(true); // 1 XOR 0 = 1
+      expect(result.has(100)).toBe(true); // 0 XOR 1 = 1
+    });
+
     it('andNot - 应该执行差集运算（返回新对象）', () => {
       const a = new BitSet();
       const b = new BitSet();
@@ -208,6 +274,39 @@ describe('BitSet - 位集合', () => {
       expect(result.has(1)).toBe(true);
       expect(result.has(2)).toBe(false);
       expect(result.has(3)).toBe(false);
+    });
+
+    it('andNot - 不同大小的 BitSet（this 更大）', () => {
+      const a = new BitSet(128);
+      const b = new BitSet(32);
+
+      a.set(1);
+      a.set(2);
+      a.set(100); // 超出 b 的范围
+
+      b.set(2);
+
+      const result = a.andNot(b);
+
+      expect(result.has(1)).toBe(true); // 1 AND NOT 0 = 1
+      expect(result.has(2)).toBe(false); // 1 AND NOT 1 = 0
+      expect(result.has(100)).toBe(true); // 1 AND NOT 0 = 1 (b 超出部分视为 0)
+    });
+
+    it('andNot - 不同大小的 BitSet（other 更大）', () => {
+      const a = new BitSet(32);
+      const b = new BitSet(128);
+
+      a.set(1);
+      a.set(2);
+
+      b.set(2);
+      b.set(100); // 超出 a 的范围，但不影响结果
+
+      const result = a.andNot(b);
+
+      expect(result.has(1)).toBe(true); // 1 AND NOT 0 = 1
+      expect(result.has(2)).toBe(false); // 1 AND NOT 1 = 0
     });
   });
 
@@ -315,6 +414,58 @@ describe('BitSet - 位集合', () => {
 
       expect(a.equals(b)).toBe(false);
     });
+
+    it('不同大小的 BitSet 比较 - this 更大', () => {
+      const a = new BitSet(128);
+      const b = new BitSet(32);
+
+      a.set(1);
+      a.set(2);
+
+      b.set(1);
+      b.set(2);
+
+      // a 和 b 在重叠部分相同，a 超出部分全为 0
+      expect(a.equals(b)).toBe(true);
+    });
+
+    it('不同大小的 BitSet 比较 - other 更大', () => {
+      const a = new BitSet(32);
+      const b = new BitSet(128);
+
+      a.set(1);
+      a.set(2);
+
+      b.set(1);
+      b.set(2);
+
+      // a 和 b 在重叠部分相同，b 超出部分全为 0
+      expect(a.equals(b)).toBe(true);
+    });
+
+    it('不同大小的 BitSet 比较 - this 更大且超出部分有值', () => {
+      const a = new BitSet(128);
+      const b = new BitSet(32);
+
+      a.set(1);
+      a.set(100); // 超出 b 的范围
+
+      b.set(1);
+
+      expect(a.equals(b)).toBe(false);
+    });
+
+    it('不同大小的 BitSet 比较 - other 更大且超出部分有值', () => {
+      const a = new BitSet(32);
+      const b = new BitSet(128);
+
+      a.set(1);
+
+      b.set(1);
+      b.set(100); // 超出 a 的范围
+
+      expect(a.equals(b)).toBe(false);
+    });
   });
 
   describe('迭代器 - 遍历', () => {
@@ -352,6 +503,190 @@ describe('BitSet - 位集合', () => {
       expect(bs.has(5)).toBe(true);
       expect(bs.has(10)).toBe(true);
       expect(bs.count()).toBe(3);
+    });
+
+    it('应该处理空数组', () => {
+      const bs = BitSet.fromArray([]);
+
+      expect(bs.isEmpty()).toBe(true);
+      expect(bs.count()).toBe(0);
+    });
+  });
+
+  describe('capacity - 容量', () => {
+    it('应该返回正确的容量', () => {
+      const bs = new BitSet(100);
+
+      // 容量会向上取整到 32 的倍数
+      expect(bs.capacity).toBeGreaterThanOrEqual(100);
+      expect(bs.capacity % 32).toBe(0);
+    });
+
+    it('应该返回正确的字数组长度', () => {
+      const bs = new BitSet(100);
+
+      expect(bs.wordCount).toBe(Math.ceil(100 / 32));
+    });
+  });
+
+  describe('setAll - 设置所有位', () => {
+    it('应该设置所有位为 1', () => {
+      const bs = new BitSet(64);
+
+      bs.setAll();
+
+      // 所有位都应该为 1
+      expect(bs.has(0)).toBe(true);
+      expect(bs.has(31)).toBe(true);
+      expect(bs.has(32)).toBe(true);
+      expect(bs.has(63)).toBe(true);
+      expect(bs.count()).toBe(64);
+    });
+  });
+
+  describe('contains - 包含检查', () => {
+    it('应该检测包含关系', () => {
+      const a = new BitSet();
+      const b = new BitSet();
+
+      a.set(1);
+      a.set(2);
+      a.set(3);
+
+      b.set(1);
+      b.set(2);
+
+      expect(a.contains(b)).toBe(true);
+      expect(b.contains(a)).toBe(false);
+    });
+
+    it('应该处理空集合', () => {
+      const a = new BitSet();
+      const b = new BitSet();
+
+      a.set(1);
+
+      expect(a.contains(b)).toBe(true);
+      expect(b.contains(a)).toBe(false);
+    });
+
+    it('应该处理不同大小的集合', () => {
+      const a = new BitSet(32);
+      const b = new BitSet(128);
+
+      a.set(1);
+      a.set(2);
+
+      b.set(1);
+      b.set(100); // 超出 a 的范围
+
+      expect(a.contains(b)).toBe(false);
+    });
+
+    it('应该处理 other 超出部分全为 0 的情况', () => {
+      const a = new BitSet(128);
+      const b = new BitSet(128);
+
+      a.set(1);
+      a.set(2);
+      a.set(3);
+
+      b.set(1);
+      b.set(2);
+
+      expect(a.contains(b)).toBe(true);
+    });
+  });
+
+  describe('not - 取反', () => {
+    it('应该返回取反后的位集合', () => {
+      const bs = new BitSet(64);
+
+      bs.set(0);
+      bs.set(1);
+
+      const result = bs.not();
+
+      // 原来为 1 的位现在为 0
+      expect(result.has(0)).toBe(false);
+      expect(result.has(1)).toBe(false);
+      // 原来为 0 的位现在为 1
+      expect(result.has(2)).toBe(true);
+      expect(result.has(31)).toBe(true);
+    });
+  });
+
+  describe('andInPlace - 原地与操作', () => {
+    it('应该清零超出部分', () => {
+      const a = new BitSet(128);
+      const b = new BitSet(64);
+
+      a.set(1);
+      a.set(2);
+      a.set(100); // 超出 b 的范围
+
+      b.set(1);
+      b.set(2);
+
+      a.andInPlace(b);
+
+      expect(a.has(1)).toBe(true);
+      expect(a.has(2)).toBe(true);
+      expect(a.has(100)).toBe(false); // 应该被清零
+    });
+  });
+
+  describe('toString - 字符串表示', () => {
+    it('应该返回二进制字符串', () => {
+      const bs = new BitSet(8);
+
+      bs.set(0);
+      bs.set(2);
+
+      const str = bs.toString();
+
+      // 从高位到低位，所以 0 和 2 位为 1
+      expect(str).toContain('1');
+      expect(str.length).toBe(32); // 容量向上取整到 32
+    });
+
+    it('空集合应该返回全 0 字符串', () => {
+      const bs = new BitSet(32);
+      const str = bs.toString();
+
+      expect(str).toBe('0'.repeat(32));
+    });
+  });
+
+  describe('自动扩容', () => {
+    it('set 应该自动扩容', () => {
+      const bs = new BitSet(32);
+
+      bs.set(100); // 超出初始容量
+
+      expect(bs.has(100)).toBe(true);
+      expect(bs.capacity).toBeGreaterThanOrEqual(101);
+    });
+
+    it('flip 应该自动扩容', () => {
+      const bs = new BitSet(32);
+
+      bs.flip(100); // 超出初始容量
+
+      expect(bs.has(100)).toBe(true);
+      expect(bs.capacity).toBeGreaterThanOrEqual(101);
+    });
+
+    it('orInPlace 应该自动扩容', () => {
+      const a = new BitSet(32);
+      const b = new BitSet(128);
+
+      b.set(100);
+
+      a.orInPlace(b);
+
+      expect(a.has(100)).toBe(true);
+      expect(a.capacity).toBeGreaterThanOrEqual(101);
     });
   });
 });

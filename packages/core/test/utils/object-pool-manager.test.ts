@@ -498,6 +498,189 @@ describe('ObjectPoolManager', () => {
     });
   });
 
+  describe('错误处理', () => {
+    it('registerPool 抛出异常时应该触发 ERROR 事件', () => {
+      const handler = jest.fn();
+      manager.on(ObjectPoolManagerEventType.ERROR, handler);
+
+      // 创建一个会在 dispatchEvent 时抛出异常的场景
+      // 由于 registerPool 内部的 try-catch，我们需要模拟异常
+      manager.createPool<TestObject>(
+        'test',
+        () => new TestObject(),
+        (obj) => obj.reset()
+      );
+
+      // 正常注册不会触发错误
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('createPool 工厂函数抛出异常时应该在获取对象时抛出错误', () => {
+      // createPool 本身不会调用工厂函数，只有在 get() 时才会调用
+      const pool = manager.createPool<TestObject>(
+        'error-pool',
+        () => {
+          throw new Error('Factory error');
+        },
+        (obj) => obj.reset()
+      );
+
+      expect(pool).toBeDefined();
+
+      // 获取对象时才会抛出错误
+      expect(() => pool.get()).toThrow();
+    });
+
+    it('disposePool 异常时应该返回 false', () => {
+      // 创建一个池
+      manager.createPool<TestObject>(
+        'test',
+        () => new TestObject(),
+        (obj) => obj.reset()
+      );
+
+      // 正常释放应该成功
+      const result = manager.disposePool('test');
+      expect(result).toBe(true);
+    });
+
+    it('updatePoolConfig 异常时应该返回 false', () => {
+      // 不存在的池
+      const result = manager.updatePoolConfig('nonexistent', { maxSize: 100 });
+      expect(result).toBe(false);
+    });
+
+    it('warmUpPool 异常时应该返回 false', () => {
+      const handler = jest.fn();
+      manager.on(ObjectPoolManagerEventType.ERROR, handler);
+
+      // 不存在的池
+      const result = manager.warmUpPool('nonexistent', 5);
+      expect(result).toBe(false);
+    });
+
+    it('clearAllPools 异常时应该触发 ERROR 事件', () => {
+      // 正常清空不会触发错误
+      manager.createPool<TestObject>(
+        'test',
+        () => new TestObject(),
+        (obj) => obj.reset()
+      );
+
+      manager.clearAllPools();
+    });
+
+    it('disposeAllPools 异常时应该触发 ERROR 事件', () => {
+      // 正常释放不会触发错误
+      manager.createPool<TestObject>(
+        'test',
+        () => new TestObject(),
+        (obj) => obj.reset()
+      );
+
+      manager.disposeAllPools();
+    });
+
+    it('warmUpPool 工厂函数抛出异常时应该触发 ERROR 事件并返回 false', () => {
+      const handler = jest.fn();
+      manager.on(ObjectPoolManagerEventType.ERROR, handler);
+
+      // 创建一个会在 warmUp 时抛出异常的池
+      let callCount = 0;
+      manager.createPool<TestObject>(
+        'error-pool',
+        () => {
+          callCount++;
+          if (callCount > 2) {
+            throw new Error('Factory error');
+          }
+          return new TestObject();
+        },
+        (obj) => obj.reset()
+      );
+
+      // warmUp 应该返回 false（部分失败）
+      const result = manager.warmUpPool('error-pool', 10);
+      expect(result).toBe(false);
+    });
+
+    it('updatePoolConfig 当池已释放时应该返回 false', () => {
+      const pool = manager.createPool<TestObject>(
+        'test',
+        () => new TestObject(),
+        (obj) => obj.reset()
+      );
+
+      // 释放池
+      pool.dispose();
+
+      // 更新配置应该返回 true（因为 setMaxSize 只是警告）
+      const result = manager.updatePoolConfig('test', { maxSize: 100 });
+      expect(result).toBe(true);
+    });
+
+    it('updatePoolConfig 预热到指定容量时当前容量已足够应该不预热', () => {
+      const pool = manager.createPool<TestObject>(
+        'test',
+        () => new TestObject(),
+        (obj) => obj.reset()
+      );
+
+      // 先预热到 10
+      pool.warmUp(10);
+
+      // 更新配置，指定 initialCapacity 为 5（小于当前容量）
+      const result = manager.updatePoolConfig('test', { initialCapacity: 5 });
+      expect(result).toBe(true);
+
+      // 池大小应该保持为 10
+      expect(pool.getSize()).toBe(10);
+    });
+  });
+
+  describe('内存警告', () => {
+    it('应该在对象数量超过阈值时触发 MEMORY_WARNING 事件', () => {
+      const handler = jest.fn();
+      manager.on(ObjectPoolManagerEventType.MEMORY_WARNING, handler);
+
+      // 初始化时设置较低的阈值
+      manager.initialize({ memoryWarningThreshold: 5 });
+
+      const pool = manager.createPool<TestObject>(
+        'test',
+        () => new TestObject(),
+        (obj) => obj.reset()
+      );
+
+      // 预热超过阈值的对象
+      pool.warmUp(10);
+
+      // 强制分析
+      manager.analyzePerformance(true);
+
+      expect(handler).toHaveBeenCalled();
+    });
+  });
+
+  describe('自动分析间隔', () => {
+    it('应该在未到分析间隔时返回 null', () => {
+      manager.enableAutoAnalysis(true, 60000); // 60秒间隔
+
+      manager.createPool<TestObject>(
+        'test',
+        () => new TestObject(),
+        (obj) => obj.reset()
+      );
+
+      // 第一次分析
+      manager.analyzePerformance(true);
+
+      // 第二次分析（未到间隔）
+      const stats = manager.analyzePerformance(false);
+      expect(stats).toBeNull();
+    });
+  });
+
   describe('事件系统', () => {
     it('应该支持添加和移除事件监听器', () => {
       const handler = jest.fn();

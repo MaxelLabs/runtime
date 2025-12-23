@@ -75,3 +75,12 @@ export { AnimationSystem, createAnimationSystemDef, getTweenValue } from './anim
 // ============ Interaction System ============
 
 export { InteractionSystem, createInteractionSystemDef } from './interaction';
+
+// ============ Camera System ============
+
+export { CameraSystem, CameraMatrices, createCameraSystem } from './camera';
+
+// ============ Render System ============
+
+export { RenderSystem, createRenderSystem } from './render';
+export type { Renderable, RenderContext, RenderHook } from './render';

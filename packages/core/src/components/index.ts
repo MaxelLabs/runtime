@@ -48,6 +48,12 @@ export * from './animation';
 // Layout Components - 布局相关组件
 export * from './layout';
 
+// Camera Components - 相机相关组件
+export * from './camera';
+
+// Light Components - 光源相关组件
+export * from './light';
+
 /**
  * 组件类型辅助类型
  * @internal

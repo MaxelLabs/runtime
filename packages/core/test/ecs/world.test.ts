@@ -65,6 +65,20 @@ describe('World - ECS中央调度器', () => {
       expect(world.destroyEntity(fakeEntity)).toBe(false);
     });
 
+    it('应该获取所有存活的实体', () => {
+      const e1 = world.createEntity();
+      const e2 = world.createEntity();
+      const e3 = world.createEntity();
+
+      world.destroyEntity(e2);
+
+      const allEntities = world.getAllEntities();
+      expect(allEntities).toHaveLength(2);
+      expect(allEntities).toContain(e1);
+      expect(allEntities).toContain(e3);
+      expect(allEntities).not.toContain(e2);
+    });
+
     it('应该统计实体数量', () => {
       expect(world.getEntityCount()).toBe(0);
 
@@ -133,6 +147,56 @@ describe('World - ECS中央调度器', () => {
 
       world.removeComponent(entity, Position);
       expect(world.hasComponent(entity, Position)).toBe(false);
+    });
+
+    it('对不存活的实体添加组件应该返回false', () => {
+      const deadEntity = world.createEntity();
+      world.destroyEntity(deadEntity);
+
+      expect(world.addComponent(deadEntity, Position)).toBe(false);
+    });
+
+    it('对不存活的实体移除组件应该返回false', () => {
+      const deadEntity = world.createEntity();
+      world.addComponent(deadEntity, Position);
+      world.destroyEntity(deadEntity);
+
+      expect(world.removeComponent(deadEntity, Position)).toBe(false);
+    });
+
+    it('移除未注册的组件类型应该返回false', () => {
+      class UnregisteredComponent {}
+      expect(world.removeComponent(entity, UnregisteredComponent)).toBe(false);
+    });
+
+    it('移除实体没有的组件应该返回false', () => {
+      // 确保 Velocity 已注册但实体没有该组件
+      expect(world.hasComponent(entity, Velocity)).toBe(false);
+      expect(world.removeComponent(entity, Velocity)).toBe(false);
+    });
+
+    it('对不存在的实体获取组件应该返回undefined', () => {
+      const fakeEntity = EntityId.create(999, 0);
+      expect(world.getComponent(fakeEntity, Position)).toBeUndefined();
+    });
+
+    it('获取未注册的组件类型应该返回undefined', () => {
+      class UnregisteredComponent {}
+      expect(world.getComponent(entity, UnregisteredComponent)).toBeUndefined();
+    });
+
+    it('添加组件实例而不是Partial数据', () => {
+      const posInstance = new Position();
+      posInstance.x = 100;
+      posInstance.y = 200;
+      posInstance.z = 300;
+
+      // 传入完整的组件实例
+      world.addComponent(entity, Position, posInstance);
+
+      const retrieved = world.getComponent(entity, Position);
+      expect(retrieved).toBe(posInstance); // 应该是同一个实例
+      expect(retrieved!.x).toBe(100);
     });
   });
 

@@ -146,6 +146,14 @@ describe('ChangeTracker - 变化追踪器', () => {
     it('未变化的实体应该返回 false', () => {
       expect(tracker.hasChanged(entity1, Position)).toBe(false);
     });
+
+    it('检查特定变化类型时如果实体记录不存在应该返回 false', () => {
+      // 这是一个边界情况：组件记录存在但实体记录不存在
+      // 正常情况下不会发生，但需要测试防御性代码
+      tracker.registerComponent(Position);
+      // 直接检查一个从未标记过的实体的特定变化类型
+      expect(tracker.hasChanged(entity1, Position, ChangeType.Added)).toBe(false);
+    });
   });
 
   describe('hasAnyChange - 检查实体是否有任何变化', () => {
@@ -267,6 +275,20 @@ describe('ChangeTracker - 变化追踪器', () => {
       expect(tracker.hasChanged(entity1, Position)).toBe(false);
       expect(tracker.hasChanged(entity1, Velocity)).toBe(true);
     });
+
+    it('当实体只有一个组件变化时应该删除实体记录', () => {
+      tracker.markChanged(entity1, Position);
+
+      expect(tracker.hasAnyChange(entity1)).toBe(true);
+
+      tracker.clearComponent(Position);
+
+      expect(tracker.hasAnyChange(entity1)).toBe(false);
+    });
+
+    it('清除未注册的组件应该不报错', () => {
+      expect(() => tracker.clearComponent(Health)).not.toThrow();
+    });
   });
 
   describe('clearEntity - 清除实体变化', () => {
@@ -278,6 +300,10 @@ describe('ChangeTracker - 变化追踪器', () => {
 
       expect(tracker.hasChanged(entity1, Position)).toBe(false);
       expect(tracker.hasChanged(entity2, Position)).toBe(true);
+    });
+
+    it('清除未变化的实体应该不报错', () => {
+      expect(() => tracker.clearEntity(entity3)).not.toThrow();
     });
   });
 

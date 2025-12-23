@@ -41,6 +41,12 @@ export * from './components';
 // 逻辑系统 (Phase 4)
 export * from './systems';
 
+// 场景管理
+export * from './scene';
+
+// 资源管理
+export * from './resources';
+
 // RHI 接口
 export * from './rhi';
 

@@ -1,61 +1,63 @@
 /**
  * Maxellabs 通用材质类型
  * 定义跨模块共享的基础材质类型
+ *
+ * @module common/material
+ *
+ * ## 架构说明
+ *
+ * 本模块基于 core/material.ts 中的统一材质类型，提供通用场景下的材质定义。
+ *
+ * ```
+ * core/material.ts
+ *   ├── BaseMaterialDefinition
+ *   ├── MaterialTextureSlot
+ *   └── MaterialTextureRef
+ *        ↓
+ * common/material.ts (本文件)
+ *   ├── CommonTextureRef (扩展 MaterialTextureRef)
+ *   └── CommonMaterial (扩展 BaseMaterialDefinition)
+ * ```
  */
 
-import type { ComparisonOperator } from '../animation';
 import type {
   ColorLike,
   BlendMode,
-  CommonMetadata,
-  MaterialType,
   LoopMode,
   Vector2Like,
-  BaseTextureRef,
-  Nameable,
   RequiredEnableable,
+  BaseMaterialDefinition,
+  MaterialTextureRef,
+  UnifiedMaterialType,
+  MaterialAlphaMode,
+  MaterialMetadata,
 } from '../core';
 
-/**
- * 通用纹理槽
- */
-export enum CommonTextureSlot {
-  /**
-   * 主纹理
-   */
-  Main = 'main',
-  /**
-   * 法线贴图
-   */
-  Normal = 'normal',
-  /**
-   * 高度贴图
-   */
-  Height = 'height',
-  /**
-   * 遮挡贴图
-   */
-  Occlusion = 'occlusion',
-  /**
-   * 自发光贴图
-   */
-  Emission = 'emission',
-}
+// 重新导出核心材质类型
+export {
+  MaterialTextureSlot,
+  UnifiedMaterialType,
+  MaterialAlphaMode,
+  MaterialVariantConditionType,
+  MaterialVariantDefinition,
+  MaterialVariantCondition,
+  PBRMaterialProperties,
+  PhysicalMaterialProperties,
+} from '../core';
+
+export type { MaterialTextureRef, BaseMaterialDefinition, MaterialPropertyValue } from '../core';
+
+// ============================================================================
+// 通用纹理引用
+// ============================================================================
 
 /**
  * 通用纹理引用
  *
- * @description 继承 BaseTextureRef，添加通用纹理槽和 UV 变换属性
+ * @description 扩展 MaterialTextureRef，添加 UV 变换属性
+ * 统一使用 assetId 作为纹理资源标识符
  */
-export interface CommonTextureRef extends Omit<BaseTextureRef, 'slot'> {
-  /**
-   * 纹理ID (映射到 BaseTextureRef.assetId)
-   */
-  textureId: string;
-  /**
-   * 纹理槽（使用通用纹理槽枚举）
-   */
-  slot: CommonTextureSlot;
+export interface CommonTextureRef extends MaterialTextureRef {
   /**
    * UV缩放
    */
@@ -65,34 +67,38 @@ export interface CommonTextureRef extends Omit<BaseTextureRef, 'slot'> {
    */
   offset?: Vector2Like;
   /**
-   * 旋转角度
+   * 旋转角度（弧度）
    */
   rotation?: number;
 }
 
+// ============================================================================
+// 通用材质基础接口
+// ============================================================================
+
 /**
  * 通用材质基础接口
  *
- * @description 组合 Nameable, RequiredEnableable traits
+ * @description 扩展 BaseMaterialDefinition，添加 RequiredEnableable trait
  */
-export interface CommonMaterialBase extends Nameable, RequiredEnableable {
-  /**
-   * 材质ID
-   */
-  id: string;
+export interface CommonMaterialBase extends Omit<BaseMaterialDefinition, 'enabled'>, RequiredEnableable {
   /**
    * 材质类型
    */
-  type: MaterialType;
+  type: UnifiedMaterialType;
   /**
-   * 材质标签
+   * 透明模式
    */
-  tags?: string[];
+  alphaMode?: MaterialAlphaMode;
   /**
    * 元数据
    */
-  metadata?: CommonMetadata;
+  metadata?: MaterialMetadata;
 }
+
+// ============================================================================
+// 通用材质属性
+// ============================================================================
 
 /**
  * 通用材质属性
@@ -152,6 +158,10 @@ export interface UVAnimation extends RequiredEnableable {
   playMode: LoopMode;
 }
 
+// ============================================================================
+// 通用材质实例
+// ============================================================================
+
 /**
  * 通用材质实例
  */
@@ -172,96 +182,4 @@ export interface CommonMaterial extends CommonMaterialBase {
    * 是否投射阴影
    */
   castShadows?: boolean;
-}
-
-/**
- * 材质变体
- *
- * @description 组合 Nameable trait
- */
-export interface MaterialVariant extends Nameable {
-  /**
-   * 基础材质ID
-   */
-  baseMaterialId: string;
-  /**
-   * 属性覆盖
-   */
-  propertyOverrides: Partial<CommonMaterialProperties>;
-  /**
-   * 条件
-   */
-  conditions?: MaterialCondition[];
-}
-
-/**
- * 材质条件
- */
-export interface MaterialCondition {
-  /**
-   * 条件类型
-   */
-  type: MaterialConditionType;
-  /**
-   * 条件值
-   */
-  value: any;
-  /**
-   * 比较操作
-   */
-  operator: ComparisonOperator;
-}
-
-/**
- * 材质条件类型
- */
-export enum MaterialConditionType {
-  /**
-   * 设备类型（移动端/桌面端）
-   */
-  DeviceType = 'device-type',
-  /**
-   * 图形质量级别（低/中/高/超高）
-   */
-  QualityLevel = 'quality-level',
-  /**
-   * 平台类型（iOS/Android/Web/Windows等）
-   */
-  Platform = 'platform',
-  /**
-   * 图形API（OpenGL/Vulkan/Metal/DirectX等）
-   */
-  GraphicsAPI = 'graphics-api',
-  /**
-   * GPU性能等级
-   */
-  GPUTier = 'gpu-tier',
-  /**
-   * 内存容量限制
-   */
-  MemoryLimit = 'memory-limit',
-  /**
-   * 屏幕分辨率
-   */
-  ScreenResolution = 'screen-resolution',
-  /**
-   * 渲染特性支持（HDR/PBR/实时光照等）
-   */
-  FeatureSupport = 'feature-support',
-  /**
-   * 带宽限制（影响纹理质量）
-   */
-  BandwidthLimit = 'bandwidth-limit',
-  /**
-   * 电池状态（移动设备节能模式）
-   */
-  PowerMode = 'power-mode',
-  /**
-   * 用户偏好设置
-   */
-  UserPreference = 'user-preference',
-  /**
-   * 自定义条件
-   */
-  Custom = 'custom',
 }

@@ -16,126 +16,31 @@
  * - 引用计数管理（继承自 ReferResource）
  * - 组件启用/禁用状态
  * - 组件脏标记（用于优化更新）
+ *
+ * ## 类型来源
+ *
+ * 布局接口定义来自 @maxellabs/specification：
+ * - ISizeConstraint: 尺寸约束接口
+ * - IAnchor: 锚点配置接口
+ * - IEdgeInsets: 边距接口
+ * - IFlexContainer: Flex 容器接口
+ * - IFlexItem: Flex 子项接口
+ * - ILayoutResult: 布局结果接口
  */
 
 import { Component } from '../base';
-
-// ============ 布局接口定义 ============
-
-/**
- * 尺寸约束接口
- */
-export interface ISizeConstraint {
-  /** 最小宽度 */
-  minWidth?: number;
-  /** 最大宽度 */
-  maxWidth?: number;
-  /** 最小高度 */
-  minHeight?: number;
-  /** 最大高度 */
-  maxHeight?: number;
-  /** 首选宽度 */
-  preferredWidth?: number;
-  /** 首选高度 */
-  preferredHeight?: number;
-}
-
-/**
- * 锚点配置接口
- * 值范围 0-1，表示相对于父级的位置
- */
-export interface IAnchor {
-  /** 锚点最小 X (左边界) */
-  minX: number;
-  /** 锚点最大 X (右边界) */
-  maxX: number;
-  /** 锚点最小 Y (下边界) */
-  minY: number;
-  /** 锚点最大 Y (上边界) */
-  maxY: number;
-}
-
-/**
- * 边距/内边距接口
- */
-export interface IEdgeInsets {
-  /** 上边距 */
-  top: number;
-  /** 右边距 */
-  right: number;
-  /** 下边距 */
-  bottom: number;
-  /** 左边距 */
-  left: number;
-}
-
-/**
- * Flex 方向
- */
-export type FlexDirection = 'row' | 'column' | 'row-reverse' | 'column-reverse';
-
-/**
- * Flex 对齐方式
- */
-export type FlexAlign = 'flex-start' | 'flex-end' | 'center' | 'stretch' | 'baseline';
-
-/**
- * Flex 主轴对齐方式
- */
-export type FlexJustify = 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
-
-/**
- * Flex 换行模式
- */
-export type FlexWrap = 'nowrap' | 'wrap' | 'wrap-reverse';
-
-/**
- * Flex 容器接口
- */
-export interface IFlexContainer {
-  /** 主轴方向 */
-  direction: FlexDirection;
-  /** 换行模式 */
-  wrap: FlexWrap;
-  /** 主轴对齐 */
-  justifyContent: FlexJustify;
-  /** 交叉轴对齐 */
-  alignItems: FlexAlign;
-  /** 多行对齐 */
-  alignContent?: FlexAlign;
-  /** 子项间距 */
-  gap?: number;
-}
-
-/**
- * Flex 子项接口
- */
-export interface IFlexItem {
-  /** 伸展比例 */
-  grow: number;
-  /** 收缩比例 */
-  shrink: number;
-  /** 基础尺寸 */
-  basis: number | 'auto';
-  /** 自身对齐方式（覆盖容器的 alignItems） */
-  alignSelf?: FlexAlign | 'auto';
-  /** 排序权重 */
-  order?: number;
-}
-
-/**
- * 计算后的布局结果接口
- */
-export interface ILayoutResult {
-  /** 计算后的 X 坐标（相对于父级） */
-  x: number;
-  /** 计算后的 Y 坐标（相对于父级） */
-  y: number;
-  /** 计算后的宽度 */
-  width: number;
-  /** 计算后的高度 */
-  height: number;
-}
+import type {
+  ISizeConstraint,
+  IAnchor,
+  IEdgeInsets,
+  IFlexContainer,
+  IFlexItem,
+  ILayoutResult,
+  FlexDirection,
+  FlexAlign,
+  FlexJustify,
+  FlexWrap,
+} from '@maxellabs/specification';
 
 // ============ 布局组件 ============
 

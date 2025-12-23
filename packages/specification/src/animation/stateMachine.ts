@@ -2,27 +2,12 @@
  * Maxellabs 动画状态机模块
  * 动画状态机、状态和转换的定义
  *
- * 注意: AnimationState, AnimationTransition 等核心类型已移动到 common/animation.ts
- * 此处重新导出以保持向后兼容
+ * @description 动画状态机核心类型 (AnimationState, AnimationTransition 等)
+ * 请直接从 '@maxellabs/specification/common' 导入
  */
 
-import type { AnimationParameter } from '../common';
+import type { AnimationParameter, AnimationTransition, AnimationState, InterruptionSource } from '../common';
 import type { Nameable } from '../core';
-
-// 重新导出从 common/animation.ts 移动的类型（向后兼容）
-export type {
-  AnimationCondition,
-  AnimationConditionType,
-  ComparisonOperator,
-  AnimationBehaviorType,
-  AnimationStateBehavior,
-  InterruptionSource,
-  AnimationTransition,
-  AnimationState,
-} from '../common';
-
-// 重新导入用于本文件的类型
-import type { AnimationTransition, AnimationState, InterruptionSource } from '../common';
 
 /**
  * 动画状态机（使用通用类型）

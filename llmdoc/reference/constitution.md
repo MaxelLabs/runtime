@@ -419,6 +419,76 @@ static fromData(data: Partial<ITransform>): TransformComponent {
 
 ---
 
+## 📦 Type Definition Source of Truth
+
+### Interface/Enum 定义规则
+
+**Rule**: 所有 `interface`、`enum`、`type` 等类型定义必须遵循以下优先级：
+
+1. **首先查找 `@maxellabs/specification` 包**
+   - 如果已有类似定义 → **直接使用 spec 中的定义**
+   - 如果没有类似定义 → **在 spec 包中创建新定义**
+
+2. **只有当类型仅限于当前包内部使用时**，才可在当前包中定义
+
+### 决策流程
+
+```
+需要新类型 → 检查 @maxellabs/specification
+                    ↓
+         ┌─────────┴─────────┐
+         ↓                   ↓
+      已存在              不存在
+         ↓                   ↓
+    导入使用            是否跨包使用？
+                             ↓
+              ┌──────────────┴──────────────┐
+              ↓                              ↓
+           是 (跨包)                      否 (仅限内部)
+              ↓                              ↓
+    在 spec 包中定义                  在当前包中定义
+```
+
+### 示例
+
+```typescript
+// ✅ CORRECT: 使用 spec 中已有的类型
+import type { Vector3Like, QuaternionLike, ColorLike } from '@maxellabs/specification';
+import type { ISceneData, IEntityData } from '@maxellabs/specification';
+
+// ✅ CORRECT: 跨包使用的新类型 → 在 spec 中定义
+// packages/specification/src/core/scene.ts
+export interface ISceneData {
+  version: ISceneVersion;
+  metadata: ISceneMetadata;
+  entities: IEntityData[];
+}
+
+// ✅ CORRECT: 仅限当前包内部使用的类型 → 在当前包定义
+// packages/core/src/scene/Scene.ts
+interface SceneEntityMetadata {
+  sceneId: string;
+  active: boolean;
+}
+
+// ❌ WRONG: 在非 spec 包中定义跨包使用的基础类型
+// packages/core/src/types.ts
+export interface Vector3Like { ... }  // ❌ 应在 spec 中
+```
+
+### 类型分类
+
+| 类型类别 | 定义位置 | 示例 |
+|---------|---------|------|
+| 数学类型 | `@maxellabs/specification` | Vector3Like, QuaternionLike, Matrix4Like |
+| 组件数据接口 | `@maxellabs/specification` | ITransform, ICamera, ILight |
+| 场景数据格式 | `@maxellabs/specification` | ISceneData, IEntityData, IComponentData |
+| 渲染接口 | `@maxellabs/specification` | IRHIDevice, IRHIBuffer, IRHITexture |
+| 枚举类型 | `@maxellabs/specification` | ResourceType, LightType, ProjectionType |
+| 包内部类型 | 当前包 | SceneEntityMetadata, SystemExecutionStats |
+
+---
+
 ## 🎯 Compliance Checklist
 
 Before committing code, verify:

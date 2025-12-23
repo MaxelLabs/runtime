@@ -1,6 +1,24 @@
 /**
  * Maxellabs 材质渲染规范
  * 材质和着色器渲染相关类型定义
+ *
+ * @module rendering/material
+ *
+ * ## 架构说明
+ *
+ * 本模块基于 core/material.ts 中的统一材质类型，提供渲染管线专用的材质定义。
+ *
+ * ```
+ * core/material.ts
+ *   ├── BaseMaterialDefinition
+ *   ├── MaterialTextureSlot
+ *   └── MaterialTextureRef
+ *        ↓
+ * rendering/material.ts (本文件)
+ *   ├── IMaterial (USD 风格的材质定义)
+ *   ├── TextureReference (RHI 特化的纹理引用)
+ *   └── MaterialRenderState (渲染状态)
+ * ```
  */
 
 import type {
@@ -13,6 +31,7 @@ import type {
   RHIAddressMode,
   RHIBlendFactor,
 } from '../common';
+import type { GPUDataType } from '../core';
 import type {
   FillMode,
   InterpolationMode,
@@ -49,8 +68,9 @@ export interface IMaterial extends MaterialPrim {
     name: UsdValue; // string
     /**
      * 材质类型
+     * @see UnifiedMaterialType
      */
-    materialType: UsdValue; // MaterialType
+    materialType: UsdValue; // UnifiedMaterialType
     /**
      * 是否双面
      */
@@ -61,8 +81,9 @@ export interface IMaterial extends MaterialPrim {
     opacity: UsdValue; // float
     /**
      * 透明模式
+     * @see MaterialAlphaMode
      */
-    alphaMode: UsdValue; // AlphaMode
+    alphaMode: UsdValue; // MaterialAlphaMode
     /**
      * 透明度阈值
      */
@@ -193,7 +214,7 @@ export interface ShaderInput extends Nameable {
   /**
    * 输入类型
    */
-  type: RHIShaderDataType;
+  type: GPUDataType;
   /**
    * 默认值
    */
@@ -217,54 +238,7 @@ export interface ShaderOutput extends Nameable {
   /**
    * 输出类型
    */
-  type: RHIShaderDataType;
-}
-
-/**
- * RHI着色器数据类型
- *
- * @description 着色器参数的数据类型，仅包含 GPU 可处理的类型
- * 与 core/enums.ts 中的 DataType 有部分重叠，但用途不同：
- * - DataType: 通用数据类型，包含 String, Object, Array 等非 GPU 类型
- * - RHIShaderDataType: 着色器特化类型，包含 Matrix 等 GPU 专用类型
- */
-export enum RHIShaderDataType {
-  /**
-   * 浮点数
-   */
-  Float = 'float',
-  /**
-   * 二维向量
-   */
-  Vector2 = 'vector2',
-  /**
-   * 三维向量
-   */
-  Vector3 = 'vector3',
-  /**
-   * 四维向量
-   */
-  Vector4 = 'vector4',
-  /**
-   * 颜色
-   */
-  Color = 'color',
-  /**
-   * 纹理
-   */
-  Texture = 'texture',
-  /**
-   * 矩阵
-   */
-  Matrix = 'matrix',
-  /**
-   * 布尔值
-   */
-  Boolean = 'boolean',
-  /**
-   * 整数
-   */
-  Integer = 'integer',
+  type: GPUDataType;
 }
 
 /**
@@ -319,12 +293,14 @@ export interface MaterialProperty {
  * 纹理引用（RHI 特化）
  *
  * @description 继承 BaseTextureRef，添加 RHI 特有的类型和采样器
+ * 统一使用 assetId 作为纹理资源标识符
  */
 export interface TextureReference extends Omit<BaseTextureRef, 'sampler'> {
   /**
-   * 纹理路径 (映射到 BaseTextureRef.assetId)
+   * 纹理资源ID（继承自 BaseTextureRef.assetId）
+   * @see BaseTextureRef.assetId
    */
-  path: string;
+  assetId: string;
   /**
    * 纹理类型（RHI 特有）
    */
@@ -346,40 +322,8 @@ export interface MaterialTextureSampler {
   filter: RHIFilterMode;
   /**
    * 包装模式
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
    */
   wrap: RHIAddressMode;
-
   /**
    * 各向异性过滤
    */
@@ -632,28 +576,6 @@ export interface RasterState {
 }
 
 /**
- * 材质变体
- */
-// export interface MaterialVariant {
-//   /**
-//    * 变体名称
-//    */
-//   name: string;
-//   /**
-//    * 变体描述
-//    */
-//   description?: string;
-//   /**
-//    * 变体属性覆盖
-//    */
-//   propertyOverrides: Record<string, any>;
-//   /**
-//    * 变体条件
-//    */
-//   conditions?: VariantCondition[];
-// }
-
-/**
  * 变体条件
  */
 export interface VariantCondition {
@@ -833,7 +755,6 @@ export interface MaterialAnimation extends Nameable, Durable {
  * 材质关键帧
  *
  * @description 基于 UnifiedKeyframe 泛型，材质动画使用 any 类型值
- * 保持向后兼容：MaterialKeyframe 是 UnifiedKeyframe<any> 的别名
  */
 export type MaterialKeyframe = UnifiedKeyframe<any>;
 
@@ -845,7 +766,7 @@ export type MaterialKeyframe = UnifiedKeyframe<any>;
 export interface MaterialAnimationTrack
   extends Omit<UnifiedAnimationTrack<MaterialKeyframe>, 'property' | 'targetPath'> {
   /**
-   * 目标属性 (使用 targetProperty 以保持向后兼容)
+   * 目标属性
    */
   targetProperty: string;
   /**
