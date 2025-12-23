@@ -62,6 +62,7 @@ related_ids: ["doc-standard", "constitution-core-runtime"]
 - **Data**: Name, Tag, Tags, Metadata, Disabled, Static
 - **Physics**: Velocity, Acceleration, AngularVelocity, Mass, Gravity, Damping
 - **Animation**: AnimationState, AnimationClipRef, Timeline, TweenState
+- **Layout**: Anchor, FlexContainer, FlexItem, LayoutResult, SizeConstraint, Margin, Padding
 
 ---
 
@@ -72,6 +73,7 @@ related_ids: ["doc-standard", "constitution-core-runtime"]
 | Document | ID | Content | Use Case |
 |----------|----|---------|----------|
 | **System Overview** | `architecture-system-overview` | Monorepo structure, initialization flow, ECS architecture, API exposure, design patterns | **System Design** |
+| **Logic Systems** | `architecture-logic-systems` | System execution stages (FrameStart/Update/PostUpdate), dependencies, TransformSystem/LayoutSystem/AnimationSystem flow | **System Scheduling** |
 
 **Key Architecture Patterns:**
 1. **Specification-First**: Interface → Implementation → Factory
@@ -100,11 +102,13 @@ llmdoc/
 ├── reference/                        ← Specifications & Contracts
 │   ├── constitution.md               ← CRITICAL: Read first
 │   ├── data-models-core.md           ← Component specs & implementations
+│   ├── layout-components.md          ← Layout components (Anchor, Flexbox)
 │   ├── shared-utilities.md           ← Utility reference
 │   └── tech-stack.md                 ← Build & tooling
 │
 ├── architecture/                     ← System Design
-│   └── system-overview.md            ← High-level architecture
+│   ├── system-overview.md            ← High-level architecture
+│   └── logic-systems.md              ← System execution stages & dependencies
 │
 └── guides/                           ← Procedures
     └── doc-standard.md               ← Documentation standards
@@ -150,6 +154,8 @@ Utilities (ObjectPool, SparseSet for optimization)
 |------|------------------|---------------------|
 | **Implement new component** | `data-models-core` | `constitution-core-runtime` |
 | **Understand ECS architecture** | `architecture-system-overview` | `data-models-core` |
+| **Implement new System** | `architecture-logic-systems` | `architecture-system-overview` |
+| **UI Layout with Anchor/Flex** | `reference-layout-components` | `architecture-logic-systems` |
 | **Build the project** | `tech-stack-monorepo` | - |
 | **Write documentation** | `doc-standard` | `llmdoc/index.md` |
 | **Debug component issues** | `constitution-core-runtime` | `data-models-core` |

@@ -215,7 +215,64 @@ interface ITweenState {
 type EasingType = 'linear' | 'easeIn' | 'easeOut' | 'easeInOut' | 'bounce' | 'elastic';
 ```
 
-### 6. Math Types
+### 6. Layout System
+
+#### Layout Interfaces
+```typescript
+interface IAnchor {
+  minX: number;  // 0-1, left boundary
+  maxX: number;  // 0-1, right boundary
+  minY: number;  // 0-1, bottom boundary
+  maxY: number;  // 0-1, top boundary
+}
+
+interface ISizeConstraint {
+  minWidth?: number;
+  maxWidth?: number;
+  minHeight?: number;
+  maxHeight?: number;
+  preferredWidth?: number;
+  preferredHeight?: number;
+}
+
+interface IEdgeInsets {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
+type FlexDirection = 'row' | 'column' | 'row-reverse' | 'column-reverse';
+type FlexAlign = 'flex-start' | 'flex-end' | 'center' | 'stretch' | 'baseline';
+type FlexJustify = 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
+type FlexWrap = 'nowrap' | 'wrap' | 'wrap-reverse';
+
+interface IFlexContainer {
+  direction: FlexDirection;
+  wrap: FlexWrap;
+  justifyContent: FlexJustify;
+  alignItems: FlexAlign;
+  alignContent?: FlexAlign;
+  gap?: number;
+}
+
+interface IFlexItem {
+  grow: number;
+  shrink: number;
+  basis: number | 'auto';
+  alignSelf?: FlexAlign | 'auto';
+  order?: number;
+}
+
+interface ILayoutResult {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+```
+
+### 7. Math Types
 
 ```typescript
 interface Vector2Like {
@@ -963,6 +1020,210 @@ class TweenState extends Component implements ITweenState {
 }
 ```
 
+### 6. Layout Components
+
+#### Anchor & Constraints
+```typescript
+class SizeConstraint extends Component implements ISizeConstraint {
+  minWidth?: number;
+  maxWidth?: number;
+  minHeight?: number;
+  maxHeight?: number;
+  preferredWidth?: number;
+  preferredHeight?: number;
+
+  static fromData(data: ISizeConstraint): SizeConstraint {
+    const component = new SizeConstraint();
+    if (data.minWidth !== undefined) component.minWidth = data.minWidth;
+    if (data.maxWidth !== undefined) component.maxWidth = data.maxWidth;
+    if (data.minHeight !== undefined) component.minHeight = data.minHeight;
+    if (data.maxHeight !== undefined) component.maxHeight = data.maxHeight;
+    if (data.preferredWidth !== undefined) component.preferredWidth = data.preferredWidth;
+    if (data.preferredHeight !== undefined) component.preferredHeight = data.preferredHeight;
+    return component;
+  }
+
+  override clone(): SizeConstraint {
+    const cloned = new SizeConstraint();
+    if (this.minWidth !== undefined) cloned.minWidth = this.minWidth;
+    if (this.maxWidth !== undefined) cloned.maxWidth = this.maxWidth;
+    if (this.minHeight !== undefined) cloned.minHeight = this.minHeight;
+    if (this.maxHeight !== undefined) cloned.maxHeight = this.maxHeight;
+    if (this.preferredWidth !== undefined) cloned.preferredWidth = this.preferredWidth;
+    if (this.preferredHeight !== undefined) cloned.preferredHeight = this.preferredHeight;
+    return cloned;
+  }
+}
+
+class Anchor extends Component implements IAnchor {
+  minX: number = 0.5;
+  maxX: number = 0.5;
+  minY: number = 0.5;
+  maxY: number = 0.5;
+
+  static fromData(data: IAnchor): Anchor {
+    const component = new Anchor();
+    component.minX = data.minX;
+    component.maxX = data.maxX;
+    component.minY = data.minY;
+    component.maxY = data.maxY;
+    return component;
+  }
+
+  override clone(): Anchor {
+    const cloned = new Anchor();
+    cloned.minX = this.minX;
+    cloned.maxX = this.maxX;
+    cloned.minY = this.minY;
+    cloned.maxY = this.maxY;
+    return cloned;
+  }
+}
+```
+
+#### Edge Insets
+```typescript
+class Margin extends Component implements IEdgeInsets {
+  top: number = 0;
+  right: number = 0;
+  bottom: number = 0;
+  left: number = 0;
+
+  static fromData(data: IEdgeInsets): Margin {
+    const component = new Margin();
+    component.top = data.top;
+    component.right = data.right;
+    component.bottom = data.bottom;
+    component.left = data.left;
+    return component;
+  }
+
+  override clone(): Margin {
+    const cloned = new Margin();
+    cloned.top = this.top;
+    cloned.right = this.right;
+    cloned.bottom = this.bottom;
+    cloned.left = this.left;
+    return cloned;
+  }
+}
+
+class Padding extends Component implements IEdgeInsets {
+  top: number = 0;
+  right: number = 0;
+  bottom: number = 0;
+  left: number = 0;
+
+  static fromData(data: IEdgeInsets): Padding {
+    const component = new Padding();
+    component.top = data.top;
+    component.right = data.right;
+    component.bottom = data.bottom;
+    component.left = data.left;
+    return component;
+  }
+
+  override clone(): Padding {
+    const cloned = new Padding();
+    cloned.top = this.top;
+    cloned.right = this.right;
+    cloned.bottom = this.bottom;
+    cloned.left = this.left;
+    return cloned;
+  }
+}
+```
+
+#### Flexbox Components
+```typescript
+class FlexContainer extends Component implements IFlexContainer {
+  direction: FlexDirection = 'row';
+  wrap: FlexWrap = 'nowrap';
+  justifyContent: FlexJustify = 'flex-start';
+  alignItems: FlexAlign = 'stretch';
+  alignContent?: FlexAlign;
+  gap?: number;
+
+  static fromData(data: IFlexContainer): FlexContainer {
+    const component = new FlexContainer();
+    component.direction = data.direction;
+    component.wrap = data.wrap;
+    component.justifyContent = data.justifyContent;
+    component.alignItems = data.alignItems;
+    if (data.alignContent !== undefined) component.alignContent = data.alignContent;
+    if (data.gap !== undefined) component.gap = data.gap;
+    return component;
+  }
+
+  override clone(): FlexContainer {
+    const cloned = new FlexContainer();
+    cloned.direction = this.direction;
+    cloned.wrap = this.wrap;
+    cloned.justifyContent = this.justifyContent;
+    cloned.alignItems = this.alignItems;
+    if (this.alignContent !== undefined) cloned.alignContent = this.alignContent;
+    if (this.gap !== undefined) cloned.gap = this.gap;
+    return cloned;
+  }
+}
+
+class FlexItem extends Component implements IFlexItem {
+  grow: number = 0;
+  shrink: number = 1;
+  basis: number | 'auto' = 'auto';
+  alignSelf?: FlexAlign | 'auto';
+  order?: number;
+
+  static fromData(data: IFlexItem): FlexItem {
+    const component = new FlexItem();
+    component.grow = data.grow;
+    component.shrink = data.shrink;
+    component.basis = data.basis;
+    if (data.alignSelf !== undefined) component.alignSelf = data.alignSelf;
+    if (data.order !== undefined) component.order = data.order;
+    return component;
+  }
+
+  override clone(): FlexItem {
+    const cloned = new FlexItem();
+    cloned.grow = this.grow;
+    cloned.shrink = this.shrink;
+    cloned.basis = this.basis;
+    if (this.alignSelf !== undefined) cloned.alignSelf = this.alignSelf;
+    if (this.order !== undefined) cloned.order = this.order;
+    return cloned;
+  }
+}
+```
+
+#### Layout Result
+```typescript
+class LayoutResult extends Component implements ILayoutResult {
+  x: number = 0;
+  y: number = 0;
+  width: number = 0;
+  height: number = 0;
+
+  static fromData(data: ILayoutResult): LayoutResult {
+    const component = new LayoutResult();
+    component.x = data.x;
+    component.y = data.y;
+    component.width = data.width;
+    component.height = data.height;
+    return component;
+  }
+
+  override clone(): LayoutResult {
+    const cloned = new LayoutResult();
+    cloned.x = this.x;
+    cloned.y = this.y;
+    cloned.width = this.width;
+    cloned.height = this.height;
+    return cloned;
+  }
+}
+```
+
 ---
 
 ## 🧩 Composition Patterns (Traits)
@@ -1158,6 +1419,7 @@ component.transform = data.transform;  // Don't do this!
 | **Data** | Name, Tag, Tags, Metadata, Disabled, Static | IName, ITag, ITags, IMetadata, IDisabled, IStatic | Array spread, optional fields |
 | **Physics** | Velocity, Acceleration, AngularVelocity, Mass, Gravity, Damping | Vector3Like, IMass, IGravity, IDamping | Direct value copy |
 | **Animation** | AnimationState, AnimationClipRef, Timeline, TweenState | IAnimationState, IAnimationClipRef, ITimeline, ITweenState | All fields copied |
+| **Layout** | Anchor, FlexContainer, FlexItem, LayoutResult, SizeConstraint, Margin, Padding | IAnchor, IFlexContainer, IFlexItem, ILayoutResult, ISizeConstraint, IEdgeInsets | Optional fields with defaults |
 
 ---
 
@@ -1174,6 +1436,7 @@ component.transform = data.transform;  // Don't do this!
 
 ## 🔗 Related Documents
 
-- **Architecture**: ECS architecture and entity lifecycle
-- **Component Lifecycle**: Creation, update, and destruction patterns
+- **Architecture**: `llmdoc/architecture/system-overview.md` - ECS architecture and entity lifecycle
+- **Logic Systems**: `llmdoc/architecture/logic-systems.md` - System execution stages and dependencies
+- **Layout Components**: `llmdoc/reference/layout-components.md` - Layout algorithm details
 - **Specification Interfaces**: Detailed interface definitions and contracts
