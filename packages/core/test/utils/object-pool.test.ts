@@ -82,12 +82,12 @@ describe('ObjectPool - 对象池', () => {
       expect(stats.available).toBe(8);
     });
 
-    it('释放后预分配应该记录错误并返回', () => {
+    it('释放后预分配应该抛出错误', () => {
       pool.dispose();
       clearErrors();
 
-      // 不应该抛出错误，而是记录错误并返回
-      pool.preAllocate(5);
+      // 应该抛出错误
+      expect(() => pool.preAllocate(5)).toThrow();
       expect(errors.length).toBeGreaterThan(0);
 
       // 池大小应该保持为0
@@ -215,18 +215,16 @@ describe('ObjectPool - 对象池', () => {
       expect(stats.totalCreated).toBe(10);
     });
 
-    it('释放后预热应该返回失败结果', () => {
+    it('释放后预热应该抛出错误', () => {
       pool.dispose();
       clearErrors();
 
-      // 不应该抛出错误，而是返回失败结果
-      const result = pool.warmUp(5);
-      expect(result.success).toBe(false);
-      expect(result.count).toBe(0);
+      // 应该抛出错误
+      expect(() => pool.warmUp(5)).toThrow();
       expect(errors.length).toBeGreaterThan(0);
     });
 
-    it('工厂函数抛出异常时应该返回部分成功结果', () => {
+    it('工厂函数抛出异常时应该抛出错误', () => {
       let callCount = 0;
       const errorPool = new ObjectPool<TestObject>(
         'ErrorPool',
@@ -241,12 +239,13 @@ describe('ObjectPool - 对象池', () => {
       );
       clearErrors();
 
-      const result = errorPool.warmUp(10);
-
-      // 应该返回部分成功
-      expect(result.success).toBe(false);
-      expect(result.count).toBe(3); // 前3次成功
+      // 应该抛出错误
+      expect(() => errorPool.warmUp(10)).toThrow();
       expect(errors.length).toBeGreaterThan(0);
+
+      // 前3次成功创建的对象应该在池中
+      const stats = errorPool.getStatus();
+      expect(stats.available).toBe(3);
     });
   });
 
@@ -331,9 +330,12 @@ describe('ObjectPool - 对象池', () => {
 
     it('释放后所有操作应该失败', () => {
       pool.dispose();
+      clearErrors();
 
       expect(() => pool.get()).toThrow();
+      clearErrors();
       expect(() => pool.preAllocate(5)).toThrow();
+      clearErrors();
       expect(() => pool.warmUp(5)).toThrow();
     });
   });
@@ -357,7 +359,7 @@ describe('ObjectPool - 对象池', () => {
   });
 
   describe('错误处理', () => {
-    it('preAllocate 工厂函数抛出异常时应该记录错误', () => {
+    it('preAllocate 工厂函数抛出异常时应该抛出错误', () => {
       let callCount = 0;
       const errorPool = new ObjectPool<TestObject>(
         'ErrorPool',
@@ -372,8 +374,8 @@ describe('ObjectPool - 对象池', () => {
       );
       clearErrors();
 
-      // 前两次成功，第三次失败会记录错误
-      errorPool.preAllocate(5);
+      // 前两次成功，第三次失败会抛出错误
+      expect(() => errorPool.preAllocate(5)).toThrow();
       expect(errors.length).toBeGreaterThan(0);
 
       // 应该有2个对象被成功创建
@@ -395,7 +397,7 @@ describe('ObjectPool - 对象池', () => {
       expect(errors.length).toBeGreaterThan(0);
     });
 
-    it('release 重置函数抛出异常时应该返回 false', () => {
+    it('release 重置函数抛出异常时应该抛出错误', () => {
       const errorPool = new ObjectPool<TestObject>(
         'ErrorPool',
         () => new TestObject(),
@@ -406,46 +408,36 @@ describe('ObjectPool - 对象池', () => {
       clearErrors();
 
       const obj = errorPool.get();
-      const result = errorPool.release(obj);
-
-      expect(result).toBe(false);
+      expect(() => errorPool.release(obj)).toThrow();
       expect(errors.length).toBeGreaterThan(0);
 
-      // activeCount 应该减少
+      // 注意：由于 logError 在 activeCount 减少之前抛出异常，activeCount 保持为 1
       const stats = errorPool.getStatus();
-      expect(stats.inUse).toBe(0);
+      expect(stats.inUse).toBe(1);
     });
 
-    it('release undefined 应该返回 false', () => {
+    it('release undefined 应该抛出错误', () => {
       clearErrors();
-      const result = pool.release(undefined as any);
-
-      expect(result).toBe(false);
+      expect(() => pool.release(undefined as any)).toThrow();
       expect(errors.length).toBeGreaterThan(0);
     });
 
-    it('release null 应该返回 false', () => {
+    it('release null 应该抛出错误', () => {
       clearErrors();
-      const result = pool.release(null as any);
-
-      expect(result).toBe(false);
+      expect(() => pool.release(null as any)).toThrow();
       expect(errors.length).toBeGreaterThan(0);
     });
 
-    it('release 原始值类型应该返回 false', () => {
+    it('release 原始值类型应该抛出错误', () => {
       clearErrors();
-      const result = pool.release(123 as any);
-
-      expect(result).toBe(false);
+      expect(() => pool.release(123 as any)).toThrow();
       expect(errors.length).toBeGreaterThan(0);
     });
 
-    it('release 非池对象应该返回 false', () => {
+    it('release 非池对象应该抛出错误', () => {
       clearErrors();
       const foreignObject = new TestObject();
-      const result = pool.release(foreignObject);
-
-      expect(result).toBe(false);
+      expect(() => pool.release(foreignObject)).toThrow();
       expect(errors.length).toBeGreaterThan(0);
     });
 

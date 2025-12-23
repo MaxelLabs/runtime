@@ -937,9 +937,9 @@ describe('Scene', () => {
         }
 
         const registry = getSceneComponentRegistry();
-        registry.register('EnabledComponent', EnabledComponent, (data: Record<string, unknown>) =>
-          EnabledComponent.fromData(data)
-        );
+        registry.register('EnabledComponent', EnabledComponent, {
+          factory: (data: Record<string, unknown>) => EnabledComponent.fromData(data),
+        });
 
         const sceneData = {
           version: { major: 1, minor: 0, patch: 0 },
@@ -994,9 +994,9 @@ describe('Scene', () => {
       }
 
       const registry = getSceneComponentRegistry();
-      registry.register('ArrayComponent', ArrayComponent, (data: Record<string, unknown>) =>
-        ArrayComponent.fromData(data)
-      );
+      registry.register('ArrayComponent', ArrayComponent, {
+        factory: (data: Record<string, unknown>) => ArrayComponent.fromData(data),
+      });
 
       const entity = scene.createEntity('TestEntity');
       scene.world.addComponent(entity, ArrayComponent, ArrayComponent.fromData({ items: [1, 2, 3] }));
@@ -1025,9 +1025,9 @@ describe('Scene', () => {
       }
 
       const registry = getSceneComponentRegistry();
-      registry.register('NestedComponent', NestedComponent, (data: Record<string, unknown>) =>
-        NestedComponent.fromData(data)
-      );
+      registry.register('NestedComponent', NestedComponent, {
+        factory: (data: Record<string, unknown>) => NestedComponent.fromData(data),
+      });
 
       const entity = scene.createEntity('TestEntity');
       scene.world.addComponent(entity, NestedComponent, NestedComponent.fromData({ nested: { x: 10, y: 20 } }));
@@ -1060,9 +1060,9 @@ describe('Scene', () => {
       }
 
       const registry = getSceneComponentRegistry();
-      registry.register('FunctionComponent', FunctionComponent, (data: Record<string, unknown>) =>
-        FunctionComponent.fromData(data)
-      );
+      registry.register('FunctionComponent', FunctionComponent, {
+        factory: (data: Record<string, unknown>) => FunctionComponent.fromData(data),
+      });
 
       const entity = scene.createEntity('TestEntity');
       scene.world.addComponent(entity, FunctionComponent, FunctionComponent.fromData({ value: 100 }));

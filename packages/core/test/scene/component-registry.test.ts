@@ -131,7 +131,7 @@ describe('SceneComponentRegistry', () => {
         return instance;
       };
 
-      registry.register('CustomComponent', CustomComponent, factory);
+      registry.register('CustomComponent', CustomComponent, { factory });
 
       const component = registry.createComponent<CustomComponent>('CustomComponent', { value: 5 });
       expect(component?.value).toBe(10);
@@ -223,7 +223,7 @@ describe('SceneComponentRegistry', () => {
         return instance;
       };
 
-      registry.register('CustomComponent', CustomComponent, factory);
+      registry.register('CustomComponent', CustomComponent, { factory });
 
       const component = registry.createComponent<CustomComponent>('CustomComponent', { value: 10 });
       expect(component?.value).toBe(30);
