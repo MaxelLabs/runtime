@@ -285,8 +285,12 @@ export class FlexContainer extends Component implements IFlexContainer {
   alignItems: FlexAlign = 'stretch';
   /** 多行对齐 */
   alignContent?: FlexAlign;
-  /** 子项间距 */
+  /** 子项间距（统一间距，同时应用于行和列） */
   gap?: number;
+  /** 行间距（交叉轴方向的间距） */
+  rowGap?: number;
+  /** 列间距（主轴方向的间距） */
+  columnGap?: number;
 
   /**
    * 从规范数据创建组件
@@ -302,6 +306,12 @@ export class FlexContainer extends Component implements IFlexContainer {
     }
     if (data.gap !== undefined) {
       component.gap = data.gap;
+    }
+    if (data.rowGap !== undefined) {
+      component.rowGap = data.rowGap;
+    }
+    if (data.columnGap !== undefined) {
+      component.columnGap = data.columnGap;
     }
     return component;
   }
@@ -321,7 +331,29 @@ export class FlexContainer extends Component implements IFlexContainer {
     if (this.gap !== undefined) {
       cloned.gap = this.gap;
     }
+    if (this.rowGap !== undefined) {
+      cloned.rowGap = this.rowGap;
+    }
+    if (this.columnGap !== undefined) {
+      cloned.columnGap = this.columnGap;
+    }
     return cloned;
+  }
+
+  /**
+   * 获取实际的行间距
+   * @returns 行间距值，如果未设置则回退到 gap
+   */
+  getRowGap(): number {
+    return this.rowGap ?? this.gap ?? 0;
+  }
+
+  /**
+   * 获取实际的列间距
+   * @returns 列间距值，如果未设置则回退到 gap
+   */
+  getColumnGap(): number {
+    return this.columnGap ?? this.gap ?? 0;
   }
 }
 

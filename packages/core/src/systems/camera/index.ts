@@ -70,6 +70,14 @@ export class CameraMatrices {
     if (data.viewProjectionMatrix) {
       component.viewProjectionMatrix = { ...data.viewProjectionMatrix };
     }
+    if (data.inverseViewMatrix) {
+      component.inverseViewMatrix = { ...data.inverseViewMatrix };
+    }
+    if (data.inverseProjectionMatrix) {
+      component.inverseProjectionMatrix = { ...data.inverseProjectionMatrix };
+    }
+    // 同步 dirty 标记，默认为 true 以确保首次更新
+    component.dirty = data.dirty ?? true;
     return component;
   }
 

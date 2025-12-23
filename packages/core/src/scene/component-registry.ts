@@ -37,18 +37,35 @@ import { AnimationState } from '../components/animation';
 import { SizeConstraint, Anchor, Margin, Padding, FlexContainer, FlexItem, LayoutResult } from '../components/layout';
 
 /**
+ * 场景组件数据类型约束
+ * 用于限制 createComponent 的数据参数类型
+ *
+ * @remarks
+ * 注意：此类型与 components 模块中的 ComponentData 不同，
+ * 这里专门用于场景反序列化时的数据传递
+ */
+export type SceneComponentData = Record<string, unknown>;
+
+/**
  * 组件工厂函数类型
  */
-export type ComponentFactory<T = unknown> = (data: Record<string, unknown>) => T;
+export type ComponentFactory<T = unknown, D extends SceneComponentData = SceneComponentData> = (data: D) => T;
+
+/**
+ * 组件数据验证器类型
+ */
+export type ComponentValidator<D extends SceneComponentData = SceneComponentData> = (data: D) => boolean;
 
 /**
  * 组件注册信息
  */
-export interface ComponentRegistration<T = unknown> {
+export interface ComponentRegistration<T = unknown, D extends SceneComponentData = SceneComponentData> {
   /** 组件类 */
   componentClass: ComponentClass<T>;
   /** 工厂函数（可选，默认使用 fromData） */
-  factory?: ComponentFactory<T>;
+  factory?: ComponentFactory<T, D>;
+  /** 数据验证器（可选） */
+  validator?: ComponentValidator<D>;
 }
 
 /**
@@ -133,12 +150,17 @@ export class SceneComponentRegistry {
    * 注册组件
    * @param typeId 组件类型标识符
    * @param componentClass 组件类
-   * @param factory 可选的工厂函数
+   * @param options 注册选项（工厂函数和验证器）
    */
-  register<T>(typeId: string, componentClass: ComponentClass<T>, factory?: ComponentFactory<T>): void {
+  register<T, D extends SceneComponentData = SceneComponentData>(
+    typeId: string,
+    componentClass: ComponentClass<T>,
+    options?: { factory?: ComponentFactory<T, D>; validator?: ComponentValidator<D> }
+  ): void {
     this.registrations.set(typeId, {
       componentClass: componentClass as ComponentClass,
-      factory: factory as ComponentFactory | undefined,
+      factory: options?.factory as ComponentFactory | undefined,
+      validator: options?.validator as ComponentValidator | undefined,
     });
   }
 
@@ -167,11 +189,13 @@ export class SceneComponentRegistry {
   }
 
   /**
-   * 创建组件实例
+   * 创建组件实例（类型安全版本）
+   * @template T 组件类型
+   * @template D 组件数据类型
    * @param typeId 组件类型标识符
    * @param data 组件数据
    */
-  createComponent<T = unknown>(typeId: string, data: Record<string, unknown>): T | null {
+  createComponent<T = unknown, D extends SceneComponentData = SceneComponentData>(typeId: string, data: D): T | null {
     const registration = this.registrations.get(typeId);
     if (!registration) {
       console.warn(`[ComponentRegistry] Unknown component type: ${typeId}`);
@@ -179,6 +203,12 @@ export class SceneComponentRegistry {
     }
 
     try {
+      // 如果有验证器，先验证数据
+      if (registration.validator && !registration.validator(data)) {
+        console.warn(`[ComponentRegistry] Invalid data for component type: ${typeId}`);
+        return null;
+      }
+
       // 优先使用工厂函数
       if (registration.factory) {
         return registration.factory(data) as T;
@@ -186,17 +216,17 @@ export class SceneComponentRegistry {
 
       // 使用 fromData 静态方法
       const componentClass = registration.componentClass as ComponentClass<T> & {
-        fromData?: (data: Record<string, unknown>) => T;
+        fromData?: (data: D) => T;
       };
 
       if (typeof componentClass.fromData === 'function') {
         return componentClass.fromData(data);
       }
 
-      // 回退：直接实例化并赋值
+      // 回退：直接实例化并赋值（带类型检查）
       const instance = new componentClass() as Record<string, unknown>;
       for (const [key, value] of Object.entries(data)) {
-        if (key in instance) {
+        if (key in instance && value !== undefined) {
           instance[key] = value;
         }
       }
@@ -205,6 +235,16 @@ export class SceneComponentRegistry {
       console.error(`[ComponentRegistry] Failed to create component ${typeId}:`, error);
       return null;
     }
+  }
+
+  /**
+   * 创建组件实例（带类型推断）
+   * @template T 组件类型
+   * @param typeId 组件类型标识符
+   * @param data 组件数据（Partial<T> 类型）
+   */
+  createTypedComponent<T>(typeId: string, data: Partial<T>): T | null {
+    return this.createComponent<T, Partial<T> & SceneComponentData>(typeId, data as Partial<T> & SceneComponentData);
   }
 
   /**

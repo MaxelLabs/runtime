@@ -33,20 +33,6 @@ import type {
   MaterialMetadata,
 } from '../core';
 
-// 重新导出核心材质类型
-export {
-  MaterialTextureSlot,
-  UnifiedMaterialType,
-  MaterialAlphaMode,
-  MaterialVariantConditionType,
-  MaterialVariantDefinition,
-  MaterialVariantCondition,
-  PBRMaterialProperties,
-  PhysicalMaterialProperties,
-} from '../core';
-
-export type { MaterialTextureRef, BaseMaterialDefinition, MaterialPropertyValue } from '../core';
-
 // ============================================================================
 // 通用纹理引用
 // ============================================================================
