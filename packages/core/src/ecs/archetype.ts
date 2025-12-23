@@ -1,5 +1,5 @@
 import type { EntityId } from './entity-id';
-import type { BitSet } from '../utils/bitset';
+import type { BitSet } from '../utils';
 import type { ComponentTypeId } from './component-registry';
 import { logError } from '../utils';
 
