@@ -1,49 +1,12 @@
 /**
- * 可释放资源接口
+ * 可释放资源模块
  *
  * @remarks
- * 实现此接口的对象表示持有需要手动释放的资源（如 GPU 缓冲区、事件监听器、定时器等）。
- * 当对象不再需要时，应调用 `dispose()` 方法释放资源。
- *
- * @example
- * ```typescript
- * class MyResource implements IDisposable {
- *   private buffer: ArrayBuffer;
- *   private disposed = false;
- *
- *   constructor() {
- *     this.buffer = new ArrayBuffer(1024);
- *   }
- *
- *   dispose(): void {
- *     if (this.disposed) return;
- *     this.disposed = true;
- *     // 释放资源
- *     this.buffer = null!;
- *   }
- *
- *   isDisposed(): boolean {
- *     return this.disposed;
- *   }
- * }
- * ```
+ * 提供资源释放的基类和辅助函数。
+ * IDisposable 接口定义来自 @maxellabs/specification。
  */
-export interface IDisposable {
-  /**
-   * 释放资源
-   *
-   * @remarks
-   * 此方法应该是幂等的，即多次调用不应产生副作用。
-   * 实现时应检查是否已释放，避免重复释放。
-   */
-  dispose(): void;
 
-  /**
-   * 检查资源是否已释放
-   * @returns 如果资源已释放返回 true
-   */
-  isDisposed(): boolean;
-}
+import type { IDisposable } from '@maxellabs/specification';
 
 /**
  * 可释放资源基类

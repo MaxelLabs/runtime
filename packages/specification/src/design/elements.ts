@@ -3,38 +3,33 @@
  * 设计工具中的元素类型和属性
  */
 
-// 从 core 模块导入基础类型
-import type { ITransform } from '../core/interfaces';
-
 // 从 common 模块导入通用类型
-import type { CommonBounds, CommonElement, OverflowMode } from '../common';
+import type { CommonElement, OverflowMode } from '../common';
 import type { ImageScaleMode, ImageFilter } from '../common/image';
 import type { TextAlign, FontStyle, FontWeight, CommonTextStyle } from '../common/text';
 import type { SpriteAtlas, SpriteAnimation } from '../common/sprite';
+
+// 从 core 模块导入枚举类型（用于子类型约束）
+import type { ElementType } from '../core';
 
 // 导入设计特定类型
 import type { DesignConstraints, ComponentInstance } from './base';
 import type { DesignStyle } from './styles';
 import type { IconStyle } from './enums';
-import type { ElementType } from '../core';
 
 /**
  * 设计元素基础接口
  * 扩展通用元素接口，添加设计特定的属性
+ *
+ * @description 仅排除需要特化的属性：
+ * - children: CommonElement[] → DesignElement[]
+ * - constraints: CommonConstraints → DesignConstraints
+ *
+ * 保留的属性（类型兼容）：
+ * - type: ElementType（两者相同）
+ * - transform: ITransform（两者相同）
  */
-export interface DesignElement extends Omit<CommonElement, 'type' | 'children' | 'constraints' | 'transform'> {
-  /**
-   * 元素类型（设计特定）
-   */
-  type: ElementType;
-  /**
-   * 位置和尺寸（设计特定的 bounds 而不是 transform）
-   */
-  bounds: CommonBounds;
-  /**
-   * 变换信息（可选，用于3D变换）
-   */
-  transform?: ITransform;
+export interface DesignElement extends Omit<CommonElement, 'children' | 'constraints'> {
   /**
    * 样式
    */

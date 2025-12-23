@@ -368,6 +368,71 @@ describe('DAGScheduler', () => {
       expect(batches[2].level).toBe(2);
       expect(batches[2].nodes).toHaveLength(1);
     });
+
+    it('应该在检测到循环依赖时中断并返回部分结果', () => {
+      // 创建一个包含循环依赖的图
+      scheduler.addNode('A', 'Node A');
+      scheduler.addNode('B', 'Node B');
+      scheduler.addNode('C', 'Node C');
+
+      // A -> B -> C -> A (循环)
+      scheduler.addDependency('B', 'A');
+      scheduler.addDependency('C', 'B');
+      scheduler.addDependency('A', 'C');
+
+      // 捕获 console.error
+      const originalError = console.error;
+      const errorCalls: string[] = [];
+      console.error = (...args: any[]) => {
+        errorCalls.push(args.join(' '));
+      };
+
+      try {
+        const batches = scheduler.analyzeParallelBatches();
+
+        // 由于循环依赖，应该返回空数组（没有入度为0的节点）
+        expect(batches).toHaveLength(0);
+
+        // 应该输出错误信息
+        expect(errorCalls.some((msg) => msg.includes('Circular dependency'))).toBe(true);
+      } finally {
+        console.error = originalError;
+      }
+    });
+
+    it('应该在部分循环依赖时返回已处理的批次', () => {
+      // 创建一个部分有循环依赖的图
+      scheduler.addNode('A', 'Node A');
+      scheduler.addNode('B', 'Node B');
+      scheduler.addNode('C', 'Node C');
+      scheduler.addNode('D', 'Node D');
+
+      // A 是独立的
+      // B -> C -> D -> B (循环)
+      scheduler.addDependency('C', 'B');
+      scheduler.addDependency('D', 'C');
+      scheduler.addDependency('B', 'D');
+
+      // 捕获 console.error
+      const originalError = console.error;
+      const errorCalls: string[] = [];
+      console.error = (...args: any[]) => {
+        errorCalls.push(args.join(' '));
+      };
+
+      try {
+        const batches = scheduler.analyzeParallelBatches();
+
+        // 应该至少处理了 A 节点
+        expect(batches.length).toBeGreaterThanOrEqual(1);
+        expect(batches[0].nodes.some((n) => n.id === 'A')).toBe(true);
+
+        // 应该输出错误信息（因为 B, C, D 形成循环）
+        expect(errorCalls.some((msg) => msg.includes('Circular dependency'))).toBe(true);
+      } finally {
+        console.error = originalError;
+      }
+    });
   });
 
   describe('getNodeInfo 方法', () => {

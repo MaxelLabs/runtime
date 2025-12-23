@@ -1,4 +1,4 @@
-import { logError } from '../utils/errors';
+import { logError } from '../utils';
 
 /**
  * Canvas 配置选项

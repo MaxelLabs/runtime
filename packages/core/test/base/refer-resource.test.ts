@@ -3,7 +3,7 @@
  * 测试引用计数资源管理功能
  */
 import { describe, it, expect, jest } from '@jest/globals';
-import type { IReferable } from '../../src/base/refer-resource';
+import type { IReferable } from '@maxellabs/specification';
 import { ReferResource } from '../../src/base/refer-resource';
 
 // 创建测试用的子类

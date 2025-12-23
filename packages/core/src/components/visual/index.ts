@@ -42,7 +42,7 @@ import type {
   ICastShadow,
   IReceiveShadow,
 } from '@maxellabs/specification';
-import { Component } from '../base/component';
+import { Component } from '../base';
 
 /**
  * MeshRef Component - 网格引用组件

@@ -1,4 +1,4 @@
-import type { IDisposable } from './disposable';
+import type { IDisposable } from '@maxellabs/specification';
 
 /**
  * ID 生成器

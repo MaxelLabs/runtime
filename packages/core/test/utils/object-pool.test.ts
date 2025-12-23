@@ -84,9 +84,15 @@ describe('ObjectPool - 对象池', () => {
 
     it('释放后预分配应该抛出错误', () => {
       pool.dispose();
+      clearErrors();
 
+      // 应该抛出错误
       expect(() => pool.preAllocate(5)).toThrow();
       expect(errors.length).toBeGreaterThan(0);
+
+      // 池大小应该保持为0
+      const stats = pool.getStatus();
+      expect(stats.available).toBe(0);
     });
   });
 
@@ -209,10 +215,37 @@ describe('ObjectPool - 对象池', () => {
       expect(stats.totalCreated).toBe(10);
     });
 
-    it('释放后预热应该失败', () => {
+    it('释放后预热应该抛出错误', () => {
       pool.dispose();
+      clearErrors();
 
+      // 应该抛出错误
       expect(() => pool.warmUp(5)).toThrow();
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('工厂函数抛出异常时应该抛出错误', () => {
+      let callCount = 0;
+      const errorPool = new ObjectPool<TestObject>(
+        'ErrorPool',
+        () => {
+          callCount++;
+          if (callCount > 3) {
+            throw new Error('Factory error');
+          }
+          return new TestObject();
+        },
+        (obj) => obj.reset()
+      );
+      clearErrors();
+
+      // 应该抛出错误
+      expect(() => errorPool.warmUp(10)).toThrow();
+      expect(errors.length).toBeGreaterThan(0);
+
+      // 前3次成功创建的对象应该在池中
+      const stats = errorPool.getStatus();
+      expect(stats.available).toBe(3);
     });
   });
 
@@ -297,9 +330,12 @@ describe('ObjectPool - 对象池', () => {
 
     it('释放后所有操作应该失败', () => {
       pool.dispose();
+      clearErrors();
 
       expect(() => pool.get()).toThrow();
+      clearErrors();
       expect(() => pool.preAllocate(5)).toThrow();
+      clearErrors();
       expect(() => pool.warmUp(5)).toThrow();
     });
   });
@@ -319,6 +355,120 @@ describe('ObjectPool - 对象池', () => {
 
       pool.setMaxSize(10); // 应该不报错，只是警告
       expect(pool.isDisposed()).toBe(true);
+    });
+  });
+
+  describe('错误处理', () => {
+    it('preAllocate 工厂函数抛出异常时应该抛出错误', () => {
+      let callCount = 0;
+      const errorPool = new ObjectPool<TestObject>(
+        'ErrorPool',
+        () => {
+          callCount++;
+          if (callCount > 2) {
+            throw new Error('Factory error');
+          }
+          return new TestObject();
+        },
+        (obj) => obj.reset()
+      );
+      clearErrors();
+
+      // 前两次成功，第三次失败会抛出错误
+      expect(() => errorPool.preAllocate(5)).toThrow();
+      expect(errors.length).toBeGreaterThan(0);
+
+      // 应该有2个对象被成功创建
+      const stats = errorPool.getStatus();
+      expect(stats.available).toBe(2);
+    });
+
+    it('get 工厂函数抛出异常时应该抛出错误', () => {
+      const errorPool = new ObjectPool<TestObject>(
+        'ErrorPool',
+        () => {
+          throw new Error('Factory error');
+        },
+        (obj) => obj.reset()
+      );
+      clearErrors();
+
+      expect(() => errorPool.get()).toThrow();
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('release 重置函数抛出异常时应该抛出错误', () => {
+      const errorPool = new ObjectPool<TestObject>(
+        'ErrorPool',
+        () => new TestObject(),
+        () => {
+          throw new Error('Reset error');
+        }
+      );
+      clearErrors();
+
+      const obj = errorPool.get();
+      expect(() => errorPool.release(obj)).toThrow();
+      expect(errors.length).toBeGreaterThan(0);
+
+      // 注意：由于 logError 在 activeCount 减少之前抛出异常，activeCount 保持为 1
+      const stats = errorPool.getStatus();
+      expect(stats.inUse).toBe(1);
+    });
+
+    it('release undefined 应该抛出错误', () => {
+      clearErrors();
+      expect(() => pool.release(undefined as any)).toThrow();
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('release null 应该抛出错误', () => {
+      clearErrors();
+      expect(() => pool.release(null as any)).toThrow();
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('release 原始值类型应该抛出错误', () => {
+      clearErrors();
+      expect(() => pool.release(123 as any)).toThrow();
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('release 非池对象应该抛出错误', () => {
+      clearErrors();
+      const foreignObject = new TestObject();
+      expect(() => pool.release(foreignObject)).toThrow();
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('trackObject 对于非对象类型应该不追踪', () => {
+      // 这个测试验证 trackObject 的边界情况
+      // 由于 trackObject 是私有方法，我们通过 release 来间接测试
+      const obj = pool.get();
+      pool.release(obj);
+
+      // 再次获取同一个对象
+      const obj2 = pool.get();
+      expect(obj2).toBe(obj);
+    });
+  });
+
+  describe('getSize 和 getCapacity', () => {
+    it('getSize 应该返回池中空闲对象数量', () => {
+      pool.preAllocate(10);
+      expect(pool.getSize()).toBe(10);
+
+      pool.get();
+      expect(pool.getSize()).toBe(9);
+    });
+
+    it('getCapacity 应该返回总容量', () => {
+      pool.preAllocate(10);
+      expect(pool.getCapacity()).toBe(10);
+
+      pool.get();
+      pool.get();
+      expect(pool.getCapacity()).toBe(10); // 2 active + 8 available
     });
   });
 

@@ -366,6 +366,163 @@ describe('Canvas - 画布封装', () => {
       const result = Canvas.isWebGL2Supported();
       expect(typeof result).toBe('boolean');
     });
+
+    it('isWebGLSupported 在有 document 时应该尝试创建 canvas', () => {
+      const mockGetContext = jest.fn().mockReturnValue({});
+      (global as any).document = {
+        createElement: () => ({
+          getContext: mockGetContext,
+        }),
+      };
+
+      const result = Canvas.isWebGLSupported();
+
+      expect(typeof result).toBe('boolean');
+    });
+
+    it('isWebGL2Supported 在有 document 时应该尝试创建 canvas', () => {
+      const mockGetContext = jest.fn().mockReturnValue({});
+      (global as any).document = {
+        createElement: () => ({
+          getContext: mockGetContext,
+        }),
+      };
+
+      const result = Canvas.isWebGL2Supported();
+
+      expect(typeof result).toBe('boolean');
+    });
+
+    it('isWebGLSupported 在 getContext 抛出异常时应该返回 false', () => {
+      (global as any).document = {
+        createElement: () => ({
+          getContext: () => {
+            throw new Error('WebGL not supported');
+          },
+        }),
+      };
+
+      const result = Canvas.isWebGLSupported();
+
+      expect(result).toBe(false);
+    });
+
+    it('isWebGL2Supported 在 getContext 抛出异常时应该返回 false', () => {
+      (global as any).document = {
+        createElement: () => ({
+          getContext: () => {
+            throw new Error('WebGL2 not supported');
+          },
+        }),
+      };
+
+      const result = Canvas.isWebGL2Supported();
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('getContext 方法', () => {
+    it('getContext2D 应该返回 2D 上下文', () => {
+      const mockCtx = {
+        scale: jest.fn(),
+      };
+      const mockCanvas = createMockCanvas();
+      mockCanvas.getContext = jest.fn().mockReturnValue(mockCtx);
+
+      const canvas = new Canvas(mockCanvas, { handleDevicePixelRatio: false });
+      const ctx = canvas.getContext2D();
+
+      expect(ctx).toBe(mockCtx);
+      expect(mockCanvas.getContext).toHaveBeenCalledWith('2d', undefined);
+    });
+
+    it('getContext2D 应该在启用 DPR 时缩放上下文', () => {
+      const mockCtx = {
+        scale: jest.fn(),
+      };
+      const mockCanvas = createMockCanvas();
+      mockCanvas.getContext = jest.fn().mockReturnValue(mockCtx);
+      (global as any).window = { devicePixelRatio: 2 };
+
+      const canvas = new Canvas(mockCanvas, { handleDevicePixelRatio: true, maxDevicePixelRatio: 2 });
+      const ctx = canvas.getContext2D();
+
+      expect(ctx).toBe(mockCtx);
+      expect(mockCtx.scale).toHaveBeenCalledWith(2, 2);
+    });
+
+    it('getContext2D 返回 null 时不应该缩放', () => {
+      const mockCanvas = createMockCanvas();
+      mockCanvas.getContext = jest.fn().mockReturnValue(null);
+
+      const canvas = new Canvas(mockCanvas);
+      const ctx = canvas.getContext2D();
+
+      expect(ctx).toBeNull();
+    });
+
+    it('getContextWebGL 应该返回 WebGL 上下文', () => {
+      const mockGLCtx = {};
+      const mockCanvas = createMockCanvas();
+      mockCanvas.getContext = jest.fn().mockImplementation((type: unknown) => {
+        if (type === 'webgl') {
+          return mockGLCtx;
+        }
+        return null;
+      });
+
+      const canvas = new Canvas(mockCanvas);
+      const ctx = canvas.getContextWebGL();
+
+      expect(ctx).toBe(mockGLCtx);
+    });
+
+    it('getContextWebGL 应该回退到 experimental-webgl', () => {
+      const mockGLCtx = {};
+      const mockCanvas = createMockCanvas();
+      mockCanvas.getContext = jest.fn().mockImplementation((type: unknown) => {
+        if (type === 'experimental-webgl') {
+          return mockGLCtx;
+        }
+        return null;
+      });
+
+      const canvas = new Canvas(mockCanvas);
+      const ctx = canvas.getContextWebGL();
+
+      expect(ctx).toBe(mockGLCtx);
+    });
+
+    it('getContextWebGL2 应该返回 WebGL2 上下文', () => {
+      const mockGL2Ctx = {};
+      const mockCanvas = createMockCanvas();
+      mockCanvas.getContext = jest.fn().mockImplementation((type: unknown) => {
+        if (type === 'webgl2') {
+          return mockGL2Ctx;
+        }
+        return null;
+      });
+
+      const canvas = new Canvas(mockCanvas);
+      const ctx = canvas.getContextWebGL2();
+
+      expect(ctx).toBe(mockGL2Ctx);
+    });
+  });
+
+  describe('autoResize 选项', () => {
+    it('构造函数中启用 autoResize 应该自动添加监听器', () => {
+      const mockCanvas = createMockCanvas();
+      (global as any).window = {
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      };
+
+      new Canvas(mockCanvas, { autoResize: true });
+
+      expect((global as any).window.addEventListener).toHaveBeenCalledWith('resize', expect.any(Function));
+    });
   });
 
   describe('复杂场景', () => {

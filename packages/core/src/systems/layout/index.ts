@@ -48,6 +48,8 @@ import type { Query, SystemContext } from '../../ecs';
 import { SystemStage } from '../../ecs';
 import type { ISystem, SystemMetadata, SystemExecutionStats } from '../types';
 import {
+  Children,
+  Parent,
   Anchor,
   FlexContainer,
   FlexItem,
@@ -55,8 +57,7 @@ import {
   SizeConstraint,
   Margin,
   Padding,
-} from '../../components/layout';
-import { Children, Parent } from '../../components/transform';
+} from '../../components';
 
 /**
  * LayoutSystem 元数据

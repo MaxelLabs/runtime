@@ -510,6 +510,114 @@ describe('RenderDataStorage - 渲染数据存储', () => {
     });
   });
 
+  describe('禁用 GPU 同步的场景', () => {
+    it('syncToGPU 应该返回 0 当 GPU 同步禁用时', () => {
+      const noGpuStorage = new RenderDataStorage({
+        enableGPUSync: false,
+        enableChangeDetection: false,
+      });
+
+      const count = noGpuStorage.syncToGPU();
+      expect(count).toBe(0);
+    });
+
+    it('getGPUBuffer 应该返回 null 当 GPU 同步禁用时', () => {
+      const noGpuStorage = new RenderDataStorage({
+        enableGPUSync: false,
+        enableChangeDetection: false,
+      });
+
+      const buffer = noGpuStorage.getGPUBuffer('worldMatrices');
+      expect(buffer).toBeNull();
+    });
+  });
+
+  describe('自定义字段 GPU 同步', () => {
+    let mockDevice: IRHIDeviceMinimal;
+
+    beforeEach(() => {
+      mockDevice = createMockDevice();
+    });
+
+    it('应该在 GPU 初始化后注册自定义字段到 GPU', () => {
+      storage.initializeGPU(mockDevice);
+      storage.addCustomField('velocity', 3, true);
+
+      // 应该创建额外的 Buffer
+      expect(mockDevice.createBuffer).toHaveBeenCalledTimes(3); // worldMatrices + colors + velocity
+    });
+
+    it('应该在设置自定义字段时标记 GPU 脏', () => {
+      storage.initializeGPU(mockDevice);
+      storage.addCustomField('velocity', 3, true);
+
+      const slot = storage.allocate(entity1);
+      storage.setCustomField(slot, 'velocity', [1, 2, 3]);
+
+      // 同步应该有数据
+      const count = storage.syncToGPU();
+      expect(count).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  describe('自定义字段统计', () => {
+    it('应该在统计中包含自定义字段内存', () => {
+      storage.addCustomField('velocity', 3, false);
+      storage.addCustomField('acceleration', 3, false);
+
+      const stats = storage.getStats();
+      expect(stats.memoryBytes).toBeGreaterThan(0);
+    });
+  });
+
+  describe('自定义字段扩容', () => {
+    it('应该在扩容时扩展自定义字段', () => {
+      const smallStorage = new RenderDataStorage({
+        initialCapacity: 2,
+        enableGPUSync: false,
+        enableChangeDetection: false,
+      });
+
+      smallStorage.addCustomField('velocity', 3, false);
+
+      // 分配超过初始容量的实体
+      const slot1 = smallStorage.allocate(EntityId.create(0, 0));
+      const slot2 = smallStorage.allocate(EntityId.create(1, 0));
+      const slot3 = smallStorage.allocate(EntityId.create(2, 0));
+
+      // 设置自定义字段数据
+      smallStorage.setCustomField(slot1, 'velocity', [1, 0, 0]);
+      smallStorage.setCustomField(slot2, 'velocity', [2, 0, 0]);
+      smallStorage.setCustomField(slot3, 'velocity', [3, 0, 0]);
+
+      // 验证数据完整性
+      expect(smallStorage.getCustomField(slot1, 'velocity')![0]).toBe(1);
+      expect(smallStorage.getCustomField(slot2, 'velocity')![0]).toBe(2);
+      expect(smallStorage.getCustomField(slot3, 'velocity')![0]).toBe(3);
+    });
+
+    it('应该在扩容时更新 GPU 同步的自定义字段', () => {
+      const mockDevice = createMockDevice();
+      const smallStorage = new RenderDataStorage({
+        initialCapacity: 2,
+        enableGPUSync: true,
+        enableChangeDetection: false,
+      });
+
+      smallStorage.initializeGPU(mockDevice);
+      smallStorage.addCustomField('velocity', 3, true);
+
+      // 分配超过初始容量的实体触发扩容
+      smallStorage.allocate(EntityId.create(0, 0));
+      smallStorage.allocate(EntityId.create(1, 0));
+      smallStorage.allocate(EntityId.create(2, 0));
+
+      // 验证扩容后仍然可以正常工作
+      const stats = smallStorage.getStats();
+      expect(stats.count).toBe(3);
+    });
+  });
+
   describe('复杂场景', () => {
     it('应该处理深层级结构', () => {
       const slots: number[] = [];

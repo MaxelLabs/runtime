@@ -543,4 +543,234 @@ describe('EventDispatcher - 事件分发器', () => {
       expect(callback).toHaveBeenCalledTimes(1000);
     });
   });
+
+  describe('dispatchEvent 方法', () => {
+    it('应该支持字符串类型参数', () => {
+      const callback = jest.fn();
+      dispatcher.on('test', { callback, priority: 0, once: false });
+
+      dispatcher.dispatchEvent('test', { value: 123 });
+
+      expect(callback).toHaveBeenCalled();
+      const event = callback.mock.calls[0][0] as Event;
+      expect(event.data.value).toBe(123);
+    });
+
+    it('暂停时应该返回 false', () => {
+      const callback = jest.fn();
+      dispatcher.on('test', { callback, priority: 0, once: false });
+
+      dispatcher.pauseEvents();
+      const result = dispatcher.dispatchEvent('test');
+
+      expect(result).toBe(false);
+      expect(callback).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('事件捕获阶段', () => {
+    it('应该支持捕获阶段监听器', () => {
+      const parent = new EventDispatcher();
+      const child = new EventDispatcher();
+
+      child.setParent(parent);
+
+      const captureCallback = jest.fn();
+      parent.on('test_capture', { callback: captureCallback, priority: 0, once: false });
+
+      child.emit('test', undefined, true);
+
+      expect(captureCallback).toHaveBeenCalled();
+    });
+
+    it('捕获阶段应该按优先级执行', () => {
+      const parent = new EventDispatcher();
+      const child = new EventDispatcher();
+
+      child.setParent(parent);
+
+      const executionOrder: number[] = [];
+
+      parent.on('test_capture', {
+        callback: () => executionOrder.push(1),
+        priority: 1,
+        once: false,
+      });
+      parent.on('test_capture', {
+        callback: () => executionOrder.push(3),
+        priority: 3,
+        once: false,
+      });
+      parent.on('test_capture', {
+        callback: () => executionOrder.push(2),
+        priority: 2,
+        once: false,
+      });
+
+      child.emit('test', undefined, true);
+
+      expect(executionOrder).toEqual([3, 2, 1]);
+    });
+
+    it('捕获阶段应该支持上下文', () => {
+      const parent = new EventDispatcher();
+      const child = new EventDispatcher();
+
+      child.setParent(parent);
+
+      const context = { value: 42 };
+      const captureCallback = jest.fn(function (this: typeof context) {
+        expect(this.value).toBe(42);
+      });
+
+      parent.on('test_capture', {
+        callback: captureCallback,
+        target: context as any,
+        priority: 0,
+        once: false,
+      });
+
+      child.emit('test', undefined, true);
+
+      expect(captureCallback).toHaveBeenCalled();
+    });
+
+    it('捕获阶段暂停时应该不执行', () => {
+      const parent = new EventDispatcher();
+      const child = new EventDispatcher();
+
+      child.setParent(parent);
+      parent.pauseEvents();
+
+      const captureCallback = jest.fn();
+      parent.on('test_capture', { callback: captureCallback, priority: 0, once: false });
+
+      child.emit('test', undefined, true);
+
+      expect(captureCallback).not.toHaveBeenCalled();
+    });
+
+    it('捕获阶段应该支持 stopImmediatePropagation', () => {
+      const parent = new EventDispatcher();
+      const child = new EventDispatcher();
+
+      child.setParent(parent);
+
+      const callback1 = jest.fn((event: Event) => {
+        event.stopImmediatePropagation();
+      });
+      const callback2 = jest.fn();
+
+      parent.on('test_capture', { callback: callback1, priority: 2, once: false });
+      parent.on('test_capture', { callback: callback2, priority: 1, once: false });
+
+      child.emit('test', undefined, true);
+
+      expect(callback1).toHaveBeenCalled();
+      expect(callback2).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('冒泡阶段', () => {
+    it('冒泡阶段暂停时应该不执行', () => {
+      const grandparent = new EventDispatcher();
+      const parent = new EventDispatcher();
+      const child = new EventDispatcher();
+
+      parent.setParent(grandparent);
+      child.setParent(parent);
+
+      grandparent.pauseEvents();
+
+      const grandparentCallback = jest.fn();
+      grandparent.on('test', { callback: grandparentCallback, priority: 0, once: false });
+
+      child.emit('test', undefined, true);
+
+      expect(grandparentCallback).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('监听器错误处理', () => {
+    it('监听器抛出错误不应该影响其他监听器', () => {
+      const callback1 = jest.fn(() => {
+        throw new Error('Test error');
+      });
+      const callback2 = jest.fn();
+
+      dispatcher.on('test', { callback: callback1, priority: 2, once: false });
+      dispatcher.on('test', { callback: callback2, priority: 1, once: false });
+
+      // 不应该抛出错误
+      expect(() => dispatcher.emit('test')).not.toThrow();
+
+      expect(callback1).toHaveBeenCalled();
+      expect(callback2).toHaveBeenCalled();
+    });
+
+    it('捕获阶段监听器抛出错误不应该影响其他监听器', () => {
+      const parent = new EventDispatcher();
+      const child = new EventDispatcher();
+
+      child.setParent(parent);
+
+      const callback1 = jest.fn(() => {
+        throw new Error('Test error');
+      });
+      const callback2 = jest.fn();
+
+      parent.on('test_capture', { callback: callback1, priority: 2, once: false });
+      parent.on('test_capture', { callback: callback2, priority: 1, once: false });
+
+      // 不应该抛出错误
+      expect(() => child.emit('test', undefined, true)).not.toThrow();
+
+      expect(callback1).toHaveBeenCalled();
+      expect(callback2).toHaveBeenCalled();
+    });
+  });
+
+  describe('setParent 方法', () => {
+    it('更换父级时应该从旧父级移除', () => {
+      const parent1 = new EventDispatcher();
+      const parent2 = new EventDispatcher();
+      const child = new EventDispatcher();
+
+      child.setParent(parent1);
+      child.setParent(parent2);
+
+      const parent1Callback = jest.fn();
+      const parent2Callback = jest.fn();
+
+      parent1.on('test', { callback: parent1Callback, priority: 0, once: false });
+      parent2.on('test', { callback: parent2Callback, priority: 0, once: false });
+
+      child.emit('test', undefined, true);
+
+      expect(parent1Callback).not.toHaveBeenCalled();
+      expect(parent2Callback).toHaveBeenCalled();
+    });
+  });
+
+  describe('dispose 方法', () => {
+    it('释放时应该清理所有子级的父引用', () => {
+      const parent = new EventDispatcher();
+      const child1 = new EventDispatcher();
+      const child2 = new EventDispatcher();
+
+      parent.addChild(child1);
+      parent.addChild(child2);
+
+      parent.dispose();
+
+      // 子级的父引用应该被清除
+      const parentCallback = jest.fn();
+      parent.on('test', { callback: parentCallback, priority: 0, once: false });
+
+      child1.emit('test', undefined, true);
+      child2.emit('test', undefined, true);
+
+      expect(parentCallback).not.toHaveBeenCalled();
+    });
+  });
 });

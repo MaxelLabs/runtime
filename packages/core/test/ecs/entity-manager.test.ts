@@ -243,4 +243,36 @@ describe('EntityManager - 实体管理器', () => {
       expect(manager.getTotalCount()).toBeLessThanOrEqual(count);
     });
   });
+
+  describe('边界情况', () => {
+    it('销毁版本号不匹配的实体应该返回 false', () => {
+      const e1 = manager.create();
+      manager.destroy(e1);
+
+      // 创建新实体复用索引
+      manager.create();
+
+      // 尝试用旧版本号销毁
+      expect(manager.destroy(e1)).toBe(false);
+    });
+
+    it('getGeneration 对不存在的实体应该返回 -1', () => {
+      const fakeEntity = EntityId.create(999, 0);
+      expect(manager.getGeneration(fakeEntity)).toBe(-1);
+    });
+
+    it('getGeneration 应该返回正确的版本号', () => {
+      const entity = manager.create();
+      expect(manager.getGeneration(entity)).toBe(0);
+
+      manager.destroy(entity);
+      const newEntity = manager.create();
+      expect(manager.getGeneration(newEntity)).toBe(1);
+    });
+
+    it('isAlive 对索引越界的实体应该返回 false', () => {
+      const fakeEntity = EntityId.create(999, 0);
+      expect(manager.isAlive(fakeEntity)).toBe(false);
+    });
+  });
 });

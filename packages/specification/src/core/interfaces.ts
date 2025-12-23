@@ -4,8 +4,9 @@
  */
 
 import type { UsdValue } from './usd';
-import type { EasingFunction, MaterialType, BorderStyle, ClickFeedbackType, VisualEffectType } from './enums';
+import type { EasingFunction, BorderStyle, ClickFeedbackType, VisualEffectType } from './enums';
 import type { TransformSpace } from './enums';
+import type { UnifiedMaterialType } from './material';
 import type { ColorLike, Matrix4Like, QuaternionLike, Vector3Like } from './math';
 import type {
   Nameable,
@@ -140,7 +141,7 @@ export interface MaterialProperties extends Nameable {
   /**
    * 材质类型
    */
-  type: MaterialType;
+  type: UnifiedMaterialType;
   /**
    * 基础颜色
    */
@@ -641,4 +642,94 @@ export interface BaseParameter extends Nameable {
    * 描述
    */
   description?: string;
+}
+
+// ============================================================================
+// 生命周期管理接口
+// ============================================================================
+
+/**
+ * 可释放资源接口
+ *
+ * @remarks
+ * 实现此接口的对象表示持有需要手动释放的资源（如 GPU 缓冲区、事件监听器、定时器等）。
+ * 当对象不再需要时，应调用 `dispose()` 方法释放资源。
+ *
+ * @example
+ * ```typescript
+ * class MyResource implements IDisposable {
+ *   private disposed = false;
+ *
+ *   dispose(): void {
+ *     if (this.disposed) return;
+ *     this.disposed = true;
+ *     // 释放资源
+ *   }
+ *
+ *   isDisposed(): boolean {
+ *     return this.disposed;
+ *   }
+ * }
+ * ```
+ */
+export interface IDisposable {
+  /**
+   * 释放资源
+   *
+   * @remarks
+   * 此方法应该是幂等的，即多次调用不应产生副作用。
+   * 实现时应检查是否已释放，避免重复释放。
+   */
+  dispose(): void;
+
+  /**
+   * 检查资源是否已释放
+   * @returns 如果资源已释放返回 true
+   */
+  isDisposed(): boolean;
+}
+
+/**
+ * 可引用计数资源接口
+ *
+ * @remarks
+ * 实现此接口的对象使用引用计数管理生命周期。
+ * 当引用计数降为 0 时，资源应被自动释放。
+ *
+ * @example
+ * ```typescript
+ * class MyResource implements IReferable {
+ *   private _refCount = 0;
+ *
+ *   get refCount(): number { return this._refCount; }
+ *
+ *   addRef(): number { return ++this._refCount; }
+ *
+ *   release(): number {
+ *     this._refCount = Math.max(0, this._refCount - 1);
+ *     if (this._refCount === 0) {
+ *       // 释放资源
+ *     }
+ *     return this._refCount;
+ *   }
+ * }
+ * ```
+ */
+export interface IReferable {
+  /**
+   * 当前引用计数
+   */
+  readonly refCount: number;
+
+  /**
+   * 增加引用计数
+   * @returns 增加后的引用计数
+   */
+  addRef(): number;
+
+  /**
+   * 减少引用计数
+   * @returns 减少后的引用计数
+   */
+  release(): number;
 }

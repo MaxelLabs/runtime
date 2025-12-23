@@ -4,20 +4,22 @@
  */
 
 import type { ComponentPropertyType, IconStyle } from './enums';
-import type { ConstraintConfig, BaseComponentProperty, ConstraintType, BaseCategory, Nameable } from '../core';
+import type { ConstraintConfig, BaseComponentProperty, LayoutConstraintType, BaseCategory, Nameable } from '../core';
 
 /**
  * 设计约束（扩展核心约束配置）
+ *
+ * @description 使用 LayoutConstraintType 定义水平和垂直布局约束
  */
 export interface DesignConstraints extends ConstraintConfig {
   /**
    * 水平约束
    */
-  horizontal: ConstraintType;
+  horizontal: LayoutConstraintType;
   /**
    * 垂直约束
    */
-  vertical: ConstraintType;
+  vertical: LayoutConstraintType;
 }
 
 /**

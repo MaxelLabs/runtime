@@ -15,6 +15,7 @@ import type {
   RenderingProperties,
   Nameable,
 } from '../core';
+import type { IEdgeInsets } from './layout';
 
 /**
  * 通用边界框
@@ -223,7 +224,7 @@ export interface CommonContainer extends CommonElement {
   /**
    * 内边距
    */
-  padding?: Padding;
+  padding?: IEdgeInsets;
   /**
    * 溢出处理
    */
@@ -262,25 +263,9 @@ export enum LayoutMode {
 
 /**
  * 内边距
+ * @deprecated 使用 IEdgeInsets 代替
  */
-export interface Padding {
-  /**
-   * 顶部内边距
-   */
-  top: number;
-  /**
-   * 右侧内边距
-   */
-  right: number;
-  /**
-   * 底部内边距
-   */
-  bottom: number;
-  /**
-   * 左侧内边距
-   */
-  left: number;
-}
+export type Padding = IEdgeInsets;
 
 /**
  * 溢出处理模式

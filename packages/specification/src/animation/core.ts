@@ -2,17 +2,14 @@
  * Maxellabs 动画核心模块
  * 基于 USD 的动画基础类型和接口定义
  *
- * 注意: AnimationCondition 等类型已移动到 common/animation.ts
- * 此处重新导出以保持向后兼容
- *
  * Phase 2 重构: UsdKeyframe 和 UsdAnimationTrack 现在基于 core/generics.ts 中的统一泛型
+ *
+ * @description 动画条件类型 (AnimationCondition, AnimationConditionType, ComparisonOperator)
+ * 请直接从 '@maxellabs/specification/common' 导入
  */
 
 import type { UsdPrim, UsdValue, CommonMetadata, UnifiedKeyframe, UnifiedAnimationTrack } from '../core';
 import type { AnimationEvent, AnimationTrack } from '../common';
-
-// 重新导出从 common/animation.ts 移动的类型（向后兼容）
-export type { AnimationCondition, AnimationConditionType, ComparisonOperator } from '../common';
 
 /**
  * 动画基础接口

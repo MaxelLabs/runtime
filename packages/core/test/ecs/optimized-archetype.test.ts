@@ -324,10 +324,12 @@ describe('OptimizedArchetype', () => {
 describe('OptimizedArchetype 数值组件', () => {
   let registry: ComponentRegistry;
   let positionTypeId: number;
+  let velocityTypeId: number;
 
   beforeEach(() => {
     registry = new ComponentRegistry();
     positionTypeId = registry.register(Position);
+    velocityTypeId = registry.register(Velocity);
 
     // 注册数值组件
     OptimizedArchetype.registerNumericComponent({
@@ -365,5 +367,257 @@ describe('OptimizedArchetype 数值组件', () => {
     });
 
     expect(callCount).toBe(1);
+  });
+
+  describe('registerNumericComponents 批量注册', () => {
+    it('应该支持批量注册数值组件', () => {
+      OptimizedArchetype.registerNumericComponents([
+        {
+          typeId: velocityTypeId,
+          stride: 3,
+          arrayType: Float32Array,
+          fields: ['vx', 'vy', 'vz'],
+        },
+      ]);
+
+      const mask = registry.createMask([Velocity]);
+      const archetype = new OptimizedArchetype(mask, [velocityTypeId]);
+
+      const entity = EntityId.create(1, 0);
+      archetype.addEntity(entity, [new Velocity(1, 2, 3)]);
+
+      const buffer = archetype.getTypedBuffer(velocityTypeId);
+      expect(buffer).toBeDefined();
+      expect(buffer instanceof Float32Array).toBe(true);
+    });
+  });
+
+  describe('数值组件的 removeEntity', () => {
+    it('应该正确移除数值组件实体', () => {
+      const mask = registry.createMask([Position]);
+      const archetype = new OptimizedArchetype(mask, [positionTypeId]);
+
+      const entity1 = EntityId.create(1, 0);
+      const entity2 = EntityId.create(2, 0);
+      archetype.addEntity(entity1, [new Position(10, 20, 30)]);
+      archetype.addEntity(entity2, [new Position(40, 50, 60)]);
+
+      expect(archetype.getEntityCount()).toBe(2);
+
+      const result = archetype.removeEntity(entity1);
+      expect(result).toBe(true);
+      expect(archetype.getEntityCount()).toBe(1);
+      expect(archetype.hasEntity(entity1)).toBe(false);
+      expect(archetype.hasEntity(entity2)).toBe(true);
+    });
+  });
+
+  describe('数值组件的 getComponent', () => {
+    it('应该返回 TypedArray 视图', () => {
+      const mask = registry.createMask([Position]);
+      const archetype = new OptimizedArchetype(mask, [positionTypeId]);
+
+      const entity = EntityId.create(1, 0);
+      archetype.addEntity(entity, [new Position(10, 20, 30)]);
+
+      const view = archetype.getComponent(entity, positionTypeId);
+      expect(view).toBeDefined();
+      expect(view instanceof Float32Array).toBe(true);
+      expect(view[0]).toBe(10);
+      expect(view[1]).toBe(20);
+      expect(view[2]).toBe(30);
+    });
+  });
+
+  describe('数值组件的 getComponentArray', () => {
+    it('应该返回视图数组', () => {
+      const mask = registry.createMask([Position]);
+      const archetype = new OptimizedArchetype(mask, [positionTypeId]);
+
+      archetype.addEntity(EntityId.create(1, 0), [new Position(10, 20, 30)]);
+      archetype.addEntity(EntityId.create(2, 0), [new Position(40, 50, 60)]);
+
+      const components = archetype.getComponentArray(positionTypeId);
+      expect(components).toBeDefined();
+      expect(components!.length).toBe(2);
+      expect(components![0] instanceof Float32Array).toBe(true);
+    });
+  });
+
+  describe('数值组件的 clear', () => {
+    it('应该清空数值组件存储', () => {
+      const mask = registry.createMask([Position]);
+      const archetype = new OptimizedArchetype(mask, [positionTypeId]);
+
+      archetype.addEntity(EntityId.create(1, 0), [new Position(10, 20, 30)]);
+      archetype.addEntity(EntityId.create(2, 0), [new Position(40, 50, 60)]);
+
+      archetype.clear();
+
+      expect(archetype.getEntityCount()).toBe(0);
+      expect(archetype.isEmpty()).toBe(true);
+    });
+  });
+
+  describe('forEachNumeric 边界情况', () => {
+    it('应该对非数值组件不执行回调', () => {
+      // 创建一个只有普通组件的 archetype
+      const healthTypeId = registry.register(Health);
+      const mask = registry.createMask([Health]);
+      const archetype = new OptimizedArchetype(mask, [healthTypeId]);
+
+      archetype.addEntity(EntityId.create(1, 0), [new Health(100, 100)]);
+
+      let callCount = 0;
+      archetype.forEachNumeric(healthTypeId, () => {
+        callCount++;
+      });
+
+      expect(callCount).toBe(0);
+    });
+
+    it('应该对不存在的组件类型不执行回调', () => {
+      const mask = registry.createMask([Position]);
+      const archetype = new OptimizedArchetype(mask, [positionTypeId]);
+
+      archetype.addEntity(EntityId.create(1, 0), [new Position(10, 20, 30)]);
+
+      let callCount = 0;
+      archetype.forEachNumeric(999, () => {
+        callCount++;
+      });
+
+      expect(callCount).toBe(0);
+    });
+  });
+
+  describe('extractNumericValues 边界情况', () => {
+    it('应该支持数组输入', () => {
+      const mask = registry.createMask([Position]);
+      const archetype = new OptimizedArchetype(mask, [positionTypeId]);
+
+      // 使用数组而不是对象
+      const entity = EntityId.create(1, 0);
+      archetype.addEntity(entity, [[10, 20, 30]]);
+
+      const view = archetype.getComponent(entity, positionTypeId);
+      expect(view).toBeDefined();
+      expect(view[0]).toBe(10);
+      expect(view[1]).toBe(20);
+      expect(view[2]).toBe(30);
+    });
+
+    it('应该支持 Float32Array 输入', () => {
+      const mask = registry.createMask([Position]);
+      const archetype = new OptimizedArchetype(mask, [positionTypeId]);
+
+      const entity = EntityId.create(1, 0);
+      archetype.addEntity(entity, [new Float32Array([10, 20, 30])]);
+
+      const view = archetype.getComponent(entity, positionTypeId);
+      expect(view).toBeDefined();
+      expect(view[0]).toBe(10);
+      expect(view[1]).toBe(20);
+      expect(view[2]).toBe(30);
+    });
+
+    it('应该支持 Float64Array 输入', () => {
+      const mask = registry.createMask([Position]);
+      const archetype = new OptimizedArchetype(mask, [positionTypeId]);
+
+      const entity = EntityId.create(1, 0);
+      archetype.addEntity(entity, [new Float64Array([10, 20, 30])]);
+
+      const view = archetype.getComponent(entity, positionTypeId);
+      expect(view).toBeDefined();
+      expect(view[0]).toBe(10);
+      expect(view[1]).toBe(20);
+      expect(view[2]).toBe(30);
+    });
+
+    it('应该对非数字字段使用默认值 0', () => {
+      const mask = registry.createMask([Position]);
+      const archetype = new OptimizedArchetype(mask, [positionTypeId]);
+
+      // 使用包含非数字字段的对象
+      const entity = EntityId.create(1, 0);
+      archetype.addEntity(entity, [{ x: 10, y: 'invalid', z: undefined }]);
+
+      const view = archetype.getComponent(entity, positionTypeId);
+      expect(view).toBeDefined();
+      expect(view[0]).toBe(10);
+      expect(view[1]).toBe(0); // 'invalid' 被转换为 0
+      expect(view[2]).toBe(0); // undefined 被转换为 0
+    });
+  });
+
+  describe('getStats 数值组件统计', () => {
+    it('应该正确统计数值组件', () => {
+      const mask = registry.createMask([Position]);
+      const archetype = new OptimizedArchetype(mask, [positionTypeId]);
+
+      archetype.addEntity(EntityId.create(1, 0), [new Position(10, 20, 30)]);
+
+      const stats = archetype.getStats();
+      expect(stats.numericComponents).toBe(1);
+      expect(stats.objectComponents).toBe(0);
+      expect(stats.memoryEstimate).toBeGreaterThan(0);
+    });
+
+    it('应该正确统计混合组件', () => {
+      const healthTypeId = registry.register(Health);
+      const mask = registry.createMask([Position, Health]);
+      const archetype = new OptimizedArchetype(mask, [positionTypeId, healthTypeId]);
+
+      archetype.addEntity(EntityId.create(1, 0), [new Position(10, 20, 30), new Health(100, 100)]);
+
+      const stats = archetype.getStats();
+      expect(stats.numericComponents).toBe(1);
+      expect(stats.objectComponents).toBe(1);
+      expect(stats.componentTypeCount).toBe(2);
+    });
+  });
+
+  describe('getTypedBuffer 边界情况', () => {
+    it('应该对非数值组件返回 undefined', () => {
+      const healthTypeId = registry.register(Health);
+      const mask = registry.createMask([Health]);
+      const archetype = new OptimizedArchetype(mask, [healthTypeId]);
+
+      archetype.addEntity(EntityId.create(1, 0), [new Health(100, 100)]);
+
+      const buffer = archetype.getTypedBuffer(healthTypeId);
+      expect(buffer).toBeUndefined();
+    });
+
+    it('应该对不存在的组件类型返回 undefined', () => {
+      const mask = registry.createMask([Position]);
+      const archetype = new OptimizedArchetype(mask, [positionTypeId]);
+
+      const buffer = archetype.getTypedBuffer(999);
+      expect(buffer).toBeUndefined();
+    });
+  });
+
+  describe('getComponentArray 边界情况', () => {
+    it('应该对不存在的组件类型返回 undefined', () => {
+      const mask = registry.createMask([Position]);
+      const archetype = new OptimizedArchetype(mask, [positionTypeId]);
+
+      const result = archetype.getComponentArray(999);
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('getComponent 边界情况', () => {
+    it('应该对不存在的实体返回 undefined（数值组件）', () => {
+      const mask = registry.createMask([Position]);
+      const archetype = new OptimizedArchetype(mask, [positionTypeId]);
+
+      archetype.addEntity(EntityId.create(1, 0), [new Position(10, 20, 30)]);
+
+      const result = archetype.getComponent(EntityId.create(999, 0), positionTypeId);
+      expect(result).toBeUndefined();
+    });
   });
 });

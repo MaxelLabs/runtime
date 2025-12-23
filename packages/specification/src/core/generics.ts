@@ -659,3 +659,50 @@ export interface BaseCategory extends Nameable, Describable {
   /** 父分类 ID */
   parent?: string;
 }
+
+// ============================================================================
+// Material 泛型基类（用于消除材质接口的重复定义）
+// ============================================================================
+
+/**
+ * 基础材质接口
+ * 统一 CommonMaterial 和 IMaterial 的公共部分
+ *
+ * @description 组合 Nameable, Enableable traits
+ * 各模块应扩展此接口添加特定字段：
+ * - CommonMaterial: properties, renderPriority, receiveShadows, castShadows
+ * - IMaterial: attributes, shaderNetwork, renderState
+ */
+export interface BaseMaterial extends Nameable, Enableable {
+  /** 材质 ID */
+  id: string;
+  /** 材质类型 */
+  type: string;
+  /** 是否双面渲染 */
+  doubleSided?: boolean;
+  /** 透明度 */
+  opacity?: number;
+  /** 透明模式 */
+  alphaMode?: string;
+  /** 透明度阈值 */
+  alphaCutoff?: number;
+  /** 材质标签 */
+  tags?: string[];
+  /** 元数据 */
+  metadata?: Record<string, any>;
+}
+
+/**
+ * 材质属性基础接口
+ * 统一 CommonMaterialProperties 和 MaterialProperty 的公共部分
+ */
+export interface BaseMaterialProperty {
+  /** 属性值 */
+  value?: any;
+  /** 纹理引用 */
+  texture?: BaseTextureRef;
+  /** UV 通道 */
+  uvChannel?: number;
+  /** 强度 */
+  intensity?: number;
+}

@@ -1,27 +1,5 @@
 import { MaxObject } from './max-object';
-
-/**
- * 资源引用接口
- * 定义可引用计数对象的基本行为
- */
-export interface IReferable {
-  /**
-   * 引用计数
-   */
-  readonly refCount: number;
-
-  /**
-   * 增加引用计数
-   * @returns 增加后的引用计数
-   */
-  addRef(): number;
-
-  /**
-   * 减少引用计数
-   * @returns 减少后的引用计数
-   */
-  release(): number;
-}
+import type { IReferable } from '@maxellabs/specification';
 
 /**
  * 引用计数资源基类

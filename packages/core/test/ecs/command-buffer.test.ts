@@ -41,6 +41,11 @@ describe('CommandBuffer', () => {
       expect(cmdBuffer.getCommandCount()).toBe(0);
       expect(cmdBuffer.isApplied()).toBe(false);
     });
+
+    it('应该支持绑定 World 实例', () => {
+      const boundBuffer = new CommandBuffer(world);
+      expect(boundBuffer.getBoundWorld()).toBe(world);
+    });
   });
 
   describe('spawn 方法', () => {
@@ -241,6 +246,29 @@ describe('CommandBuffer', () => {
       expect(() => cmdBuffer.spawn()).toThrow('CommandBuffer has already been applied');
       expect(() => cmdBuffer.despawn(0)).toThrow('CommandBuffer has already been applied');
     });
+
+    it('应该在没有提供 World 实例时抛出错误', () => {
+      const unboundBuffer = new CommandBuffer();
+      unboundBuffer.spawn();
+
+      expect(() => unboundBuffer.apply()).toThrow('No World instance provided');
+    });
+
+    it('应该在绑定的 World 与传入的 World 不匹配时抛出错误', () => {
+      const world2 = new World();
+      const boundBuffer = new CommandBuffer(world);
+      boundBuffer.spawn();
+
+      expect(() => boundBuffer.apply(world2)).toThrow('World instance mismatch');
+    });
+
+    it('应该使用绑定的 World 执行命令', () => {
+      const boundBuffer = new CommandBuffer(world);
+      boundBuffer.spawn();
+      boundBuffer.apply(); // 不传参数，使用绑定的 World
+
+      expect(world.getEntityCount()).toBe(1);
+    });
   });
 
   describe('clear 方法', () => {
@@ -316,6 +344,44 @@ describe('CommandBuffer', () => {
       expect(cmdBuffer1.isEmpty()).toBe(cmdBuffer2.isEmpty());
       expect(cmdBuffer1.isApplied()).toBe(cmdBuffer2.isApplied());
       expect(cmdBuffer1.getCommandCount()).toBe(cmdBuffer2.getCommandCount());
+    });
+
+    it('reset 应该解绑 World', () => {
+      const boundBuffer = new CommandBuffer(world);
+      expect(boundBuffer.getBoundWorld()).toBe(world);
+
+      boundBuffer.reset();
+      expect(boundBuffer.getBoundWorld()).toBeNull();
+    });
+  });
+
+  describe('bindWorld 方法', () => {
+    it('应该绑定 World 实例', () => {
+      expect(cmdBuffer.getBoundWorld()).toBeNull();
+
+      cmdBuffer.bindWorld(world);
+      expect(cmdBuffer.getBoundWorld()).toBe(world);
+    });
+
+    it('应该允许重新绑定 World', () => {
+      const world2 = new World();
+
+      cmdBuffer.bindWorld(world);
+      expect(cmdBuffer.getBoundWorld()).toBe(world);
+
+      cmdBuffer.bindWorld(world2);
+      expect(cmdBuffer.getBoundWorld()).toBe(world2);
+    });
+  });
+
+  describe('getBoundWorld 方法', () => {
+    it('应该在未绑定时返回 null', () => {
+      expect(cmdBuffer.getBoundWorld()).toBeNull();
+    });
+
+    it('应该返回绑定的 World', () => {
+      cmdBuffer.bindWorld(world);
+      expect(cmdBuffer.getBoundWorld()).toBe(world);
     });
   });
 

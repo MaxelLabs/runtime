@@ -432,4 +432,151 @@ describe('GPUBufferSync - GPU Buffer 同步系统', () => {
       );
     });
   });
+
+  describe('未初始化时的行为', () => {
+    it('sync 应该在未初始化时返回 false', () => {
+      const data = new Float32Array(100);
+      gpuSync.registerStorage('test', data, { usage: GPUBufferUsage.UNIFORM });
+
+      // 未初始化，gpuBuffer 为 null
+      const result = gpuSync.sync('test');
+      expect(result).toBe(false);
+    });
+
+    it('markDirty 应该在 Buffer 不存在时不报错', () => {
+      expect(() => {
+        gpuSync.markDirty('nonexistent', 0, 64);
+      }).not.toThrow();
+    });
+
+    it('markFullDirty 应该在 Buffer 不存在时不报错', () => {
+      expect(() => {
+        gpuSync.markFullDirty('nonexistent');
+      }).not.toThrow();
+    });
+  });
+
+  describe('数据源大小变化', () => {
+    beforeEach(() => {
+      gpuSync.initialize(mockDevice);
+    });
+
+    it('sync 时数据源变大且 autoResize 为 false 应该警告', () => {
+      const data = new Float32Array(100);
+      gpuSync.registerStorage('test', data, {
+        usage: GPUBufferUsage.UNIFORM,
+        autoResize: false,
+      });
+
+      // 第一次同步
+      gpuSync.sync('test');
+
+      // 模拟数据源变大（通过 updateSource）
+      const largerData = new Float32Array(1000);
+      // 直接修改 source 引用来模拟扩容
+      gpuSync.updateSource('test', largerData);
+
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      // 再次同步，应该警告
+      gpuSync.sync('test');
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('source size exceeds GPU buffer size'));
+      consoleSpy.mockRestore();
+    });
+
+    it('sync 时数据源变大且 autoResize 为 true 应该扩容', () => {
+      const data = new Float32Array(100);
+      gpuSync.registerStorage('test', data, {
+        usage: GPUBufferUsage.UNIFORM,
+        autoResize: true,
+      });
+
+      // 第一次同步
+      gpuSync.sync('test');
+
+      // 模拟数据源变大
+      const largerData = new Float32Array(1000);
+      gpuSync.updateSource('test', largerData);
+
+      // 再次同步，应该扩容
+      gpuSync.sync('test');
+
+      // 应该调用多次 createBuffer（初始 + 扩容）
+      expect(mockDevice.createBuffer).toHaveBeenCalledTimes(2);
+    });
+
+    it('resizeGPUBuffer 应该支持双缓冲', () => {
+      const data = new Float32Array(100);
+      gpuSync.registerStorage('test', data, {
+        usage: GPUBufferUsage.UNIFORM,
+        autoResize: true,
+        doubleBuffer: true,
+      });
+
+      // 第一次同步
+      gpuSync.sync('test');
+
+      // 模拟数据源变大
+      const largerData = new Float32Array(1000);
+      gpuSync.updateSource('test', largerData);
+
+      // 再次同步，应该扩容
+      gpuSync.sync('test');
+
+      // 双缓冲：初始 2 个 + 扩容后 2 个 = 4 个
+      expect(mockDevice.createBuffer).toHaveBeenCalledTimes(4);
+    });
+  });
+
+  describe('脏区域合并', () => {
+    beforeEach(() => {
+      gpuSync.initialize(mockDevice);
+    });
+
+    it('应该保留不重叠的脏区域', () => {
+      const data = new Float32Array(100);
+      gpuSync.registerStorage('test', data, { usage: GPUBufferUsage.UNIFORM });
+
+      // 先同步一次清除初始脏状态
+      gpuSync.sync('test');
+
+      // 标记两个不重叠的区域
+      gpuSync.markDirty('test', 0, 32);
+      gpuSync.markDirty('test', 100, 32);
+
+      const stats = gpuSync.getBufferStats('test');
+      expect(stats?.dirtyRegions).toBe(2); // 应该保留两个区域
+    });
+
+    it('应该正确处理单个脏区域', () => {
+      const data = new Float32Array(100);
+      gpuSync.registerStorage('test', data, { usage: GPUBufferUsage.UNIFORM });
+
+      // 先同步一次清除初始脏状态
+      gpuSync.sync('test');
+
+      // 只标记一个区域
+      gpuSync.markDirty('test', 0, 32);
+
+      const stats = gpuSync.getBufferStats('test');
+      expect(stats?.dirtyRegions).toBe(1);
+    });
+
+    it('应该正确合并多个重叠区域', () => {
+      const data = new Float32Array(100);
+      gpuSync.registerStorage('test', data, { usage: GPUBufferUsage.UNIFORM });
+
+      // 先同步一次清除初始脏状态
+      gpuSync.sync('test');
+
+      // 标记多个重叠区域
+      gpuSync.markDirty('test', 0, 50);
+      gpuSync.markDirty('test', 40, 50);
+      gpuSync.markDirty('test', 80, 50);
+
+      const stats = gpuSync.getBufferStats('test');
+      expect(stats?.dirtyRegions).toBe(1); // 应该合并为一个区域
+    });
+  });
 });

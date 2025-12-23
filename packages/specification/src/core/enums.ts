@@ -199,21 +199,6 @@ export enum AlignmentType {
 //---------------------------------------------------------------------------------------------------------------------
 
 /**
- * 材质类型
- */
-export enum MaterialType {
-  Standard = 'standard',
-  Unlit = 'unlit',
-  Physical = 'physical',
-  Toon = 'toon',
-  Sprite = 'sprite',
-  UI = 'ui',
-  Particle = 'particle',
-  Skybox = 'skybox',
-  Custom = 'custom',
-}
-
-/**
  * 渐变类型
  */
 export enum GradientType {
@@ -326,15 +311,6 @@ export enum Permission {
   Execute = 'execute',
   Delete = 'delete',
   Admin = 'admin',
-}
-
-/**
- * Alpha模式
- */
-export enum AlphaMode {
-  Opaque = 'opaque',
-  Mask = 'mask',
-  Blend = 'blend',
 }
 
 /**
@@ -584,9 +560,12 @@ export enum TransformSpace {
 }
 
 /**
- * 约束类型
+ * 布局约束类型
+ *
+ * @description 用于 UI 布局定位的约束类型
+ * 注意：与 CommonConstraintType（值类型约束）和 TransformConstraintType（变换约束）语义不同
  */
-export enum ConstraintType {
+export enum LayoutConstraintType {
   // 水平约束
   Left = 'left',
   Right = 'right',
@@ -599,6 +578,12 @@ export enum ConstraintType {
   Bottom = 'bottom',
   TopBottom = 'top-bottom',
 }
+
+/**
+ * @deprecated 使用 LayoutConstraintType 代替
+ */
+export type ConstraintType = LayoutConstraintType;
+export const ConstraintType = LayoutConstraintType;
 
 /**
  * 资源加载状态枚举
@@ -617,18 +602,72 @@ export enum ResourceLoadState {
 }
 
 /**
- * 数据类型
+ * GPU 兼容数据类型
+ *
+ * @description 可以在 GPU 着色器中使用的数据类型
+ * RHIShaderDataType 应使用这些值的子集
+ */
+export enum GPUDataType {
+  /** 布尔值 */
+  Boolean = 'boolean',
+  /** 整数 */
+  Integer = 'integer',
+  /** 浮点数 */
+  Float = 'float',
+  /** 二维向量 */
+  Vector2 = 'vector2',
+  /** 三维向量 */
+  Vector3 = 'vector3',
+  /** 四维向量 */
+  Vector4 = 'vector4',
+  /** 颜色 */
+  Color = 'color',
+  /** 纹理 */
+  Texture = 'texture',
+  /** 矩阵 (GPU 专用) */
+  Matrix = 'matrix',
+  /** 2x2 矩阵 */
+  Matrix2 = 'matrix2',
+  /** 3x3 矩阵 */
+  Matrix3 = 'matrix3',
+  /** 4x4 矩阵 */
+  Matrix4 = 'matrix4',
+}
+
+/**
+ * 核心数据类型（非 GPU）
+ *
+ * @description 仅在 CPU 端使用的数据类型
+ */
+export enum CoreDataType {
+  /** 字符串 */
+  String = 'string',
+  /** 对象 */
+  Object = 'object',
+  /** 数组 */
+  Array = 'array',
+  /** 枚举 */
+  Enum = 'enum',
+}
+
+/**
+ * 数据类型（完整）
+ *
+ * @description 包含所有数据类型，GPU 和非 GPU
+ * @deprecated 建议使用 GPUDataType 或 CoreDataType 以明确用途
  */
 export enum DataType {
+  // GPU 兼容类型
   Boolean = 'boolean',
   Integer = 'integer',
   Float = 'float',
-  String = 'string',
   Vector2 = 'vector2',
   Vector3 = 'vector3',
   Vector4 = 'vector4',
   Color = 'color',
   Texture = 'texture',
+  // 非 GPU 类型
+  String = 'string',
   Object = 'object',
   Array = 'array',
   Enum = 'enum',

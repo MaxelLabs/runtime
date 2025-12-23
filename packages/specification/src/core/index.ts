@@ -10,4 +10,7 @@ export * from './interfaces';
 export * from './usd';
 export * from './math';
 export * from './generics';
+export * from './material';
 export * from './ecs';
+export * from './scene';
+export * from './resources';

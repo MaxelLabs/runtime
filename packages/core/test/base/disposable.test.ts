@@ -3,8 +3,8 @@
  * 测试 IDisposable 接口和相关工具函数
  */
 
-import { describe, it, expect } from '@jest/globals';
-import type { IDisposable } from '../../src/base/disposable';
+import { describe, it, expect, jest } from '@jest/globals';
+import type { IDisposable } from '@maxellabs/specification';
 import {
   Disposable,
   dispose,
@@ -103,6 +103,27 @@ describe('Disposable - 可释放资源', () => {
 
       expect(() => disposeAll(disposables as any)).not.toThrow();
     });
+
+    it('应该继续释放即使某个资源抛出异常', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const d1 = new SimpleDisposable();
+      const errorDisposable: IDisposable = {
+        dispose: () => {
+          throw new Error('dispose error');
+        },
+        isDisposed: () => false,
+      };
+      const d3 = new SimpleDisposable();
+
+      disposeAll([d1, errorDisposable, d3]);
+
+      expect(d1.isDisposed()).toBe(true);
+      expect(d3.isDisposed()).toBe(true);
+      expect(consoleSpy).toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
   });
 
   describe('using 辅助函数', () => {
@@ -177,6 +198,29 @@ describe('Disposable - 可释放资源', () => {
       expect(d2.isDisposed()).toBe(true);
       expect(d3.isDisposed()).toBe(true);
     });
+
+    it('多次调用 dispose 应该只执行一次', () => {
+      const d1 = new SimpleDisposable();
+      const d2 = new SimpleDisposable();
+
+      const combined = combineDisposables(d1, d2);
+
+      combined.dispose();
+      combined.dispose();
+      combined.dispose();
+
+      expect(combined.isDisposed()).toBe(true);
+      expect(d1.disposeCount).toBe(1);
+      expect(d2.disposeCount).toBe(1);
+    });
+
+    it('应该处理空参数', () => {
+      const combined = combineDisposables();
+
+      expect(combined.isDisposed()).toBe(false);
+      combined.dispose();
+      expect(combined.isDisposed()).toBe(true);
+    });
   });
 
   describe('DisposableCollector', () => {
@@ -220,6 +264,48 @@ describe('Disposable - 可释放资源', () => {
 
       // 添加到已释放的收集器，资源应该被立即释放
       expect(d1.isDisposed()).toBe(true);
+    });
+
+    it('多次调用 dispose 应该只执行一次', () => {
+      const collector = new DisposableCollector();
+      const d1 = new SimpleDisposable();
+      collector.add(d1);
+
+      collector.dispose();
+      collector.dispose();
+      collector.dispose();
+
+      expect(d1.disposeCount).toBe(1);
+      expect(collector.count).toBe(0);
+    });
+
+    it('移除不存在的资源应该返回 false', () => {
+      const collector = new DisposableCollector();
+      const d1 = new SimpleDisposable();
+
+      const result = collector.remove(d1);
+
+      expect(result).toBe(false);
+    });
+
+    it('add 方法应该返回添加的资源', () => {
+      const collector = new DisposableCollector();
+      const d1 = new SimpleDisposable();
+
+      const returned = collector.add(d1);
+
+      expect(returned).toBe(d1);
+    });
+  });
+
+  describe('dispose 辅助函数 - 边界情况', () => {
+    it('应该不释放已经释放的资源', () => {
+      const disposable = new SimpleDisposable();
+      disposable.dispose();
+
+      dispose(disposable);
+
+      expect(disposable.disposeCount).toBe(1);
     });
   });
 });

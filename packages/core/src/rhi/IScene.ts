@@ -11,7 +11,7 @@
  * @see packages/core/src/ecs/core/query.ts - Query 系统
  */
 
-import type { IDisposable } from '../base';
+import type { IDisposable } from '@maxellabs/specification';
 import type { EntityId, World, ComponentClass } from '../ecs';
 
 /**
@@ -39,7 +39,15 @@ export interface HierarchyComponent {
 /**
  * 场景事件类型
  */
-export type SceneEventType = 'load' | 'unload' | 'update' | 'entityAdded' | 'entityRemoved';
+export type SceneEventType =
+  | 'load'
+  | 'unload'
+  | 'update'
+  | 'entityAdded'
+  | 'entityRemoved'
+  | 'dataLoaded'
+  | 'environmentChanged'
+  | 'renderSettingsChanged';
 
 /**
  * 场景事件监听器

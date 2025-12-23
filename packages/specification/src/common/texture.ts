@@ -13,25 +13,7 @@ import type {
   RequiredEnableable,
 } from '../core';
 import type { CacheConfiguration } from '../package';
-import type { RHITextureFormat, RHIFilterMode, RHIAddressMode, RHITextureDataType } from './rhi';
-
-/**
- * 纹理目标
- *
- * @deprecated 请使用 RHITextureType 代替
- */
-export enum TextureTarget {
-  /** 2D纹理 */
-  Texture2D = 'texture-2d',
-  /** 立方体纹理 */
-  TextureCube = 'texture-cube',
-  /** 3D纹理 */
-  Texture3D = 'texture-3d',
-  /** 2D数组纹理 */
-  Texture2DArray = 'texture-2d-array',
-  /** 立方体数组纹理 */
-  TextureCubeArray = 'texture-cube-array',
-}
+import type { RHITextureFormat, RHIFilterMode, RHIAddressMode, RHITextureDataType, RHITextureType } from './rhi';
 
 /**
  * 纹理使用类型
@@ -82,9 +64,9 @@ export interface CommonTextureConfig extends Nameable {
    */
   dataType: RHITextureDataType;
   /**
-   * 纹理目标
+   * 纹理类型（使用统一的 RHI 类型）
    */
-  target: TextureTarget;
+  textureType: RHITextureType;
   /**
    * 使用类型
    */
