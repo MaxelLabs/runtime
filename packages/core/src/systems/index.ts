@@ -83,4 +83,6 @@ export { CameraSystem, CameraMatrices, createCameraSystem } from './camera';
 // ============ Render System ============
 
 export { RenderSystem, createRenderSystem } from './render';
-export type { Renderable, RenderContext, RenderHook } from './render';
+// Export RenderContext and Renderable with System suffix to avoid conflict with renderer module
+// The renderer module exports the canonical types; these are System-specific versions
+export type { RenderContext as SystemRenderContext, Renderable as SystemRenderable, RenderHook } from './render';

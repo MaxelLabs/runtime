@@ -47,6 +47,9 @@ export * from './scene';
 // 资源管理
 export * from './resources';
 
+// 渲染器模块
+export * from './renderer';
+
 // RHI 接口
 export * from './rhi';
 

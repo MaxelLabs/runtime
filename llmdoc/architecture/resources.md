@@ -304,16 +304,27 @@ private releaseMesh(uri: string): void {
 
   entry.refCount--;
   if (entry.refCount <= 0) {
-    // Destroy GPU resources
+    // Destroy GPU resources using loader's dispose method
     if (entry.data) {
-      entry.data.vertexBuffer?.destroy();
-      entry.data.indexBuffer?.destroy();
+      const loader = this.loaders.get('mesh') ?? this.defaultLoaders.get('mesh');
+      if (loader && 'dispose' in loader) {
+        (loader as IResourceLoader<MeshResource>).dispose(entry.data);
+      } else {
+        // Fallback: manual cleanup
+        entry.data.vertexBuffer?.destroy();
+        entry.data.indexBuffer?.destroy();
+      }
     }
     entry.state = ResourceState.Released;
     this.meshes.delete(uri);
   }
 }
 ```
+
+**修复说明** (2025-12-24):
+- 现在使用 Loader 的 `dispose()` 方法清理资源
+- 如果 Loader 未实现 dispose，回退到手动清理
+- 确保资源释放时正确清理 GPU 资源
 
 ---
 
@@ -404,15 +415,26 @@ private releaseTexture(uri: string): void {
 
   entry.refCount--;
   if (entry.refCount <= 0) {
-    // Destroy GPU texture
-    if (entry.data?.texture) {
-      entry.data.texture.destroy();
+    // Destroy GPU texture using loader's dispose method
+    if (entry.data) {
+      const loader = this.loaders.get('texture') ?? this.defaultLoaders.get('texture');
+      if (loader && 'dispose' in loader) {
+        (loader as IResourceLoader<TextureResource>).dispose(entry.data);
+      } else {
+        // Fallback: manual cleanup
+        entry.data.texture?.destroy();
+      }
     }
     entry.state = ResourceState.Released;
     this.textures.delete(uri);
   }
 }
 ```
+
+**修复说明** (2025-12-24):
+- 现在使用 Loader 的 `dispose()` 方法清理纹理资源
+- 如果 Loader 未实现 dispose,回退到手动清理
+- 保持与 mesh 资源释放的一致性
 
 ---
 

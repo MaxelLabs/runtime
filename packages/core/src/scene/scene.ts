@@ -62,6 +62,8 @@ import { getSceneComponentRegistry } from './component-registry';
 import { ResourceManager } from '../resources';
 import { EventDispatcher } from '../events/event-dispatcher';
 import type { Event } from '../events/event';
+import type { Renderer } from '../renderer';
+import type { RenderSystem } from '../systems/render';
 
 // Import modules
 import { SceneEntityManager } from './entity/entity-manager';
@@ -99,6 +101,8 @@ export class Scene implements IScene {
   // === Device & Resources ===
   private _device: IRHIDevice | null;
   private _resourceManager: ResourceManager;
+  private _renderer?: Renderer;
+  private _renderSystem?: RenderSystem; // Cache RenderSystem reference
 
   // === Event Listener Mapping (for off() compatibility) ===
   private listenerMap: Map<SceneEventListener, (event: Event) => void> = new Map();
@@ -149,6 +153,11 @@ export class Scene implements IScene {
   setDevice(device: IRHIDevice): void {
     this._device = device;
     this._resourceManager.setDevice(device);
+
+    // Update RenderSystem device if exists
+    if (this._renderSystem) {
+      this._renderSystem.setDevice(device);
+    }
   }
 
   /**
@@ -162,6 +171,76 @@ export class Scene implements IScene {
    */
   get resourceManager(): ResourceManager {
     return this._resourceManager;
+  }
+
+  /**
+   * Set renderer
+   * @param renderer Renderer instance
+   *
+   * @remarks
+   * Sets the renderer for this scene and automatically configures RenderSystem.
+   * Allows application packages to use custom renderers.
+   *
+   * @example
+   * ```typescript
+   * import { PBRRenderer } from '@maxellabs/engine';
+   *
+   * const renderer = new PBRRenderer(device);
+   * scene.setRenderer(renderer);
+   * ```
+   */
+  setRenderer(renderer: Renderer, renderSystem?: RenderSystem): void {
+    this._renderer = renderer;
+
+    // Cache RenderSystem reference if provided, or try to find it
+    if (renderSystem) {
+      this._renderSystem = renderSystem;
+    }
+
+    // Pass renderer to RenderSystem
+    if (this._renderSystem) {
+      this._renderSystem.setRenderer(renderer);
+    }
+  }
+
+  /**
+   * Register RenderSystem
+   * @param renderSystem RenderSystem instance
+   *
+   * @remarks
+   * This should be called when RenderSystem is added to scheduler.
+   * Allows Scene to cache the RenderSystem reference for renderer setup.
+   *
+   * @example
+   * ```typescript
+   * const renderSystem = new RenderSystem();
+   * scene.registerRenderSystem(renderSystem);
+   * scene.scheduler.addSystem(createRenderSystemDef(renderSystem));
+   * ```
+   */
+  registerRenderSystem(renderSystem: RenderSystem): void {
+    this._renderSystem = renderSystem;
+
+    // Set scene reference (type-safe, no hack needed)
+    renderSystem.setScene(this);
+
+    // If renderer already set, configure RenderSystem
+    if (this._renderer) {
+      renderSystem.setRenderer(this._renderer);
+    }
+
+    // Set device
+    if (this._device) {
+      renderSystem.setDevice(this._device);
+    }
+  }
+
+  /**
+   * Get renderer
+   * @returns The renderer instance, or undefined if not set
+   */
+  getRenderer(): Renderer | undefined {
+    return this._renderer;
   }
 
   // === Component Registration ===
@@ -499,19 +578,25 @@ export class Scene implements IScene {
     // 1. Trigger unload event
     this.onUnload();
 
-    // 2. Dispose resources FIRST (before clearing entities)
+    // 2. Dispose renderer FIRST
+    if (this._renderer) {
+      this._renderer.dispose();
+      this._renderer = undefined;
+    }
+
+    // 3. Dispose resources
     this._resourceManager.dispose();
 
-    // 3. Clear entities
+    // 4. Clear entities
     this.clear();
 
-    // 4. Destroy root entity
+    // 5. Destroy root entity
     const root = this.getRoot();
     if (root !== (-1 as EntityId)) {
       this.world.destroyEntity(root);
     }
 
-    // 5. Clear modules
+    // 6. Clear modules
     this.entityManager.clear();
     this.listenerMap.clear();
     this.eventDispatcher.dispose();
