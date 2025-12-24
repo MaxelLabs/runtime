@@ -83,4 +83,5 @@ export { CameraSystem, CameraMatrices, createCameraSystem } from './camera';
 // ============ Render System ============
 
 export { RenderSystem, createRenderSystem } from './render';
-export type { Renderable, RenderContext, RenderHook } from './render';
+// Note: RenderContext and Renderable types exported from renderer module to avoid duplication
+export type { RenderHook } from './render';

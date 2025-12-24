@@ -71,6 +71,8 @@ export class Scene implements IScene, IDisposable {
   readonly scheduler: SystemScheduler;
   private _device: IRHIDevice | null;
   private resourceManager: ResourceManager;
+  private _renderer?: Renderer;               // NEW: Renderer instance
+  private _renderSystem?: RenderSystem;       // NEW: Cached RenderSystem reference
   private _root: EntityId;
   private entities: Set<EntityId>;
   private nameIndex: Map<string, EntityId>;
@@ -90,7 +92,7 @@ export class Scene implements IScene, IDisposable {
     this.world = new World();
     this.scheduler = new SystemScheduler(this.world);
 
-    // Create resource manager (NEW)
+    // Create resource manager
     this.resourceManager = new ResourceManager(options.device);
 
     // Register required components
@@ -126,6 +128,53 @@ export class Scene implements IScene, IDisposable {
     this.nameIndex.set('__ROOT__', root);
     return root;
   }
+
+  // === NEW: Renderer Management ===
+
+  /**
+   * Set renderer for this scene
+   * @param renderer Renderer instance
+   * @param renderSystem Optional RenderSystem instance
+   */
+  setRenderer(renderer: Renderer, renderSystem?: RenderSystem): void {
+    this._renderer = renderer;
+
+    if (renderSystem) {
+      this._renderSystem = renderSystem;
+    }
+
+    // Pass renderer to RenderSystem
+    if (this._renderSystem) {
+      this._renderSystem.setRenderer(renderer);
+    }
+  }
+
+  /**
+   * Register RenderSystem (internal)
+   * @param renderSystem RenderSystem instance
+   * @internal
+   */
+  registerRenderSystem(renderSystem: RenderSystem): void {
+    this._renderSystem = renderSystem;
+
+    // If renderer already set, configure RenderSystem
+    if (this._renderer) {
+      renderSystem.setRenderer(this._renderer);
+    }
+
+    // Set device
+    if (this._device) {
+      renderSystem.setDevice(this._device);
+    }
+  }
+
+  /**
+   * Get renderer
+   * @returns Renderer instance or undefined
+   */
+  getRenderer(): Renderer | undefined {
+    return this._renderer;
+  }
 }
 ```
 
@@ -136,7 +185,7 @@ FUNCTION Scene.constructor(options):
   1. Generate unique scene ID
   2. Create World instance
   3. Create SystemScheduler
-  4. Create ResourceManager with device (NEW)
+  4. Create ResourceManager with device
   5. Register core components (Name, Tag, Parent, Children, etc.)
   6. Create root entity (unless disabled)
   7. Initialize event listeners
@@ -152,16 +201,28 @@ FUNCTION Scene.render():
   2. Check if active and device exists
   3. RenderSystem handles actual rendering (in scheduler)
 
+FUNCTION Scene.setRenderer(renderer, renderSystem?):
+  1. Store renderer reference
+  2. Cache RenderSystem if provided
+  3. Pass renderer to RenderSystem (if cached)
+  4. Configure device on RenderSystem
+
 FUNCTION Scene.dispose():
   1. Emit unload event
-  2. Dispose ResourceManager (NEW - releases all resources)
-  3. Clear all entities (except root)
-  4. Destroy root entity
-  5. Clear world
-  6. Clear event listeners
-  7. Clear indexes
-  8. Mark as disposed
+  2. Dispose renderer (NEW - if set)
+  3. Dispose ResourceManager (releases all resources)
+  4. Clear all entities (except root)
+  5. Destroy root entity
+  6. Clear world
+  7. Clear event listeners
+  8. Clear indexes
+  9. Mark as disposed
 ```
+
+**更新说明** (2025-12-24):
+- 新增 `setRenderer()` 方法用于注入自定义渲染器
+- `dispose()` 现在在资源清理前先清理渲染器
+- RenderSystem 可通过 `registerRenderSystem()` 自动配置
 
 ---
 
@@ -237,6 +298,11 @@ FUNCTION Scene.dispose():
 // Initialize scene with device
 const scene = new Scene({ device: webglDevice });
 
+// Set custom renderer (NEW)
+import { PBRRenderer } from '@maxellabs/engine';
+const renderer = new PBRRenderer(webglDevice);
+scene.setRenderer(renderer);
+
 // Load resources
 const meshHandle = await scene.loadMesh('models/cube.glb');
 const textureHandle = await scene.loadTexture('textures/diffuse.png');
@@ -246,16 +312,17 @@ scene.world.addComponent(entity, MeshRef, MeshRef.fromData({
   assetId: meshHandle.uri
 }));
 
-// Scene.dispose() automatically releases all resources
+// Scene.dispose() automatically releases renderer + all resources
 scene.dispose();
 ```
 
 ### Integration Benefits
 
 ✅ **Single Owner**: Scene owns ResourceManager (no global state)
-✅ **Auto Cleanup**: dispose() releases all resources
+✅ **Auto Cleanup**: dispose() releases renderer + all resources
 ✅ **Consistent API**: load/get/release through Scene
 ✅ **Device Injection**: ResourceManager uses Scene's device
+✅ **Renderer Extensibility**: Application packages can inject custom renderers (NEW)
 
 ---
 

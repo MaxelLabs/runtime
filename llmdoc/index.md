@@ -11,10 +11,14 @@ related_ids: ["doc-standard", "constitution-core-runtime"]
 ## 🎯 Quick Start
 
 **最近更新** (2025-12-24):
-- ✅ **Scene 与 ResourceManager 集成完成** - Scene 现在拥有资源管理能力
-  - 参见: `llmdoc/agent/strategy-scene-resource-integration.md`
-  - 参见: `llmdoc/architecture/scene-systems.md` (Resource Management Integration)
-  - 参见: `llmdoc/architecture/resources.md` (Scene Integration)
+- ✅ **资源加载失败处理修复** - 修复资源加载失败后清理逻辑错误
+  - ResourceManager 现使用 Loader 的 `dispose()` 方法清理资源
+  - 修复加载失败时未从缓存移除导致的内存泄漏
+  - 参见: `llmdoc/architecture/resources.md` (Release 部分)
+- ✅ **Scene 渲染器集成** - Scene 现支持自定义渲染器注入
+  - 新增 `setRenderer()` / `getRenderer()` API
+  - dispose() 自动清理渲染器和资源
+  - 参见: `llmdoc/architecture/scene-systems.md` (Renderer Management)
 
 **First Read**: Start with the **Constitution** to understand all rules and constraints.
 

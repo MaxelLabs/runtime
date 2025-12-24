@@ -46,6 +46,7 @@ import { Camera } from '../../components/camera';
 import { CameraMatrices } from '../camera';
 import type { IRHIDevice, IRHICommandEncoder } from '@maxellabs/specification';
 import type { Matrix4Like } from '@maxellabs/specification';
+import type { Renderer } from '../../renderer';
 
 // ============ 渲染数据结构 ============
 
@@ -110,6 +111,9 @@ export class RenderSystem implements ISystem {
   /** RHI 设备 */
   protected device: IRHIDevice | null = null;
 
+  /** Renderer 实例 (NEW) */
+  protected renderer?: Renderer;
+
   /** 可渲染对象查询 */
   protected renderableQuery?: Query;
 
@@ -130,6 +134,18 @@ export class RenderSystem implements ISystem {
    */
   setDevice(device: IRHIDevice): void {
     this.device = device;
+  }
+
+  /**
+   * 设置渲染器 (NEW)
+   * @param renderer Renderer instance
+   *
+   * @remarks
+   * When a Renderer is set, RenderSystem will delegate rendering to it.
+   * If no Renderer is set, RenderSystem falls back to legacy hooks.
+   */
+  setRenderer(renderer: Renderer): void {
+    this.renderer = renderer;
   }
 
   /**
@@ -177,7 +193,24 @@ export class RenderSystem implements ISystem {
       renderables: this.renderables,
     };
 
-    // 6. 执行渲染前钩子
+    // NEW: 如果有 Renderer，使用 Renderer 渲染
+    if (this.renderer && this.device && mainCamera) {
+      // Try to get scene from context (if available)
+      const scene = (ctx as any).scene || (ctx.world as any).scene;
+      if (scene) {
+        this.renderer.beginFrame();
+        this.renderer.renderScene(scene, mainCamera.entity);
+        this.renderer.endFrame();
+
+        return {
+          entityCount: this.renderables.length,
+          executionTimeMs: performance.now() - startTime,
+          skipped: false,
+        };
+      }
+    }
+
+    // 6. 执行渲染前钩子 (Fallback: 保留现有逻辑)
     this.onBeforeRender(renderCtx);
     for (const hook of this.beforeRenderHooks) {
       hook(renderCtx);
