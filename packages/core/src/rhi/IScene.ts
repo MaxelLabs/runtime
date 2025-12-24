@@ -46,6 +46,7 @@ export type SceneEventType =
   | 'entityAdded'
   | 'entityRemoved'
   | 'dataLoaded'
+  | 'assetsPreloaded'
   | 'environmentChanged'
   | 'renderSettingsChanged';
 

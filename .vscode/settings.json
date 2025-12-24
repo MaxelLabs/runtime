@@ -30,9 +30,13 @@
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
   "cSpell.words": [
+    "Forbiddens",
     "gltf",
+    "Iloader",
+    "IRHI",
     "kratos",
     "matcap",
+    "maxellabs",
     "meshopt",
     "plark",
     "pointermissed",

@@ -55,6 +55,78 @@ interface Component {
 
 ---
 
+## 📁 文件命名规范
+
+### 规则
+
+- **文件名**: 使用 kebab-case (全小写,单词间用连字符分隔)
+- **类名/接口名**: 使用 PascalCase (每个单词首字母大写)
+- **变量/函数名**: 使用 camelCase (首字母小写,后续单词首字母大写)
+
+### 示例
+
+#### ✅ 正确示例
+
+```typescript
+// 文件: packages/core/src/scene/scene-manager.ts
+export class SceneManager {
+  private entityCount: number;
+
+  createEntity(): Entity {
+    return new Entity();
+  }
+}
+```
+
+#### ❌ 错误示例
+
+```typescript
+// 文件: packages/core/src/scene/SceneManager.ts  ❌ 文件名应为 kebab-case
+export class sceneManager {  // ❌ 类名应为 PascalCase
+  private EntityCount: number;  // ❌ 变量名应为 camelCase
+
+  CreateEntity(): Entity {  // ❌ 方法名应为 camelCase
+    return new Entity();
+  }
+}
+```
+
+### 特殊情况
+
+- **接口文件**: 以 `I` 开头使用 PascalCase（接口文件例外）
+  ```typescript
+  // 文件: IResourceLoader.ts
+  export interface IResourceLoader { }
+
+  // 文件: IScene.ts
+  export interface IScene { }
+  ```
+
+- **类型定义文件**: 使用描述性名称（kebab-case）
+  ```typescript
+  // 文件: resource-types.ts
+  export type ResourceId = string;
+  ```
+
+- **测试文件**: 与源文件同名,添加 `.test.ts` 后缀
+  ```typescript
+  // 源文件: scene-manager.ts
+  // 测试: scene-manager.test.ts
+  ```
+
+### 映射规则
+
+| 类名/接口名 (PascalCase) | 文件名 (kebab-case or PascalCase) |
+|-------------------------|-------------------------------|
+| SceneManager | scene-manager.ts |
+| LocalTransform | local-transform.ts |
+| IResourceLoader | IResourceLoader.ts（接口文件例外）|
+| IScene | IScene.ts（接口文件例外）|
+| MaterialInstance | material-instance.ts |
+| AnimationSystem | animation-system.ts |
+
+---
+
 ## 📐 Coordinate Systems & Matrix Conventions
 
 ### Matrix Storage
@@ -267,6 +339,86 @@ fromData(_data: IStatic) { }  // ❌ Ignored parameter
 static fromData(): Static {
   return new Static();
 }
+```
+
+---
+
+## 📄 index.ts 文件规范
+
+### 规则
+
+**Rule**: index.ts 文件仅用于导出（re-export），禁止包含实现代码。
+
+### 允许的内容
+
+```typescript
+// ✅ CORRECT: 仅导出语句
+export { ResourceManager } from './resource-manager';
+export { ResourceHandle, createResourceHandle } from './resource-handle';
+export type { IResourceLoader, LoaderMetadata } from './loaders';
+export { DefaultMeshLoader, DefaultTextureLoader, DefaultMaterialLoader } from './loaders';
+
+// ✅ CORRECT: JSDoc 注释和包文档
+/**
+ * @packageDocumentation
+ * @remarks
+ * This module provides resource management functionality.
+ */
+```
+
+### 禁止的内容
+
+```typescript
+// ❌ FORBIDDEN: 类实现
+export class ResourceManager {
+  // ... 514 行代码
+}
+
+// ❌ FORBIDDEN: 接口定义（应在独立文件中）
+export interface ResourceEntry<T> {
+  data: T;
+  state: ResourceState;
+}
+
+// ❌ FORBIDDEN: 函数实现（应在独立文件中）
+export function createResourceHandle(uri: string): ResourceHandle {
+  // ... 实现代码
+}
+
+// ❌ FORBIDDEN: 常量定义（应在独立文件中）
+export const DEFAULT_CACHE_SIZE = 1024;
+```
+
+### 文件长度限制
+
+- **推荐**: index.ts 应少于 **50 行**（仅导出语句）
+- **警告**: 如果超过 100 行，说明可能包含实现代码，需要重构
+
+### 重构步骤
+
+当 index.ts 包含实现代码时：
+
+1. **提取类/接口**: 创建独立文件（如 `resource-manager.ts`）
+2. **移动实现**: 将代码移动到新文件
+3. **更新 index.ts**: 改为仅导出
+4. **验证导入**: 确保外部导入路径不变
+
+### 示例：正确的 index.ts
+
+```typescript
+/**
+ * Resource Management Module
+ * @packageDocumentation
+ */
+
+// Type aliases (backward compatibility)
+export type ILoader<T> = IResourceLoader<T>;
+
+// Re-exports
+export { ResourceManager } from './resource-manager';
+export { ResourceHandle, createResourceHandle } from './resource-handle';
+export type { IResourceLoader, LoaderMetadata } from './loaders';
+export { DefaultMeshLoader, DefaultTextureLoader, DefaultMaterialLoader } from './loaders';
 ```
 
 ---

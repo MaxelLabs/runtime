@@ -92,50 +92,50 @@ related_ids: ["ref-rhi-interfaces", "arch-logic-systems", "ref-data-models"]
 ```
 packages/core/src/
 ├── base/                      # 基础类
-│   └── ReferResource.ts       # 引用计数资源基类
+│   └── refer-resource.ts      # 引用计数资源基类
 │
 ├── ecs/                       # ECS 核心
-│   ├── World.ts               # 世界容器
-│   ├── Entity.ts              # 实体管理
-│   ├── Query.ts               # 组件查询
-│   └── SystemScheduler.ts     # 系统调度器
+│   ├── world.ts               # 世界容器
+│   ├── entity.ts              # 实体管理
+│   ├── query.ts               # 组件查询
+│   └── system-scheduler.ts    # 系统调度器
 │
 ├── components/                # 数据组件
 │   ├── base/                  # Component 基类
-│   ├── transform/             # LocalTransform, WorldTransform, Parent, Children
-│   ├── camera/                # Camera, CameraTarget
-│   ├── light/                 # DirectionalLight, PointLight, SpotLight, AmbientLight
-│   ├── visual/                # MeshRef, MaterialRef, TextureRef, Color, Visible
-│   ├── layout/                # Anchor, FlexContainer, FlexItem, LayoutResult
-│   ├── animation/             # AnimationState, TweenState, Timeline
-│   ├── data/                  # Name, Tag, Metadata
-│   └── physics/               # Velocity, Acceleration (可选)
+│   ├── transform/             # local-transform, world-transform, parent, children
+│   ├── camera/                # camera, camera-target
+│   ├── light/                 # directional-light, point-light, spot-light, ambient-light
+│   ├── visual/                # mesh-ref, material-ref, texture-ref, color, visible
+│   ├── layout/                # anchor, flex-container, flex-item, layout-result
+│   ├── animation/             # animation-state, tween-state, timeline
+│   ├── data/                  # name, tag, metadata
+│   └── physics/               # velocity, acceleration (可选)
 │
 ├── systems/                   # 逻辑系统
 │   ├── types.ts               # ISystem, SystemMetadata
-│   ├── transform/             # TransformSystem (层级矩阵)
-│   ├── animation/             # AnimationSystem (时间/缓动)
-│   ├── layout/                # LayoutSystem (Flex/Anchor)
-│   ├── camera/                # 🆕 CameraSystem (View/Projection)
-│   └── render/                # 🆕 RenderSystem (基础渲染循环)
+│   ├── transform/             # transform-system (层级矩阵)
+│   ├── animation/             # animation-system (时间/缓动)
+│   ├── layout/                # layout-system (Flex/Anchor)
+│   ├── camera/                # 🆕 camera-system (View/Projection)
+│   └── render/                # 🆕 render-system (基础渲染循环)
 │
 ├── scene/                     # 🆕 场景管理
-│   ├── Scene.ts               # 场景类
-│   ├── SceneGraph.ts          # 场景图遍历
-│   └── RenderQueue.ts         # 渲染队列
+│   ├── scene.ts               # 场景类
+│   ├── scene-graph.ts         # 场景图遍历
+│   └── render-queue.ts        # 渲染队列
 │
 ├── resources/                 # 🆕 资源管理
-│   ├── ResourceManager.ts     # 资源管理器
-│   ├── ResourceHandle.ts      # 资源句柄
+│   ├── resource-manager.ts    # 资源管理器
+│   ├── resource-handle.ts     # 资源句柄
 │   └── loaders/               # 加载器接口
-│       ├── ILoader.ts
-│       ├── MeshLoader.ts
-│       └── TextureLoader.ts
+│       ├── Iloader.ts
+│       ├── mesh-loader.ts
+│       └── texture-loader.ts
 │
 ├── renderer/                  # 🆕 渲染器抽象
-│   ├── Renderer.ts            # 渲染器基类
-│   ├── RenderContext.ts       # 渲染上下文
-│   └── MaterialInstance.ts    # 材质实例
+│   ├── renderer.ts            # 渲染器基类
+│   ├── render-context.ts      # 渲染上下文
+│   └── material-instance.ts   # 材质实例
 │
 └── index.ts                   # 统一导出
 ```
