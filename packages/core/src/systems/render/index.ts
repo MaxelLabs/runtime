@@ -47,19 +47,27 @@ import { CameraMatrices } from '../camera';
 import type { IRHIDevice, IRHICommandEncoder } from '@maxellabs/specification';
 import type { Matrix4Like } from '@maxellabs/specification';
 import type { Renderer } from '../../renderer';
+import type { IScene } from '../../rhi/IScene';
 
 // ============ 渲染数据结构 ============
+// Note: Renderable and RenderContext types are re-exported from renderer module
+// to maintain backward compatibility. The canonical definitions are in renderer/render-context.ts
 
 /**
- * Renderable - 可渲染对象
+ * Renderable - 可渲染对象 (System 版本)
  * 包含渲染所需的所有数据
+ *
+ * @remarks
+ * 此接口与 renderer/render-context.ts 中的 Renderable 保持兼容。
+ * - meshRef/materialRef 是 meshId/materialId 的别名
+ * - 添加了 visible 字段以支持可见性过滤
  */
 export interface Renderable {
   /** 实体 ID */
   entity: EntityId;
-  /** 网格引用 */
+  /** 网格引用 (别名: meshId) */
   meshRef: string;
-  /** 材质引用 */
+  /** 材质引用 (别名: materialId) */
   materialRef: string;
   /** 世界变换矩阵 */
   worldMatrix: Matrix4Like;
@@ -67,15 +75,23 @@ export interface Renderable {
   layer: number;
   /** 排序键 */
   sortKey: number;
+  /** 可见性标志 */
+  visible: boolean;
 }
 
 /**
- * RenderContext - 渲染上下文
+ * RenderContext - 渲染上下文 (System 版本)
  * 传递给渲染钩子的上下文信息
+ *
+ * @remarks
+ * 此接口扩展了 renderer/render-context.ts 中的 RenderContext，
+ * 添加了 System 特有的字段（systemContext, encoder）。
  */
 export interface RenderContext {
   /** System 上下文 */
   systemContext: SystemContext;
+  /** Scene 引用 (用于资源访问) */
+  scene: IScene | null;
   /** RHI 设备 */
   device: IRHIDevice | null;
   /** 命令编码器 */
@@ -86,6 +102,10 @@ export interface RenderContext {
   cameraMatrices: CameraMatrices | null;
   /** 当前帧的可渲染对象 */
   renderables: Renderable[];
+  /** 当前时间（秒） */
+  time: number;
+  /** 帧计数 */
+  frameCount: number;
 }
 
 /**
@@ -113,6 +133,9 @@ export class RenderSystem implements ISystem {
 
   /** Renderer 实例 (NEW) */
   protected renderer?: Renderer;
+
+  /** Scene 引用 */
+  protected scene: IScene | null = null;
 
   /** 可渲染对象查询 */
   protected renderableQuery?: Query;
@@ -166,6 +189,17 @@ export class RenderSystem implements ISystem {
   }
 
   /**
+   * 设置 Scene 引用
+   * @param scene Scene instance
+   *
+   * @remarks
+   * 允许 RenderSystem 直接访问 Scene，避免类型不安全的 hack。
+   */
+  setScene(scene: IScene): void {
+    this.scene = scene;
+  }
+
+  /**
    * 执行系统逻辑
    */
   execute(ctx: SystemContext, query?: Query): SystemExecutionStats | void {
@@ -186,28 +220,40 @@ export class RenderSystem implements ISystem {
     // 5. 创建渲染上下文
     const renderCtx: RenderContext = {
       systemContext: ctx,
+      scene: this.scene,
       device: this.device,
       encoder: null,
       mainCamera: mainCamera?.entity ?? null,
       cameraMatrices: mainCamera?.matrices ?? null,
       renderables: this.renderables,
+      time: ctx.totalTime,
+      frameCount: ctx.frameCount,
     };
 
     // NEW: 如果有 Renderer，使用 Renderer 渲染
-    if (this.renderer && this.device && mainCamera) {
-      // Try to get scene from context (if available)
-      const scene = (ctx as any).scene || (ctx.world as any).scene;
-      if (scene) {
-        this.renderer.beginFrame();
-        this.renderer.renderScene(scene, mainCamera.entity);
-        this.renderer.endFrame();
-
-        return {
-          entityCount: this.renderables.length,
-          executionTimeMs: performance.now() - startTime,
-          skipped: false,
-        };
+    if (this.renderer && this.device && mainCamera && this.scene) {
+      // 执行渲染前钩子 (确保钩子在 Renderer 模式下也被调用)
+      this.onBeforeRender(renderCtx);
+      for (const hook of this.beforeRenderHooks) {
+        hook(renderCtx);
       }
+
+      // 使用 Renderer 渲染
+      this.renderer.beginFrame();
+      this.renderer.renderScene(this.scene, mainCamera.entity);
+      this.renderer.endFrame();
+
+      // 执行渲染后钩子
+      for (const hook of this.afterRenderHooks) {
+        hook(renderCtx);
+      }
+      this.onAfterRender(renderCtx);
+
+      return {
+        entityCount: this.renderables.length,
+        executionTimeMs: performance.now() - startTime,
+        skipped: false,
+      };
     }
 
     // 6. 执行渲染前钩子 (Fallback: 保留现有逻辑)
@@ -278,6 +324,7 @@ export class RenderSystem implements ISystem {
         },
         layer: 0, // 可以从 Layer 组件获取
         sortKey: 0, // 可以基于深度或材质计算
+        visible: visible.value,
       };
 
       this.renderables.push(renderable);

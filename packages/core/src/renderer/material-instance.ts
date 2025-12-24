@@ -73,20 +73,54 @@ export class MaterialInstance {
 
     // Initialize default properties (deep copy)
     for (const [key, value] of Object.entries(material.properties)) {
-      // Deep copy arrays, shallow copy primitives
-      if (Array.isArray(value)) {
-        this.properties.set(key, [...value]);
-      } else if (typeof value === 'object' && value !== null) {
-        this.properties.set(key, { ...value });
-      } else {
-        this.properties.set(key, value);
-      }
+      this.properties.set(key, this.deepClone(value));
     }
 
     // Initialize texture bindings (shallow copy - strings are immutable)
     for (const [key, value] of Object.entries(material.textures)) {
       this.textureBindings.set(key, value);
     }
+  }
+
+  /**
+   * Deep clone a value
+   * @param value Value to clone
+   * @returns Deep cloned value
+   *
+   * @remarks
+   * Handles:
+   * - Primitives (returned as-is)
+   * - Arrays (recursively cloned)
+   * - Plain objects (recursively cloned)
+   * - null/undefined (returned as-is)
+   *
+   * Does NOT handle:
+   * - Class instances (will be shallow copied)
+   * - Circular references (will cause stack overflow)
+   * - Special objects (Date, RegExp, Map, Set, etc.)
+   */
+  private deepClone<T>(value: T): T {
+    // Handle null and undefined
+    if (value === null || value === undefined) {
+      return value;
+    }
+
+    // Handle primitives
+    if (typeof value !== 'object') {
+      return value;
+    }
+
+    // Handle arrays
+    if (Array.isArray(value)) {
+      return value.map((item) => this.deepClone(item)) as T;
+    }
+
+    // Handle plain objects
+    const result: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+      result[key] = this.deepClone(val);
+    }
+    return result as T;
   }
 
   /**

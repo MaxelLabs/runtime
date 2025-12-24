@@ -44,6 +44,12 @@ import { MaterialInstance } from './material-instance';
 import type { RenderContext } from './render-context';
 
 /**
+ * Renderer dispose callback
+ * Called when renderer is disposed, allowing cleanup of external references
+ */
+export type RendererDisposeCallback = (renderer: Renderer) => void;
+
+/**
  * Renderer configuration options
  */
 export interface RendererConfig {
@@ -61,6 +67,9 @@ export interface RendererConfig {
 
   /** Clear stencil buffer */
   clearStencil?: boolean;
+
+  /** Dispose callback (called when renderer is disposed) */
+  onDispose?: RendererDisposeCallback;
 }
 
 /**
@@ -96,8 +105,11 @@ export abstract class Renderer {
   /** Configuration */
   protected config: RendererConfig;
 
-  /** MaterialInstance cache (key: shaderId) */
+  /** MaterialInstance cache (key: materialId or custom key) */
   protected materialInstances: Map<string, MaterialInstance> = new Map();
+
+  /** Dispose callbacks */
+  protected disposeCallbacks: RendererDisposeCallback[] = [];
 
   /** Is currently rendering */
   protected isRendering: boolean = false;
@@ -118,6 +130,11 @@ export abstract class Renderer {
       clearStencil: false,
       ...config,
     };
+
+    // Register dispose callback if provided
+    if (config.onDispose) {
+      this.disposeCallbacks.push(config.onDispose);
+    }
   }
 
   /**
@@ -188,6 +205,7 @@ export abstract class Renderer {
   /**
    * Create material instance
    * @param material Material resource
+   * @param cacheKey Optional custom cache key (defaults to materialId if available, otherwise shaderId)
    * @returns Material instance
    *
    * @remarks
@@ -197,24 +215,42 @@ export abstract class Renderer {
    * 3. Set material properties and texture bindings
    *
    * ## Caching Strategy
-   * - Cache key: shaderId (assumes one instance per shader)
-   * - For per-object instances, use different cache strategy
-   * - Future: Object pooling for performance
+   * - Default cache key: materialId (if available) or shaderId
+   * - Custom cache key can be provided for special cases
+   * - Use `createUncachedMaterialInstance` for per-object instances
+   *
+   * ## Important
+   * If two materials use the same shader but different parameters,
+   * they will have different cache keys (based on materialId).
+   * This prevents parameter override issues.
    */
-  createMaterialInstance(material: IMaterialResource): MaterialInstance {
-    // Use shaderId as cache key
-    const cacheKey = material.shaderId;
+  createMaterialInstance(material: IMaterialResource, cacheKey?: string): MaterialInstance {
+    // Use provided key, or materialId if available, or fall back to shaderId
+    const key = cacheKey ?? (material as any).id ?? material.shaderId;
 
-    let instance = this.materialInstances.get(cacheKey);
+    let instance = this.materialInstances.get(key);
     if (instance) {
       return instance;
     }
 
     // Create new instance
     instance = new MaterialInstance(material, this.device);
-    this.materialInstances.set(cacheKey, instance);
+    this.materialInstances.set(key, instance);
 
     return instance;
+  }
+
+  /**
+   * Create uncached material instance
+   * @param material Material resource
+   * @returns New MaterialInstance (not cached)
+   *
+   * @remarks
+   * Use this for per-object material instances that need unique parameters.
+   * The caller is responsible for disposing the instance.
+   */
+  createUncachedMaterialInstance(material: IMaterialResource): MaterialInstance {
+    return new MaterialInstance(material, this.device);
   }
 
   /**
@@ -234,15 +270,52 @@ export abstract class Renderer {
   }
 
   /**
+   * Add dispose callback
+   * @param callback Callback to be called when renderer is disposed
+   *
+   * @remarks
+   * Use this to clean up external references to the renderer.
+   * Callbacks are called in the order they were added.
+   */
+  onDispose(callback: RendererDisposeCallback): void {
+    this.disposeCallbacks.push(callback);
+  }
+
+  /**
+   * Remove dispose callback
+   * @param callback Callback to remove
+   * @returns true if callback was found and removed
+   */
+  removeDisposeCallback(callback: RendererDisposeCallback): boolean {
+    const index = this.disposeCallbacks.indexOf(callback);
+    if (index !== -1) {
+      this.disposeCallbacks.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * Dispose resources
    * @remarks
    * Releases:
    * - All material instances
    * - GPU resources
+   * - Calls dispose callbacks
    *
    * After dispose(), renderer should not be used.
    */
   dispose(): void {
+    // Call dispose callbacks first (so they can access renderer state if needed)
+    for (const callback of this.disposeCallbacks) {
+      try {
+        callback(this);
+      } catch (error) {
+        console.error('[Renderer] Error in dispose callback:', error);
+      }
+    }
+    this.disposeCallbacks.length = 0;
+
     // Dispose all material instances
     for (const instance of this.materialInstances.values()) {
       instance.dispose();

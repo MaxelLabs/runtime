@@ -60,6 +60,6 @@ export { Renderer } from './renderer';
 export { MaterialInstance } from './material-instance';
 
 // Types and interfaces
-export type { RendererConfig } from './renderer';
+export type { RendererConfig, RendererDisposeCallback } from './renderer';
 export type { RenderContext, Renderable } from './render-context';
 export { createEmptyRenderContext } from './render-context';

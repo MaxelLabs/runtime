@@ -206,14 +206,23 @@ export class Scene implements IScene {
   /**
    * Register RenderSystem
    * @param renderSystem RenderSystem instance
-   * @internal
    *
    * @remarks
-   * This is called internally when RenderSystem is added to scheduler.
+   * This should be called when RenderSystem is added to scheduler.
    * Allows Scene to cache the RenderSystem reference for renderer setup.
+   *
+   * @example
+   * ```typescript
+   * const renderSystem = new RenderSystem();
+   * scene.registerRenderSystem(renderSystem);
+   * scene.scheduler.addSystem(createRenderSystemDef(renderSystem));
+   * ```
    */
   registerRenderSystem(renderSystem: RenderSystem): void {
     this._renderSystem = renderSystem;
+
+    // Set scene reference (type-safe, no hack needed)
+    renderSystem.setScene(this);
 
     // If renderer already set, configure RenderSystem
     if (this._renderer) {
