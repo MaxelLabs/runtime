@@ -10,6 +10,12 @@ related_ids: ["doc-standard", "constitution-core-runtime"]
 
 ## 🎯 Quick Start
 
+**最近更新** (2025-12-24):
+- ✅ **Scene 与 ResourceManager 集成完成** - Scene 现在拥有资源管理能力
+  - 参见: `llmdoc/agent/strategy-scene-resource-integration.md`
+  - 参见: `llmdoc/architecture/scene-systems.md` (Resource Management Integration)
+  - 参见: `llmdoc/architecture/resources.md` (Scene Integration)
+
 **First Read**: Start with the **Constitution** to understand all rules and constraints.
 
 ```
@@ -100,6 +106,17 @@ related_ids: ["doc-standard", "constitution-core-runtime"]
 
 ---
 
+### 🧠 **Agent Strategy Layer** (Completed Plans)
+
+**Strategic documentation for completed architectural decisions**
+
+| Document | ID | Status | Content | Use Case |
+|----------|----|----|---------|----------|
+| **Scene-Resource Integration** | `strategy-scene-resource-integration` | ✅ Completed | Scene 与 ResourceManager 集成实施方案，包括 API 设计、生命周期管理、测试策略 | **Integration Reference** |
+| **Scene Architecture Refactoring** | `strategy-scene-refactoring` | 🚧 Draft | Scene 类重构为模块化架构（EntityManager, HierarchyManager, EventBus, ResourceFacade, Serializer） | **Refactoring Reference** |
+
+---
+
 ## 🌳 Navigation Tree
 
 ```
@@ -120,6 +137,10 @@ llmdoc/
 │   ├── scene-systems.md              ← Scene & system architecture
 │   ├── resources.md                  ← Resource management
 │   └── logic-systems.md              ← System execution stages & dependencies
+│
+├── agent/                            ← Strategic Memory
+│   ├── strategy-scene-resource-integration.md  ← Scene + ResourceManager 集成 (✅ Completed)
+│   └── strategy-scene-refactoring.md           ← Scene 重构策略 (🚧 Draft)
 │
 └── guides/                           ← Procedures
     └── doc-standard.md               ← Documentation standards
@@ -205,6 +226,7 @@ Application Packages (Usage)
 | **Load scene from JSON** | `architecture-scene-systems` | `ref-specification` |
 | **Manage GPU resources** | `architecture-resources` | `architecture-scene-systems` |
 | **Create custom loaders** | `architecture-resources` | `ref-specification` |
+| **Integrate Scene + Resources** | `strategy-scene-resource-integration` | `architecture-scene-systems`, `architecture-resources` |
 
 ---
 

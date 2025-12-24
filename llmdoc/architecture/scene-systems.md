@@ -43,6 +43,15 @@ interface IScene {
   findEntityByName(name: string): EntityId | null;
   getEntitiesByTag(tag: string): EntityId[];
 
+  // Resource management (NEW)
+  loadMesh(uri: string): Promise<IResourceHandle>;
+  loadTexture(uri: string): Promise<IResourceHandle>;
+  loadMaterial(uri: string): Promise<IResourceHandle>;
+  getMesh(handle: IResourceHandle): IMeshResource | undefined;
+  getTexture(handle: IResourceHandle): ITextureResource | undefined;
+  getMaterial(handle: IResourceHandle): IMaterialResource | undefined;
+  releaseResource(handle: IResourceHandle): void;
+
   // Lifecycle
   update(deltaTime: number): void;
   render(): void;
@@ -61,6 +70,7 @@ export class Scene implements IScene, IDisposable {
   readonly world: World;
   readonly scheduler: SystemScheduler;
   private _device: IRHIDevice | null;
+  private resourceManager: ResourceManager;
   private _root: EntityId;
   private entities: Set<EntityId>;
   private nameIndex: Map<string, EntityId>;
@@ -79,6 +89,9 @@ export class Scene implements IScene, IDisposable {
     // Create ECS core
     this.world = new World();
     this.scheduler = new SystemScheduler(this.world);
+
+    // Create resource manager (NEW)
+    this.resourceManager = new ResourceManager(options.device);
 
     // Register required components
     this.registerSceneComponents();
@@ -123,9 +136,10 @@ FUNCTION Scene.constructor(options):
   1. Generate unique scene ID
   2. Create World instance
   3. Create SystemScheduler
-  4. Register core components (Name, Tag, Parent, Children, etc.)
-  5. Create root entity (unless disabled)
-  6. Initialize event listeners
+  4. Create ResourceManager with device (NEW)
+  5. Register core components (Name, Tag, Parent, Children, etc.)
+  6. Create root entity (unless disabled)
+  7. Initialize event listeners
 
 FUNCTION Scene.update(deltaTime):
   1. Check if disposed
@@ -140,13 +154,108 @@ FUNCTION Scene.render():
 
 FUNCTION Scene.dispose():
   1. Emit unload event
-  2. Clear all entities (except root)
-  3. Destroy root entity
-  4. Clear world
-  5. Clear event listeners
-  6. Clear indexes
-  7. Mark as disposed
+  2. Dispose ResourceManager (NEW - releases all resources)
+  3. Clear all entities (except root)
+  4. Destroy root entity
+  5. Clear world
+  6. Clear event listeners
+  7. Clear indexes
+  8. Mark as disposed
 ```
+
+---
+
+## 📦 Resource Management Integration
+
+### Scene Resource API
+
+**Context**: Scene 现在拥有 ResourceManager 实例，提供资源加载/管理能力（已实现）。
+
+**实现状态**: ✅ **已完成** (2025-12-24)
+
+```typescript
+class Scene {
+  private resourceManager: ResourceManager;
+
+  // === Resource Loading ===
+  async loadMesh(uri: string): Promise<IResourceHandle> {
+    this.checkDisposed();
+    return this.resourceManager.loadMesh(uri);
+  }
+
+  async loadTexture(uri: string): Promise<IResourceHandle> {
+    this.checkDisposed();
+    return this.resourceManager.loadTexture(uri);
+  }
+
+  async loadMaterial(uri: string): Promise<IResourceHandle> {
+    this.checkDisposed();
+    return this.resourceManager.loadMaterial(uri);
+  }
+
+  // === Resource Retrieval ===
+  getMesh(handle: IResourceHandle): IMeshResource | undefined {
+    return this.resourceManager.getMesh(handle);
+  }
+
+  getTexture(handle: IResourceHandle): ITextureResource | undefined {
+    return this.resourceManager.getTexture(handle);
+  }
+
+  getMaterial(handle: IResourceHandle): IMaterialResource | undefined {
+    return this.resourceManager.getMaterial(handle);
+  }
+
+  // === Resource Release ===
+  releaseResource(handle: IResourceHandle): void {
+    this.resourceManager.release(handle);
+  }
+}
+```
+
+### Resource Lifecycle in Scene
+
+```pseudocode
+FUNCTION Scene.loadMesh(uri):
+  1. Check if scene is disposed
+  2. Delegate to resourceManager.loadMesh(uri)
+  3. Return resource handle (with ref count)
+
+FUNCTION Scene.dispose():
+  1. Emit unload event
+  2. Call resourceManager.dispose()
+     ├─ Releases ALL resources
+     ├─ Destroys GPU buffers/textures
+     └─ Clears caches
+  3. Clear scene entities
+  4. Mark scene as disposed
+```
+
+### Usage Pattern
+
+```typescript
+// Initialize scene with device
+const scene = new Scene({ device: webglDevice });
+
+// Load resources
+const meshHandle = await scene.loadMesh('models/cube.glb');
+const textureHandle = await scene.loadTexture('textures/diffuse.png');
+
+// Use in components
+scene.world.addComponent(entity, MeshRef, MeshRef.fromData({
+  assetId: meshHandle.uri
+}));
+
+// Scene.dispose() automatically releases all resources
+scene.dispose();
+```
+
+### Integration Benefits
+
+✅ **Single Owner**: Scene owns ResourceManager (no global state)
+✅ **Auto Cleanup**: dispose() releases all resources
+✅ **Consistent API**: load/get/release through Scene
+✅ **Device Injection**: ResourceManager uses Scene's device
 
 ---
 
@@ -1003,7 +1112,10 @@ scene.setParent(child, parent);
 
 ### Deserialization Pipeline
 
+**实现状态**: ✅ **已完成** - Scene.fromData() 现在有异步变体 `fromDataAsync()` 用于资源预加载（2025-12-24）。
+
 ```typescript
+// === Synchronous Version (Compatible) ===
 static fromData(data: ISceneData, options: Partial<SceneConfig> = {}): Scene {
   // 1. Create scene
   const scene = new Scene({
@@ -1013,19 +1125,21 @@ static fromData(data: ISceneData, options: Partial<SceneConfig> = {}): Scene {
     createRoot: true,
   });
 
-  // 2. Get registry
+  // 2. Skip assets (no preload in sync version)
+
+  // 3. Get registry
   const registry = getSceneComponentRegistry();
 
-  // 3. ID mapping
+  // 4. ID mapping
   const entityIdMap: Map<number, EntityId> = new Map();
 
-  // 4. First pass: Create all entities
+  // 5. First pass: Create all entities
   for (const entityData of data.entities) {
     const entity = scene.createEntityFromData(entityData, registry);
     entityIdMap.set(entityData.id, entity);
   }
 
-  // 5. Second pass: Establish hierarchy
+  // 6. Second pass: Establish hierarchy
   for (const entityData of data.entities) {
     if (entityData.parent !== undefined && entityData.parent !== null) {
       const entity = entityIdMap.get(entityData.id);
@@ -1036,21 +1150,115 @@ static fromData(data: ISceneData, options: Partial<SceneConfig> = {}): Scene {
     }
   }
 
-  // 6. Apply environment
+  // 7. Apply environment
   if (data.environment) {
     scene.applyEnvironment(data.environment);
   }
 
-  // 7. Apply render settings
+  // 8. Apply render settings
   if (data.renderSettings) {
     scene.applyRenderSettings(data.renderSettings);
   }
 
-  // 8. Emit event
+  // 9. Emit event
   scene.emit('dataLoaded', { data, entityCount: entityIdMap.size });
 
   return scene;
 }
+
+// === Async Version (NEW - with resource preload) ===
+static async fromDataAsync(
+  data: ISceneData,
+  options: Partial<SceneConfig> = {}
+): Promise<Scene> {
+  // 1. Create scene
+  const scene = new Scene({
+    name: data.metadata.name,
+    active: options.active ?? true,
+    device: options.device,
+    createRoot: true,
+  });
+
+  // 2. Preload assets (NEW - parallel loading)
+  if (data.assets) {
+    const preloadPromises = data.assets
+      .filter(asset => asset.preload !== false)  // Default: preload = true
+      .map(async (asset) => {
+        try {
+          switch (asset.type) {
+            case 'mesh':
+              await scene.loadMesh(asset.uri);
+              break;
+            case 'texture':
+              await scene.loadTexture(asset.uri);
+              break;
+            case 'material':
+              await scene.loadMaterial(asset.uri);
+              break;
+          }
+        } catch (error) {
+          console.warn(`[Scene] Failed to preload ${asset.type}: ${asset.uri}`, error);
+          // Non-blocking: continue even if asset fails
+        }
+      });
+
+    await Promise.all(preloadPromises);
+    scene.emit('assetsPreloaded', { count: preloadPromises.length });
+  }
+
+  // 3. Load entities (same as sync version)
+  const registry = getSceneComponentRegistry();
+  const entityIdMap: Map<number, EntityId> = new Map();
+
+  for (const entityData of data.entities) {
+    const entity = scene.createEntityFromData(entityData, registry);
+    entityIdMap.set(entityData.id, entity);
+  }
+
+  // 4. Establish hierarchy
+  for (const entityData of data.entities) {
+    if (entityData.parent !== undefined && entityData.parent !== null) {
+      const entity = entityIdMap.get(entityData.id);
+      const parentEntity = entityIdMap.get(entityData.parent);
+      if (entity && parentEntity) {
+        scene.setParent(entity, parentEntity);
+      }
+    }
+  }
+
+  // 5. Apply settings
+  if (data.environment) {
+    scene.applyEnvironment(data.environment);
+  }
+  if (data.renderSettings) {
+    scene.applyRenderSettings(data.renderSettings);
+  }
+
+  scene.emit('dataLoaded', { data, entityCount: entityIdMap.size });
+  return scene;
+}
+```
+
+### ISceneData Extension (NEW)
+
+```typescript
+// In @maxellabs/specification
+interface ISceneData {
+  version: IVersion;
+  metadata: ISceneMetadata;
+  entities: IEntityData[];
+  environment?: IEnvironmentData;
+  renderSettings?: IRenderSettingsData;
+  assets?: AssetDescriptor[];    // NEW
+}
+
+interface AssetDescriptor {
+  uri: string;
+  type: 'mesh' | 'texture' | 'material';
+  preload?: boolean;    // Default: true
+  id?: string;          // Optional identifier
+}
+```
 
 private createEntityFromData(entityData: IEntityData, registry: SceneComponentRegistry): EntityId {
   // Create entity with name
@@ -1162,6 +1370,7 @@ type SceneEventType =
   | 'load'
   | 'unload'
   | 'dataLoaded'
+  | 'assetsPreloaded'    // NEW: Fired after Scene.fromDataAsync preloads assets
   | 'environmentChanged'
   | 'renderSettingsChanged';
 
@@ -1176,6 +1385,7 @@ interface SceneEventMap {
   load: { scene: Scene };
   unload: { scene: Scene };
   dataLoaded: { data: ISceneData; entityCount: number };
+  assetsPreloaded: { count: number };    // NEW: Emitted after asset preload completion
   environmentChanged: IEnvironmentData;
   renderSettingsChanged: IRenderSettingsData;
 }
