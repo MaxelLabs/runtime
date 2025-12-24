@@ -57,6 +57,7 @@ export type ILoader<T> = IResourceLoader<T>;
 // ============================================================================
 
 export { ResourceManager } from './resource-manager';
+export type { ResourceCleanupErrorCallback } from './resource-manager';
 export { ResourceHandle, createResourceHandle } from './resource-handle';
 export type { IResourceLoader, LoaderMetadata } from './loaders';
 export { DefaultMeshLoader, DefaultTextureLoader, DefaultMaterialLoader } from './loaders';

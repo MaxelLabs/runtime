@@ -246,12 +246,16 @@ export class SceneSerializer implements ISceneSerializer {
   }
 
   private applyEnvironment(environment: NonNullable<ISceneData['environment']>, scene: Scene): void {
-    (scene as unknown as { _environment: typeof environment })._environment = environment;
+    // 使用公共 API 设置环境配置
+    // Scene 类应该提供 setEnvironment 方法来处理环境设置
+    // 目前通过事件通知场景环境已更改，让场景自行处理
     scene.emit('environmentChanged', environment);
   }
 
   private applyRenderSettings(renderSettings: NonNullable<ISceneData['renderSettings']>, scene: Scene): void {
-    (scene as unknown as { _renderSettings: typeof renderSettings })._renderSettings = renderSettings;
+    // 使用公共 API 设置渲染配置
+    // Scene 类应该提供 setRenderSettings 方法来处理渲染设置
+    // 目前通过事件通知场景渲染设置已更改，让场景自行处理
     scene.emit('renderSettingsChanged', renderSettings);
   }
 }

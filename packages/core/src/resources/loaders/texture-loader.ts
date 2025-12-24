@@ -50,6 +50,9 @@ export class DefaultTextureLoader implements IResourceLoader<ITextureResource> {
   /** 支持的扩展名（空数组，表示回退加载器） */
   readonly extensions: string[] = [];
 
+  /** 已警告的 URI 集合（用于去重） */
+  private warnedUris: Set<string> = new Set();
+
   /**
    * 加载纹理资源（默认实现）
    *
@@ -58,10 +61,14 @@ export class DefaultTextureLoader implements IResourceLoader<ITextureResource> {
    * @returns 1x1 白色占位符纹理
    */
   async load(uri: string, _device: IRHIDevice): Promise<ITextureResource> {
-    console.warn(
-      `[DefaultTextureLoader] No custom loader registered for texture: "${uri}". ` +
-        `Returning 1x1 white placeholder. Consider registering a custom TextureLoader (e.g., ImageLoader).`
-    );
+    // 仅在首次加载时警告，避免大量加载时产生噪音
+    if (!this.warnedUris.has(uri)) {
+      this.warnedUris.add(uri);
+      console.warn(
+        `[DefaultTextureLoader] No custom loader registered for texture: "${uri}". ` +
+          `Returning 1x1 white placeholder. Consider registering a custom TextureLoader (e.g., ImageLoader).`
+      );
+    }
 
     // 返回 1x1 白色占位符纹理
     return {

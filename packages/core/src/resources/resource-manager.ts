@@ -65,6 +65,11 @@ interface ResourceEntry<T> {
  */
 type ResourceCleanupFn<T> = (entry: ResourceEntry<T>) => void;
 
+/**
+ * 资源清理错误回调类型
+ */
+export type ResourceCleanupErrorCallback = (error: Error, resourceType: string, entry: unknown) => void;
+
 // ============================================================================
 // ResourceManager
 // ============================================================================
@@ -93,6 +98,9 @@ export class ResourceManager implements IDisposable {
 
   /** 是否已销毁 */
   private _disposed: boolean = false;
+
+  /** 清理错误回调 */
+  private cleanupErrorCallback: ResourceCleanupErrorCallback | null = null;
 
   constructor(device?: IRHIDevice) {
     this.device = device ?? null;
@@ -254,6 +262,14 @@ export class ResourceManager implements IDisposable {
     return this.loaders.get(type) as IResourceLoader<T> | undefined;
   }
 
+  /**
+   * 设置清理错误回调
+   * 当资源清理失败时会调用此回调，允许调用者处理清理失败的情况
+   */
+  setCleanupErrorCallback(callback: ResourceCleanupErrorCallback | null): void {
+    this.cleanupErrorCallback = callback;
+  }
+
   // ==================== 统计信息（Public API）====================
 
   /**
@@ -305,8 +321,26 @@ export class ResourceManager implements IDisposable {
     let entry = cache.get(uri);
     if (entry) {
       entry.refCount++;
+      // 等待已有的加载完成
       if (entry.loadPromise) {
-        await entry.loadPromise;
+        try {
+          await entry.loadPromise;
+        } catch {
+          // 如果加载失败，减少引用计数并重新抛出错误
+          entry.refCount--;
+          if (entry.refCount <= 0) {
+            cache.delete(uri);
+          }
+          throw entry.error ?? new Error(`Failed to load resource: ${uri}`);
+        }
+      }
+      // 检查加载是否失败
+      if (entry.state === ResourceState.Failed) {
+        entry.refCount--;
+        if (entry.refCount <= 0) {
+          cache.delete(uri);
+        }
+        throw entry.error ?? new Error(`Failed to load resource: ${uri}`);
       }
       return createResourceHandle(uri, resourceType, ++this.resourceIdCounter);
     }
@@ -323,7 +357,15 @@ export class ResourceManager implements IDisposable {
 
     // 3. 异步加载
     entry.loadPromise = this.doLoadResource(loaderType, uri, entry);
-    await entry.loadPromise;
+    try {
+      await entry.loadPromise;
+    } catch (error) {
+      // 加载失败时，如果没有其他引用，清理条目
+      if (entry.refCount <= 1) {
+        cache.delete(uri);
+      }
+      throw error;
+    }
 
     return createResourceHandle(uri, resourceType, ++this.resourceIdCounter);
   }
@@ -343,7 +385,9 @@ export class ResourceManager implements IDisposable {
     }
 
     try {
-      const data = (await loader.load(uri, this.device!)) as T;
+      // 传递设备给加载器（可能为 null，由加载器决定是否需要）
+      // 默认加载器不需要设备，自定义加载器应该在内部检查设备
+      const data = (await loader.load(uri, this.device as IRHIDevice)) as T;
       entry.data = data;
       entry.state = ResourceState.Loaded;
       return data;
@@ -427,8 +471,13 @@ export class ResourceManager implements IDisposable {
       try {
         entry.data.vertexBuffer?.destroy();
         entry.data.indexBuffer?.destroy();
-      } catch (error) {
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
         console.warn('[ResourceManager] Failed to cleanup mesh GPU resources:', error);
+        // 调用错误回调
+        if (this.cleanupErrorCallback) {
+          this.cleanupErrorCallback(error, 'mesh', entry);
+        }
       }
       entry.data = null;
     }
@@ -441,8 +490,13 @@ export class ResourceManager implements IDisposable {
     if (entry.data) {
       try {
         entry.data.texture?.destroy();
-      } catch (error) {
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
         console.warn('[ResourceManager] Failed to cleanup texture GPU resources:', error);
+        // 调用错误回调
+        if (this.cleanupErrorCallback) {
+          this.cleanupErrorCallback(error, 'texture', entry);
+        }
       }
       entry.data = null;
     }

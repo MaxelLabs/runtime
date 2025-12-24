@@ -50,6 +50,9 @@ export class DefaultMaterialLoader implements IResourceLoader<IMaterialResource>
   /** 支持的扩展名（空数组，表示回退加载器） */
   readonly extensions: string[] = [];
 
+  /** 已警告的 URI 集合（用于去重） */
+  private warnedUris: Set<string> = new Set();
+
   /**
    * 加载材质资源（默认实现）
    *
@@ -58,10 +61,14 @@ export class DefaultMaterialLoader implements IResourceLoader<IMaterialResource>
    * @returns 默认材质
    */
   async load(uri: string, _device: IRHIDevice): Promise<IMaterialResource> {
-    console.warn(
-      `[DefaultMaterialLoader] No custom loader registered for material: "${uri}". ` +
-        `Returning default material. Consider registering a custom MaterialLoader.`
-    );
+    // 仅在首次加载时警告，避免大量加载时产生噪音
+    if (!this.warnedUris.has(uri)) {
+      this.warnedUris.add(uri);
+      console.warn(
+        `[DefaultMaterialLoader] No custom loader registered for material: "${uri}". ` +
+          `Returning default material. Consider registering a custom MaterialLoader.`
+      );
+    }
 
     // 返回默认材质
     return {

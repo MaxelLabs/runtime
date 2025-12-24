@@ -125,8 +125,25 @@ export class SceneEntityManager implements ISceneEntityManager {
       this.removeFromTagIndex(tagComp.value, entity);
     }
 
-    // Remove metadata
-    this.world.removeComponent(entity, SceneEntityMetadata);
+    // Remove metadata component (if exists)
+    if (this.world.hasComponent(entity, SceneEntityMetadata)) {
+      this.world.removeComponent(entity, SceneEntityMetadata);
+    }
+
+    // Remove Name component (if exists) to ensure consistency
+    if (this.world.hasComponent(entity, Name)) {
+      this.world.removeComponent(entity, Name);
+    }
+
+    // Remove Tag component (if exists) to ensure consistency
+    if (this.world.hasComponent(entity, Tag)) {
+      this.world.removeComponent(entity, Tag);
+    }
+
+    // Remove Disabled component (if exists)
+    if (this.world.hasComponent(entity, Disabled)) {
+      this.world.removeComponent(entity, Disabled);
+    }
 
     this.entities.delete(entity);
   }
@@ -166,7 +183,18 @@ export class SceneEntityManager implements ISceneEntityManager {
   }
 
   setEntityName(entity: EntityId, name: string): void {
+    // 验证实体是否属于此场景
+    if (!this.entities.has(entity)) {
+      console.warn(`[SceneEntityManager] Entity ${entity} is not managed by this scene`);
+      return;
+    }
+
     const oldName = this.getEntityName(entity);
+
+    // 如果名称相同，无需更新
+    if (oldName === name) {
+      return;
+    }
 
     // Update index
     if (oldName) {
