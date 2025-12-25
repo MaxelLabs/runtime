@@ -235,9 +235,6 @@ importers:
       '@maxellabs/core':
         specifier: workspace:*
         version: link:../core
-      '@maxellabs/math':
-        specifier: workspace:*
-        version: link:../math
       '@maxellabs/rhi':
         specifier: workspace:*
         version: link:../rhi
