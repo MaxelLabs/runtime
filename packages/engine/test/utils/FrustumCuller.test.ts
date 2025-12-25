@@ -5,14 +5,11 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import {
-  Frustum,
-  FrustumCuller,
-  FrustumPlane,
-  IntersectionResult,
-  type ICullable,
-} from '../../src/utils/FrustumCuller';
-import { Matrix4, Vector3 } from '@maxellabs/math';
+import { Frustum, FrustumCuller, FrustumPlane, IntersectionResult, MMath, type ICullable } from '../../src';
+
+const { Matrix4, Vector3 } = MMath;
+type Matrix4 = InstanceType<typeof Matrix4>;
+type Vector3 = InstanceType<typeof Vector3>;
 
 // 创建一个简单的透视投影矩阵
 function createPerspectiveMatrix(fov: number, aspect: number, near: number, far: number): Matrix4 {

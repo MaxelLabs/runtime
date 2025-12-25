@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from '@jest/globals';
-import { EnvironmentProbe, ProbeType, ProbeUpdateMode, ProbeState } from '../../src/utils/EnvironmentProbe';
+import { EnvironmentProbe, ProbeType, ProbeUpdateMode, ProbeState } from '../../src';
 
 describe('EnvironmentProbe', () => {
   // ========================================

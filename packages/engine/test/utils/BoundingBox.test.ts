@@ -5,8 +5,9 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { BoundingBox } from '../../src/utils/BoundingBox';
-import { Matrix4 } from '@maxellabs/math';
+import { BoundingBox, MMath } from '../../src';
+
+const { Matrix4 } = MMath;
 
 describe('BoundingBox', () => {
   // ========================================
@@ -198,6 +199,7 @@ describe('BoundingBox', () => {
 
       const identity = new Matrix4();
       bboxA.updateWorldBounds(identity);
+      bboxB.updateWorldBounds(identity);
       innerBox.updateWorldBounds(identity);
 
       expect(bboxA.containsBox(innerBox, true)).toBe(true);

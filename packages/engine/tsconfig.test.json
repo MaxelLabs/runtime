@@ -8,7 +8,6 @@
       "@/*": ["src/*"],
       "@maxellabs/specification": ["../specification/src"],
       "@maxellabs/core": ["../core/src"],
-      "@maxellabs/math": ["../math/src"],
       "@maxellabs/rhi": ["../rhi/src"]
     },
     "types": ["jest", "node"]
