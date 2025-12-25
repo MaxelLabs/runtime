@@ -192,9 +192,28 @@ export abstract class Renderer {
    * 2. Call subclass's render() implementation
    * 3. Call onAfterRender (application packages can extend)
    *
+   * ## 使用约定（重要）
+   * - **推荐使用方式**：通过 RenderSystem 调用，RenderSystem 会在调用前填充 renderables
+   * - **直接调用限制**：如果绕过 RenderSystem 直接调用此方法，pendingRenderables 将为空
+   * - **数据流**：RenderSystem.execute() → setRenderables() → renderScene()
+   *
    * ## 状态检查
    * - 如果 setRenderables() 未在本帧调用，pendingRenderables 将为空数组
-   * - 确保渲染流程不会使用过时数据
+   * - 每次 renderScene() 结束后会清空 pendingRenderables，防止下一帧使用过时数据
+   *
+   * ## 职责边界
+   * - **Renderer**：负责 RHI 命令提交和渲染逻辑，不执行 ECS 查询
+   * - **RenderSystem**：负责 ECS 数据收集和场景管理，通过 setRenderables() 传递数据
+   *
+   * @example
+   * ```typescript
+   * // 推荐：通过 RenderSystem 使用
+   * scene.scheduler.addSystemInstances(renderSystem);
+   * scene.update(deltaTime); // RenderSystem 会调用 renderer.renderScene()
+   *
+   * // 不推荐：直接调用（renderables 将为空）
+   * renderer.renderScene(scene, cameraEntity); // ⚠️ pendingRenderables 为空！
+   * ```
    */
   renderScene(scene: IScene, camera: EntityId): void {
     // Build render context

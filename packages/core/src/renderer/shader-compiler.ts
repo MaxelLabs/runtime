@@ -289,6 +289,7 @@ export class ShaderCompiler {
    *
    * @param vertexSource 顶点着色器源码
    * @param fragmentSource 片元着色器源码
+   * @param fallbackDepth 递归深度（内部使用，用于防止无限递归）
    * @returns 编译后的着色器程序
    *
    * @remarks
@@ -311,6 +312,18 @@ export class ShaderCompiler {
    * - 相同源码的着色器只编译一次（通过哈希缓存）
    * - 多个 MaterialInstance 可共享同一着色器程序（引用计数）
    *
+   * ## 引用计数管理（重要）
+   * - **每次调用 `compile()` 都会递增 `refCount`**（无论是新编译还是缓存命中）
+   * - 调用者有责任在不再使用时调用 `release(program)`
+   * - **并发调用安全**：多个请求等待同一个编译时，每个请求都会递增 refCount
+   * - **取消请求时**：如果调用者在接收 program 后未使用（如 catch 块中放弃），
+   *   仍需调用 `release()` 以避免引用计数泄漏
+   *
+   * ## 并发安全说明
+   * - JavaScript 是单线程的，refCount++ 操作是原子的
+   * - 多个并发请求会正确等待同一个编译 Promise 完成
+   * - 不存在真正的竞争条件，但需要正确的引用计数管理
+   *
    * @throws {ShaderCompilerError} 编译失败或参数无效
    *
    * @example
@@ -321,17 +334,21 @@ export class ShaderCompiler {
    *   fragmentShaderSource
    * );
    *
-   * // 错误处理
+   * // 错误处理（正确的引用计数管理）
+   * let program: ShaderProgram | null = null;
    * try {
-   *   const program = await compiler.compile(vs, fs);
+   *   program = await compiler.compile(vs, fs);
+   *   // ... 使用 program ...
    * } catch (error) {
-   *   if (error instanceof ShaderCompilerError) {
-   *     console.error('Compilation failed:', error.details);
+   *   console.error('Compilation failed:', error);
+   *   // 如果 program 已分配但未使用，需要释放
+   *   if (program) {
+   *     compiler.release(program);
    *   }
    * }
    * ```
    */
-  async compile(vertexSource: string, fragmentSource: string): Promise<ShaderProgram> {
+  async compile(vertexSource: string, fragmentSource: string, fallbackDepth: number = 0): Promise<ShaderProgram> {
     this.checkDisposed();
 
     // 1. 参数验证
@@ -355,6 +372,11 @@ export class ShaderCompiler {
     }
 
     // 4. 并发安全检查 - 如果正在编译相同着色器,等待现有编译完成
+    // ⚠️ 引用计数约定：
+    // - 每次调用 compile() 都会递增 refCount（包括并发等待的调用）
+    // - 调用者有责任在不再使用时调用 release()
+    // - 如果调用者在接收程序后未使用（如异常取消），仍需调用 release()
+    // - JavaScript 是单线程的，refCount++ 操作是原子的，无真正竞争条件
     if (this.compilingPromises.has(hash)) {
       const existingPromise = this.compilingPromises.get(hash)!;
       const program = await existingPromise;
@@ -364,7 +386,7 @@ export class ShaderCompiler {
     }
 
     // 5. 创建编译 Promise
-    const compilePromise = this.doCompile(vertexSource, fragmentSource, hash);
+    const compilePromise = this.doCompile(vertexSource, fragmentSource, hash, fallbackDepth);
     this.compilingPromises.set(hash, compilePromise);
 
     try {
@@ -372,6 +394,8 @@ export class ShaderCompiler {
       return program;
     } finally {
       // 6. 清理 Promise 缓存
+      // 注意：无论成功或失败，都需要清理 Promise 引用
+      // 失败的情况下，doCompile 内部已经清理了 hash（如果使用 fallback）
       this.compilingPromises.delete(hash);
     }
   }
@@ -380,7 +404,12 @@ export class ShaderCompiler {
    * 执行实际编译（内部方法）
    * @internal
    */
-  private async doCompile(vertexSource: string, fragmentSource: string, hash: string): Promise<ShaderProgram> {
+  private async doCompile(
+    vertexSource: string,
+    fragmentSource: string,
+    hash: string,
+    fallbackDepth: number
+  ): Promise<ShaderProgram> {
     try {
       // 编译着色器
       const vertexModule = await this.compileShaderModule(vertexSource, 'vertex');
@@ -396,17 +425,21 @@ export class ShaderCompiler {
 
       return program;
     } catch (error) {
-      // Fallback 处理（递归深度限制：最多 3 次）
+      // Fallback 处理（使用传入的 depth 参数）
       const MAX_FALLBACK_DEPTH = 3;
-      const currentDepth = vertexSource === this.config.fallbackShader?.vertex ? 1 : 0;
 
-      if (this.config.fallbackShader && currentDepth < MAX_FALLBACK_DEPTH) {
-        console.warn(`[ShaderCompiler] Compilation failed (fallback depth=${currentDepth}), trying fallback`, error);
-        return this.compile(this.config.fallbackShader.vertex, this.config.fallbackShader.fragment);
+      if (this.config.fallbackShader && fallbackDepth < MAX_FALLBACK_DEPTH) {
+        console.warn(`[ShaderCompiler] Compilation failed (fallback depth=${fallbackDepth}), trying fallback`, error);
+
+        // 清理当前失败的 Promise 缓存，避免泄漏
+        this.compilingPromises.delete(hash);
+
+        // 递归调用 compile，递增 depth 参数
+        return this.compile(this.config.fallbackShader.vertex, this.config.fallbackShader.fragment, fallbackDepth + 1);
       }
 
       // 达到递归深度限制或无 Fallback，抛出原始错误
-      if (currentDepth >= MAX_FALLBACK_DEPTH) {
+      if (fallbackDepth >= MAX_FALLBACK_DEPTH) {
         console.error('[ShaderCompiler] Fallback recursion limit reached, aborting');
       }
       throw error;
