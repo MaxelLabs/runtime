@@ -546,6 +546,7 @@ export class ShaderCompiler {
     }
 
     this.cache.clear();
+    this.compilingPromises.clear(); // 清理正在编译的 Promise 缓存
     this.disposed = true;
   }
 

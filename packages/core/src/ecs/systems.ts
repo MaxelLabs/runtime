@@ -192,6 +192,9 @@ export class SystemScheduler {
   private errorCallback?: SystemErrorCallback;
   private errorHandlingStrategy: ErrorHandlingStrategy = ErrorHandlingStrategy.Continue;
 
+  // 循环依赖处理策略
+  private throwOnCircularDependency: boolean = false;
+
   // 缓存的内部查询（避免每帧创建新 Query）
   private cachedQueries: Map<string, Query> = new Map();
 
@@ -679,18 +682,23 @@ export class SystemScheduler {
       // 拓扑排序
       const result = dag.topologicalSort();
       if (!result.success) {
-        // 循环依赖检测 - 抛出详细错误
+        // 循环依赖检测 - 根据配置抛出错误或警告
         const cycleInfo = result.cycle ? ` Cycle: ${result.cycle.join(' → ')}` : '';
         const errorMessage = `[SystemScheduler] Circular dependency detected in stage "${SystemStage[stage]}".${cycleInfo}`;
 
         console.error(errorMessage);
         console.error(`  Affected systems: ${systems.map((s) => s.def.name).join(', ')}`);
-        console.error(`  Action: Systems in this stage will execute in registration order (not optimized).`);
         console.error(`  Fix: Remove circular dependencies by adjusting 'after' declarations.`);
 
-        // 循环依赖时保持原顺序（回退到 priority 排序结果）
-        // 注意：不抛出异常，以允许应用在非关键系统存在循环依赖时继续运行
-        continue;
+        if (this.throwOnCircularDependency) {
+          // 抛出错误，阻止应用继续运行
+          throw new Error(errorMessage);
+        } else {
+          // 循环依赖时保持原顺序（回退到 priority 排序结果）
+          console.error(`  Action: Systems in this stage will execute in registration order (not optimized).`);
+          console.error(`  Hint: Set throwOnCircularDependency=true in development to enforce fixing this issue.`);
+          continue;
+        }
       }
 
       // 应用排序结果
@@ -832,6 +840,34 @@ export class SystemScheduler {
    */
   getErrorHandlingStrategy(): ErrorHandlingStrategy {
     return this.errorHandlingStrategy;
+  }
+
+  /**
+   * 设置循环依赖处理策略
+   * @param throwOnError 是否在检测到循环依赖时抛出错误
+   *
+   * @remarks
+   * - `false`（默认）：检测到循环依赖时打印警告并回退到 priority 排序
+   * - `true`：检测到循环依赖时抛出错误，阻止应用继续运行
+   *
+   * ## 使用场景
+   * - 开发环境：建议设置为 `true`，强制修复循环依赖
+   * - 生产环境：建议设置为 `false`，允许应用继续运行（但应监控警告日志）
+   *
+   * @example
+   * ```typescript
+   * scheduler.setThrowOnCircularDependency(true); // 开发模式
+   * ```
+   */
+  setThrowOnCircularDependency(throwOnError: boolean): void {
+    this.throwOnCircularDependency = throwOnError;
+  }
+
+  /**
+   * 获取循环依赖处理策略
+   */
+  getThrowOnCircularDependency(): boolean {
+    return this.throwOnCircularDependency;
   }
 
   /**

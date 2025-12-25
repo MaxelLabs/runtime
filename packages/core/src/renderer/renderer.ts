@@ -191,6 +191,10 @@ export abstract class Renderer {
    * 1. Call onBeforeRender (application packages can extend)
    * 2. Call subclass's render() implementation
    * 3. Call onAfterRender (application packages can extend)
+   *
+   * ## 状态检查
+   * - 如果 setRenderables() 未在本帧调用，pendingRenderables 将为空数组
+   * - 确保渲染流程不会使用过时数据
    */
   renderScene(scene: IScene, camera: EntityId): void {
     // Build render context
@@ -204,6 +208,10 @@ export abstract class Renderer {
 
     // Post-render hook
     this.onAfterRender(ctx);
+
+    // 清空 pendingRenderables，防止下一帧使用过时数据
+    // 如果 RenderSystem 在下一帧不调用 setRenderables()，将使用空数组
+    this.pendingRenderables = [];
   }
 
   /**

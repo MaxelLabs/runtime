@@ -163,11 +163,13 @@ async function main(): Promise<void> {
 
     // 6. 创建 SimpleRenderer（声明式 RHI 渲染器）
     // SimpleRenderer 演示了声明式 RHI 架构：
-    // - 使用 IRHIDevice.createShaderModule() 编译着色器（无 getUniformLocation）
+    // - 使用 ShaderCompiler 编译着色器（支持缓存、引用计数、并发安全）
     // - 通过 BindGroup + BindGroupLayout 声明式绑定 Uniform
     // - 通过 PipelineLayout + RenderPipeline 组合所有渲染状态
     // 详见 packages/core/demo/src/utils/simple-renderer.ts
-    const renderer = new SimpleRenderer({
+    //
+    // 注意：使用异步工厂方法 create() 而非构造函数，因为着色器编译是异步的
+    const renderer = await SimpleRenderer.create({
       device,
       canvas,
       clearColor: [0.1, 0.1, 0.1, 1.0],

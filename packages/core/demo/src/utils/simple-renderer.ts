@@ -74,7 +74,7 @@
  * - ✅ **可维护性**：清晰的资源依赖关系
  */
 
-import { Renderer, MMath, MSpec } from '@maxellabs/core';
+import { Renderer, MMath, MSpec, ShaderCompiler } from '@maxellabs/core';
 import type { RendererConfig, RenderContext } from '@maxellabs/core';
 import type {
   IRHIBuffer,
@@ -222,6 +222,9 @@ export class SimpleRenderer extends Renderer {
   /** Canvas 元素引用 */
   private canvas: HTMLCanvasElement;
 
+  /** 着色器编译器 */
+  private shaderCompiler: ShaderCompiler;
+
   /** 扩展配置 */
   protected override config: SimpleRendererConfig;
 
@@ -229,6 +232,10 @@ export class SimpleRenderer extends Renderer {
    * 创建 SimpleRenderer
    *
    * @param config 渲染器配置
+   *
+   * @remarks
+   * 构造函数初始化 ShaderCompiler，但 GPU 资源的初始化延迟到 initResources()（异步）。
+   * 调用者需要手动调用 initResources() 或通过 asyncInit() 工厂方法。
    */
   constructor(config: SimpleRendererConfig) {
     super(config);
@@ -238,14 +245,41 @@ export class SimpleRenderer extends Renderer {
     // 预分配 Transform Uniform 数据（3个 mat4 = 192 bytes，对齐到 256）
     this.transformData = new Float32Array(64); // 4 * 16
 
-    // 初始化 GPU 资源
-    this.initResources();
+    // 创建着色器编译器
+    this.shaderCompiler = new ShaderCompiler({
+      device: this.getDevice(),
+    });
   }
 
   /**
-   * 初始化 GPU 资源
+   * 工厂方法：创建并初始化 SimpleRenderer（推荐）
+   *
+   * @param config 渲染器配置
+   * @returns 初始化完成的 SimpleRenderer 实例
+   *
+   * @remarks
+   * 这是推荐的创建方式，自动处理异步初始化。
+   *
+   * @example
+   * ```typescript
+   * const renderer = await SimpleRenderer.create(config);
+   * scene.setRenderer(renderer);
+   * ```
    */
-  private initResources(): void {
+  static async create(config: SimpleRendererConfig): Promise<SimpleRenderer> {
+    const renderer = new SimpleRenderer(config);
+    await renderer.initResources();
+    return renderer;
+  }
+
+  /**
+   * 初始化 GPU 资源（异步）
+   *
+   * @remarks
+   * 使用 ShaderCompiler 编译着色器，支持缓存和异步编译。
+   * 必须在使用渲染器前调用此方法。
+   */
+  async initResources(): Promise<void> {
     const device = this.getDevice();
 
     // 1. 创建顶点缓冲区
@@ -265,21 +299,16 @@ export class SimpleRenderer extends Renderer {
       label: 'Transform Uniform Buffer',
     });
 
-    // 3. 编译着色器（声明式 - Step 1）
-    // 注意：不再使用 getUniformLocation()，着色器仅编译和反射
-    this.vertexShader = device.createShaderModule({
-      code: vertexShaderSource,
-      language: 'glsl',
-      stage: MSpec.RHIShaderStage.VERTEX,
-      label: 'Triangle Vertex Shader',
-    });
-
-    this.fragmentShader = device.createShaderModule({
-      code: fragmentShaderSource,
-      language: 'glsl',
-      stage: MSpec.RHIShaderStage.FRAGMENT,
-      label: 'Triangle Fragment Shader',
-    });
+    // 3. 使用 ShaderCompiler 编译着色器（声明式 - Step 1）
+    // 注意：compile() 是异步的，且支持缓存（相同源码仅编译一次）
+    try {
+      const shaderProgram = await this.shaderCompiler.compile(vertexShaderSource, fragmentShaderSource);
+      this.vertexShader = shaderProgram.vertexModule;
+      this.fragmentShader = shaderProgram.fragmentModule;
+    } catch (error) {
+      console.error('[SimpleRenderer] Shader compilation failed:', error);
+      throw error;
+    }
 
     // 4. 创建绑定组布局（声明式 - Step 2）
     // 定义 Uniform 绑定点，无需运行时查询位置
@@ -468,6 +497,9 @@ export class SimpleRenderer extends Renderer {
     this.vertexShader?.destroy();
     this.fragmentShader?.destroy();
     this.renderTargetTexture?.destroy();
+
+    // 释放着色器编译器及其缓存的着色器程序
+    this.shaderCompiler.dispose();
 
     // 调用父类 dispose
     super.dispose();
