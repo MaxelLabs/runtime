@@ -8,57 +8,86 @@
  * 管理着色器程序的生命周期和缓存，提供：
  * - 基于哈希的缓存查找（避免重复编译）
  * - 引用计数管理（自动释放未使用的着色器）
+ * - 大小限制和 LRU 淘汰（防止内存泄漏）
  * - 统计接口（监控缓存大小）
  *
  * ## 缓存策略
  * - 键：着色器源码的哈希值（由 ShaderCompiler 计算）
- * - 值：ShaderProgram 实例
+ * - 值：ShaderProgram 实例 + 最后访问时间
  * - 生命周期：当 refCount 降为 0 时自动从缓存移除
- *
- * ## 未来优化
- * - 可考虑 LRU 淘汰策略（当前无限制）
- * - 可添加内存占用监控
+ * - 大小限制：默认 100 个程序，超过时 LRU 淘汰（refCount=0 的程序）
  */
 
 import type { ShaderProgram } from './shader-program';
 
 /**
+ * 缓存项（内部使用）
+ */
+interface CacheEntry {
+  program: ShaderProgram;
+  lastAccessTime: number;
+}
+
+/**
+ * 着色器缓存配置
+ */
+export interface ShaderCacheConfig {
+  /**
+   * 最大缓存数量（默认 100）
+   */
+  maxSize?: number;
+}
+
+/**
  * 着色器缓存
  *
  * @remarks
- * 管理着色器程序的生命周期和缓存。
+ * 管理着色器程序的生命周期和缓存，带 LRU 淘汰策略。
  *
  * ## 缓存键
  * - 使用着色器源码的哈希值作为键
  * - 由 ShaderCompiler 计算并传入
  *
- * ## 引用计数
- * - 每次 get() 返回缓存的程序时，应手动递增 refCount
- * - 调用 release() 时递减 refCount，降为 0 时自动销毁并移除
+ * ## 引用计数 + LRU
+ * - refCount > 0：正在使用，不会被淘汰
+ * - refCount = 0：可被淘汰，按 lastAccessTime 排序
+ * - 当缓存满时，自动淘汰最久未使用的 refCount=0 程序
  *
  * ## 示例
  * ```typescript
- * const cache = new ShaderCache();
+ * const cache = new ShaderCache({ maxSize: 50 });
  *
  * // 缓存程序
  * cache.set('hash123', program);
  *
- * // 获取程序（需手动管理引用计数）
+ * // 获取程序（自动更新 lastAccessTime）
  * const cached = cache.get('hash123');
- * if (cached) {
- *   cached.refCount++;
- * }
  *
- * // 释放程序
- * cache.release('hash123'); // refCount--，降为 0 时自动销毁
+ * // 释放程序（refCount--）
+ * cache.release('hash123');
  * ```
  */
 export class ShaderCache {
   /**
-   * 哈希 → 程序映射
+   * 哈希 → 缓存项映射
    * @internal
    */
-  private cache: Map<string, ShaderProgram> = new Map();
+  private cache: Map<string, CacheEntry> = new Map();
+
+  /**
+   * 最大缓存大小
+   * @internal
+   */
+  private maxSize: number;
+
+  /**
+   * 创建着色器缓存
+   *
+   * @param config 缓存配置
+   */
+  constructor(config: ShaderCacheConfig = {}) {
+    this.maxSize = config.maxSize ?? 100;
+  }
 
   /**
    * 获取缓存的着色器程序
@@ -67,7 +96,7 @@ export class ShaderCache {
    * @returns 着色器程序，如果不存在返回 undefined
    *
    * @remarks
-   * 此方法不会自动递增 refCount，调用者需手动管理。
+   * 此方法不会自动递增 refCount，但会更新 lastAccessTime。
    *
    * @example
    * ```typescript
@@ -79,7 +108,12 @@ export class ShaderCache {
    * ```
    */
   get(hash: string): ShaderProgram | undefined {
-    return this.cache.get(hash);
+    const entry = this.cache.get(hash);
+    if (entry) {
+      entry.lastAccessTime = performance.now();
+      return entry.program;
+    }
+    return undefined;
   }
 
   /**
@@ -89,6 +123,7 @@ export class ShaderCache {
    * @param program 着色器程序
    *
    * @remarks
+   * 如果缓存已满，会先尝试 LRU 淘汰 refCount=0 的程序。
    * 如果哈希已存在，会覆盖旧值（通常不应发生）。
    *
    * @example
@@ -98,7 +133,25 @@ export class ShaderCache {
    * ```
    */
   set(hash: string, program: ShaderProgram): void {
-    this.cache.set(hash, program);
+    // 如果已存在，直接更新
+    if (this.cache.has(hash)) {
+      this.cache.set(hash, {
+        program,
+        lastAccessTime: performance.now(),
+      });
+      return;
+    }
+
+    // 检查缓存是否已满
+    if (this.cache.size >= this.maxSize) {
+      this.evictLRU();
+    }
+
+    // 添加新条目
+    this.cache.set(hash, {
+      program,
+      lastAccessTime: performance.now(),
+    });
   }
 
   /**
@@ -140,18 +193,47 @@ export class ShaderCache {
    * ```
    */
   release(hash: string): boolean {
-    const program = this.cache.get(hash);
-    if (!program) {
+    const entry = this.cache.get(hash);
+    if (!entry) {
       return false;
     }
 
-    program.refCount--;
-    if (program.refCount <= 0) {
-      program.destroy();
+    entry.program.refCount--;
+    if (entry.program.refCount <= 0) {
+      entry.program.destroy();
       this.cache.delete(hash);
       return true;
     }
     return false;
+  }
+
+  /**
+   * LRU 淘汰策略（内部方法）
+   *
+   * @remarks
+   * 找到 refCount=0 且 lastAccessTime 最小的程序并删除。
+   * 如果所有程序都在使用（refCount>0），不执行淘汰。
+   *
+   * @internal
+   */
+  private evictLRU(): void {
+    let oldestHash: string | null = null;
+    let oldestTime = Infinity;
+
+    // 找到最久未使用的 refCount=0 程序
+    for (const [hash, entry] of this.cache.entries()) {
+      if (entry.program.refCount === 0 && entry.lastAccessTime < oldestTime) {
+        oldestHash = hash;
+        oldestTime = entry.lastAccessTime;
+      }
+    }
+
+    // 如果找到，删除它
+    if (oldestHash !== null) {
+      const entry = this.cache.get(oldestHash)!;
+      entry.program.destroy();
+      this.cache.delete(oldestHash);
+    }
   }
 
   /**
@@ -171,8 +253,8 @@ export class ShaderCache {
    * ```
    */
   clear(): void {
-    for (const program of this.cache.values()) {
-      program.destroy();
+    for (const entry of this.cache.values()) {
+      entry.program.destroy();
     }
     this.cache.clear();
   }

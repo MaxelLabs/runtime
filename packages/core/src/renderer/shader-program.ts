@@ -7,12 +7,32 @@
  * @remarks
  * 包装已编译的着色器模块，提供统一的接口访问着色器程序资源：
  * - 持有顶点/片元着色器模块引用
- * - 缓存 Uniform/Attribute 位置查询结果
+ * - 提供着色器反射信息访问（Uniform/Attribute/Bindings）
  * - 支持引用计数（多个 MaterialInstance 可共享同一着色器程序）
  * - 实现 Dispose 模式释放 GPU 资源
+ *
+ * ## 声明式设计原则
+ * ShaderProgram 遵循 RHI 的声明式架构：
+ * - **不提供运行时位置查询**（getUniformLocation/getAttributeLocation 已移除）
+ * - Uniform 绑定通过 BindGroup + PipelineLayout 声明
+ * - Attribute 位置通过 VertexLayout 声明
+ * - 反射信息通过 IRHIShaderModule.reflection 获取
  */
 
 import type { IRHIShaderModule } from '@maxellabs/specification';
+
+/**
+ * 着色器反射信息聚合
+ *
+ * @remarks
+ * 聚合顶点和片元着色器的反射信息，提供统一访问接口。
+ */
+export interface ShaderProgramReflection {
+  /** 顶点着色器反射信息 */
+  vertex: IRHIShaderModule['reflection'];
+  /** 片元着色器反射信息 */
+  fragment: IRHIShaderModule['reflection'];
+}
 
 /**
  * 着色器程序包装器
@@ -25,27 +45,52 @@ import type { IRHIShaderModule } from '@maxellabs/specification';
  * 2. 通过引用计数管理共享（多个 MaterialInstance 可引用同一程序）
  * 3. 当 refCount 降为 0 时，由 ShaderCompiler 调用 destroy() 释放资源
  *
- * ## 缓存策略
- * - Uniform/Attribute 位置查询结果被缓存到 Map 中
- * - 避免在渲染循环中重复查询 GPU（性能优化）
- *
- * ## 注意事项
- * - 不要直接调用 destroy()，应通过 ShaderCompiler.release() 管理
- * - 位置查询方法当前返回 -1（需 RHI 扩展支持）
- *
- * @example
+ * ## 声明式使用模式
  * ```typescript
- * // 由 ShaderCompiler 创建（用户不直接构造）
+ * // 1. 编译着色器
  * const program = await compiler.compile(vertexSource, fragmentSource);
  *
- * // 查询 Uniform 位置
+ * // 2. 获取反射信息（替代位置查询）
+ * const reflection = program.getReflection();
+ * const uniformBindings = reflection.vertex.bindings;
+ * const attributes = reflection.vertex.attributes;
+ *
+ * // 3. 声明式绑定（通过 BindGroup）
+ * const bindGroup = device.createBindGroup(bindGroupLayout, [
+ *   { binding: 0, resource: uniformBuffer }
+ * ]);
+ *
+ * // 4. 释放引用
+ * compiler.release(program);
+ * ```
+ *
+ * ## 迁移指南
+ * 从旧的命令式 API 迁移：
+ *
+ * ### 旧代码（已移除）
+ * ```typescript
  * const mvpLocation = program.getUniformLocation('u_MVP');
  * if (mvpLocation !== -1) {
  *   device.setUniform(mvpLocation, mvpMatrix);
  * }
+ * ```
  *
- * // 释放引用
- * compiler.release(program);
+ * ### 新代码（声明式）
+ * ```typescript
+ * // 方式1：通过反射信息
+ * const reflection = program.getReflection();
+ * const mvpBinding = reflection.vertex.bindings.find(b => b.name === 'u_MVP');
+ * if (mvpBinding) {
+ *   // 使用 BindGroup 绑定
+ *   const bindGroup = device.createBindGroup(layout, [
+ *     { binding: mvpBinding.binding, resource: uniformBuffer }
+ *   ]);
+ * }
+ *
+ * // 方式2：直接使用预定义的绑定索引
+ * const bindGroup = device.createBindGroup(layout, [
+ *   { binding: 0, resource: uniformBuffer }  // u_MVP at binding 0
+ * ]);
  * ```
  */
 export class ShaderProgram {
@@ -66,20 +111,6 @@ export class ShaderProgram {
    * @readonly
    */
   readonly fragmentModule: IRHIShaderModule;
-
-  /**
-   * Uniform 位置缓存
-   * @remarks 键为 Uniform 名称，值为位置索引
-   * @internal
-   */
-  private uniformLocations: Map<string, number> = new Map();
-
-  /**
-   * Attribute 位置缓存
-   * @remarks 键为 Attribute 名称，值为位置索引
-   * @internal
-   */
-  private attributeLocations: Map<string, number> = new Map();
 
   /**
    * 引用计数
@@ -105,79 +136,43 @@ export class ShaderProgram {
   }
 
   /**
-   * 获取 Uniform 位置
+   * 获取着色器反射信息
    *
-   * @param name Uniform 名称
-   * @returns 位置索引，如果未找到返回 -1
+   * @returns 顶点和片元着色器的反射信息
    *
    * @remarks
-   * 查询结果会被缓存，后续调用直接返回缓存值。
+   * 反射信息包含：
+   * - **bindings**：Uniform/Storage 缓冲区绑定信息（名称、binding 索引、类型）
+   * - **attributes**：顶点属性信息（名称、location、格式） - 仅顶点着色器
+   * - **varyings**：varying/in/out 变量信息 - WebGL 特定
+   * - **entryPoints**：入口点信息（GLSL 中为 'main'）
    *
-   * ## 当前限制
-   * - 需要 RHI 扩展支持（IRHIDevice.getUniformLocation）
-   * - 当前实现返回 -1（占位符）
+   * ## 使用场景
+   * 1. **动态 Uniform 绑定**：根据着色器中的 uniform 声明动态创建 BindGroup
+   * 2. **顶点属性匹配**：验证网格的顶点属性与着色器要求是否匹配
+   * 3. **调试和工具**：在开发工具中显示着色器的接口信息
    *
    * @example
    * ```typescript
-   * const location = program.getUniformLocation('u_ModelMatrix');
-   * if (location !== -1) {
-   *   // 设置 Uniform 值
-   *   device.setUniform(location, modelMatrix);
+   * const reflection = program.getReflection();
+   *
+   * // 遍历所有 Uniform bindings
+   * for (const binding of reflection.vertex.bindings) {
+   *   console.log(`Uniform: ${binding.name} at binding ${binding.binding}`);
+   * }
+   *
+   * // 检查顶点属性
+   * const posAttr = reflection.vertex.attributes?.find(a => a.name === 'aPosition');
+   * if (posAttr) {
+   *   console.log(`Position attribute at location ${posAttr.location}`);
    * }
    * ```
    */
-  getUniformLocation(name: string): number {
-    // 检查缓存
-    if (this.uniformLocations.has(name)) {
-      return this.uniformLocations.get(name)!;
-    }
-
-    // TODO: Query from device (requires RHI extension)
-    // 实际实现应类似于：
-    // const location = device.getUniformLocation(this.id, name);
-    const location = -1;
-
-    // 缓存结果（包括 -1，避免重复查询）
-    this.uniformLocations.set(name, location);
-    return location;
-  }
-
-  /**
-   * 获取 Attribute 位置
-   *
-   * @param name Attribute 名称
-   * @returns 位置索引，如果未找到返回 -1
-   *
-   * @remarks
-   * 查询结果会被缓存，后续调用直接返回缓存值。
-   *
-   * ## 当前限制
-   * - 需要 RHI 扩展支持（IRHIDevice.getAttributeLocation）
-   * - 当前实现返回 -1（占位符）
-   *
-   * @example
-   * ```typescript
-   * const location = program.getAttributeLocation('a_Position');
-   * if (location !== -1) {
-   *   // 绑定顶点属性
-   *   device.bindAttribute(location, buffer);
-   * }
-   * ```
-   */
-  getAttributeLocation(name: string): number {
-    // 检查缓存
-    if (this.attributeLocations.has(name)) {
-      return this.attributeLocations.get(name)!;
-    }
-
-    // TODO: Query from device (requires RHI extension)
-    // 实际实现应类似于：
-    // const location = device.getAttributeLocation(this.id, name);
-    const location = -1;
-
-    // 缓存结果（包括 -1，避免重复查询）
-    this.attributeLocations.set(name, location);
-    return location;
+  getReflection(): ShaderProgramReflection {
+    return {
+      vertex: this.vertexModule.reflection,
+      fragment: this.fragmentModule.reflection,
+    };
   }
 
   /**
@@ -189,7 +184,6 @@ export class ShaderProgram {
    *
    * ## 清理内容
    * - 销毁着色器模块（调用 IRHIShaderModule.destroy()）
-   * - 清空位置缓存
    *
    * @internal 仅由 ShaderCompiler 调用
    */
@@ -198,8 +192,5 @@ export class ShaderProgram {
     // 实际实现应类似于：
     // this.vertexModule.destroy();
     // this.fragmentModule.destroy();
-
-    this.uniformLocations.clear();
-    this.attributeLocations.clear();
   }
 }

@@ -679,10 +679,17 @@ export class SystemScheduler {
       // 拓扑排序
       const result = dag.topologicalSort();
       if (!result.success) {
-        console.error(`SystemScheduler: ${result.error}`);
-        console.error(`  Stage: ${SystemStage[stage]}`);
+        // 循环依赖检测 - 抛出详细错误
+        const cycleInfo = result.cycle ? ` Cycle: ${result.cycle.join(' → ')}` : '';
+        const errorMessage = `[SystemScheduler] Circular dependency detected in stage "${SystemStage[stage]}".${cycleInfo}`;
+
+        console.error(errorMessage);
         console.error(`  Affected systems: ${systems.map((s) => s.def.name).join(', ')}`);
-        // 循环依赖时保持原顺序
+        console.error(`  Action: Systems in this stage will execute in registration order (not optimized).`);
+        console.error(`  Fix: Remove circular dependencies by adjusting 'after' declarations.`);
+
+        // 循环依赖时保持原顺序（回退到 priority 排序结果）
+        // 注意：不抛出异常，以允许应用在非关键系统存在循环依赖时继续运行
         continue;
       }
 

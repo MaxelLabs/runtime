@@ -105,6 +105,16 @@ export class RenderSystem implements ISystem {
     description: '基础渲染系统，收集可见对象并执行渲染',
     stage: SystemStage.Render,
     priority: 0,
+    // 注意：无需声明 after: ['CameraSystem']
+    // 原因：RenderSystem 在 Render 阶段（stage=5），CameraSystem 在 PostUpdate 阶段（stage=3）
+    // SystemScheduler 保证不同阶段按固定顺序执行：
+    //   1. FrameStart (0)
+    //   2. PreUpdate (1)
+    //   3. Update (2)
+    //   4. PostUpdate (3) ← CameraSystem 在此阶段计算相机矩阵
+    //   5. PreRender (4)
+    //   6. Render (5) ← RenderSystem 在此阶段使用 CameraSystem 的输出
+    //   7. FrameEnd (6)
   };
 
   /** RHI 设备 */

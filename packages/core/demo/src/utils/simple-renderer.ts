@@ -10,11 +10,68 @@
  * - 从 Scene 查询实体（Camera、MeshRef）
  * - 使用 IRHIDevice 接口（无 WebGL 直接调用）
  * - 验证完整的 ECS 渲染流程
+ * - **展示声明式渲染架构**（BindGroup + PipelineLayout）
  *
  * ## 架构约束
  * - ✅ NO WebGL Dependencies: 仅通过 IRHIDevice 操作
  * - ✅ All Types from Specification: 所有 RHI 类型来自 @maxellabs/specification
  * - ✅ ECS Integration: 从 Scene 查询实体数据
+ * - ✅ Declarative Binding: 使用 BindGroup 声明式绑定 Uniform
+ *
+ * ## 声明式架构说明
+ * 本渲染器展示了现代 RHI 的声明式设计模式：
+ *
+ * ### 1. 着色器编译
+ * ```typescript
+ * // 使用 IRHIDevice.createShaderModule() 编译着色器
+ * const vertexShader = device.createShaderModule({
+ *   code: vertexShaderSource,
+ *   language: 'glsl',
+ *   stage: RHIShaderStage.VERTEX
+ * });
+ * ```
+ *
+ * ### 2. BindGroup 声明式绑定（取代命令式 setUniform）
+ * ```typescript
+ * // 旧模式（命令式，已废弃）：
+ * // const location = gl.getUniformLocation(program, 'u_MVP');
+ * // gl.uniformMatrix4fv(location, false, mvpMatrix);
+ *
+ * // 新模式（声明式，本 Demo 使用）：
+ * const bindGroupLayout = device.createBindGroupLayout([
+ *   { binding: 0, visibility: RHIShaderStage.VERTEX, buffer: { type: 'uniform' } }
+ * ]);
+ * const bindGroup = device.createBindGroup(bindGroupLayout, [
+ *   { binding: 0, resource: uniformBuffer }  // 声明式绑定
+ * ]);
+ * ```
+ *
+ * ### 3. VertexLayout 声明式定义（取代 bindBuffer + vertexAttribPointer）
+ * ```typescript
+ * const vertexLayout = {
+ *   buffers: [{
+ *     attributes: [
+ *       { name: 'aPosition', shaderLocation: 0, format: FLOAT32x3 }
+ *     ]
+ *   }]
+ * };
+ * ```
+ *
+ * ### 4. RenderPipeline 组合所有状态
+ * ```typescript
+ * const pipeline = device.createRenderPipeline({
+ *   vertexShader,
+ *   fragmentShader,
+ *   vertexLayout,
+ *   layout: pipelineLayout  // 包含所有 BindGroupLayout
+ * });
+ * ```
+ *
+ * ## 为什么是声明式？
+ * - ✅ **类型安全**：编译时检查绑定冲突
+ * - ✅ **性能优化**：驱动程序可预优化状态切换
+ * - ✅ **跨平台**：WebGPU/Vulkan/Metal 统一抽象
+ * - ✅ **可维护性**：清晰的资源依赖关系
  */
 
 import { Renderer, MMath, MSpec } from '@maxellabs/core';
@@ -208,7 +265,8 @@ export class SimpleRenderer extends Renderer {
       label: 'Transform Uniform Buffer',
     });
 
-    // 3. 编译着色器
+    // 3. 编译着色器（声明式 - Step 1）
+    // 注意：不再使用 getUniformLocation()，着色器仅编译和反射
     this.vertexShader = device.createShaderModule({
       code: vertexShaderSource,
       language: 'glsl',
@@ -223,11 +281,12 @@ export class SimpleRenderer extends Renderer {
       label: 'Triangle Fragment Shader',
     });
 
-    // 4. 创建绑定组布局
+    // 4. 创建绑定组布局（声明式 - Step 2）
+    // 定义 Uniform 绑定点，无需运行时查询位置
     const bindGroupLayout: IRHIBindGroupLayout = device.createBindGroupLayout(
       [
         {
-          binding: 0,
+          binding: 0, // 对应着色器中的 binding = 0
           visibility: MSpec.RHIShaderStage.VERTEX,
           buffer: { type: 'uniform' },
           name: 'Transforms',
@@ -236,16 +295,21 @@ export class SimpleRenderer extends Renderer {
       'Triangle BindGroup Layout'
     );
 
-    // 5. 创建绑定组
+    // 5. 创建绑定组（声明式 - Step 3）
+    // 将 Uniform Buffer 绑定到 binding 0，无需 setUniform()
     this.bindGroup = device.createBindGroup(bindGroupLayout, [{ binding: 0, resource: this.uniformBuffer }]);
 
-    // 6. 创建管线布局
+    // 6. 创建管线布局（声明式 - Step 4）
+    // 定义管线可以访问的所有 BindGroupLayout
+    // 注意：与 WebGL 的动态绑定不同，这是静态声明
     const pipelineLayout: IRHIPipelineLayout = device.createPipelineLayout(
       [bindGroupLayout],
       'Triangle Pipeline Layout'
     );
 
-    // 7. 创建渲染管线
+    // 7. 创建渲染管线（声明式 - Step 5）
+    // 组合所有渲染状态：着色器、顶点布局、绑定布局
+    // 这个 Pipeline 对象封装了完整的渲染状态，无需运行时设置
     this.pipeline = device.createRenderPipeline({
       vertexShader: this.vertexShader,
       fragmentShader: this.fragmentShader,
@@ -350,16 +414,18 @@ export class SimpleRenderer extends Renderer {
       const modelMatrix = new MMath.Matrix4();
       modelMatrix.fromIMatrix4x4(renderable.worldMatrix);
 
-      // 更新 Transform Uniform
+      // 更新 Transform Uniform（声明式数据传递）
+      // 注意：数据通过 Buffer.update() 传递，而非命令式的 setUniform()
+      // 绑定关系已在 BindGroup 创建时声明，这里只更新数据
       this.transformData.set(modelMatrix.toArray(), 0);
       this.transformData.set(viewMatrix.toArray(), 16);
       this.transformData.set(projectionMatrix.toArray(), 32);
       this.uniformBuffer!.update(new Float32Array(this.transformData), 0);
 
-      // 创建命令编码器
+      // 创建命令编码器（记录渲染命令）
       const encoder: IRHICommandEncoder = this.device.createCommandEncoder('Triangle Render');
 
-      // 创建渲染通道描述符（渲染到离屏目标）
+      // 创建渲染通道描述符（声明式渲染目标配置）
       const passDescriptor = {
         colorAttachments: [
           {
@@ -371,11 +437,11 @@ export class SimpleRenderer extends Renderer {
         ],
       };
 
-      // 开始渲染通道
+      // 开始渲染通道（声明式渲染状态绑定）
       const renderPass = encoder.beginRenderPass(passDescriptor);
-      renderPass.setPipeline(this.pipeline!);
-      renderPass.setBindGroup(0, this.bindGroup!);
-      renderPass.setVertexBuffer(0, this.vertexBuffer!);
+      renderPass.setPipeline(this.pipeline!); // 绑定 Pipeline（包含着色器、顶点布局等）
+      renderPass.setBindGroup(0, this.bindGroup!); // 绑定 BindGroup（包含 Uniform 绑定）
+      renderPass.setVertexBuffer(0, this.vertexBuffer!); // 绑定顶点缓冲区
       renderPass.draw(3); // 绘制 3 个顶点（1个三角形）
       renderPass.end();
 

@@ -6,11 +6,11 @@
  *
  * @remarks
  * ## 目标
- * 验证 Core 包的完整 ECS 渲染流程：
+ * 验证 Core 包的完整 ECS 渲染流程和声明式 RHI 架构：
  * - Scene 管理实体
  * - Camera 实体提供视图/投影矩阵
  * - 三角形实体包含 Mesh 数据
- * - SimpleRenderer 从 Scene 查询实体并渲染
+ * - SimpleRenderer 通过声明式 RHI API 渲染
  *
  * ## 架构
  * ```
@@ -19,6 +19,21 @@
  *   ├─ Triangle Entity (LocalTransform + MeshRef)
  *   └─ Renderer (SimpleRenderer)
  * ```
+ *
+ * ## 声明式 RHI 架构验证
+ * 本 Demo 展示了从 ECS 到 RHI 的完整声明式渲染流程：
+ * 1. **ECS 数据收集**：RenderSystem 查询实体，收集 Renderable 数据
+ * 2. **相机矩阵计算**：CameraSystem 预计算 View/Projection 矩阵
+ * 3. **着色器编译**：通过 IRHIDevice.createShaderModule() 编译 GLSL
+ * 4. **BindGroup 绑定**：声明式绑定 Uniform Buffer（无 getUniformLocation）
+ * 5. **Pipeline 创建**：组合所有渲染状态（着色器、顶点布局、绑定布局）
+ * 6. **渲染执行**：通过 RenderPass API 提交渲染命令
+ *
+ * ## 关键设计点
+ * - **FOV 单位**：Camera.setPerspective() 的 FOV 参数单位是【度数】而非弧度
+ * - **声明式绑定**：Uniform 绑定通过 BindGroup 预定义，运行时只更新数据
+ * - **着色器反射**：通过 ShaderProgram.getReflection() 获取绑定信息
+ * - **类型安全**：所有 RHI 类型来自 @maxellabs/specification
  *
  * ## 使用方式
  * 在浏览器中打开 `packages/core/demo/html/triangle.html`
@@ -146,7 +161,12 @@ async function main(): Promise<void> {
 
     console.info('[Triangle Demo] Triangle entity created');
 
-    // 6. 创建 SimpleRenderer
+    // 6. 创建 SimpleRenderer（声明式 RHI 渲染器）
+    // SimpleRenderer 演示了声明式 RHI 架构：
+    // - 使用 IRHIDevice.createShaderModule() 编译着色器（无 getUniformLocation）
+    // - 通过 BindGroup + BindGroupLayout 声明式绑定 Uniform
+    // - 通过 PipelineLayout + RenderPipeline 组合所有渲染状态
+    // 详见 packages/core/demo/src/utils/simple-renderer.ts
     const renderer = new SimpleRenderer({
       device,
       canvas,
@@ -162,6 +182,8 @@ async function main(): Promise<void> {
     const renderSystem = new RenderSystem();
 
     // 配置 RenderSystem
+    // 注意：RenderSystem 在 Render 阶段（stage=5），CameraSystem 在 PostUpdate 阶段（stage=3）
+    // SystemScheduler 保证阶段顺序：CameraSystem 先计算相机矩阵，RenderSystem 再使用它们渲染
     renderSystem.setDevice(device);
     renderSystem.setRenderer(renderer);
     renderSystem.setScene(scene);

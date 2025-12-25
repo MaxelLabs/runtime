@@ -61,6 +61,7 @@
  */
 
 import type { IRHIDevice, IRHIShaderModule } from '@maxellabs/specification';
+import { RHIShaderStage } from '@maxellabs/specification';
 import { ShaderProgram } from './shader-program';
 import { ShaderCache } from './shader-cache';
 
@@ -572,27 +573,28 @@ export class ShaderCompiler {
    * @remarks
    * 通过 IRHIDevice.createShaderModule() 编译着色器。
    *
-   * ## 当前限制
-   * - 需要 RHI 实现支持 createShaderModule()
-   * - 当前实现为占位符（返回空对象）
+   * ## 实现说明
+   * - 使用 RHI 层的 createShaderModule() 进行实际编译
+   * - WebGL 实现自动检测版本并适配 GLSL 语法
+   * - 编译错误会包含详细的行号和源码信息
    *
    * @internal
    */
   private async compileShaderModule(source: string, stage: 'vertex' | 'fragment'): Promise<IRHIShaderModule> {
     try {
-      // TODO: 使用 IRHIDevice.createShaderModule()
-      // 当前占位实现
-      console.warn(`[ShaderCompiler] TODO: Compile ${stage} shader`);
-      return {} as IRHIShaderModule;
+      // 映射 stage 到 RHI 枚举
+      const rhiStage = stage === 'vertex' ? RHIShaderStage.VERTEX : RHIShaderStage.FRAGMENT;
 
-      // 实际实现应类似于：
-      // const descriptor: RHIShaderModuleDescriptor = {
-      //   code: source,
-      //   stage: stage === 'vertex' ? RHIShaderStage.VERTEX : RHIShaderStage.FRAGMENT,
-      //   language: 'glsl',
-      //   label: `${stage}-shader`,
-      // };
-      // return this.device.createShaderModule(descriptor);
+      // 使用 RHI Device 的 createShaderModule（同步方法）
+      const shaderModule = this.device.createShaderModule({
+        code: source,
+        stage: rhiStage,
+        language: 'glsl',
+        label: `${stage}-shader`,
+      });
+
+      // createShaderModule 是同步的，但我们返回 Promise 以保持接口一致性
+      return shaderModule;
     } catch (error) {
       throw new ShaderCompilerError(`Failed to compile ${stage} shader`, {
         stage,
