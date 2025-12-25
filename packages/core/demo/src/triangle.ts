@@ -74,7 +74,7 @@ async function main(): Promise<void> {
     // 添加 LocalTransform 组件（相机位置）
     // 注意：相机距离三角形 3 个单位，确保在视锥体内
     const cameraLocalTransform = LocalTransform.fromData({
-      position: { x: 0, y: 0, z: 100 },
+      position: { x: 0, y: 0, z: 3 },
       rotation: { x: 0, y: 0, z: 0, w: 1 },
       scale: { x: 1, y: 1, z: 1 },
     });
@@ -85,8 +85,9 @@ async function main(): Promise<void> {
 
     // 添加 Camera 组件
     const cameraComp = new Camera();
-    // 远裁剪面设为 1000，确保三角形在视锥体内
-    cameraComp.setPerspective(Math.PI / 4, canvas.width / canvas.height, 0.1, 1000);
+    // 注意：setPerspective 的 FOV 参数单位是【度数】，不是弧度！
+    // 45 度 FOV 是常用值，远裁剪面设为 1000
+    cameraComp.setPerspective(45, canvas.width / canvas.height, 0.1, 1000);
     cameraComp.isMain = true;
     scene.world.addComponent(cameraEntity, Camera, cameraComp);
 
