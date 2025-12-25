@@ -43,6 +43,9 @@ describe('Renderer', () => {
       getMesh: jest.fn(),
       getMaterial: jest.fn(),
       getTexture: jest.fn(),
+      world: {
+        getComponent: jest.fn().mockReturnValue(null),
+      },
     } as unknown as IScene;
     mockCamera = 1 as EntityId;
 

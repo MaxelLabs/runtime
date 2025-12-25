@@ -39,9 +39,10 @@
 import type { IRHIDevice } from '@maxellabs/specification';
 import type { IScene } from '../rhi/IScene';
 import type { EntityId } from '../ecs';
-import type { IMaterialResource } from '@maxellabs/specification';
+import type { IMaterialResource, Matrix4Like } from '@maxellabs/specification';
 import { MaterialInstance } from './material-instance';
-import type { RenderContext } from './render-context';
+import type { Renderable, RenderContext } from './render-context';
+import { CameraMatrices } from '../systems/camera';
 
 /**
  * Renderer dispose callback
@@ -117,6 +118,9 @@ export abstract class Renderer {
   /** Frame counter */
   protected frameCount: number = 0;
 
+  /** Pending renderables from RenderSystem (NEW) */
+  protected pendingRenderables: Renderable[] = [];
+
   /**
    * Create Renderer
    * @param config Renderer configuration
@@ -187,6 +191,29 @@ export abstract class Renderer {
    * 1. Call onBeforeRender (application packages can extend)
    * 2. Call subclass's render() implementation
    * 3. Call onAfterRender (application packages can extend)
+   *
+   * ## 使用约定（重要）
+   * - **推荐使用方式**：通过 RenderSystem 调用，RenderSystem 会在调用前填充 renderables
+   * - **直接调用限制**：如果绕过 RenderSystem 直接调用此方法，pendingRenderables 将为空
+   * - **数据流**：RenderSystem.execute() → setRenderables() → renderScene()
+   *
+   * ## 状态检查
+   * - 如果 setRenderables() 未在本帧调用，pendingRenderables 将为空数组
+   * - 每次 renderScene() 结束后会清空 pendingRenderables，防止下一帧使用过时数据
+   *
+   * ## 职责边界
+   * - **Renderer**：负责 RHI 命令提交和渲染逻辑，不执行 ECS 查询
+   * - **RenderSystem**：负责 ECS 数据收集和场景管理，通过 setRenderables() 传递数据
+   *
+   * @example
+   * ```typescript
+   * // 推荐：通过 RenderSystem 使用
+   * scene.scheduler.addSystemInstances(renderSystem);
+   * scene.update(deltaTime); // RenderSystem 会调用 renderer.renderScene()
+   *
+   * // 不推荐：直接调用（renderables 将为空）
+   * renderer.renderScene(scene, cameraEntity); // ⚠️ pendingRenderables 为空！
+   * ```
    */
   renderScene(scene: IScene, camera: EntityId): void {
     // Build render context
@@ -200,6 +227,10 @@ export abstract class Renderer {
 
     // Post-render hook
     this.onAfterRender(ctx);
+
+    // 清空 pendingRenderables，防止下一帧使用过时数据
+    // 如果 RenderSystem 在下一帧不调用 setRenderables()，将使用空数组
+    this.pendingRenderables = [];
   }
 
   /**
@@ -267,6 +298,28 @@ export abstract class Renderer {
    */
   getFrameCount(): number {
     return this.frameCount;
+  }
+
+  /**
+   * Set renderables from RenderSystem (NEW)
+   * @param renderables Array of renderable objects collected by RenderSystem
+   *
+   * @remarks
+   * RenderSystem calls this method before renderScene() to provide
+   * the list of renderable objects. This data will be used in createRenderContext().
+   *
+   * ## 数据所有权说明
+   * - 此方法会进行**浅拷贝**，确保 Renderer 拥有独立的 renderables 数组
+   * - 原始数组在下一帧可能被 RenderSystem 清空或修改
+   * - Renderable 对象本身不拷贝（避免性能开销），但数组是独立的
+   *
+   * ## 调用时序
+   * - 必须在 `renderScene()` 前调用
+   * - 每帧调用一次，数据有效期仅当前帧
+   */
+  setRenderables(renderables: Renderable[]): void {
+    // 浅拷贝数组，避免 RenderSystem 后续修改影响渲染
+    this.pendingRenderables = [...renderables];
   }
 
   /**
@@ -356,15 +409,29 @@ export abstract class Renderer {
    */
   protected createRenderContext(scene: IScene, camera: EntityId): RenderContext {
     // Default implementation: create basic context
-    // Subclass can extend to add more data (shadow maps, post-processing textures, etc.)
+    // 优先使用 RenderSystem 填充的数据（如果可用）
+    // 否则使用默认空值，由 Renderer 自己实现数据收集
+
+    // 尝试获取 CameraMatrices（从 CameraSystem）
+    let viewMatrix: Matrix4Like | null = null;
+    let projectionMatrix: Matrix4Like | null = null;
+    let viewProjectionMatrix: Matrix4Like | null = null;
+
+    const cameraMatrices = scene.world.getComponent(camera, CameraMatrices);
+    if (cameraMatrices) {
+      viewMatrix = cameraMatrices.viewMatrix;
+      projectionMatrix = cameraMatrices.projectionMatrix;
+      viewProjectionMatrix = cameraMatrices.viewProjectionMatrix;
+    }
+
     return {
       scene,
       camera,
       device: this.device,
-      renderables: [], // Filled by RenderSystem
-      viewMatrix: null,
-      projectionMatrix: null,
-      viewProjectionMatrix: null,
+      renderables: this.pendingRenderables, // Use renderables from RenderSystem
+      viewMatrix,
+      projectionMatrix,
+      viewProjectionMatrix,
       time: performance.now() / 1000.0,
       frameCount: this.frameCount,
     };

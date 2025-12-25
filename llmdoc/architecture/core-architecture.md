@@ -5,7 +5,7 @@ title: "Core 包统一架构设计"
 description: "Core 包作为共享基础设施层，统合 Engine/Effects/Charts/Design 四大类应用的核心能力定义"
 tags: ["core", "architecture", "ecs", "rendering", "scene", "unified"]
 context_dependency: ["arch-system-overview"]
-related_ids: ["ref-rhi-interfaces", "arch-logic-systems", "ref-data-models"]
+related_ids: ["ref-rhi-interfaces", "arch-logic-systems", "ref-data-models", "architecture-shader-compiler"]
 ---
 
 # Core 包统一架构设计
@@ -135,7 +135,10 @@ packages/core/src/
 ├── renderer/                  # 🆕 渲染器抽象
 │   ├── renderer.ts            # 渲染器基类
 │   ├── render-context.ts      # 渲染上下文
-│   └── material-instance.ts   # 材质实例
+│   ├── material-instance.ts   # 材质实例
+│   ├── shader-compiler.ts     # 着色器编译器
+│   ├── shader-program.ts      # 着色器程序包装器
+│   └── shader-cache.ts        # 着色器缓存管理器
 │
 └── index.ts                   # 统一导出
 ```

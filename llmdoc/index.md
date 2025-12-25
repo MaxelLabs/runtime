@@ -89,6 +89,7 @@ related_ids: ["doc-standard", "constitution-core-runtime"]
 | **Component Architecture** | `architecture-components` | Complete component system (Transform, Visual, Camera, Light, Layout, Animation, Data) with fromData() patterns | **Component Reference** |
 | **Scene & Systems** | `architecture-scene-systems` | Scene class, ComponentRegistry, SystemScheduler, execution flow (CameraSystem, RenderSystem) | **System Design** |
 | **Resource Management** | `architecture-resources` | ResourceManager, lifecycle, reference counting, loader system | **Resource Reference** |
+| **Shader Compiler** | `architecture-shader-compiler` | ShaderCompiler 编译、缓存、生命周期管理，与 Renderer/MaterialInstance 集成 | **Rendering** |
 | **Logic Systems** | `architecture-logic-systems` | System execution stages (FrameStart/Update/PostUpdate), dependencies, TransformSystem/LayoutSystem/AnimationSystem flow | **System Scheduling** |
 
 **Key Architecture Patterns:**
@@ -140,6 +141,7 @@ llmdoc/
 │   ├── components.md                 ← Component system reference
 │   ├── scene-systems.md              ← Scene & system architecture
 │   ├── resources.md                  ← Resource management
+│   ├── shader-compiler.md            ← Shader compilation & caching
 │   └── logic-systems.md              ← System execution stages & dependencies
 │
 ├── agent/                            ← Strategic Memory
@@ -230,6 +232,7 @@ Application Packages (Usage)
 | **Load scene from JSON** | `architecture-scene-systems` | `ref-specification` |
 | **Manage GPU resources** | `architecture-resources` | `architecture-scene-systems` |
 | **Create custom loaders** | `architecture-resources` | `ref-specification` |
+| **Implement shader compilation** | `architecture-shader-compiler` | `architecture-scene-systems`, `ref-specification` |
 | **Integrate Scene + Resources** | `strategy-scene-resource-integration` | `architecture-scene-systems`, `architecture-resources` |
 
 ---

@@ -184,6 +184,17 @@ export class Camera extends Component implements ICameraData {
 
   /**
    * 设置为透视投影
+   *
+   * @param fov 垂直视场角，单位：**度数**（不是弧度！）。常用值：45-90
+   * @param aspect 宽高比 (width / height)
+   * @param near 近裁剪面距离
+   * @param far 远裁剪面距离
+   *
+   * @example
+   * ```typescript
+   * // 45 度 FOV，16:9 宽高比
+   * camera.setPerspective(45, 16/9, 0.1, 1000);
+   * ```
    */
   setPerspective(fov: number, aspect: number, near: number, far: number): this {
     this.projectionType = 'perspective' as ProjectionType;

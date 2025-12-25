@@ -26,11 +26,11 @@
  * @example
  * ```typescript
  * class PBRRenderSystem extends RenderSystem {
- *   onBeforeRender(ctx: RenderContext): void {
+ *   onBeforeRender(ctx: SystemRenderContext): void {
  *     // 阴影贴图渲染
  *   }
  *
- *   onRender(ctx: RenderContext, renderables: Renderable[]): void {
+ *   onRender(ctx: SystemRenderContext, renderables: Renderable[]): void {
  *     // PBR 渲染
  *   }
  * }
@@ -45,49 +45,29 @@ import { WorldTransform } from '../../components/transform';
 import { Camera } from '../../components/camera';
 import { CameraMatrices } from '../camera';
 import type { IRHIDevice, IRHICommandEncoder } from '@maxellabs/specification';
-import type { Matrix4Like } from '@maxellabs/specification';
 import type { Renderer } from '../../renderer';
 import type { IScene } from '../../rhi/IScene';
+import type { Renderable } from '../../renderer/render-context';
 
-// ============ 渲染数据结构 ============
-// Note: Renderable and RenderContext types are re-exported from renderer module
-// to maintain backward compatibility. The canonical definitions are in renderer/render-context.ts
-
-/**
- * Renderable - 可渲染对象 (System 版本)
- * 包含渲染所需的所有数据
- *
- * @remarks
- * 此接口与 renderer/render-context.ts 中的 Renderable 保持兼容。
- * - meshRef/materialRef 是 meshId/materialId 的别名
- * - 添加了 visible 字段以支持可见性过滤
- */
-export interface Renderable {
-  /** 实体 ID */
-  entity: EntityId;
-  /** 网格引用 (别名: meshId) */
-  meshRef: string;
-  /** 材质引用 (别名: materialId) */
-  materialRef: string;
-  /** 世界变换矩阵 */
-  worldMatrix: Matrix4Like;
-  /** 渲染层 */
-  layer: number;
-  /** 排序键 */
-  sortKey: number;
-  /** 可见性标志 */
-  visible: boolean;
-}
+// ============ System 特有的渲染上下文 ============
 
 /**
- * RenderContext - 渲染上下文 (System 版本)
+ * SystemRenderContext - System 渲染上下文
  * 传递给渲染钩子的上下文信息
  *
  * @remarks
- * 此接口扩展了 renderer/render-context.ts 中的 RenderContext，
- * 添加了 System 特有的字段（systemContext, encoder）。
+ * 此接口是 RenderSystem 内部使用的上下文，包含 System 特有的字段。
+ * 与 renderer/render-context.ts 中的 RenderContext 不同：
+ * - 添加了 systemContext（ECS 上下文）
+ * - 添加了 encoder（命令编码器）
+ * - 使用 CameraMatrices 组件而非独立的矩阵字段
+ *
+ * ## 设计决策
+ * - RenderSystem 使用 SystemRenderContext（包含 ECS 上下文）
+ * - Renderer 使用 RenderContext（纯渲染数据，无 ECS 依赖）
+ * - 两者通过 Renderable 类型共享可渲染对象数据
  */
-export interface RenderContext {
+export interface SystemRenderContext {
   /** System 上下文 */
   systemContext: SystemContext;
   /** Scene 引用 (用于资源访问) */
@@ -111,7 +91,7 @@ export interface RenderContext {
 /**
  * RenderHook - 渲染钩子
  */
-export type RenderHook = (ctx: RenderContext) => void;
+export type RenderHook = (ctx: SystemRenderContext) => void;
 
 // ============ RenderSystem 实现 ============
 
@@ -125,13 +105,22 @@ export class RenderSystem implements ISystem {
     description: '基础渲染系统，收集可见对象并执行渲染',
     stage: SystemStage.Render,
     priority: 0,
-    after: ['CameraSystem'],
+    // 注意：无需声明 after: ['CameraSystem']
+    // 原因：RenderSystem 在 Render 阶段（stage=5），CameraSystem 在 PostUpdate 阶段（stage=3）
+    // SystemScheduler 保证不同阶段按固定顺序执行：
+    //   1. FrameStart (0)
+    //   2. PreUpdate (1)
+    //   3. Update (2)
+    //   4. PostUpdate (3) ← CameraSystem 在此阶段计算相机矩阵
+    //   5. PreRender (4)
+    //   6. Render (5) ← RenderSystem 在此阶段使用 CameraSystem 的输出
+    //   7. FrameEnd (6)
   };
 
   /** RHI 设备 */
   protected device: IRHIDevice | null = null;
 
-  /** Renderer 实例 (NEW) */
+  /** Renderer 实例 */
   protected renderer?: Renderer;
 
   /** Scene 引用 */
@@ -218,7 +207,7 @@ export class RenderSystem implements ISystem {
     const mainCamera = this.findMainCamera(ctx);
 
     // 5. 创建渲染上下文
-    const renderCtx: RenderContext = {
+    const renderCtx: SystemRenderContext = {
       systemContext: ctx,
       scene: this.scene,
       device: this.device,
@@ -237,6 +226,10 @@ export class RenderSystem implements ISystem {
       for (const hook of this.beforeRenderHooks) {
         hook(renderCtx);
       }
+
+      // 将 RenderSystem 收集的 renderables 传递给 Renderer
+      // 类型已统一，无需映射
+      this.renderer.setRenderables(this.renderables);
 
       // 使用 Renderer 渲染
       this.renderer.beginFrame();
@@ -302,8 +295,8 @@ export class RenderSystem implements ISystem {
       // 创建 Renderable
       const renderable: Renderable = {
         entity,
-        meshRef: meshRef.assetId,
-        materialRef: materialRef.assetId,
+        meshId: meshRef.assetId,
+        materialId: materialRef.assetId,
         worldMatrix: worldTransform.matrix ?? {
           m00: 1,
           m01: 0,
@@ -377,7 +370,7 @@ export class RenderSystem implements ISystem {
   /**
    * 渲染前回调（子类可重写）
    */
-  protected onBeforeRender(_ctx: RenderContext): void {
+  protected onBeforeRender(_ctx: SystemRenderContext): void {
     // 子类实现
   }
 
@@ -386,7 +379,7 @@ export class RenderSystem implements ISystem {
    * @remarks
    * 默认实现不做任何渲染，由具体应用包实现渲染逻辑
    */
-  protected onRender(_ctx: RenderContext, _renderables: Renderable[]): void {
+  protected onRender(_ctx: SystemRenderContext, _renderables: Renderable[]): void {
     // 子类实现具体渲染逻辑
     // 例如：
     // - Engine: PBR 渲染
@@ -398,7 +391,7 @@ export class RenderSystem implements ISystem {
   /**
    * 渲染后回调（子类可重写）
    */
-  protected onAfterRender(_ctx: RenderContext): void {
+  protected onAfterRender(_ctx: SystemRenderContext): void {
     // 子类实现
   }
 

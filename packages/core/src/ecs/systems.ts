@@ -83,6 +83,17 @@ export interface SystemContext {
 export type SystemExecuteFn = (ctx: SystemContext, query?: Query) => void;
 
 /**
+ * System 初始化函数
+ * @returns 可选返回 Query 实例，将被缓存用于后续执行
+ */
+export type SystemInitializeFn = (ctx: SystemContext) => Query | undefined;
+
+/**
+ * System 销毁函数
+ */
+export type SystemDisposeFn = (ctx: SystemContext) => void;
+
+/**
  * System 定义
  */
 export interface SystemDef {
@@ -90,10 +101,14 @@ export interface SystemDef {
   name: string;
   /** 执行阶段 */
   stage: SystemStage;
-  /** 查询过滤器（可选） */
+  /** 查询过滤器（可选，与 initialize 二选一） */
   query?: QueryFilter;
+  /** 初始化函数（可选，用于创建 Query 或其他初始化逻辑） */
+  initialize?: SystemInitializeFn;
   /** 执行函数 */
   execute: SystemExecuteFn;
+  /** 销毁函数（可选） */
+  dispose?: SystemDisposeFn;
   /** 是否启用 */
   enabled?: boolean;
   /** 执行优先级（同阶段内，数字越小越先执行） */
@@ -111,6 +126,8 @@ interface RegisteredSystem {
   def: SystemDef;
   query?: Query;
   enabled: boolean;
+  /** 是否已初始化 */
+  initialized: boolean;
 }
 
 /**
@@ -175,6 +192,9 @@ export class SystemScheduler {
   private errorCallback?: SystemErrorCallback;
   private errorHandlingStrategy: ErrorHandlingStrategy = ErrorHandlingStrategy.Continue;
 
+  // 循环依赖处理策略
+  private throwOnCircularDependency: boolean = false;
+
   // 缓存的内部查询（避免每帧创建新 Query）
   private cachedQueries: Map<string, Query> = new Map();
 
@@ -208,6 +228,9 @@ export class SystemScheduler {
 
   /**
    * 添加 System
+   * @remarks
+   * 如果 SystemDef 提供了 `initialize` 函数，将在首次执行时自动调用。
+   * 如果只提供了 `query`，将立即创建 Query。
    */
   addSystem(def: SystemDef): this {
     if (this.systems.has(def.name)) {
@@ -215,16 +238,19 @@ export class SystemScheduler {
       this.removeSystem(def.name);
     }
 
-    // 创建查询（如果有）
+    // 如果没有 initialize 函数但有 query，立即创建查询
     let query: Query | undefined;
-    if (def.query) {
+    let initialized = false;
+    if (!def.initialize && def.query) {
       query = this.world.query(def.query);
+      initialized = true; // 没有 initialize 函数，视为已初始化
     }
 
     const registered: RegisteredSystem = {
       def,
       query,
       enabled: def.enabled ?? true,
+      initialized,
     };
 
     this.systems.set(def.name, registered);
@@ -245,14 +271,114 @@ export class SystemScheduler {
   }
 
   /**
+   * 从 ISystem 实例添加 System（便捷方法）
+   * @param system ISystem 实例
+   * @returns this（支持链式调用）
+   *
+   * @remarks
+   * 此方法简化了从 ISystem 类实例注册 System 的流程。
+   * 自动从 system.metadata 提取配置，并绑定 initialize/execute/dispose 方法。
+   *
+   * @example
+   * ```typescript
+   * const transformSystem = new TransformSystem();
+   * const cameraSystem = new CameraSystem();
+   * const renderSystem = new RenderSystem();
+   *
+   * // 便捷注册
+   * scene.scheduler
+   *   .addSystemInstance(transformSystem)
+   *   .addSystemInstance(cameraSystem)
+   *   .addSystemInstance(renderSystem);
+   *
+   * // 等价于繁琐的手动注册：
+   * // scene.scheduler.addSystem({
+   * //   name: transformSystem.metadata.name,
+   * //   stage: transformSystem.metadata.stage,
+   * //   priority: transformSystem.metadata.priority,
+   * //   after: transformSystem.metadata.after ? [...transformSystem.metadata.after] : undefined,
+   * //   initialize: (ctx) => transformSystem.initialize?.(ctx),
+   * //   execute: (ctx, query) => transformSystem.execute(ctx, query),
+   * //   dispose: (ctx) => transformSystem.dispose?.(ctx),
+   * // });
+   * ```
+   */
+  addSystemInstance(system: {
+    metadata: {
+      name: string;
+      stage: SystemStage;
+      priority?: number;
+      after?: readonly string[];
+    };
+    initialize?: (ctx: SystemContext) => Query | undefined;
+    execute: (ctx: SystemContext, query?: Query) => void;
+    dispose?: (ctx: SystemContext) => void;
+  }): this {
+    const def: SystemDef = {
+      name: system.metadata.name,
+      stage: system.metadata.stage,
+      priority: system.metadata.priority,
+      after: system.metadata.after ? [...system.metadata.after] : undefined,
+      initialize: system.initialize ? (ctx) => system.initialize!(ctx) : undefined,
+      execute: (ctx, query) => system.execute(ctx, query),
+      dispose: system.dispose ? (ctx) => system.dispose!(ctx) : undefined,
+    };
+
+    return this.addSystem(def);
+  }
+
+  /**
+   * 批量从 ISystem 实例添加 System（便捷方法）
+   * @param systems ISystem 实例数组
+   * @returns this（支持链式调用）
+   *
+   * @example
+   * ```typescript
+   * scene.scheduler.addSystemInstances(
+   *   new TransformSystem(),
+   *   new CameraSystem(),
+   *   new RenderSystem()
+   * );
+   * ```
+   */
+  addSystemInstances(
+    ...systems: Array<{
+      metadata: {
+        name: string;
+        stage: SystemStage;
+        priority?: number;
+        after?: readonly string[];
+      };
+      initialize?: (ctx: SystemContext) => Query | undefined;
+      execute: (ctx: SystemContext, query?: Query) => void;
+      dispose?: (ctx: SystemContext) => void;
+    }>
+  ): this {
+    for (const system of systems) {
+      this.addSystemInstance(system);
+    }
+    return this;
+  }
+
+  /**
    * 移除 System
    * @remarks
-   * 同时清理关联的 Query 以避免内存泄漏
+   * 同时清理关联的 Query 以避免内存泄漏，并调用 dispose 函数（如果有）
    */
   removeSystem(name: string): boolean {
     const system = this.systems.get(name);
     if (!system) {
       return false;
+    }
+
+    // 调用 dispose 函数（如果有）
+    if (system.def.dispose && system.initialized) {
+      const ctx = this.createSystemContext();
+      try {
+        system.def.dispose(ctx);
+      } catch (error) {
+        console.error(`[SystemScheduler] Error disposing system "${name}":`, error);
+      }
     }
 
     // 清理关联的 Query
@@ -395,6 +521,11 @@ export class SystemScheduler {
         continue;
       }
 
+      // 延迟初始化：首次执行时调用 initialize
+      if (!system.initialized) {
+        this.initializeSystem(system, ctx);
+      }
+
       // 执行
       try {
         system.def.execute(ctx, system.query);
@@ -402,6 +533,45 @@ export class SystemScheduler {
         this.handleSystemError(system, stage, error);
       }
     }
+  }
+
+  /**
+   * 初始化单个 System
+   * @param system 要初始化的 System
+   * @param ctx System 上下文
+   */
+  private initializeSystem(system: RegisteredSystem, ctx: SystemContext): void {
+    try {
+      if (system.def.initialize) {
+        // 调用 initialize 函数
+        const query = system.def.initialize(ctx);
+        if (query) {
+          system.query = query;
+        }
+      } else if (system.def.query && !system.query) {
+        // 如果有 query 定义但还没创建，现在创建
+        system.query = this.world.query(system.def.query);
+      }
+      system.initialized = true;
+    } catch (error) {
+      console.error(`[SystemScheduler] Error initializing system "${system.def.name}":`, error);
+      // 标记为已初始化以避免重复尝试
+      system.initialized = true;
+    }
+  }
+
+  /**
+   * 创建 System 上下文
+   * @returns SystemContext 实例
+   */
+  private createSystemContext(): SystemContext {
+    return {
+      world: this.world,
+      deltaTime: this.deltaTime,
+      totalTime: this.totalTime,
+      frameCount: this.frameCount,
+      getResource: <T>(type: new () => T) => this.world.getResource(type),
+    };
   }
 
   /**
@@ -512,11 +682,23 @@ export class SystemScheduler {
       // 拓扑排序
       const result = dag.topologicalSort();
       if (!result.success) {
-        console.error(`SystemScheduler: ${result.error}`);
-        console.error(`  Stage: ${SystemStage[stage]}`);
+        // 循环依赖检测 - 根据配置抛出错误或警告
+        const cycleInfo = result.cycle ? ` Cycle: ${result.cycle.join(' → ')}` : '';
+        const errorMessage = `[SystemScheduler] Circular dependency detected in stage "${SystemStage[stage]}".${cycleInfo}`;
+
+        console.error(errorMessage);
         console.error(`  Affected systems: ${systems.map((s) => s.def.name).join(', ')}`);
-        // 循环依赖时保持原顺序
-        continue;
+        console.error(`  Fix: Remove circular dependencies by adjusting 'after' declarations.`);
+
+        if (this.throwOnCircularDependency) {
+          // 抛出错误，阻止应用继续运行
+          throw new Error(errorMessage);
+        } else {
+          // 循环依赖时保持原顺序（回退到 priority 排序结果）
+          console.error(`  Action: Systems in this stage will execute in registration order (not optimized).`);
+          console.error(`  Hint: Set throwOnCircularDependency=true in development to enforce fixing this issue.`);
+          continue;
+        }
       }
 
       // 应用排序结果
@@ -658,6 +840,34 @@ export class SystemScheduler {
    */
   getErrorHandlingStrategy(): ErrorHandlingStrategy {
     return this.errorHandlingStrategy;
+  }
+
+  /**
+   * 设置循环依赖处理策略
+   * @param throwOnError 是否在检测到循环依赖时抛出错误
+   *
+   * @remarks
+   * - `false`（默认）：检测到循环依赖时打印警告并回退到 priority 排序
+   * - `true`：检测到循环依赖时抛出错误，阻止应用继续运行
+   *
+   * ## 使用场景
+   * - 开发环境：建议设置为 `true`，强制修复循环依赖
+   * - 生产环境：建议设置为 `false`，允许应用继续运行（但应监控警告日志）
+   *
+   * @example
+   * ```typescript
+   * scheduler.setThrowOnCircularDependency(true); // 开发模式
+   * ```
+   */
+  setThrowOnCircularDependency(throwOnError: boolean): void {
+    this.throwOnCircularDependency = throwOnError;
+  }
+
+  /**
+   * 获取循环依赖处理策略
+   */
+  getThrowOnCircularDependency(): boolean {
+    return this.throwOnCircularDependency;
   }
 
   /**

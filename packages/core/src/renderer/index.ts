@@ -58,8 +58,12 @@
 // Core classes
 export { Renderer } from './renderer';
 export { MaterialInstance } from './material-instance';
+export { ShaderCompiler, ShaderCompilerError } from './shader-compiler';
+export { ShaderProgram } from './shader-program';
+export { ShaderCache } from './shader-cache';
 
 // Types and interfaces
 export type { RendererConfig, RendererDisposeCallback } from './renderer';
 export type { RenderContext, Renderable } from './render-context';
 export { createEmptyRenderContext } from './render-context';
+export type { ShaderCompilerConfig } from './shader-compiler';
