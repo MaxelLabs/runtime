@@ -66,9 +66,6 @@ export interface BoundingBoxOptions {
 const DEFAULT_MIN: Vector3Like = { x: Infinity, y: Infinity, z: Infinity };
 const DEFAULT_MAX: Vector3Like = { x: -Infinity, y: -Infinity, z: -Infinity };
 
-/** 临时矩阵（用于避免频繁创建对象） */
-const _tempMatrix = new Matrix4();
-
 // ========================================
 // Main Implementation
 // ========================================
@@ -107,6 +104,9 @@ export class BoundingBox {
   /** 配置选项 */
   private _options: BoundingBoxOptions;
 
+  /** 临时矩阵（实例级别，避免并发问题） */
+  private _tempMatrix: Matrix4;
+
   /**
    * 构造函数
    *
@@ -117,6 +117,7 @@ export class BoundingBox {
     this._localBox = new Box3();
     this._worldBox = new Box3();
     this._boundingSphere = new Sphere(new Vector3(), 0);
+    this._tempMatrix = new Matrix4();
     this._options = { autoUpdateWorld: true, ...options };
 
     if (data) {
@@ -304,8 +305,8 @@ export class BoundingBox {
 
     // 应用变换矩阵
     if (!this._localBox.isEmpty()) {
-      // 使用临时矩阵避免频繁创建对象
-      _tempMatrix.set(
+      // 使用实例级临时矩阵避免频繁创建对象，同时保证线程安全
+      this._tempMatrix.set(
         worldMatrix.m00,
         worldMatrix.m01,
         worldMatrix.m02,
@@ -323,7 +324,7 @@ export class BoundingBox {
         worldMatrix.m32,
         worldMatrix.m33
       );
-      this._worldBox.applyMatrix4(_tempMatrix);
+      this._worldBox.applyMatrix4(this._tempMatrix);
     }
 
     this._localDirty = false;
@@ -551,6 +552,7 @@ export class BoundingBox {
     cloned._localDirty = this._localDirty;
     cloned._worldDirty = this._worldDirty;
     cloned._sphereDirty = this._sphereDirty;
+    cloned._tempMatrix = new Matrix4();
     cloned._options = { ...this._options };
     return cloned;
   }

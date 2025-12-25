@@ -408,7 +408,7 @@ export abstract class Renderer {
    * ```
    */
   protected createRenderContext(scene: IScene, camera: EntityId): RenderContext {
-    // Default implementation: create basic context
+    // 默认 implementation: create basic context
     // 优先使用 RenderSystem 填充的数据（如果可用）
     // 否则使用默认空值，由 Renderer 自己实现数据收集
 
