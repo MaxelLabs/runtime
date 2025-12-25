@@ -58,6 +58,7 @@ import type {
 } from '@maxellabs/specification';
 import type { IScene, SceneOptions, SceneEventType, SceneEventListener } from '../rhi/IScene';
 import { Parent, Children, Name, Tag, Disabled } from '../components';
+import { Camera } from '../components/camera';
 import { getSceneComponentRegistry } from './component-registry';
 import { ResourceManager } from '../resources';
 import { EventDispatcher } from '../events/event-dispatcher';
@@ -534,7 +535,25 @@ export class Scene implements IScene {
       return;
     }
 
-    // RenderSystem handles actual rendering in scheduler
+    // If renderer is set but no RenderSystem, call renderer directly
+    // This allows simple demos to work without ECS systems
+    if (this._renderer && !this._renderSystem) {
+      // Find main camera entity
+      const cameraQuery = this.world.query({ all: [Camera] });
+      let mainCamera: EntityId | null = null;
+
+      cameraQuery.forEach((entity, [camera]) => {
+        if (camera.isMain) {
+          mainCamera = entity;
+        }
+      });
+
+      // Fall back to root if no camera found
+      const cameraEntity = mainCamera ?? this.getRoot();
+      this._renderer.renderScene(this, cameraEntity);
+    }
+
+    // RenderSystem handles actual rendering in scheduler (if present)
   }
 
   clear(): this {

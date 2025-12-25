@@ -39,9 +39,10 @@
 import type { IRHIDevice } from '@maxellabs/specification';
 import type { IScene } from '../rhi/IScene';
 import type { EntityId } from '../ecs';
-import type { IMaterialResource } from '@maxellabs/specification';
+import type { IMaterialResource, Matrix4Like } from '@maxellabs/specification';
 import { MaterialInstance } from './material-instance';
-import type { RenderContext } from './render-context';
+import type { Renderable, RenderContext } from './render-context';
+import { CameraMatrices } from '../systems/camera';
 
 /**
  * Renderer dispose callback
@@ -116,6 +117,9 @@ export abstract class Renderer {
 
   /** Frame counter */
   protected frameCount: number = 0;
+
+  /** Pending renderables from RenderSystem (NEW) */
+  protected pendingRenderables: Renderable[] = [];
 
   /**
    * Create Renderer
@@ -270,6 +274,18 @@ export abstract class Renderer {
   }
 
   /**
+   * Set renderables from RenderSystem (NEW)
+   * @param renderables Array of renderable objects collected by RenderSystem
+   *
+   * @remarks
+   * RenderSystem calls this method before renderScene() to provide
+   * the list of renderable objects. This data will be used in createRenderContext().
+   */
+  setRenderables(renderables: Renderable[]): void {
+    this.pendingRenderables = renderables;
+  }
+
+  /**
    * Add dispose callback
    * @param callback Callback to be called when renderer is disposed
    *
@@ -356,15 +372,29 @@ export abstract class Renderer {
    */
   protected createRenderContext(scene: IScene, camera: EntityId): RenderContext {
     // Default implementation: create basic context
-    // Subclass can extend to add more data (shadow maps, post-processing textures, etc.)
+    // 优先使用 RenderSystem 填充的数据（如果可用）
+    // 否则使用默认空值，由 Renderer 自己实现数据收集
+
+    // 尝试获取 CameraMatrices（从 CameraSystem）
+    let viewMatrix: Matrix4Like | null = null;
+    let projectionMatrix: Matrix4Like | null = null;
+    let viewProjectionMatrix: Matrix4Like | null = null;
+
+    const cameraMatrices = scene.world.getComponent(camera, CameraMatrices);
+    if (cameraMatrices) {
+      viewMatrix = cameraMatrices.viewMatrix;
+      projectionMatrix = cameraMatrices.projectionMatrix;
+      viewProjectionMatrix = cameraMatrices.viewProjectionMatrix;
+    }
+
     return {
       scene,
       camera,
       device: this.device,
-      renderables: [], // Filled by RenderSystem
-      viewMatrix: null,
-      projectionMatrix: null,
-      viewProjectionMatrix: null,
+      renderables: this.pendingRenderables, // Use renderables from RenderSystem
+      viewMatrix,
+      projectionMatrix,
+      viewProjectionMatrix,
       time: performance.now() / 1000.0,
       frameCount: this.frameCount,
     };

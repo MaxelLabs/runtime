@@ -125,7 +125,6 @@ export class RenderSystem implements ISystem {
     description: '基础渲染系统，收集可见对象并执行渲染',
     stage: SystemStage.Render,
     priority: 0,
-    after: ['CameraSystem'],
   };
 
   /** RHI 设备 */
@@ -237,6 +236,18 @@ export class RenderSystem implements ISystem {
       for (const hook of this.beforeRenderHooks) {
         hook(renderCtx);
       }
+
+      // 将 RenderSystem 收集的 renderables 传递给 Renderer
+      const rendererRenderables = this.renderables.map((r) => ({
+        entity: r.entity,
+        meshId: r.meshRef,
+        materialId: r.materialRef,
+        worldMatrix: r.worldMatrix,
+        layer: r.layer,
+        sortKey: r.sortKey,
+        visible: r.visible,
+      }));
+      this.renderer.setRenderables(rendererRenderables);
 
       // 使用 Renderer 渲染
       this.renderer.beginFrame();
