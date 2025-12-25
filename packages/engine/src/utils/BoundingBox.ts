@@ -66,6 +66,9 @@ export interface BoundingBoxOptions {
 const DEFAULT_MIN: Vector3Like = { x: Infinity, y: Infinity, z: Infinity };
 const DEFAULT_MAX: Vector3Like = { x: -Infinity, y: -Infinity, z: -Infinity };
 
+/** 临时矩阵（用于避免频繁创建对象） */
+const _tempMatrix = new Matrix4();
+
 // ========================================
 // Main Implementation
 // ========================================
@@ -301,8 +304,8 @@ export class BoundingBox {
 
     // 应用变换矩阵
     if (!this._localBox.isEmpty()) {
-      const matrix = new Matrix4();
-      matrix.set(
+      // 使用临时矩阵避免频繁创建对象
+      _tempMatrix.set(
         worldMatrix.m00,
         worldMatrix.m01,
         worldMatrix.m02,
@@ -320,9 +323,10 @@ export class BoundingBox {
         worldMatrix.m32,
         worldMatrix.m33
       );
-      this._worldBox.applyMatrix4(matrix);
+      this._worldBox.applyMatrix4(_tempMatrix);
     }
 
+    this._localDirty = false;
     this._worldDirty = false;
     this._sphereDirty = true;
     return this;
@@ -654,9 +658,11 @@ export class BoundingBox {
 
   /**
    * 标记脏状态
+   *
+   * 当本地包围盒数据改变时调用，标记世界包围盒需要重新计算。
    */
   private _markDirty(): void {
-    this._localDirty = false;
+    this._localDirty = true;
     this._worldDirty = true;
     this._sphereDirty = true;
   }
