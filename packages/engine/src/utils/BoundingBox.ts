@@ -26,8 +26,8 @@
  * @packageDocumentation
  */
 
+import type { MSpec } from '@maxellabs/core';
 import { MMath } from '@maxellabs/core';
-import type { Vector3Like, Matrix4Like } from '@maxellabs/specification';
 
 // ========================================
 // Constants
@@ -46,9 +46,9 @@ const EPSILON = 1e-6;
  */
 export interface BoundingBoxData {
   /** 最小角点 */
-  min?: Vector3Like;
+  min?: MSpec.Vector3Like;
   /** 最大角点 */
-  max?: Vector3Like;
+  max?: MSpec.Vector3Like;
 }
 
 /**
@@ -63,8 +63,8 @@ export interface BoundingBoxOptions {
 // Default Values
 // ========================================
 
-const DEFAULT_MIN: Vector3Like = { x: Infinity, y: Infinity, z: Infinity };
-const DEFAULT_MAX: Vector3Like = { x: -Infinity, y: -Infinity, z: -Infinity };
+const DEFAULT_MIN: MSpec.Vector3Like = { x: Infinity, y: Infinity, z: Infinity };
+const DEFAULT_MAX: MSpec.Vector3Like = { x: -Infinity, y: -Infinity, z: -Infinity };
 
 // ========================================
 // Main Implementation
@@ -171,7 +171,7 @@ export class BoundingBox {
    * @param points - 三维点集合
    * @returns 新的包围盒实例
    */
-  static fromPoints(points: Vector3Like[]): BoundingBox {
+  static fromPoints(points: MSpec.Vector3Like[]): BoundingBox {
     const bbox = new BoundingBox();
     bbox.setFromPoints(points);
     return bbox;
@@ -192,7 +192,7 @@ export class BoundingBox {
    * );
    * ```
    */
-  static fromCenterAndSize(center: Vector3Like, size: Vector3Like): BoundingBox {
+  static fromCenterAndSize(center: MSpec.Vector3Like, size: MSpec.Vector3Like): BoundingBox {
     const bbox = new BoundingBox();
     bbox.setFromCenterAndSize(center, size);
     return bbox;
@@ -237,7 +237,7 @@ export class BoundingBox {
    * @param points - 三维点集合
    * @returns this
    */
-  setFromPoints(points: Vector3Like[]): this {
+  setFromPoints(points: MSpec.Vector3Like[]): this {
     this._localBox.makeEmpty();
 
     for (const point of points) {
@@ -255,7 +255,7 @@ export class BoundingBox {
    * @param size - 尺寸
    * @returns this
    */
-  setFromCenterAndSize(center: Vector3Like, size: Vector3Like): this {
+  setFromCenterAndSize(center: MSpec.Vector3Like, size: MSpec.Vector3Like): this {
     const centerVec = new MMath.Vector3(center.x, center.y, center.z);
     const sizeVec = new MMath.Vector3(size.x, size.y, size.z);
     this._localBox.setFromCenterAndSize(centerVec, sizeVec);
@@ -270,7 +270,7 @@ export class BoundingBox {
    * @param max - 最大角点
    * @returns this
    */
-  set(min: Vector3Like, max: Vector3Like): this {
+  set(min: MSpec.Vector3Like, max: MSpec.Vector3Like): this {
     this._localBox.min.set(min.x, min.y, min.z);
     this._localBox.max.set(max.x, max.y, max.z);
     this._markDirty();
@@ -295,7 +295,7 @@ export class BoundingBox {
    * bbox.updateWorldBounds(worldMatrix);
    * ```
    */
-  updateWorldBounds(worldMatrix: Matrix4Like): this {
+  updateWorldBounds(worldMatrix: MSpec.Matrix4Like): this {
     if (!this._worldDirty && !this._localDirty) {
       return this;
     }
@@ -391,7 +391,7 @@ export class BoundingBox {
    * @param useWorldSpace - 是否使用世界空间
    * @returns 是否包含
    */
-  containsPoint(point: Vector3Like, useWorldSpace: boolean = true): boolean {
+  containsPoint(point: MSpec.Vector3Like, useWorldSpace: boolean = true): boolean {
     const thisBox = useWorldSpace ? this._worldBox : this._localBox;
     return thisBox.containsPoint(new MMath.Vector3(point.x, point.y, point.z));
   }
@@ -442,7 +442,7 @@ export class BoundingBox {
    * @param useWorldSpace - 是否使用世界空间
    * @returns 距离（点在盒内时返回 0）
    */
-  distanceToPoint(point: Vector3Like, useWorldSpace: boolean = true): number {
+  distanceToPoint(point: MSpec.Vector3Like, useWorldSpace: boolean = true): number {
     const box = useWorldSpace ? this._worldBox : this._localBox;
     return box.distanceToPoint(new MMath.Vector3(point.x, point.y, point.z));
   }
@@ -473,7 +473,7 @@ export class BoundingBox {
    * @param point - 三维点
    * @returns this
    */
-  expandByPoint(point: Vector3Like): this {
+  expandByPoint(point: MSpec.Vector3Like): this {
     this._localBox.expandByPoint(new MMath.Vector3(point.x, point.y, point.z));
     this._markDirty();
     return this;

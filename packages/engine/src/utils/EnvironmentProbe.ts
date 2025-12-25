@@ -28,8 +28,8 @@
  * @packageDocumentation
  */
 
+import type { MSpec } from '@maxellabs/core';
 import { MMath } from '@maxellabs/core';
-import type { Vector3Like, Box3Like } from '@maxellabs/specification';
 
 // ========================================
 // Constants
@@ -99,7 +99,7 @@ export enum ProbeState {
  */
 export interface EnvironmentProbeConfig {
   /** 探针位置 */
-  position?: Vector3Like;
+  position?: MSpec.Vector3Like;
 
   /** 探针类型 */
   type?: ProbeType;
@@ -114,7 +114,7 @@ export interface EnvironmentProbeConfig {
   range?: number;
 
   /** 影响区域包围盒（用于盒投影） */
-  bounds?: Box3Like;
+  bounds?: MSpec.Box3Like;
 
   /** 是否启用盒投影（用于室内场景） */
   boxProjection?: boolean;
@@ -155,14 +155,14 @@ export interface EnvironmentProbeData extends EnvironmentProbeConfig {
  */
 export interface SphericalHarmonics {
   /** 系数数组 (9 个 RGB 向量) */
-  coefficients: Vector3Like[];
+  coefficients: MSpec.Vector3Like[];
 }
 
 // ========================================
 // Default Values
 // ========================================
 
-const DEFAULT_POSITION: Vector3Like = { x: 0, y: 0, z: 0 };
+const DEFAULT_POSITION: MSpec.Vector3Like = { x: 0, y: 0, z: 0 };
 
 const DEFAULT_CONFIG: Required<EnvironmentProbeConfig> = {
   position: DEFAULT_POSITION,
@@ -336,8 +336,8 @@ export class EnvironmentProbe {
    * @returns 新的探针实例
    */
   static createSkyProbe(
-    skyColor: Vector3Like = { x: 0.5, y: 0.7, z: 1.0 },
-    groundColor: Vector3Like = { x: 0.2, y: 0.2, z: 0.2 }
+    skyColor: MSpec.Vector3Like = { x: 0.5, y: 0.7, z: 1.0 },
+    groundColor: MSpec.Vector3Like = { x: 0.2, y: 0.2, z: 0.2 }
   ): EnvironmentProbe {
     const probe = new EnvironmentProbe({
       type: ProbeType.Irradiance,
@@ -360,7 +360,7 @@ export class EnvironmentProbe {
    * @param position - 新位置
    * @returns this
    */
-  setPosition(position: Vector3Like): this {
+  setPosition(position: MSpec.Vector3Like): this {
     this._position.set(position.x, position.y, position.z);
     this._dirty = true;
     return this;
@@ -384,7 +384,7 @@ export class EnvironmentProbe {
    * @param bounds - 包围盒
    * @returns this
    */
-  setBounds(bounds: Box3Like): this {
+  setBounds(bounds: MSpec.Box3Like): this {
     this._bounds.min.set(bounds.min.x, bounds.min.y, bounds.min.z);
     this._bounds.max.set(bounds.max.x, bounds.max.y, bounds.max.z);
     this._dirty = true;
@@ -423,7 +423,7 @@ export class EnvironmentProbe {
    * @param coefficients - 9 个 RGB 系数
    * @returns this
    */
-  setSphericalHarmonics(coefficients: Vector3Like[]): this {
+  setSphericalHarmonics(coefficients: MSpec.Vector3Like[]): this {
     const count = Math.min(coefficients.length, SH_COEFFICIENT_COUNT);
     for (let i = 0; i < count; i++) {
       this._shCoefficients[i].set(coefficients[i].x, coefficients[i].y, coefficients[i].z);
@@ -455,7 +455,7 @@ export class EnvironmentProbe {
    * @param groundColor - 地面颜色
    * @returns this
    */
-  setGradientSH(skyColor: Vector3Like, groundColor: Vector3Like): this {
+  setGradientSH(skyColor: MSpec.Vector3Like, groundColor: MSpec.Vector3Like): this {
     // L0 (DC): 环境光平均值
     const avgR = (skyColor.x + groundColor.x) * 0.5;
     const avgG = (skyColor.y + groundColor.y) * 0.5;
@@ -486,7 +486,7 @@ export class EnvironmentProbe {
    * @param color - 颜色
    * @returns this
    */
-  setSolidColorSH(color: Vector3Like): this {
+  setSolidColorSH(color: MSpec.Vector3Like): this {
     this._shCoefficients[0].set(color.x, color.y, color.z);
     for (let i = 1; i < SH_COEFFICIENT_COUNT; i++) {
       this._shCoefficients[i].set(0, 0, 0);
@@ -506,7 +506,7 @@ export class EnvironmentProbe {
    * @param point - 测试点
    * @returns 是否在范围内
    */
-  containsPoint(point: Vector3Like): boolean {
+  containsPoint(point: MSpec.Vector3Like): boolean {
     if (!this._enabled) {
       return false;
     }
@@ -529,7 +529,7 @@ export class EnvironmentProbe {
    * @param point - 测试点
    * @returns 权重 (0-1)
    */
-  getWeight(point: Vector3Like): number {
+  getWeight(point: MSpec.Vector3Like): number {
     if (!this._enabled) {
       return 0;
     }
@@ -553,7 +553,7 @@ export class EnvironmentProbe {
    * @param direction - 采样方向（应归一化）
    * @returns RGB 辐照度
    */
-  sampleIrradiance(direction: Vector3Like): Vector3Like {
+  sampleIrradiance(direction: MSpec.Vector3Like): MSpec.Vector3Like {
     // 使用 L2 球谐光照近似
     const x = direction.x;
     const y = direction.y;

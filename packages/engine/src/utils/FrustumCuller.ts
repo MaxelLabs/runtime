@@ -23,10 +23,8 @@
  *
  * @packageDocumentation
  */
-
-import { Vector3 } from '@maxellabs/math';
-import { Plane } from '@maxellabs/math';
-import type { Vector3Like, Matrix4Like, Box3Like, SphereLike } from '@maxellabs/specification';
+import type { MSpec } from '@maxellabs/core';
+import { MMath } from '@maxellabs/core';
 
 // ========================================
 // Constants
@@ -81,7 +79,7 @@ export enum IntersectionResult {
  */
 export interface FrustumData {
   /** 6 个平面的数据 */
-  planes?: Array<{ distance: number; normal: Vector3Like }>;
+  planes?: Array<{ distance: number; normal: MSpec.Vector3Like }>;
 }
 
 // ========================================
@@ -101,14 +99,14 @@ export interface FrustumData {
  */
 export class Frustum {
   /** 6 个裁剪平面 */
-  private _planes: Plane[];
+  private _planes: MMath.Plane[];
 
   /**
    * 构造函数
    *
    * @param planes - 初始平面数组（可选，默认创建 6 个空平面）
    */
-  constructor(planes?: Plane[]) {
+  constructor(planes?: MMath.Plane[]) {
     if (planes && planes.length === FRUSTUM_PLANE_COUNT) {
       // 深拷贝
       this._planes = planes.map((p) => p.clone());
@@ -116,7 +114,7 @@ export class Frustum {
       // 创建默认平面
       this._planes = [];
       for (let i = 0; i < FRUSTUM_PLANE_COUNT; i++) {
-        this._planes.push(new Plane());
+        this._planes.push(new MMath.Plane());
       }
     }
   }
@@ -139,7 +137,7 @@ export class Frustum {
    * const frustum = Frustum.fromProjectionMatrix(vp);
    * ```
    */
-  static fromProjectionMatrix(viewProjectionMatrix: Matrix4Like): Frustum {
+  static fromProjectionMatrix(viewProjectionMatrix: MSpec.Matrix4Like): Frustum {
     const frustum = new Frustum();
     frustum.setFromProjectionMatrix(viewProjectionMatrix);
     return frustum;
@@ -159,7 +157,7 @@ export class Frustum {
         const planeData = data.planes[i];
         frustum._planes[i].set(
           planeData.distance ?? 0,
-          new Vector3(planeData.normal?.x ?? 0, planeData.normal?.y ?? 0, planeData.normal?.z ?? 1)
+          new MMath.Vector3(planeData.normal?.x ?? 0, planeData.normal?.y ?? 0, planeData.normal?.z ?? 1)
         );
       }
     }
@@ -181,7 +179,7 @@ export class Frustum {
    *
    * @see https://www.gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf
    */
-  setFromProjectionMatrix(m: Matrix4Like): this {
+  setFromProjectionMatrix(m: MSpec.Matrix4Like): this {
     const planes = this._planes;
 
     // 从矩阵中提取平面（Row-Major 布局）
@@ -216,8 +214,8 @@ export class Frustum {
    * @param point - 三维点
    * @returns 是否在视锥体内
    */
-  containsPoint(point: Vector3Like): boolean {
-    const vec = new Vector3(point.x, point.y, point.z);
+  containsPoint(point: MSpec.Vector3Like): boolean {
+    const vec = new MMath.Vector3(point.x, point.y, point.z);
 
     for (const plane of this._planes) {
       if (plane.distanceToPoint(vec) < 0) {
@@ -234,12 +232,12 @@ export class Frustum {
    * @param box - 包围盒
    * @returns 相交结果
    */
-  intersectsBox(box: Box3Like): IntersectionResult {
+  intersectsBox(box: MSpec.Box3Like): IntersectionResult {
     const min = box.min;
     const max = box.max;
 
     // 临时向量用于计算
-    const p = new Vector3();
+    const p = new MMath.Vector3();
 
     let allInside = true;
 
@@ -274,7 +272,7 @@ export class Frustum {
    * @param box - 包围盒
    * @returns 是否相交或在内部
    */
-  intersectsBoxFast(box: Box3Like): boolean {
+  intersectsBoxFast(box: MSpec.Box3Like): boolean {
     return this.intersectsBox(box) !== IntersectionResult.Outside;
   }
 
@@ -284,8 +282,8 @@ export class Frustum {
    * @param sphere - 包围球
    * @returns 相交结果
    */
-  intersectsSphere(sphere: SphereLike): IntersectionResult {
-    const center = new Vector3(sphere.center.x, sphere.center.y, sphere.center.z);
+  intersectsSphere(sphere: MSpec.SphereLike): IntersectionResult {
+    const center = new MMath.Vector3(sphere.center.x, sphere.center.y, sphere.center.z);
     const negRadius = -sphere.radius;
 
     let allInside = true;
@@ -313,7 +311,7 @@ export class Frustum {
    * @param sphere - 包围球
    * @returns 是否相交或在内部
    */
-  intersectsSphereFast(sphere: SphereLike): boolean {
+  intersectsSphereFast(sphere: MSpec.SphereLike): boolean {
     return this.intersectsSphere(sphere) !== IntersectionResult.Outside;
   }
 
@@ -327,7 +325,7 @@ export class Frustum {
    * @param index - 平面索引
    * @returns 平面（深拷贝）
    */
-  getPlane(index: FrustumPlane): Plane {
+  getPlane(index: FrustumPlane): MMath.Plane {
     return this._planes[index].clone();
   }
 
@@ -336,7 +334,7 @@ export class Frustum {
    *
    * @returns 平面数组（深拷贝）
    */
-  getPlanes(): Plane[] {
+  getPlanes(): MMath.Plane[] {
     return this._planes.map((p) => p.clone());
   }
 
@@ -387,7 +385,7 @@ export class Frustum {
   /**
    * 从矩阵行设置平面
    */
-  private _setPlaneFromMatrix(plane: Plane, a: number, b: number, c: number, d: number): void {
+  private _setPlaneFromMatrix(plane: MMath.Plane, a: number, b: number, c: number, d: number): void {
     const length = Math.sqrt(a * a + b * b + c * c);
 
     if (length < EPSILON) {
@@ -425,9 +423,9 @@ export interface CullingStats {
  */
 export interface ICullable {
   /** 世界空间包围盒 */
-  worldBoundingBox?: Box3Like;
+  worldBoundingBox?: MSpec.Box3Like;
   /** 世界空间包围球 */
-  worldBoundingSphere?: SphereLike;
+  worldBoundingSphere?: MSpec.SphereLike;
   /** 是否被剔除 */
   culled?: boolean;
 }
@@ -474,7 +472,7 @@ export class FrustumCuller {
    * @param viewProjectionMatrix - 视图投影矩阵
    * @returns this
    */
-  setFrustum(viewProjectionMatrix: Matrix4Like): this {
+  setFrustum(viewProjectionMatrix: MSpec.Matrix4Like): this {
     this._frustum.setFromProjectionMatrix(viewProjectionMatrix);
     return this;
   }
@@ -511,7 +509,7 @@ export class FrustumCuller {
    * @param box - 包围盒
    * @returns 相交结果
    */
-  testBox(box: Box3Like): IntersectionResult {
+  testBox(box: MSpec.Box3Like): IntersectionResult {
     if (!this._enabled) {
       return IntersectionResult.Inside;
     }
@@ -524,7 +522,7 @@ export class FrustumCuller {
    * @param box - 包围盒
    * @returns 是否可见
    */
-  isBoxVisible(box: Box3Like): boolean {
+  isBoxVisible(box: MSpec.Box3Like): boolean {
     if (!this._enabled) {
       return true;
     }
@@ -537,7 +535,7 @@ export class FrustumCuller {
    * @param sphere - 包围球
    * @returns 相交结果
    */
-  testSphere(sphere: SphereLike): IntersectionResult {
+  testSphere(sphere: MSpec.SphereLike): IntersectionResult {
     if (!this._enabled) {
       return IntersectionResult.Inside;
     }
@@ -550,7 +548,7 @@ export class FrustumCuller {
    * @param sphere - 包围球
    * @returns 是否可见
    */
-  isSphereVisible(sphere: SphereLike): boolean {
+  isSphereVisible(sphere: MSpec.SphereLike): boolean {
     if (!this._enabled) {
       return true;
     }
