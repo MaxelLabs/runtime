@@ -152,6 +152,8 @@ async function main(): Promise<void> {
     console.info('[Triangle Demo] SimpleRenderer created');
 
     // 7. 创建并注册 Systems
+    // 使用 addSystemInstance 便捷方法，自动提取 metadata 并注册
+    // SystemScheduler 会在首次执行时自动调用 initialize
     const transformSystem = new TransformSystem();
     const cameraSystem = new CameraSystem();
     const renderSystem = new RenderSystem();
@@ -161,54 +163,13 @@ async function main(): Promise<void> {
     renderSystem.setRenderer(renderer);
     renderSystem.setScene(scene);
 
-    // 注册到 Scheduler (按依赖顺序: TransformSystem -> CameraSystem -> RenderSystem)
-    scene.scheduler.addSystem({
-      name: transformSystem.metadata.name,
-      stage: transformSystem.metadata.stage,
-      priority: transformSystem.metadata.priority,
-      after: transformSystem.metadata.after ? [...transformSystem.metadata.after] : undefined,
-      execute: (ctx, query) => transformSystem.execute(ctx, query),
-    });
+    // 使用便捷方法批量注册 Systems
+    // 注意：CameraSystem 会自动为带有 Camera 组件的实体创建 CameraMatrices 组件
+    scene.scheduler.addSystemInstances(transformSystem, cameraSystem, renderSystem);
 
-    scene.scheduler.addSystem({
-      name: cameraSystem.metadata.name,
-      stage: cameraSystem.metadata.stage,
-      priority: cameraSystem.metadata.priority,
-      after: cameraSystem.metadata.after ? [...cameraSystem.metadata.after] : undefined,
-      execute: (ctx, query) => cameraSystem.execute(ctx, query),
-    });
+    console.info('[Triangle Demo] Systems registered (will auto-initialize on first update)');
 
-    scene.scheduler.addSystem({
-      name: renderSystem.metadata.name,
-      stage: renderSystem.metadata.stage,
-      priority: renderSystem.metadata.priority,
-      after: renderSystem.metadata.after ? [...renderSystem.metadata.after] : undefined,
-      execute: (ctx, query) => renderSystem.execute(ctx, query),
-    });
-
-    console.info('[Triangle Demo] Systems registered');
-
-    // 8. 初始化 Systems
-    transformSystem.initialize({ world: scene.world } as any);
-    cameraSystem.initialize({ world: scene.world } as any);
-    renderSystem.initialize({ world: scene.world } as any);
-
-    console.info('[Triangle Demo] Systems initialized');
-
-    // 强制执行一次 TransformSystem 以初始化 WorldTransform
-    console.info('[Triangle Demo] Forcing initial system update...');
-    const dummyCtx = {
-      world: scene.world,
-      deltaTime: 0,
-      totalTime: 0,
-      frameCount: 0,
-      getResource: () => undefined,
-    };
-    transformSystem.execute(dummyCtx as any, undefined);
-    cameraSystem.execute(dummyCtx as any, undefined);
-    console.info('[Triangle Demo] Initial transform update completed');
-
-    // 9. 渲染循环
+    // 8. 渲染循环
     const loop = (): void => {
       // 更新 Scene（执行 PostUpdate 和 Render 阶段的 Systems）
       scene.update(0.016); // 假设 60fps
@@ -221,7 +182,7 @@ async function main(): Promise<void> {
     console.info('[Triangle Demo] Starting render loop');
     requestAnimationFrame(loop);
 
-    // 10. 添加清理逻辑（ESC 键退出）
+    // 9. 添加清理逻辑（ESC 键退出）
     window.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         console.info('[Triangle Demo] Cleaning up...');

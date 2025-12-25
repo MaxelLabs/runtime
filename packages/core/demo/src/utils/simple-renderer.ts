@@ -196,7 +196,7 @@ export class SimpleRenderer extends Renderer {
       size: TRIANGLE_VERTICES.byteLength,
       usage: MSpec.RHIBufferUsage.VERTEX,
       hint: 'static',
-      initialData: TRIANGLE_VERTICES as unknown as BufferSource,
+      initialData: new Float32Array(TRIANGLE_VERTICES),
       label: 'Triangle Vertex Buffer',
     });
 
@@ -354,7 +354,7 @@ export class SimpleRenderer extends Renderer {
       this.transformData.set(modelMatrix.toArray(), 0);
       this.transformData.set(viewMatrix.toArray(), 16);
       this.transformData.set(projectionMatrix.toArray(), 32);
-      this.uniformBuffer!.update(this.transformData as BufferSource, 0);
+      this.uniformBuffer!.update(new Float32Array(this.transformData), 0);
 
       // 创建命令编码器
       const encoder: IRHICommandEncoder = this.device.createCommandEncoder('Triangle Render');
