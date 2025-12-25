@@ -280,9 +280,19 @@ export abstract class Renderer {
    * @remarks
    * RenderSystem calls this method before renderScene() to provide
    * the list of renderable objects. This data will be used in createRenderContext().
+   *
+   * ## 数据所有权说明
+   * - 此方法会进行**浅拷贝**，确保 Renderer 拥有独立的 renderables 数组
+   * - 原始数组在下一帧可能被 RenderSystem 清空或修改
+   * - Renderable 对象本身不拷贝（避免性能开销），但数组是独立的
+   *
+   * ## 调用时序
+   * - 必须在 `renderScene()` 前调用
+   * - 每帧调用一次，数据有效期仅当前帧
    */
   setRenderables(renderables: Renderable[]): void {
-    this.pendingRenderables = renderables;
+    // 浅拷贝数组，避免 RenderSystem 后续修改影响渲染
+    this.pendingRenderables = [...renderables];
   }
 
   /**

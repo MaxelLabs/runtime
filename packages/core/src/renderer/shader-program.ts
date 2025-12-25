@@ -127,14 +127,19 @@ export class ShaderProgram {
    * ```
    */
   getUniformLocation(name: string): number {
-    if (!this.uniformLocations.has(name)) {
-      // TODO: Query from device (requires RHI extension)
-      // 实际实现应类似于：
-      // const location = device.getUniformLocation(this.id, name);
-      // this.uniformLocations.set(name, location);
-      return -1;
+    // 检查缓存
+    if (this.uniformLocations.has(name)) {
+      return this.uniformLocations.get(name)!;
     }
-    return this.uniformLocations.get(name)!;
+
+    // TODO: Query from device (requires RHI extension)
+    // 实际实现应类似于：
+    // const location = device.getUniformLocation(this.id, name);
+    const location = -1;
+
+    // 缓存结果（包括 -1，避免重复查询）
+    this.uniformLocations.set(name, location);
+    return location;
   }
 
   /**
@@ -160,14 +165,19 @@ export class ShaderProgram {
    * ```
    */
   getAttributeLocation(name: string): number {
-    if (!this.attributeLocations.has(name)) {
-      // TODO: Query from device (requires RHI extension)
-      // 实际实现应类似于：
-      // const location = device.getAttributeLocation(this.id, name);
-      // this.attributeLocations.set(name, location);
-      return -1;
+    // 检查缓存
+    if (this.attributeLocations.has(name)) {
+      return this.attributeLocations.get(name)!;
     }
-    return this.attributeLocations.get(name)!;
+
+    // TODO: Query from device (requires RHI extension)
+    // 实际实现应类似于：
+    // const location = device.getAttributeLocation(this.id, name);
+    const location = -1;
+
+    // 缓存结果（包括 -1，避免重复查询）
+    this.attributeLocations.set(name, location);
+    return location;
   }
 
   /**

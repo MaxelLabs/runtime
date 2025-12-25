@@ -330,7 +330,8 @@ describe('ShaderCompiler', () => {
       expect(p1.refCount).toBe(2);
       expect(p2.refCount).toBe(2);
 
-      expect(p1.refCount).toBe(3);
+      // 确认 p1 和 p2 指向同一个程序
+      expect(p1).toBe(p2);
     });
 
     test('应该在释放时递减引用计数', async () => {

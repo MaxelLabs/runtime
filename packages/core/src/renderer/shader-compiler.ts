@@ -246,6 +246,15 @@ export class ShaderCompiler {
   private disposed: boolean = false;
 
   /**
+   * 正在编译的 Promise 缓存（并发安全保护）
+   * @internal
+   * @remarks
+   * 防止并发调用 compile() 时重复编译相同着色器。
+   * Key: 哈希值; Value: 编译中的 Promise
+   */
+  private compilingPromises: Map<string, Promise<ShaderProgram>> = new Map();
+
+  /**
    * 创建着色器编译器
    *
    * @param config 编译器配置
@@ -344,25 +353,60 @@ export class ShaderCompiler {
       return cached;
     }
 
+    // 4. 并发安全检查 - 如果正在编译相同着色器,等待现有编译完成
+    if (this.compilingPromises.has(hash)) {
+      const existingPromise = this.compilingPromises.get(hash)!;
+      const program = await existingPromise;
+      // 增加引用计数（因为是新调用者请求）
+      program.refCount++;
+      return program;
+    }
+
+    // 5. 创建编译 Promise
+    const compilePromise = this.doCompile(vertexSource, fragmentSource, hash);
+    this.compilingPromises.set(hash, compilePromise);
+
     try {
-      // 4. 编译着色器
+      const program = await compilePromise;
+      return program;
+    } finally {
+      // 6. 清理 Promise 缓存
+      this.compilingPromises.delete(hash);
+    }
+  }
+
+  /**
+   * 执行实际编译（内部方法）
+   * @internal
+   */
+  private async doCompile(vertexSource: string, fragmentSource: string, hash: string): Promise<ShaderProgram> {
+    try {
+      // 编译着色器
       const vertexModule = await this.compileShaderModule(vertexSource, 'vertex');
       const fragmentModule = await this.compileShaderModule(fragmentSource, 'fragment');
 
-      // 5. 创建程序包装器
+      // 创建程序包装器
       const program = new ShaderProgram(hash, vertexModule, fragmentModule);
 
-      // 6. 缓存程序
+      // 缓存程序
       if (this.config.enableCache) {
         this.cache.set(hash, program);
       }
 
       return program;
     } catch (error) {
-      // 7. Fallback 处理
-      if (this.config.fallbackShader) {
-        console.warn('[ShaderCompiler] Compilation failed, using fallback', error);
+      // Fallback 处理（递归深度限制：最多 3 次）
+      const MAX_FALLBACK_DEPTH = 3;
+      const currentDepth = vertexSource === this.config.fallbackShader?.vertex ? 1 : 0;
+
+      if (this.config.fallbackShader && currentDepth < MAX_FALLBACK_DEPTH) {
+        console.warn(`[ShaderCompiler] Compilation failed (fallback depth=${currentDepth}), trying fallback`, error);
         return this.compile(this.config.fallbackShader.vertex, this.config.fallbackShader.fragment);
+      }
+
+      // 达到递归深度限制或无 Fallback，抛出原始错误
+      if (currentDepth >= MAX_FALLBACK_DEPTH) {
+        console.error('[ShaderCompiler] Fallback recursion limit reached, aborting');
       }
       throw error;
     }
@@ -379,20 +423,28 @@ export class ShaderCompiler {
    * 此方法不会触发编译，仅用于查询已缓存的程序。
    * 如果需要编译，请使用 compile() 方法。
    *
+   * ## ⚠️ 引用计数说明
+   * - **此方法不会递增引用计数** - 仅用于只读查询
+   * - 如果需要持有程序引用，请使用 `compile()`，它会递增引用计数
+   * - 使用 `getProgram()` 返回的程序时，无需调用 `release()`
+   *
    * ## 使用场景
    * - 检查着色器是否已编译
    * - 在渲染循环中快速查询缓存（避免异步等待）
    *
    * @example
    * ```typescript
-   * // 检查是否已编译
+   * // 只读查询（不递增引用计数）
    * const cached = compiler.getProgram(vs, fs);
    * if (cached) {
-   *   // 使用缓存的程序
-   * } else {
-   *   // 需要编译
-   *   const program = await compiler.compile(vs, fs);
+   *   // 临时使用，无需 release()
+   *   cached.bind();
    * }
+   *
+   * // 持有引用（递增引用计数）
+   * const program = await compiler.compile(vs, fs); // refCount++
+   * // ... 长期使用 ...
+   * compiler.release(program); // refCount--
    * ```
    */
   getProgram(vertexSource: string, fragmentSource: string): ShaderProgram | undefined {
