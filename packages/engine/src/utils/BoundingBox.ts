@@ -26,7 +26,7 @@
  * @packageDocumentation
  */
 
-import { Box3, Vector3, Sphere, Matrix4 } from '@maxellabs/math';
+import { MMath } from '@maxellabs/core';
 import type { Vector3Like, Matrix4Like } from '@maxellabs/specification';
 
 // ========================================
@@ -84,13 +84,13 @@ const DEFAULT_MAX: Vector3Like = { x: -Infinity, y: -Infinity, z: -Infinity };
  */
 export class BoundingBox {
   /** 本地空间包围盒 */
-  private _localBox: Box3;
+  private _localBox: MMath.Box3;
 
   /** 世界空间包围盒（缓存） */
-  private _worldBox: Box3;
+  private _worldBox: MMath.Box3;
 
   /** 包围球（缓存） */
-  private _boundingSphere: Sphere;
+  private _boundingSphere: MMath.Sphere;
 
   /** 本地包围盒脏标记 */
   private _localDirty: boolean = true;
@@ -105,7 +105,7 @@ export class BoundingBox {
   private _options: BoundingBoxOptions;
 
   /** 临时矩阵（实例级别，避免并发问题） */
-  private _tempMatrix: Matrix4;
+  private _tempMatrix: MMath.Matrix4;
 
   /**
    * 构造函数
@@ -114,10 +114,10 @@ export class BoundingBox {
    * @param options - 配置选项
    */
   constructor(data?: Partial<BoundingBoxData>, options?: BoundingBoxOptions) {
-    this._localBox = new Box3();
-    this._worldBox = new Box3();
-    this._boundingSphere = new Sphere(new Vector3(), 0);
-    this._tempMatrix = new Matrix4();
+    this._localBox = new MMath.Box3();
+    this._worldBox = new MMath.Box3();
+    this._boundingSphere = new MMath.Sphere(new MMath.Vector3(), 0);
+    this._tempMatrix = new MMath.Matrix4();
     this._options = { autoUpdateWorld: true, ...options };
 
     if (data) {
@@ -241,7 +241,7 @@ export class BoundingBox {
     this._localBox.makeEmpty();
 
     for (const point of points) {
-      this._localBox.expandByPoint(new Vector3(point.x, point.y, point.z));
+      this._localBox.expandByPoint(new MMath.Vector3(point.x, point.y, point.z));
     }
 
     this._markDirty();
@@ -256,8 +256,8 @@ export class BoundingBox {
    * @returns this
    */
   setFromCenterAndSize(center: Vector3Like, size: Vector3Like): this {
-    const centerVec = new Vector3(center.x, center.y, center.z);
-    const sizeVec = new Vector3(size.x, size.y, size.z);
+    const centerVec = new MMath.Vector3(center.x, center.y, center.z);
+    const sizeVec = new MMath.Vector3(size.x, size.y, size.z);
     this._localBox.setFromCenterAndSize(centerVec, sizeVec);
     this._markDirty();
     return this;
@@ -367,7 +367,7 @@ export class BoundingBox {
    * @param useWorldSpace - 是否使用世界空间
    * @returns 是否相交
    */
-  intersectsBox3(box: Box3, useWorldSpace: boolean = true): boolean {
+  intersectsBox3(box: MMath.Box3, useWorldSpace: boolean = true): boolean {
     const thisBox = useWorldSpace ? this._worldBox : this._localBox;
     return thisBox.intersectsBox(box);
   }
@@ -379,7 +379,7 @@ export class BoundingBox {
    * @param useWorldSpace - 是否使用世界空间
    * @returns 是否相交
    */
-  intersectsSphere(sphere: Sphere, useWorldSpace: boolean = true): boolean {
+  intersectsSphere(sphere: MMath.Sphere, useWorldSpace: boolean = true): boolean {
     const thisBox = useWorldSpace ? this._worldBox : this._localBox;
     return thisBox.intersectsSphere(sphere);
   }
@@ -393,7 +393,7 @@ export class BoundingBox {
    */
   containsPoint(point: Vector3Like, useWorldSpace: boolean = true): boolean {
     const thisBox = useWorldSpace ? this._worldBox : this._localBox;
-    return thisBox.containsPoint(new Vector3(point.x, point.y, point.z));
+    return thisBox.containsPoint(new MMath.Vector3(point.x, point.y, point.z));
   }
 
   /**
@@ -419,7 +419,7 @@ export class BoundingBox {
    * @param useWorldSpace - 是否使用世界空间
    * @returns 中心点（深拷贝）
    */
-  getCenter(useWorldSpace: boolean = true): Vector3 {
+  getCenter(useWorldSpace: boolean = true): MMath.Vector3 {
     const box = useWorldSpace ? this._worldBox : this._localBox;
     return box.getCenter();
   }
@@ -430,7 +430,7 @@ export class BoundingBox {
    * @param useWorldSpace - 是否使用世界空间
    * @returns 尺寸向量（深拷贝）
    */
-  getSize(useWorldSpace: boolean = true): Vector3 {
+  getSize(useWorldSpace: boolean = true): MMath.Vector3 {
     const box = useWorldSpace ? this._worldBox : this._localBox;
     return box.getSize();
   }
@@ -444,7 +444,7 @@ export class BoundingBox {
    */
   distanceToPoint(point: Vector3Like, useWorldSpace: boolean = true): number {
     const box = useWorldSpace ? this._worldBox : this._localBox;
-    return box.distanceToPoint(new Vector3(point.x, point.y, point.z));
+    return box.distanceToPoint(new MMath.Vector3(point.x, point.y, point.z));
   }
 
   /**
@@ -453,14 +453,14 @@ export class BoundingBox {
    * @param useWorldSpace - 是否使用世界空间
    * @returns 包围球（深拷贝）
    */
-  getBoundingSphere(useWorldSpace: boolean = true): Sphere {
+  getBoundingSphere(useWorldSpace: boolean = true): MMath.Sphere {
     if (this._sphereDirty) {
       const box = useWorldSpace ? this._worldBox : this._localBox;
       box.getBoundingSphere(this._boundingSphere);
       this._sphereDirty = false;
     }
     // 返回深拷贝
-    return new Sphere(this._boundingSphere.center.clone(), this._boundingSphere.radius);
+    return new MMath.Sphere(this._boundingSphere.center.clone(), this._boundingSphere.radius);
   }
 
   // ========================================
@@ -474,7 +474,7 @@ export class BoundingBox {
    * @returns this
    */
   expandByPoint(point: Vector3Like): this {
-    this._localBox.expandByPoint(new Vector3(point.x, point.y, point.z));
+    this._localBox.expandByPoint(new MMath.Vector3(point.x, point.y, point.z));
     this._markDirty();
     return this;
   }
@@ -552,7 +552,7 @@ export class BoundingBox {
     cloned._localDirty = this._localDirty;
     cloned._worldDirty = this._worldDirty;
     cloned._sphereDirty = this._sphereDirty;
-    cloned._tempMatrix = new Matrix4();
+    cloned._tempMatrix = new MMath.Matrix4();
     cloned._options = { ...this._options };
     return cloned;
   }
@@ -622,28 +622,28 @@ export class BoundingBox {
   /**
    * 获取本地空间包围盒（只读）
    */
-  get localBox(): Box3 {
+  get localBox(): MMath.Box3 {
     return this._localBox;
   }
 
   /**
    * 获取世界空间包围盒（只读）
    */
-  get worldBox(): Box3 {
+  get worldBox(): MMath.Box3 {
     return this._worldBox;
   }
 
   /**
    * 获取最小角点（本地空间）
    */
-  get min(): Vector3 {
+  get min(): MMath.Vector3 {
     return this._localBox.min;
   }
 
   /**
    * 获取最大角点（本地空间）
    */
-  get max(): Vector3 {
+  get max(): MMath.Vector3 {
     return this._localBox.max;
   }
 

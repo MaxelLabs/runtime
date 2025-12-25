@@ -28,7 +28,7 @@
  * @packageDocumentation
  */
 
-import { Vector3, Box3 } from '@maxellabs/math';
+import { MMath } from '@maxellabs/core';
 import type { Vector3Like, Box3Like } from '@maxellabs/specification';
 
 // ========================================
@@ -211,7 +211,7 @@ export class EnvironmentProbe {
   private _id: string;
 
   /** 探针位置 */
-  private _position: Vector3;
+  private _position: MMath.Vector3;
 
   /** 探针类型 */
   private _type: ProbeType;
@@ -226,7 +226,7 @@ export class EnvironmentProbe {
   private _range: number;
 
   /** 影响区域包围盒 */
-  private _bounds: Box3;
+  private _bounds: MMath.Box3;
 
   /** 是否启用盒投影 */
   private _boxProjection: boolean;
@@ -250,7 +250,7 @@ export class EnvironmentProbe {
   private _state: ProbeState;
 
   /** 球谐系数 */
-  private _shCoefficients: Vector3[];
+  private _shCoefficients: MMath.Vector3[];
 
   /** 脏标记 */
   private _dirty: boolean;
@@ -269,14 +269,14 @@ export class EnvironmentProbe {
     // 使用默认值和配置合并
     const mergedConfig = { ...DEFAULT_CONFIG, ...config };
 
-    this._position = new Vector3(mergedConfig.position.x, mergedConfig.position.y, mergedConfig.position.z);
+    this._position = new MMath.Vector3(mergedConfig.position.x, mergedConfig.position.y, mergedConfig.position.z);
     this._type = mergedConfig.type;
     this._updateMode = mergedConfig.updateMode;
     this._resolution = mergedConfig.resolution;
     this._range = mergedConfig.range;
-    this._bounds = new Box3(
-      new Vector3(mergedConfig.bounds.min.x, mergedConfig.bounds.min.y, mergedConfig.bounds.min.z),
-      new Vector3(mergedConfig.bounds.max.x, mergedConfig.bounds.max.y, mergedConfig.bounds.max.z)
+    this._bounds = new MMath.Box3(
+      new MMath.Vector3(mergedConfig.bounds.min.x, mergedConfig.bounds.min.y, mergedConfig.bounds.min.z),
+      new MMath.Vector3(mergedConfig.bounds.max.x, mergedConfig.bounds.max.y, mergedConfig.bounds.max.z)
     );
     this._boxProjection = mergedConfig.boxProjection;
     this._nearClip = mergedConfig.nearClip;
@@ -292,7 +292,7 @@ export class EnvironmentProbe {
     // 初始化球谐系数
     this._shCoefficients = [];
     for (let i = 0; i < SH_COEFFICIENT_COUNT; i++) {
-      this._shCoefficients.push(new Vector3(0, 0, 0));
+      this._shCoefficients.push(new MMath.Vector3(0, 0, 0));
     }
   }
 
@@ -512,7 +512,7 @@ export class EnvironmentProbe {
     }
 
     if (this._boxProjection) {
-      return this._bounds.containsPoint(new Vector3(point.x, point.y, point.z));
+      return this._bounds.containsPoint(new MMath.Vector3(point.x, point.y, point.z));
     }
 
     const dx = point.x - this._position.x;
@@ -700,7 +700,7 @@ export class EnvironmentProbe {
     return this._id;
   }
 
-  get position(): Vector3 {
+  get position(): MMath.Vector3 {
     return this._position;
   }
 
@@ -720,7 +720,7 @@ export class EnvironmentProbe {
     return this._range;
   }
 
-  get bounds(): Box3 {
+  get bounds(): MMath.Box3 {
     return this._bounds;
   }
 
