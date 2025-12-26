@@ -448,7 +448,10 @@ export class ShaderCompiler {
       const MAX_FALLBACK_DEPTH = 3;
 
       if (this.config.fallbackShader && fallbackDepth < MAX_FALLBACK_DEPTH) {
-        console.warn(`[ShaderCompiler] Compilation failed (fallback depth=${fallbackDepth}), trying fallback`, error);
+        // 仅在非生产环境记录警告，避免生产环境日志污染
+        if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
+          console.warn(`[ShaderCompiler] Compilation failed (fallback depth=${fallbackDepth}), trying fallback`, error);
+        }
 
         // 清理当前失败的 Promise 缓存，避免泄漏
         this.compilingPromises.delete(hash);
@@ -459,7 +462,10 @@ export class ShaderCompiler {
 
       // 达到递归深度限制或无 Fallback，抛出原始错误
       if (fallbackDepth >= MAX_FALLBACK_DEPTH) {
-        console.error('[ShaderCompiler] Fallback recursion limit reached, aborting');
+        // 仅在非生产环境记录错误日志
+        if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
+          console.error('[ShaderCompiler] Fallback recursion limit reached, aborting');
+        }
       }
       throw error;
     }

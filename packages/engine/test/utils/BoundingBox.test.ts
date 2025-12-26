@@ -363,6 +363,164 @@ describe('BoundingBox', () => {
   });
 
   // ========================================
+  // 额外相交测试
+  // ========================================
+
+  describe('Additional Intersection Tests', () => {
+    it('should test markWorldDirty directly', () => {
+      const bbox = BoundingBox.fromData({
+        min: { x: -1, y: -1, z: -1 },
+        max: { x: 1, y: 1, z: 1 },
+      });
+
+      const identity = new Matrix4();
+      bbox.updateWorldBounds(identity);
+      expect(bbox.isWorldDirty).toBe(false);
+
+      // 直接调用 markWorldDirty
+      bbox.markWorldDirty();
+      expect(bbox.isWorldDirty).toBe(true);
+    });
+
+    it('should test intersectsBox3 with world space', () => {
+      const bbox = BoundingBox.fromData({
+        min: { x: 0, y: 0, z: 0 },
+        max: { x: 2, y: 2, z: 2 },
+      });
+
+      const identity = new Matrix4();
+      bbox.updateWorldBounds(identity);
+
+      const box3 = new MMath.Box3(new MMath.Vector3(1, 1, 1), new MMath.Vector3(3, 3, 3));
+
+      expect(bbox.intersectsBox3(box3, true)).toBe(true);
+    });
+
+    it('should test intersectsBox3 with local space', () => {
+      const bbox = BoundingBox.fromData({
+        min: { x: 0, y: 0, z: 0 },
+        max: { x: 2, y: 2, z: 2 },
+      });
+
+      const box3 = new MMath.Box3(new MMath.Vector3(10, 10, 10), new MMath.Vector3(12, 12, 12));
+
+      // 使用本地空间，不相交
+      expect(bbox.intersectsBox3(box3, false)).toBe(false);
+    });
+
+    it('should test intersectsSphere with local space', () => {
+      const bbox = BoundingBox.fromData({
+        min: { x: 0, y: 0, z: 0 },
+        max: { x: 2, y: 2, z: 2 },
+      });
+
+      const sphere = new MMath.Sphere(new MMath.Vector3(1, 1, 1), 0.5);
+
+      // 使用本地空间
+      expect(bbox.intersectsSphere(sphere, false)).toBe(true);
+    });
+
+    it('should test intersectsBox with local space', () => {
+      const bboxA = BoundingBox.fromData({
+        min: { x: 0, y: 0, z: 0 },
+        max: { x: 2, y: 2, z: 2 },
+      });
+
+      const bboxB = BoundingBox.fromData({
+        min: { x: 1, y: 1, z: 1 },
+        max: { x: 3, y: 3, z: 3 },
+      });
+
+      // 使用本地空间进行相交检测
+      expect(bboxA.intersectsBox(bboxB, false)).toBe(true);
+    });
+  });
+
+  // ========================================
+  // 包围球测试
+  // ========================================
+
+  describe('Bounding Sphere', () => {
+    it('should get bounding sphere and update when dirty', () => {
+      const bbox = BoundingBox.fromData({
+        min: { x: -1, y: -1, z: -1 },
+        max: { x: 1, y: 1, z: 1 },
+      });
+
+      const identity = new Matrix4();
+      bbox.updateWorldBounds(identity);
+
+      // 获取包围球（会触发计算）
+      const sphere = bbox.getBoundingSphere(true);
+      expect(sphere).toBeDefined();
+      expect(sphere.center.x).toBeCloseTo(0, 5);
+      expect(sphere.radius).toBeGreaterThan(0);
+    });
+
+    it('should get bounding sphere in local space', () => {
+      const bbox = BoundingBox.fromData({
+        min: { x: 0, y: 0, z: 0 },
+        max: { x: 2, y: 2, z: 2 },
+      });
+
+      const sphere = bbox.getBoundingSphere(false);
+      expect(sphere.center.x).toBeCloseTo(1, 5);
+    });
+  });
+
+  // ========================================
+  // 额外修改方法测试
+  // ========================================
+
+  describe('Additional Modification Methods', () => {
+    it('should intersect two boxes', () => {
+      const bboxA = BoundingBox.fromData({
+        min: { x: 0, y: 0, z: 0 },
+        max: { x: 3, y: 3, z: 3 },
+      });
+
+      const bboxB = BoundingBox.fromData({
+        min: { x: 1, y: 1, z: 1 },
+        max: { x: 4, y: 4, z: 4 },
+      });
+
+      bboxA.intersect(bboxB);
+
+      // 交集应该是 (1,1,1) 到 (3,3,3)
+      expect(bboxA.min.x).toBe(1);
+      expect(bboxA.max.x).toBe(3);
+    });
+
+    it('should copy from another bounding box', () => {
+      const bboxA = BoundingBox.fromData({
+        min: { x: 0, y: 0, z: 0 },
+        max: { x: 1, y: 1, z: 1 },
+      });
+
+      const bboxB = BoundingBox.fromData({
+        min: { x: -5, y: -5, z: -5 },
+        max: { x: 5, y: 5, z: 5 },
+      });
+
+      bboxA.copyFrom(bboxB);
+
+      expect(bboxA.min.x).toBe(-5);
+      expect(bboxA.max.x).toBe(5);
+    });
+
+    it('should access localBox getter', () => {
+      const bbox = BoundingBox.fromData({
+        min: { x: -1, y: -1, z: -1 },
+        max: { x: 1, y: 1, z: 1 },
+      });
+
+      const localBox = bbox.localBox;
+      expect(localBox).toBeDefined();
+      expect(localBox.min.x).toBe(-1);
+    });
+  });
+
+  // ========================================
   // 相等性测试
   // ========================================
 

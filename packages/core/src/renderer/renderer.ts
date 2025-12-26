@@ -122,7 +122,8 @@ export abstract class Renderer {
   protected pendingRenderables: Renderable[] = [];
 
   /** Frame version for pendingRenderables (用于检测数据是否过期) */
-  protected renderablesFrameVersion: number = 0;
+  /** 初始化为 -1 以区分"从未设置"状态，frameCount 从 0 开始 */
+  protected renderablesFrameVersion: number = -1;
 
   /**
    * Create Renderer
@@ -270,7 +271,15 @@ export abstract class Renderer {
    */
   createMaterialInstance(material: IMaterialResource, cacheKey?: string): MaterialInstance {
     // Use provided key, or materialId if available, or fall back to shaderId
-    const key = cacheKey ?? (material as any).id ?? material.shaderId;
+    // 类型安全的属性检查：使用 'in' 操作符避免 any 类型
+    const materialId = 'id' in material && typeof material.id === 'string' ? material.id : undefined;
+    const key = cacheKey ?? materialId ?? material.shaderId;
+
+    if (!key) {
+      throw new Error(
+        '[Renderer] Cannot create MaterialInstance: no valid cache key (cacheKey, material.id, or shaderId required)'
+      );
+    }
 
     let instance = this.materialInstances.get(key);
     if (instance) {

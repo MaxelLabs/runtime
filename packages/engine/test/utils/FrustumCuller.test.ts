@@ -356,6 +356,229 @@ describe('FrustumCuller', () => {
   });
 
   // ========================================
+  // 额外单对象测试
+  // ========================================
+
+  describe('Additional Single Object Tests', () => {
+    let culler: FrustumCuller;
+
+    beforeEach(() => {
+      culler = new FrustumCuller();
+      const projMatrix = createPerspectiveMatrix(90, 1, 1, 100);
+      culler.setFrustum(projMatrix);
+    });
+
+    it('should test box with detailed result via testBox', () => {
+      const visibleBox = {
+        min: { x: -1, y: -1, z: -20 },
+        max: { x: 1, y: 1, z: -10 },
+      };
+
+      const result = culler.testBox(visibleBox);
+      expect(result).not.toBe(IntersectionResult.Outside);
+    });
+
+    it('should return Inside when disabled via testBox', () => {
+      culler.setEnabled(false);
+
+      const box = {
+        min: { x: -1, y: -1, z: 50 },
+        max: { x: 1, y: 1, z: 60 },
+      };
+
+      expect(culler.testBox(box)).toBe(IntersectionResult.Inside);
+    });
+
+    it('should test sphere with detailed result via testSphere', () => {
+      const visibleSphere = {
+        center: { x: 0, y: 0, z: -20 },
+        radius: 5,
+      };
+
+      const result = culler.testSphere(visibleSphere);
+      expect(result).not.toBe(IntersectionResult.Outside);
+    });
+
+    it('should return Inside when disabled via testSphere', () => {
+      culler.setEnabled(false);
+
+      const sphere = {
+        center: { x: 0, y: 0, z: 50 },
+        radius: 5,
+      };
+
+      expect(culler.testSphere(sphere)).toBe(IntersectionResult.Inside);
+    });
+
+    it('should return visible when disabled via isSphereVisible', () => {
+      culler.setEnabled(false);
+
+      const sphere = {
+        center: { x: 0, y: 0, z: 50 },
+        radius: 5,
+      };
+
+      expect(culler.isSphereVisible(sphere)).toBe(true);
+    });
+  });
+
+  // ========================================
+  // 额外过滤测试
+  // ========================================
+
+  describe('Additional Filter Tests', () => {
+    let culler: FrustumCuller;
+
+    beforeEach(() => {
+      culler = new FrustumCuller();
+      const projMatrix = createPerspectiveMatrix(90, 1, 1, 100);
+      culler.setFrustum(projMatrix);
+    });
+
+    it('should return all objects when disabled in filterVisible', () => {
+      culler.setEnabled(false);
+
+      const objects: ICullable[] = [
+        {
+          worldBoundingBox: {
+            min: { x: -1, y: -1, z: 50 },
+            max: { x: 1, y: 1, z: 60 },
+          },
+        },
+        {
+          worldBoundingBox: {
+            min: { x: -1, y: -1, z: 100 },
+            max: { x: 1, y: 1, z: 110 },
+          },
+        },
+      ];
+
+      const visible = culler.filterVisible(objects);
+      expect(visible.length).toBe(2);
+    });
+
+    it('should use bounding sphere in filterVisible when configured', () => {
+      culler.setUseBoundingSphere(true);
+
+      const objects: ICullable[] = [
+        {
+          worldBoundingSphere: {
+            center: { x: 0, y: 0, z: -20 },
+            radius: 5,
+          },
+        },
+        {
+          worldBoundingSphere: {
+            center: { x: 0, y: 0, z: 50 },
+            radius: 5,
+          },
+        },
+      ];
+
+      const visible = culler.filterVisible(objects);
+      expect(visible.length).toBe(1);
+    });
+
+    it('should treat objects without bounding volumes as visible in filterVisible', () => {
+      const objects: ICullable[] = [
+        {
+          // 没有包围体
+        },
+        {
+          worldBoundingBox: {
+            min: { x: -1, y: -1, z: 50 },
+            max: { x: 1, y: 1, z: 60 },
+          },
+        },
+      ];
+
+      const visible = culler.filterVisible(objects);
+      // 第一个对象没有包围体，默认可见；第二个在视锥体外，不可见
+      expect(visible.length).toBe(1);
+      expect(visible).toContain(objects[0]);
+    });
+  });
+
+  // ========================================
+  // Frustum 额外测试
+  // ========================================
+
+  describe('Frustum Additional Tests', () => {
+    it('should handle sphere partially inside frustum', () => {
+      const projMatrix = createPerspectiveMatrix(90, 1, 1, 100);
+      const frustum = Frustum.fromProjectionMatrix(projMatrix);
+
+      // 球心在视锥体边界附近
+      const partialSphere = {
+        center: { x: 0, y: 0, z: -1 }, // 在近裁剪面附近
+        radius: 2, // 半径使其部分在外
+      };
+
+      const result = frustum.intersectsSphere(partialSphere);
+      // 应该不是完全在外
+      expect(result).not.toBe(IntersectionResult.Outside);
+    });
+
+    it('should handle sphere fully inside via allInside check', () => {
+      const projMatrix = createPerspectiveMatrix(90, 1, 1, 100);
+      const frustum = Frustum.fromProjectionMatrix(projMatrix);
+
+      // 完全在视锥体内部的小球
+      const insideSphere = {
+        center: { x: 0, y: 0, z: -50 },
+        radius: 1,
+      };
+
+      const result = frustum.intersectsSphere(insideSphere);
+      expect(result).toBe(IntersectionResult.Inside);
+    });
+
+    it('should handle edge case with zero length plane normal', () => {
+      // 测试 _setPlaneFromMatrix 中 length < EPSILON 的分支
+      new Frustum();
+      // 使用 fromData 设置近乎零长度的平面
+      const zeroPlaneData = {
+        planes: [
+          { distance: 0, normal: { x: 0, y: 0, z: 1 } },
+          { distance: 0, normal: { x: 0, y: 0, z: -1 } },
+          { distance: 0, normal: { x: 0, y: 1, z: 0 } },
+          { distance: 0, normal: { x: 0, y: -1, z: 0 } },
+          { distance: 0, normal: { x: 1, y: 0, z: 0 } },
+          { distance: 0, normal: { x: -1, y: 0, z: 0 } },
+        ],
+      };
+      const testFrustum = Frustum.fromData(zeroPlaneData);
+      expect(testFrustum.getPlanes().length).toBe(6);
+    });
+
+    it('should handle degenerate matrix with zero plane coefficients', () => {
+      // 创建一个全零矩阵，触发 length < EPSILON 分支
+      const zeroMatrix = new Matrix4();
+      zeroMatrix.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+      // 这应该不会崩溃，即使矩阵是退化的
+      const frustum = Frustum.fromProjectionMatrix(zeroMatrix);
+      const planes = frustum.getPlanes();
+      expect(planes.length).toBe(6);
+    });
+
+    it('should copy from another frustum', () => {
+      const projMatrix = createPerspectiveMatrix(60, 16 / 9, 0.1, 100);
+      const original = Frustum.fromProjectionMatrix(projMatrix);
+      const copy = new Frustum();
+
+      copy.copyFrom(original);
+
+      const originalPlanes = original.getPlanes();
+      const copyPlanes = copy.getPlanes();
+
+      for (let i = 0; i < 6; i++) {
+        expect(copyPlanes[i].distance).toBeCloseTo(originalPlanes[i].distance, 5);
+      }
+    });
+  });
+
+  // ========================================
   // 批量剔除
   // ========================================
 

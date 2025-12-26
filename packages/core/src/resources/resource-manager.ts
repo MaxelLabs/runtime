@@ -486,6 +486,11 @@ export class ResourceManager implements IDisposable {
 
   /**
    * 清理网格资源条目
+   *
+   * @remarks
+   * 如果 GPU 资源销毁失败，会记录警告并调用错误回调（如果设置）。
+   * 无论成功与否，都会清除 entry.data 以防止内存泄漏。
+   * 注意：GPU 资源可能泄漏，调用者应通过 setCleanupErrorCallback 监控此类错误。
    */
   private cleanupMeshEntry(entry: ResourceEntry<IMeshResource>): void {
     if (entry.data) {
@@ -494,8 +499,16 @@ export class ResourceManager implements IDisposable {
         entry.data.indexBuffer?.destroy();
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
-        console.warn('[ResourceManager] Failed to cleanup mesh GPU resources:', error);
-        // 调用错误回调
+        // 结构化日志：记录资源 ID 和错误详情，便于追踪 GPU 资源泄漏
+        if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
+          console.warn(
+            `[ResourceManager] GPU资源清理失败，可能导致资源泄漏`,
+            `\n  类型: mesh`,
+            `\n  状态: ${entry.state}`,
+            `\n  错误: ${error.message}`
+          );
+        }
+        // 调用错误回调，允许调用者处理清理失败
         if (this.cleanupErrorCallback) {
           this.cleanupErrorCallback(error, 'mesh', entry);
         }
@@ -506,6 +519,11 @@ export class ResourceManager implements IDisposable {
 
   /**
    * 清理纹理资源条目
+   *
+   * @remarks
+   * 如果 GPU 资源销毁失败，会记录警告并调用错误回调（如果设置）。
+   * 无论成功与否，都会清除 entry.data 以防止内存泄漏。
+   * 注意：GPU 资源可能泄漏，调用者应通过 setCleanupErrorCallback 监控此类错误。
    */
   private cleanupTextureEntry(entry: ResourceEntry<ITextureResource>): void {
     if (entry.data) {
@@ -513,8 +531,16 @@ export class ResourceManager implements IDisposable {
         entry.data.texture?.destroy();
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
-        console.warn('[ResourceManager] Failed to cleanup texture GPU resources:', error);
-        // 调用错误回调
+        // 结构化日志：记录资源 ID 和错误详情，便于追踪 GPU 资源泄漏
+        if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
+          console.warn(
+            `[ResourceManager] GPU资源清理失败，可能导致资源泄漏`,
+            `\n  类型: texture`,
+            `\n  状态: ${entry.state}`,
+            `\n  错误: ${error.message}`
+          );
+        }
+        // 调用错误回调，允许调用者处理清理失败
         if (this.cleanupErrorCallback) {
           this.cleanupErrorCallback(error, 'texture', entry);
         }
