@@ -91,6 +91,7 @@ related_ids: ["doc-standard", "constitution-core-runtime"]
 | **Resource Management** | `architecture-resources` | ResourceManager, lifecycle, reference counting, loader system | **Resource Reference** |
 | **Shader Compiler** | `architecture-shader-compiler` | ShaderCompiler 编译、缓存、生命周期管理，与 Renderer/MaterialInstance 集成 | **Rendering** |
 | **Logic Systems** | `architecture-logic-systems` | System execution stages (FrameStart/Update/PostUpdate), dependencies, TransformSystem/LayoutSystem/AnimationSystem flow | **System Scheduling** |
+| **Engine Package** | `arch-engine-package` | Engine 包架构设计，3D 渲染引擎入口，PBR/阴影/glTF/后处理 | **Engine 开发** |
 
 **Key Architecture Patterns:**
 1. **Specification-First**: Interface → Implementation → Factory
@@ -142,7 +143,8 @@ llmdoc/
 │   ├── scene-systems.md              ← Scene & system architecture
 │   ├── resources.md                  ← Resource management
 │   ├── shader-compiler.md            ← Shader compilation & caching
-│   └── logic-systems.md              ← System execution stages & dependencies
+│   ├── logic-systems.md              ← System execution stages & dependencies
+│   └── engine-package.md             ← Engine 包架构设计 (3D 渲染)
 │
 ├── agent/                            ← Strategic Memory
 │   ├── strategy-scene-resource-integration.md  ← Scene + ResourceManager 集成 (✅ Completed)
@@ -234,6 +236,7 @@ Application Packages (Usage)
 | **Create custom loaders** | `architecture-resources` | `ref-specification` |
 | **Implement shader compilation** | `architecture-shader-compiler` | `architecture-scene-systems`, `ref-specification` |
 | **Integrate Scene + Resources** | `strategy-scene-resource-integration` | `architecture-scene-systems`, `architecture-resources` |
+| **Develop Engine package** | `arch-engine-package` | `arch-core-unified`, `architecture-shader-compiler` |
 
 ---
 

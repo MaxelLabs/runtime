@@ -121,6 +121,10 @@ export abstract class Renderer {
   /** Pending renderables from RenderSystem (NEW) */
   protected pendingRenderables: Renderable[] = [];
 
+  /** Frame version for pendingRenderables (用于检测数据是否过期) */
+  /** 初始化为 -1 以区分"从未设置"状态，frameCount 从 0 开始 */
+  protected renderablesFrameVersion: number = -1;
+
   /**
    * Create Renderer
    * @param config Renderer configuration
@@ -216,6 +220,16 @@ export abstract class Renderer {
    * ```
    */
   renderScene(scene: IScene, camera: EntityId): void {
+    // 检查 renderables 数据是否为当前帧
+    // 注意：frameCount 在 endFrame() 中递增，所以 renderScene() 时 frameCount 还是当前帧
+    if (this.renderablesFrameVersion !== this.frameCount && this.pendingRenderables.length > 0) {
+      console.warn(
+        `[Renderer] renderScene called with stale renderables data. ` +
+          `Expected frameVersion=${this.frameCount}, got ${this.renderablesFrameVersion}. ` +
+          `Ensure setRenderables() is called before renderScene() each frame.`
+      );
+    }
+
     // Build render context
     const ctx: RenderContext = this.createRenderContext(scene, camera);
 
@@ -257,7 +271,15 @@ export abstract class Renderer {
    */
   createMaterialInstance(material: IMaterialResource, cacheKey?: string): MaterialInstance {
     // Use provided key, or materialId if available, or fall back to shaderId
-    const key = cacheKey ?? (material as any).id ?? material.shaderId;
+    // 类型安全的属性检查：使用 'in' 操作符避免 any 类型
+    const materialId = 'id' in material && typeof material.id === 'string' ? material.id : undefined;
+    const key = cacheKey ?? materialId ?? material.shaderId;
+
+    if (!key) {
+      throw new Error(
+        '[Renderer] Cannot create MaterialInstance: no valid cache key (cacheKey, material.id, or shaderId required)'
+      );
+    }
 
     let instance = this.materialInstances.get(key);
     if (instance) {
@@ -313,13 +335,30 @@ export abstract class Renderer {
    * - 原始数组在下一帧可能被 RenderSystem 清空或修改
    * - Renderable 对象本身不拷贝（避免性能开销），但数组是独立的
    *
-   * ## 调用时序
+   * ## 调用时序（重要）
    * - 必须在 `renderScene()` 前调用
    * - 每帧调用一次，数据有效期仅当前帧
+   * - 调用此方法会更新 renderablesFrameVersion
+   *
+   * ## 并发安全
+   * - 使用 frameVersion 检测数据是否与当前帧匹配
+   * - 如果 renderScene() 时 frameVersion 不匹配，会发出警告
+   *
+   * ## 典型调用顺序
+   * ```
+   * RenderSystem.execute():
+   *   1. collectRenderables()
+   *   2. renderer.setRenderables(renderables)  // frameVersion = frameCount
+   *   3. renderer.beginFrame()
+   *   4. renderer.renderScene(scene, camera)   // 检查 frameVersion
+   *   5. renderer.endFrame()
+   * ```
    */
   setRenderables(renderables: Renderable[]): void {
     // 浅拷贝数组，避免 RenderSystem 后续修改影响渲染
     this.pendingRenderables = [...renderables];
+    // 更新版本号，标记数据为当前帧有效
+    this.renderablesFrameVersion = this.frameCount;
   }
 
   /**
@@ -408,7 +447,7 @@ export abstract class Renderer {
    * ```
    */
   protected createRenderContext(scene: IScene, camera: EntityId): RenderContext {
-    // Default implementation: create basic context
+    // 默认 implementation: create basic context
     // 优先使用 RenderSystem 填充的数据（如果可用）
     // 否则使用默认空值，由 Renderer 自己实现数据收集
 
@@ -446,6 +485,21 @@ export abstract class Renderer {
    * - Rendering shadow maps
    * - Updating global Uniform Buffers
    * - Setting render state
+   *
+   * ## 钩子调用顺序
+   * 在 Renderer 模式下，钩子调用顺序为：
+   * 1. `onBeforeRender(ctx)` - Renderer 内部钩子
+   * 2. `render(ctx)` - 主渲染
+   * 3. `onAfterRender(ctx)` - Renderer 内部钩子
+   *
+   * 在 RenderSystem 模式下，钩子调用顺序为：
+   * 1. `RenderSystem.onBeforeRender(ctx)` - System 内部钩子
+   * 2. `RenderSystem.beforeRenderHooks` - 外部注册的钩子
+   * 3. `Renderer.onBeforeRender(ctx)` - Renderer 内部钩子（通过 renderScene）
+   * 4. `Renderer.render(ctx)` - 主渲染
+   * 5. `Renderer.onAfterRender(ctx)` - Renderer 内部钩子
+   * 6. `RenderSystem.afterRenderHooks` - 外部注册的钩子
+   * 7. `RenderSystem.onAfterRender(ctx)` - System 内部钩子
    *
    * @example
    * ```typescript

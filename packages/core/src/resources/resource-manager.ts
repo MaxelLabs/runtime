@@ -308,6 +308,21 @@ export class ResourceManager implements IDisposable {
 
   /**
    * 通用资源加载方法（消除重复代码）
+   *
+   * @remarks
+   * ## 并发安全说明
+   * - 多个并发请求加载同一资源时，只会触发一次实际加载
+   * - 后续请求会等待已有的 loadPromise 完成
+   * - 每个请求都会正确递增引用计数
+   *
+   * ## 引用计数管理
+   * - 成功加载：引用计数 +1
+   * - 加载失败：引用计数回滚，如果无其他引用则清理条目
+   * - 等待已有加载失败：引用计数回滚
+   *
+   * ## 错误处理
+   * - 加载失败时会保存错误信息到 entry.error
+   * - 后续请求同一失败资源会立即抛出已保存的错误
    */
   private async loadResource<T>(
     loaderType: string,
@@ -320,13 +335,15 @@ export class ResourceManager implements IDisposable {
     // 1. 检查缓存
     let entry = cache.get(uri);
     if (entry) {
+      // 先递增引用计数（在 await 之前，确保原子性）
       entry.refCount++;
+
       // 等待已有的加载完成
       if (entry.loadPromise) {
         try {
           await entry.loadPromise;
         } catch {
-          // 如果加载失败，减少引用计数并重新抛出错误
+          // 如果加载失败，回滚引用计数
           entry.refCount--;
           if (entry.refCount <= 0) {
             cache.delete(uri);
@@ -334,14 +351,17 @@ export class ResourceManager implements IDisposable {
           throw entry.error ?? new Error(`Failed to load resource: ${uri}`);
         }
       }
-      // 检查加载是否失败
+
+      // 检查加载是否失败（可能是之前的加载失败，但条目仍存在）
       if (entry.state === ResourceState.Failed) {
+        // 回滚引用计数
         entry.refCount--;
         if (entry.refCount <= 0) {
           cache.delete(uri);
         }
         throw entry.error ?? new Error(`Failed to load resource: ${uri}`);
       }
+
       return createResourceHandle(uri, resourceType, ++this.resourceIdCounter);
     }
 
@@ -360,8 +380,9 @@ export class ResourceManager implements IDisposable {
     try {
       await entry.loadPromise;
     } catch (error) {
-      // 加载失败时，如果没有其他引用，清理条目
-      if (entry.refCount <= 1) {
+      // 加载失败时，回滚引用计数
+      entry.refCount--;
+      if (entry.refCount <= 0) {
         cache.delete(uri);
       }
       throw error;
@@ -465,6 +486,11 @@ export class ResourceManager implements IDisposable {
 
   /**
    * 清理网格资源条目
+   *
+   * @remarks
+   * 如果 GPU 资源销毁失败，会记录警告并调用错误回调（如果设置）。
+   * 无论成功与否，都会清除 entry.data 以防止内存泄漏。
+   * 注意：GPU 资源可能泄漏，调用者应通过 setCleanupErrorCallback 监控此类错误。
    */
   private cleanupMeshEntry(entry: ResourceEntry<IMeshResource>): void {
     if (entry.data) {
@@ -473,8 +499,16 @@ export class ResourceManager implements IDisposable {
         entry.data.indexBuffer?.destroy();
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
-        console.warn('[ResourceManager] Failed to cleanup mesh GPU resources:', error);
-        // 调用错误回调
+        // 结构化日志：记录资源 ID 和错误详情，便于追踪 GPU 资源泄漏
+        if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
+          console.warn(
+            `[ResourceManager] GPU资源清理失败，可能导致资源泄漏`,
+            `\n  类型: mesh`,
+            `\n  状态: ${entry.state}`,
+            `\n  错误: ${error.message}`
+          );
+        }
+        // 调用错误回调，允许调用者处理清理失败
         if (this.cleanupErrorCallback) {
           this.cleanupErrorCallback(error, 'mesh', entry);
         }
@@ -485,6 +519,11 @@ export class ResourceManager implements IDisposable {
 
   /**
    * 清理纹理资源条目
+   *
+   * @remarks
+   * 如果 GPU 资源销毁失败，会记录警告并调用错误回调（如果设置）。
+   * 无论成功与否，都会清除 entry.data 以防止内存泄漏。
+   * 注意：GPU 资源可能泄漏，调用者应通过 setCleanupErrorCallback 监控此类错误。
    */
   private cleanupTextureEntry(entry: ResourceEntry<ITextureResource>): void {
     if (entry.data) {
@@ -492,8 +531,16 @@ export class ResourceManager implements IDisposable {
         entry.data.texture?.destroy();
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
-        console.warn('[ResourceManager] Failed to cleanup texture GPU resources:', error);
-        // 调用错误回调
+        // 结构化日志：记录资源 ID 和错误详情，便于追踪 GPU 资源泄漏
+        if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
+          console.warn(
+            `[ResourceManager] GPU资源清理失败，可能导致资源泄漏`,
+            `\n  类型: texture`,
+            `\n  状态: ${entry.state}`,
+            `\n  错误: ${error.message}`
+          );
+        }
+        // 调用错误回调，允许调用者处理清理失败
         if (this.cleanupErrorCallback) {
           this.cleanupErrorCallback(error, 'texture', entry);
         }

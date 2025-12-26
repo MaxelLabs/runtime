@@ -381,7 +381,7 @@ describe('SceneSerializer', () => {
       expect(loadMeshSpy).toHaveBeenCalledWith('models/cube.glb');
       expect(loadTextureSpy).toHaveBeenCalledWith('textures/diffuse.png');
       expect(loadMaterialSpy).toHaveBeenCalledWith('materials/standard.mat');
-      expect(listener).toHaveBeenCalledWith({ count: 3 });
+      expect(listener).toHaveBeenCalledWith({ count: 3, successCount: 3, failedCount: 0 });
 
       loadMeshSpy.mockRestore();
       loadTextureSpy.mockRestore();

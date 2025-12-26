@@ -42,15 +42,15 @@
   "devDependencies": {
     "@jest/globals": "^30.0.5",
     "@types/jest": "^30.0.0",
-    "@types/node": "^18.15.11",
-    "@vitejs/plugin-legacy": "^5.2.2",
+    "@types/node": "^25.0.3",
+    "@vitejs/plugin-legacy": "^7.2.1",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
     "rimraf": "^6.0.1",
-    "rollup": "^3.20.0",
+    "rollup": "^4.54.0",
     "ts-jest": "^29.1.0",
     "typescript": "^5.0.4",
-    "vite": "^4.3.0",
-    "vite-tsconfig-paths": "^4.0.0"
+    "vite": "^7.3.0",
+    "vite-tsconfig-paths": "^6.0.3"
   }
 }
