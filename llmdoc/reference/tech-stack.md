@@ -59,6 +59,7 @@ interface TestConfig {
 │  @maxellabs/core (核心组件系统)         │
 │  - 依赖: specification, math            │
 │  - ECS架构、组件管理、实体系统          │
+│  - 重新导出 MMath 和 MSpec 命名空间     │
 └──────────────┬──────────────────────────┘
                │
                ▼
@@ -71,10 +72,15 @@ interface TestConfig {
                ▼
 ┌─────────────────────────────────────────┐
 │  @maxellabs/engine (游戏引擎)           │
-│  - 依赖: rhi, core, math               │
+│  - 依赖: core, rhi                      │
+│  - 通过 core 访问 MMath/MSpec           │
 │  - 完整引擎功能集成                      │
 └─────────────────────────────────────────┘
 ```
+
+> **注意**: `@maxellabs/engine` 不需要直接依赖 `@maxellabs/math`，
+> 因为 `@maxellabs/core` 已经重新导出了 `MMath` 和 `MSpec` 命名空间。
+> 使用方式: `import { MMath, MSpec } from '@maxellabs/core'`
 
 ## 🏗️ 构建系统
 
@@ -234,9 +240,12 @@ interface TSConfig {
 ### 项目引用 (Project References)
 ```
 core → math, specification
-engine → rhi, core, math
+engine → core, rhi
 rhi → core
 ```
+
+> **说明**: engine 通过 core 间接获取 math 和 specification 的类型，
+> 无需直接声明对 math 的依赖。
 
 ## 🚀 开发工作流
 

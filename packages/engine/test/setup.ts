@@ -4,12 +4,18 @@
  */
 
 import { beforeAll, afterEach, jest } from '@jest/globals';
+import { performance as nodePerformance } from 'perf_hooks';
 
 // Mock HTMLCanvasElement for Node environment
 if (typeof HTMLCanvasElement === 'undefined') {
   (global as any).HTMLCanvasElement = class HTMLCanvasElement {
     tagName = 'CANVAS';
   };
+}
+
+// Polyfill performance API for Node environment (Node 16+ has it globally, but ensure compatibility)
+if (typeof performance === 'undefined') {
+  (global as any).performance = nodePerformance;
 }
 
 // 设置全局测试配置
