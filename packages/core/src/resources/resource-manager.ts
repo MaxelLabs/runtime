@@ -308,6 +308,21 @@ export class ResourceManager implements IDisposable {
 
   /**
    * 通用资源加载方法（消除重复代码）
+   *
+   * @remarks
+   * ## 并发安全说明
+   * - 多个并发请求加载同一资源时，只会触发一次实际加载
+   * - 后续请求会等待已有的 loadPromise 完成
+   * - 每个请求都会正确递增引用计数
+   *
+   * ## 引用计数管理
+   * - 成功加载：引用计数 +1
+   * - 加载失败：引用计数回滚，如果无其他引用则清理条目
+   * - 等待已有加载失败：引用计数回滚
+   *
+   * ## 错误处理
+   * - 加载失败时会保存错误信息到 entry.error
+   * - 后续请求同一失败资源会立即抛出已保存的错误
    */
   private async loadResource<T>(
     loaderType: string,
@@ -320,13 +335,15 @@ export class ResourceManager implements IDisposable {
     // 1. 检查缓存
     let entry = cache.get(uri);
     if (entry) {
+      // 先递增引用计数（在 await 之前，确保原子性）
       entry.refCount++;
+
       // 等待已有的加载完成
       if (entry.loadPromise) {
         try {
           await entry.loadPromise;
         } catch {
-          // 如果加载失败，减少引用计数并重新抛出错误
+          // 如果加载失败，回滚引用计数
           entry.refCount--;
           if (entry.refCount <= 0) {
             cache.delete(uri);
@@ -334,14 +351,17 @@ export class ResourceManager implements IDisposable {
           throw entry.error ?? new Error(`Failed to load resource: ${uri}`);
         }
       }
-      // 检查加载是否失败
+
+      // 检查加载是否失败（可能是之前的加载失败，但条目仍存在）
       if (entry.state === ResourceState.Failed) {
+        // 回滚引用计数
         entry.refCount--;
         if (entry.refCount <= 0) {
           cache.delete(uri);
         }
         throw entry.error ?? new Error(`Failed to load resource: ${uri}`);
       }
+
       return createResourceHandle(uri, resourceType, ++this.resourceIdCounter);
     }
 
@@ -360,8 +380,9 @@ export class ResourceManager implements IDisposable {
     try {
       await entry.loadPromise;
     } catch (error) {
-      // 加载失败时，如果没有其他引用，清理条目
-      if (entry.refCount <= 1) {
+      // 加载失败时，回滚引用计数
+      entry.refCount--;
+      if (entry.refCount <= 0) {
         cache.delete(uri);
       }
       throw error;

@@ -18,8 +18,20 @@ import type { Scene } from '../scene';
  */
 export interface ISceneSerializer {
   fromData(data: ISceneData, scene: Scene): void;
-  fromDataAsync(data: ISceneData, scene: Scene): Promise<void>;
+  fromDataAsync(data: ISceneData, scene: Scene, options?: { strict?: boolean }): Promise<PreloadResult>;
   toData(scene: Scene): ISceneData;
+}
+
+/**
+ * 预加载结果
+ */
+export interface PreloadResult {
+  /** 成功加载的资源数量 */
+  successCount: number;
+  /** 失败的资源数量 */
+  failedCount: number;
+  /** 失败的资源列表 */
+  failedAssets: Array<{ type: string; uri: string; error: Error }>;
 }
 
 /**
@@ -66,8 +78,33 @@ export class SceneSerializer implements ISceneSerializer {
     }
   }
 
-  async fromDataAsync(data: ISceneData, scene: Scene): Promise<void> {
+  /**
+   * 异步加载场景数据（带资源预加载）
+   *
+   * @param data 场景数据
+   * @param scene 目标场景
+   * @param options 加载选项
+   *
+   * @remarks
+   * ## 资源加载策略
+   * - 默认行为：预加载失败仅警告，不阻塞场景加载
+   * - 严格模式：任何预加载失败都会抛出错误
+   *
+   * ## 资源状态检查
+   * 预加载完成后，可以通过 `getPreloadResult()` 获取加载结果，
+   * 包括成功/失败的资源列表。
+   *
+   * ## 使用建议
+   * - 对于关键资源，建议使用 `awaitAllAssets()` 确保加载完成
+   * - 对于非关键资源，可以使用默认的非阻塞模式
+   */
+  async fromDataAsync(data: ISceneData, scene: Scene, options?: { strict?: boolean }): Promise<PreloadResult> {
     // Async version - with asset preloading
+    const result: PreloadResult = {
+      successCount: 0,
+      failedCount: 0,
+      failedAssets: [],
+    };
 
     // 1. Preload assets in parallel
     if (data.assets) {
@@ -86,18 +123,35 @@ export class SceneSerializer implements ISceneSerializer {
                 await scene.loadMaterial(asset.uri);
                 break;
             }
-          } catch (error) {
+            result.successCount++;
+          } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err));
+            result.failedCount++;
+            result.failedAssets.push({ type: asset.type, uri: asset.uri, error });
+
+            if (options?.strict) {
+              throw new Error(
+                `[SceneSerializer] Failed to preload ${asset.type}: ${asset.uri}. ` + `Error: ${error.message}`
+              );
+            }
+
             console.warn(`[SceneSerializer] Failed to preload ${asset.type}: ${asset.uri}`, error);
             // Non-blocking: continue even if asset fails
           }
         });
 
       await Promise.all(preloadPromises);
-      scene.emit('assetsPreloaded', { count: preloadPromises.length });
+      scene.emit('assetsPreloaded', {
+        count: preloadPromises.length,
+        successCount: result.successCount,
+        failedCount: result.failedCount,
+      });
     }
 
     // 2. Load entities (same as sync version)
     this.fromData(data, scene);
+
+    return result;
   }
 
   toData(scene: Scene): ISceneData {

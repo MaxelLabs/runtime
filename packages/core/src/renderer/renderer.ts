@@ -121,6 +121,9 @@ export abstract class Renderer {
   /** Pending renderables from RenderSystem (NEW) */
   protected pendingRenderables: Renderable[] = [];
 
+  /** Frame version for pendingRenderables (用于检测数据是否过期) */
+  protected renderablesFrameVersion: number = 0;
+
   /**
    * Create Renderer
    * @param config Renderer configuration
@@ -216,6 +219,16 @@ export abstract class Renderer {
    * ```
    */
   renderScene(scene: IScene, camera: EntityId): void {
+    // 检查 renderables 数据是否为当前帧
+    // 注意：frameCount 在 endFrame() 中递增，所以 renderScene() 时 frameCount 还是当前帧
+    if (this.renderablesFrameVersion !== this.frameCount && this.pendingRenderables.length > 0) {
+      console.warn(
+        `[Renderer] renderScene called with stale renderables data. ` +
+          `Expected frameVersion=${this.frameCount}, got ${this.renderablesFrameVersion}. ` +
+          `Ensure setRenderables() is called before renderScene() each frame.`
+      );
+    }
+
     // Build render context
     const ctx: RenderContext = this.createRenderContext(scene, camera);
 
@@ -313,13 +326,30 @@ export abstract class Renderer {
    * - 原始数组在下一帧可能被 RenderSystem 清空或修改
    * - Renderable 对象本身不拷贝（避免性能开销），但数组是独立的
    *
-   * ## 调用时序
+   * ## 调用时序（重要）
    * - 必须在 `renderScene()` 前调用
    * - 每帧调用一次，数据有效期仅当前帧
+   * - 调用此方法会更新 renderablesFrameVersion
+   *
+   * ## 并发安全
+   * - 使用 frameVersion 检测数据是否与当前帧匹配
+   * - 如果 renderScene() 时 frameVersion 不匹配，会发出警告
+   *
+   * ## 典型调用顺序
+   * ```
+   * RenderSystem.execute():
+   *   1. collectRenderables()
+   *   2. renderer.setRenderables(renderables)  // frameVersion = frameCount
+   *   3. renderer.beginFrame()
+   *   4. renderer.renderScene(scene, camera)   // 检查 frameVersion
+   *   5. renderer.endFrame()
+   * ```
    */
   setRenderables(renderables: Renderable[]): void {
     // 浅拷贝数组，避免 RenderSystem 后续修改影响渲染
     this.pendingRenderables = [...renderables];
+    // 更新版本号，标记数据为当前帧有效
+    this.renderablesFrameVersion = this.frameCount;
   }
 
   /**
@@ -446,6 +476,21 @@ export abstract class Renderer {
    * - Rendering shadow maps
    * - Updating global Uniform Buffers
    * - Setting render state
+   *
+   * ## 钩子调用顺序
+   * 在 Renderer 模式下，钩子调用顺序为：
+   * 1. `onBeforeRender(ctx)` - Renderer 内部钩子
+   * 2. `render(ctx)` - 主渲染
+   * 3. `onAfterRender(ctx)` - Renderer 内部钩子
+   *
+   * 在 RenderSystem 模式下，钩子调用顺序为：
+   * 1. `RenderSystem.onBeforeRender(ctx)` - System 内部钩子
+   * 2. `RenderSystem.beforeRenderHooks` - 外部注册的钩子
+   * 3. `Renderer.onBeforeRender(ctx)` - Renderer 内部钩子（通过 renderScene）
+   * 4. `Renderer.render(ctx)` - 主渲染
+   * 5. `Renderer.onAfterRender(ctx)` - Renderer 内部钩子
+   * 6. `RenderSystem.afterRenderHooks` - 外部注册的钩子
+   * 7. `RenderSystem.onAfterRender(ctx)` - System 内部钩子
    *
    * @example
    * ```typescript

@@ -203,6 +203,25 @@ export class ShaderCompilerError extends Error {
  * - 不要忘记调用 dispose() 释放资源
  * - 不要在 dispose() 后继续使用编译器
  *
+ * ## 推荐使用模式（RAII）
+ * 为避免引用计数泄漏，推荐使用 `useProgram()` 方法：
+ * ```typescript
+ * // 推荐：使用 RAII 模式自动管理引用计数
+ * await compiler.useProgram(vs, fs, async (program) => {
+ *   // 使用 program 进行渲染
+ *   program.bind();
+ *   // ... 渲染逻辑 ...
+ * }); // 自动释放引用
+ *
+ * // 或者手动管理（需要确保 finally 中释放）
+ * const program = await compiler.compile(vs, fs);
+ * try {
+ *   // 使用 program
+ * } finally {
+ *   compiler.release(program);
+ * }
+ * ```
+ *
  * @example
  * ```typescript
  * // 创建编译器
@@ -518,6 +537,56 @@ export class ShaderCompiler {
   release(program: ShaderProgram): void {
     this.checkDisposed();
     this.cache.release(program.id);
+  }
+
+  /**
+   * RAII 模式使用着色器程序
+   *
+   * @param vertexSource 顶点着色器源码
+   * @param fragmentSource 片元着色器源码
+   * @param callback 使用着色器程序的回调函数
+   * @returns 回调函数的返回值
+   *
+   * @remarks
+   * 此方法提供 RAII（资源获取即初始化）模式，自动管理引用计数：
+   * - 编译/获取着色器程序（递增引用计数）
+   * - 执行回调函数
+   * - 无论成功或失败，自动释放引用计数
+   *
+   * ## 优势
+   * - 避免忘记调用 release() 导致的引用计数泄漏
+   * - 异常安全：即使回调抛出异常，也会正确释放引用
+   * - 代码更简洁，无需手动 try-finally
+   *
+   * ## 使用场景
+   * - 临时使用着色器程序（如单次渲染）
+   * - 需要异常安全的着色器使用
+   *
+   * @example
+   * ```typescript
+   * // 推荐：使用 RAII 模式
+   * await compiler.useProgram(vs, fs, async (program) => {
+   *   program.bind();
+   *   // 渲染逻辑...
+   * }); // 自动释放
+   *
+   * // 带返回值
+   * const result = await compiler.useProgram(vs, fs, async (program) => {
+   *   return program.getUniformLocation('u_MVP');
+   * });
+   * ```
+   */
+  async useProgram<T>(
+    vertexSource: string,
+    fragmentSource: string,
+    callback: (program: ShaderProgram) => T | Promise<T>
+  ): Promise<T> {
+    const program = await this.compile(vertexSource, fragmentSource);
+    try {
+      return await callback(program);
+    } finally {
+      this.release(program);
+    }
   }
 
   /**

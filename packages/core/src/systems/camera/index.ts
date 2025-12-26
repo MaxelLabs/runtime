@@ -102,6 +102,17 @@ export class CameraMatrices {
 /**
  * CameraSystem
  * 计算相机的视图矩阵和投影矩阵
+ *
+ * @remarks
+ * ## 线程安全说明
+ * CameraSystem 使用实例级临时矩阵来避免 GC 压力。
+ * 在 JavaScript 单线程环境下，这是安全的，因为：
+ * - ECS 系统按顺序执行，不会并发调用同一 System
+ * - 即使在异步环境下，execute() 方法内部是同步的
+ *
+ * ## 如果需要多线程支持
+ * 如果未来需要在 Web Worker 中运行 CameraSystem，
+ * 应该将临时矩阵改为局部变量或使用 ThreadLocal 模式。
  */
 export class CameraSystem implements ISystem {
   readonly metadata: SystemMetadata = {
@@ -112,12 +123,25 @@ export class CameraSystem implements ISystem {
     after: ['TransformSystem'],
   };
 
-  /** 临时矩阵（复用以避免 GC） */
+  /**
+   * 临时矩阵（复用以避免 GC）
+   *
+   * @remarks
+   * ## 线程安全约束
+   * - 这些临时变量仅在 execute() 同步执行期间使用
+   * - JavaScript 单线程保证不会有并发访问
+   * - 如果需要多线程支持，应改用局部变量
+   *
+   * @internal
+   */
   private tempMatrix: Matrix4 = new Matrix4();
   private tempViewMatrix: Matrix4 = new Matrix4();
   private tempProjMatrix: Matrix4 = new Matrix4();
 
-  /** 临时向量 */
+  /**
+   * 临时向量
+   * @internal
+   */
   private tempEye: Vector3 = new Vector3();
   private tempTarget: Vector3 = new Vector3();
   private tempUp: Vector3 = new Vector3(0, 1, 0);
