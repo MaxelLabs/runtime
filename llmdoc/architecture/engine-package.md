@@ -3,9 +3,10 @@ id: "arch-engine-package"
 type: "architecture"
 title: "Engine 包架构设计"
 description: "Engine 包作为 3D 渲染引擎的顶层封装，整合 Core 基础设施和 RHI 实现，提供开箱即用的 3D 应用开发能力"
-tags: ["engine", "architecture", "3d", "rendering", "pbr", "scene", "glTF"]
+tags: ["engine", "architecture", "3d", "rendering", "pbr", "scene", "glTF", "webgl", "rhi", "bind-group"]
 context_dependency: ["arch-core-unified", "architecture-shader-compiler", "architecture-resources"]
-related_ids: ["ref-rhi-interfaces", "arch-logic-systems", "architecture-scene-systems"]
+related_ids: ["ref-rhi-interfaces", "arch-logic-systems", "architecture-scene-systems", "strategy-triangle-rendering-gap-analysis"]
+last_updated: "2025-01-04"
 ---
 
 # Engine 包架构设计
@@ -67,69 +68,47 @@ Engine 禁止:
 
 ## 2. 模块设计
 
-### 2.1 目录结构
+### 2.1 目录结构 (当前实现)
 
 ```
 packages/engine/src/
 ├── index.ts                    # 统一导出
 │
 ├── engine/                     # 引擎入口
-│   ├── Engine.ts               # Engine 主类
-│   ├── EngineConfig.ts         # 引擎配置接口
-│   └── EngineLoop.ts           # 主循环管理
+│   ├── engine.ts               # Engine 主类 [已实现]
+│   └── engine-config.ts        # 引擎配置接口 [已实现]
 │
-├── renderers/                  # 渲染器扩展
-│   ├── ForwardRenderer.ts      # 前向渲染器
-│   ├── DeferredRenderer.ts     # 延迟渲染器（可选）
-│   ├── ShadowPass.ts           # 阴影渲染通道
-│   ├── PostProcessPass.ts      # 后处理通道
-│   └── passes/                 # 渲染通道集合
-│       ├── BloomPass.ts
-│       ├── ToneMappingPass.ts
-│       └── SSAOPass.ts
-│
-├── loaders/                    # 资源加载器
-│   ├── GLTFLoader.ts           # glTF 2.0 加载器
-│   ├── OBJLoader.ts            # OBJ 加载器
-│   ├── HDRLoader.ts            # HDR 环境贴图加载器
-│   ├── KTX2Loader.ts           # KTX2 压缩纹理加载器
-│   └── DracoDecoder.ts         # Draco 网格解压
+├── renderers/                  # 渲染器
+│   ├── simple-webgl-renderer.ts # SimpleWebGLRenderer [已实现] - 基于 RHI BindGroup/UBO
+│   ├── shaders.ts              # 内置着色器 [已实现] - std140 Uniform Blocks
+│   └── forward-renderer.ts     # ForwardRenderer (框架)
 │
 ├── materials/                  # 材质系统
-│   ├── PBRMaterial.ts          # PBR 材质
-│   ├── UnlitMaterial.ts        # 无光照材质
-│   ├── StandardMaterial.ts     # 标准材质（简化 PBR）
-│   └── shaders/                # 内置着色器
-│       ├── pbr.vert.glsl
-│       ├── pbr.frag.glsl
-│       ├── shadow.vert.glsl
-│       └── shadow.frag.glsl
+│   ├── PBR-material.ts         # PBRMaterial [已实现]
+│   └── unlit-material.ts       # UnlitMaterial [已实现]
 │
-├── systems/                    # 高级系统
-│   ├── ShadowSystem.ts         # 阴影映射系统
-│   ├── LODSystem.ts            # 层次细节系统
-│   ├── CullingSystem.ts        # 视锥剔除系统
-│   ├── InstancingSystem.ts     # GPU 实例化系统
-│   └── EnvironmentSystem.ts    # 环境光照系统
-│
-├── components/                 # 扩展组件
-│   ├── PBRMaterialRef.ts       # PBR 材质引用组件
-│   ├── ShadowCaster.ts         # 阴影投射组件
-│   ├── ShadowReceiver.ts       # 阴影接收组件
-│   ├── LODGroup.ts             # LOD 组组件
-│   └── Environment.ts          # 环境组件（IBL）
+├── components/                 # ECS 组件
+│   ├── index.ts                # 导出
+│   ├── mesh-instance.ts        # MeshInstance [已实现] - 持有 GPU 缓冲区
+│   └── material-instance.ts    # MaterialInstance [已实现] - 持有材质引用
 │
 ├── primitives/                 # 内置几何体
-│   ├── BoxGeometry.ts
-│   ├── SphereGeometry.ts
-│   ├── PlaneGeometry.ts
-│   ├── CylinderGeometry.ts
-│   └── GeometryBuilder.ts      # 几何体构建器
+│   ├── index.ts
+│   ├── geometry-builder.ts     # GeometryBuilder [已实现]
+│   ├── box-geometry.ts         # BoxGeometry [已实现]
+│   ├── sphere-geometry.ts      # SphereGeometry [已实现]
+│   ├── plane-geometry.ts       # PlaneGeometry [已实现]
+│   └── cylinder-geometry.ts    # CylinderGeometry [已实现]
 │
-└── utils/                      # 工具函数
-    ├── EnvironmentProbe.ts     # 环境探针
-    ├── BoundingBox.ts          # 包围盒计算
-    └── FrustumCuller.ts        # 视锥剔除器
+├── utils/                      # 工具函数
+│   ├── bounding-box.ts         # BoundingBox
+│   ├── environment-probe.ts    # EnvironmentProbe
+│   └── frustum-culler.ts       # FrustumCuller
+│
+└── demo/                       # 演示 [已实现]
+    ├── index.html
+    ├── html/quick-start.html
+    └── src/quick-start.ts      # Engine 快速入门 Demo
 ```
 
 ### 2.2 模块依赖关系
@@ -236,54 +215,220 @@ interface IEngine {
 }
 ```
 
-### 3.2 ForwardRenderer
+### 3.2 SimpleWebGLRenderer (RHI BindGroup/UBO 实现)
+
+> **重要变更 (2025-01-04)**: SimpleWebGLRenderer 已从原生 WebGL 调用重构为使用 RHI 抽象层。
 
 ```typescript
+// 核心类型依赖
+import type {
+  IRHIDevice, IRHIRenderPipeline, IRHIShaderModule,
+  IRHIPipelineLayout, IRHIBindGroupLayout, IRHIBindGroup,
+  IRHIBuffer, IRHIRenderPass, IRHITexture
+} from '@maxellabs/specification';
 import { Renderer, RenderContext } from '@maxellabs/core';
 
-interface ForwardRendererConfig {
-  /** 清屏颜色 */
-  clearColor?: [number, number, number, number];
-
-  /** 启用 HDR */
-  hdr?: boolean;
-
-  /** 阴影通道 */
-  shadowPass?: ShadowPass;
-
-  /** 后处理通道 */
-  postProcessPasses?: PostProcessPass[];
+interface SimpleWebGLRendererConfig extends RendererConfig {
+  backgroundColor?: [number, number, number, number];
 }
 
-class ForwardRenderer extends Renderer {
-  private shadowPass?: ShadowPass;
-  private postProcessPasses: PostProcessPass[];
+class SimpleWebGLRenderer extends Renderer {
+  // RHI 资源 (非原生 WebGL)
+  private rhiDevice: IRHIDevice;
+  private renderPipeline: IRHIRenderPipeline | null;
+  private vertexShader: IRHIShaderModule | null;
+  private fragmentShader: IRHIShaderModule | null;
 
-  constructor(device: IRHIDevice, config?: ForwardRendererConfig);
+  // BindGroup 架构 (代替 pushConstants)
+  private pipelineLayout: IRHIPipelineLayout | null;
+  private matricesBindGroupLayout: IRHIBindGroupLayout | null;  // group 0
+  private materialBindGroupLayout: IRHIBindGroupLayout | null;  // group 1
+  private matricesBindGroup: IRHIBindGroup | null;
+  private materialBindGroup: IRHIBindGroup | null;
 
-  /** 重写渲染流程 */
-  override render(context: RenderContext): void {
-    // 1. 阴影预渲染（如果启用）
-    if (this.shadowPass) {
-      this.shadowPass.render(context);
-    }
+  // UBO 缓冲区 (std140 布局)
+  private matricesBuffer: IRHIBuffer | null;  // 256 bytes
+  private materialBuffer: IRHIBuffer | null;  // 80 bytes
 
-    // 2. 主渲染通道
-    this.renderMainPass(context);
+  // 渲染目标
+  private colorTexture: IRHITexture | null;
+  private depthTexture: IRHITexture | null;
 
-    // 3. 后处理
-    for (const pass of this.postProcessPasses) {
-      pass.render(context);
-    }
-  }
-
-  /** 扩展点 */
-  protected onBeforeRender?(context: RenderContext): void;
-  protected onAfterRender?(context: RenderContext): void;
+  protected override render(ctx: RenderContext): void;
 }
 ```
 
-### 3.3 GLTFLoader
+#### RHI 资源初始化流程
+
+```pseudocode
+FUNCTION initRHIResources():
+  // 1. 创建着色器模块
+  vertexShader = device.createShaderModule({
+    code: BASIC_VERTEX_SHADER_300,
+    language: 'glsl',
+    stage: VERTEX
+  })
+
+  // 2. 创建 Uniform 缓冲区 (std140 布局)
+  matricesBuffer = device.createBuffer({
+    size: 256,  // 4 x mat4 = 4 x 64 bytes
+    usage: UNIFORM,
+    hint: 'dynamic'
+  })
+  materialBuffer = device.createBuffer({
+    size: 80,   // vec4 + 2 floats + vec3x3 + padding
+    usage: UNIFORM,
+    hint: 'dynamic'
+  })
+
+  // 3. 创建 BindGroupLayout
+  // CRITICAL: binding 值必须与着色器中的 UBO 绑定点匹配
+  matricesBindGroupLayout = device.createBindGroupLayout([
+    { binding: 0, visibility: VERTEX, buffer: { type: 'uniform' }, name: 'Matrices' }
+  ])
+  materialBindGroupLayout = device.createBindGroupLayout([
+    { binding: 1, visibility: FRAGMENT, buffer: { type: 'uniform' }, name: 'Material' }
+  ])
+
+  // 4. 创建 PipelineLayout
+  pipelineLayout = device.createPipelineLayout([
+    matricesBindGroupLayout,
+    materialBindGroupLayout
+  ])
+
+  // 5. 创建 BindGroup (绑定 UBO 到布局)
+  matricesBindGroup = device.createBindGroup(matricesBindGroupLayout, [
+    { binding: 0, resource: { buffer: matricesBuffer, offset: 0, size: 256 } }
+  ])
+  materialBindGroup = device.createBindGroup(materialBindGroupLayout, [
+    { binding: 1, resource: { buffer: materialBuffer, offset: 0, size: 80 } }
+  ])
+
+  // 6. 创建 RenderPipeline
+  renderPipeline = device.createRenderPipeline({
+    vertexShader,
+    fragmentShader,
+    vertexLayout: STANDARD_VERTEX_LAYOUT,  // pos(3) + normal(3) + uv(2) = stride 32
+    primitiveTopology: TRIANGLE_LIST,
+    depthStencilState: { depthWriteEnabled: true, depthCompare: LESS },
+    layout: pipelineLayout
+  })
+```
+
+#### 渲染循环 (使用 BindGroup)
+
+```pseudocode
+FUNCTION render(ctx: RenderContext):
+  // 1. 创建命令编码器
+  encoder = device.createCommandEncoder()
+
+  // 2. 开始渲染通道
+  renderPass = encoder.beginRenderPass({
+    colorAttachments: [{ view: colorView, loadOp: 'clear', clearColor: backgroundColor }],
+    depthStencilAttachment: { view: depthView, depthLoadOp: 'clear', clearDepth: 1.0 }
+  })
+
+  // 3. 设置管线
+  renderPass.setPipeline(renderPipeline)
+
+  // 4. 遍历 MeshInstance + MaterialInstance 实体
+  FOR EACH entity WITH (MeshInstance, MaterialInstance):
+    // 4a. 更新 UBO 数据
+    matricesBuffer.update(modelViewProjData)
+    materialBuffer.update(pbrData)
+
+    // 4b. 绑定 BindGroup (代替 pushConstants)
+    renderPass.setBindGroup(0, matricesBindGroup)
+    renderPass.setBindGroup(1, materialBindGroup)
+
+    // 4c. 设置顶点/索引缓冲区
+    renderPass.setVertexBuffer(0, meshInstance.vertexBuffer)
+    IF meshInstance.indexBuffer:
+      renderPass.setIndexBuffer(meshInstance.indexBuffer, UINT16)
+      renderPass.drawIndexed(meshInstance.indexCount)
+    ELSE:
+      renderPass.draw(meshInstance.vertexCount)
+
+  // 5. 结束并提交
+  renderPass.end()
+  encoder.copyTextureToCanvas({ source: colorView, destination: canvas })
+  device.submit([encoder.finish()])
+```
+
+#### std140 Uniform Block 布局
+
+```glsl
+// 顶点着色器 (GLSL ES 3.00)
+layout(std140) uniform Matrices {
+  mat4 u_modelMatrix;      // offset 0,   size 64
+  mat4 u_viewMatrix;       // offset 64,  size 64
+  mat4 u_projectionMatrix; // offset 128, size 64
+  mat4 u_normalMatrix;     // offset 192, size 64
+};  // Total: 256 bytes
+
+// 片段着色器 (GLSL ES 3.00)
+layout(std140) uniform Material {
+  vec4 u_baseColor;        // offset 0,   size 16
+  float u_metallic;        // offset 16,  size 4
+  float u_roughness;       // offset 20,  size 4
+  vec2 _pad0;              // offset 24,  size 8  (padding)
+  vec3 u_lightDirection;   // offset 32,  size 12
+  float _pad1;             // offset 44,  size 4  (padding)
+  vec3 u_lightColor;       // offset 48,  size 12
+  float _pad2;             // offset 60,  size 4  (padding)
+  vec3 u_cameraPosition;   // offset 64,  size 12
+  float _pad3;             // offset 76,  size 4  (padding)
+};  // Total: 80 bytes
+```
+
+**std140 布局规则要点:**
+- `vec3` 必须按 16 字节对齐 (需要 padding)
+- `mat4` 占用 64 字节 (4 x vec4)
+- 总大小必须是 16 的倍数
+
+### 3.3 MeshInstance 与 MaterialInstance 组件
+
+> **设计决策**: Engine 包使用专用组件直接持有 GPU 资源，而非 Core 包的资源 ID 引用模式。
+
+```typescript
+// MeshInstance - 直接持有 GPU 缓冲区
+class MeshInstance extends Component {
+  vertexBuffer: IRHIBuffer | null;    // GPU 顶点缓冲区
+  indexBuffer: IRHIBuffer | null;     // GPU 索引缓冲区 (可选)
+  vertexCount: number;
+  indexCount: number;
+  primitiveType: 'triangles' | 'lines' | 'points';
+  vertexLayout: VertexAttributeLayout[];
+  pipeline: IRHIRenderPipeline | null;  // 缓存的渲染管线
+
+  clone(): MeshInstance;   // 共享 GPU 资源引用
+  dispose(): void;         // 销毁 GPU 资源
+}
+
+// MaterialInstance - 持有材质对象引用
+class MaterialInstance extends Component {
+  material: PBRMaterial | UnlitMaterial | null;
+  clone(): MaterialInstance;  // 共享材质引用
+}
+
+// 标准顶点布局 (32 bytes stride)
+const STANDARD_VERTEX_LAYOUT: VertexAttributeLayout[] = [
+  { name: 'position', location: 0, format: 'float32x3', offset: 0 },
+  { name: 'normal',   location: 1, format: 'float32x3', offset: 12 },
+  { name: 'uv',       location: 2, format: 'float32x2', offset: 24 }
+];
+```
+
+**与 Core MeshRef 的区别:**
+
+| 特性 | Core MeshRef | Engine MeshInstance |
+|------|-------------|---------------------|
+| 资源引用 | assetId (字符串) | IRHIBuffer (GPU 资源) |
+| 查找开销 | 每帧通过 ResourceManager | 直接访问 |
+| 生命周期 | ResourceManager 管理 | Component dispose() |
+| 适用场景 | 资源共享/延迟加载 | 即时渲染 |
+
+### 3.4 GLTFLoader
 
 ```typescript
 import { IResourceLoader, ResourceHandle } from '@maxellabs/core';
@@ -326,60 +471,124 @@ class GLTFLoader implements IResourceLoader<GLTFResult> {
 }
 ```
 
-### 3.4 PBRMaterial
+### 3.5 PBRMaterial (已实现)
 
 ```typescript
-import { MaterialInstance } from '@maxellabs/core';
-import type { MaterialProperties } from '@maxellabs/specification';
-
 interface PBRMaterialConfig {
-  /** 基础颜色 */
-  baseColor?: [number, number, number, number];
-  baseColorTexture?: TextureHandle;
-
-  /** 金属度-粗糙度 */
-  metallic?: number;          // 0-1
-  roughness?: number;         // 0-1
-  metallicRoughnessTexture?: TextureHandle;
-
-  /** 法线 */
-  normalTexture?: TextureHandle;
+  baseColor?: [number, number, number, number];  // 默认 [1,1,1,1]
+  metallic?: number;                              // 0-1, 默认 0
+  roughness?: number;                             // 0-1, 默认 1
+  normalTexture?: string;
   normalScale?: number;
-
-  /** 遮挡 */
-  occlusionTexture?: TextureHandle;
+  occlusionTexture?: string;
   occlusionStrength?: number;
-
-  /** 自发光 */
   emissiveColor?: [number, number, number];
-  emissiveTexture?: TextureHandle;
   emissiveIntensity?: number;
-
-  /** 透明度 */
   alphaMode?: 'opaque' | 'mask' | 'blend';
   alphaCutoff?: number;
-
-  /** 双面渲染 */
   doubleSided?: boolean;
 }
 
 class PBRMaterial extends MaterialInstance {
   constructor(device: IRHIDevice, config?: PBRMaterialConfig);
 
-  /** 属性访问器 */
-  get baseColor(): [number, number, number, number];
-  set baseColor(value: [number, number, number, number]);
+  // 属性访问器 (自动同步到 UBO)
+  get/set baseColor: [number, number, number, number];
+  get/set metallic: number;
+  get/set roughness: number;
+  // ... 其他属性
 
-  get metallic(): number;
-  set metallic(value: number);
-
-  get roughness(): number;
-  set roughness(value: number);
-
-  /** 序列化 */
-  toJSON(): MaterialProperties;
-  static fromJSON(device: IRHIDevice, data: MaterialProperties): PBRMaterial;
+  toJSON(): PBRMaterialConfig;
+  static fromJSON(device: IRHIDevice, data: PBRMaterialConfig): PBRMaterial;
+  clone(): PBRMaterial;
 }
+```
+
+### 3.6 Engine 便捷 API (已实现)
+
+```typescript
+class Engine {
+  // === 材质创建 ===
+  createPBRMaterial(config?: PBRMaterialConfig): PBRMaterial;
+  createUnlitMaterial(config?: UnlitMaterialConfig): UnlitMaterial;
+
+  // === 几何体创建 ===
+  createBoxGeometry(width?: number, height?: number, depth?: number): GeometryData;
+  createSphereGeometry(radius?: number): GeometryData;
+  createPlaneGeometry(width?: number, height?: number, wSeg?: number, hSeg?: number): GeometryData;
+  createCylinderGeometry(radiusTop?: number, radiusBottom?: number, height?: number, radialSegments?: number): GeometryData;
+
+  // === 实体创建 (核心!) ===
+  createMesh(
+    geometry: GeometryData,
+    material: PBRMaterial | UnlitMaterial,
+    options?: {
+      position?: [number, number, number];
+      rotation?: [number, number, number, number];  // Quaternion
+      scale?: [number, number, number];
+      name?: string;
+    }
+  ): EntityId;
+
+  // 内部流程:
+  // 1. 构建交错顶点数据 (pos + normal + uv)
+  // 2. 创建 GPU 缓冲区 (device.createBuffer)
+  // 3. 添加 MeshInstance 组件
+  // 4. 添加 MaterialInstance 组件
+  // 5. 添加 LocalTransform + WorldTransform
+  // 6. 添加 Visible 组件
+
+  createCamera(config?: { position?, target?, fov?, near?, far?, isMain? }): EntityId;
+}
+```
+
+#### createMesh 内部实现
+
+```pseudocode
+FUNCTION createMesh(geometry, material, options):
+  entity = scene.createEntity(options.name ?? 'Mesh')
+
+  // 1. 构建交错顶点数据 (Interleaved)
+  vertexData = new Float32Array(vertexCount * 8)  // 8 floats per vertex
+  FOR i IN 0..vertexCount:
+    offset = i * 8
+    vertexData[offset+0..2] = positions[i*3..i*3+2]  // position
+    vertexData[offset+3..5] = normals[i*3..i*3+2]    // normal
+    vertexData[offset+6..7] = uvs[i*2..i*2+1]        // uv
+
+  // 2. 创建 GPU 缓冲区
+  vertexBuffer = device.createBuffer({
+    size: vertexData.byteLength,
+    usage: 'vertex',
+    initialData: vertexData
+  })
+
+  // 3. 创建索引缓冲区 (如果有)
+  IF geometry.indices:
+    indexBuffer = device.createBuffer({
+      size: indices.byteLength,
+      usage: 'index',
+      initialData: indices
+    })
+
+  // 4. 添加 ECS 组件
+  meshInstance = new MeshInstance()
+  meshInstance.vertexBuffer = vertexBuffer
+  meshInstance.indexBuffer = indexBuffer
+  meshInstance.vertexCount = vertexCount
+  meshInstance.indexCount = indexCount
+  meshInstance.vertexLayout = STANDARD_VERTEX_LAYOUT
+  world.addComponent(entity, MeshInstance, meshInstance)
+
+  materialInstance = new MaterialInstance()
+  materialInstance.material = material
+  world.addComponent(entity, MaterialInstance, materialInstance)
+
+  world.addComponent(entity, LocalTransform, fromPosition(options.position))
+  world.addComponent(entity, WorldTransform, new WorldTransform())
+  world.addComponent(entity, Visible, { value: true })
+
+  RETURN entity
 ```
 
 ---
@@ -518,148 +727,79 @@ FUNCTION loop(currentTime):
 
 ---
 
-## 5. 使用示例
+## 5. 使用示例 (已验证)
 
-### 5.1 基础场景
+### 5.1 Quick Start Demo (packages/engine/demo/src/quick-start.ts)
 
 ```typescript
 import { Engine } from '@maxellabs/engine';
 
-// 创建引擎
+// 1. 创建引擎实例
 const engine = new Engine({
   canvas: '#canvas',
   antialias: true,
-  shadows: { enabled: true },
-  postProcessing: { toneMapping: 'aces' }
+  debug: true
 });
 
-// 创建相机
-const camera = engine.createCamera({
-  position: [0, 2, 5],
-  target: [0, 0, 0],
-  fov: 60
-});
-
-// 创建光源
-const sun = engine.createDirectionalLight({
-  direction: [-1, -1, -1],
-  color: [1, 1, 1],
-  intensity: 1.0,
-  castShadow: true
-});
-
-// 创建地面
-const ground = engine.createMesh(
-  new PlaneGeometry(10, 10),
-  new PBRMaterial(engine.device, {
-    baseColor: [0.2, 0.2, 0.2, 1],
-    roughness: 0.8
-  })
-);
-
-// 启动渲染循环
-engine.start();
-```
-
-### 5.2 加载 glTF 模型
-
-```typescript
-import { Engine } from '@maxellabs/engine';
-
-const engine = new Engine({ canvas: '#canvas' });
-
-// 加载模型
-const result = await engine.loadGLTF('/models/robot.glb');
-
-// 访问场景根节点
-const robot = result.scene;
-
-// 播放动画
-if (result.animations.length > 0) {
-  const animator = engine.scene.world.getComponent(robot, AnimationState);
-  animator.play(result.animations[0]);
-}
-
-// 设置用户交互
-engine.onBeforeRender = (deltaTime) => {
-  // 旋转模型
-  const transform = engine.scene.world.getComponent(robot, LocalTransform);
-  transform.rotation.y += deltaTime * 0.5;
-};
-
-engine.start();
-```
-
-### 5.3 PBR 材质配置
-
-```typescript
-import { Engine, PBRMaterial } from '@maxellabs/engine';
-
-const engine = new Engine({ canvas: '#canvas' });
-
-// 加载纹理
-const baseColorTex = await engine.loadTexture('/textures/metal_basecolor.png');
-const normalTex = await engine.loadTexture('/textures/metal_normal.png');
-const mrTex = await engine.loadTexture('/textures/metal_metallic_roughness.png');
-
-// 创建材质
-const metalMaterial = new PBRMaterial(engine.device, {
-  baseColorTexture: baseColorTex,
-  normalTexture: normalTex,
-  metallicRoughnessTexture: mrTex,
-  metallic: 1.0,
+// 2. 创建 PBR 材质
+const redMaterial = engine.createPBRMaterial({
+  baseColor: [0.8, 0.2, 0.2, 1.0],
+  metallic: 0.5,
   roughness: 0.3
 });
 
-// 应用到网格
-const sphere = engine.createMesh(
-  new SphereGeometry(1, 32, 32),
-  metalMaterial
-);
-```
+// 3. 创建几何体
+const boxGeometry = engine.createBoxGeometry(1, 1, 1);
 
-### 5.4 自定义系统
-
-```typescript
-import { Engine } from '@maxellabs/engine';
-import { System, SystemStage, Query } from '@maxellabs/core';
-
-// 定义自定义组件
-class RotateComponent extends Component {
-  speed: number = 1.0;
-  axis: [number, number, number] = [0, 1, 0];
-}
-
-// 定义自定义系统
-const createRotateSystem = () => ({
-  name: 'RotateSystem',
-  stage: SystemStage.Update,
-  priority: 10,
-
-  execute(context) {
-    const query = context.world.query({
-      all: [LocalTransform, RotateComponent]
-    });
-
-    query.forEach((entity) => {
-      const transform = context.world.getComponent(entity, LocalTransform);
-      const rotate = context.world.getComponent(entity, RotateComponent);
-
-      // 应用旋转
-      const angle = rotate.speed * context.deltaTime;
-      transform.rotateOnAxis(rotate.axis, angle);
-    });
-  }
+// 4. 创建 Mesh 实体 (这是关键步骤!)
+// 内部会创建 MeshInstance + MaterialInstance + Transform + Visible 组件
+const boxMesh = engine.createMesh(boxGeometry, redMaterial, {
+  position: [0, 0, 0],
+  name: 'RedBox'
 });
 
-// 注册并使用
-const engine = new Engine({ canvas: '#canvas' });
-engine.scene.world.registerComponent(RotateComponent);
-engine.scene.scheduler.addSystem(createRotateSystem());
+// 5. 设置渲染回调
+engine.onBeforeRender = (deltaTime) => {
+  // 更新逻辑
+};
 
-// 创建旋转的立方体
-const cube = engine.createMesh(new BoxGeometry(1, 1, 1), material);
-engine.scene.world.addComponent(cube, RotateComponent, { speed: 2.0 });
+// 6. 启动渲染循环
+engine.start();
+
+// 7. 清理
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    engine.stop();
+    engine.dispose();
+  }
+});
+```
+
+### 5.2 多物体场景
+
+```typescript
+// 创建多个网格实体
+const sphereMesh = engine.createMesh(
+  engine.createSphereGeometry(0.5),
+  engine.createUnlitMaterial({ color: [1, 1, 1, 1] }),
+  { position: [2, 0, 0], name: 'WhiteSphere' }
+);
+
+const planeMesh = engine.createMesh(
+  engine.createPlaneGeometry(2, 2),
+  redMaterial,
+  {
+    position: [0, -1, 0],
+    rotation: [-0.7071068, 0, 0, 0.7071068],  // -90 degrees X
+    name: 'RedPlane'
+  }
+);
+
+const cylinderMesh = engine.createMesh(
+  engine.createCylinderGeometry(0.5, 0.5, 1, 32),
+  engine.createUnlitMaterial({ color: [1, 1, 1, 1] }),
+  { position: [-2, 0, 0], name: 'WhiteCylinder' }
+);
 ```
 
 ---
@@ -742,21 +882,33 @@ engine.resources.registerLoader('fbx', new FBXLoader(engine.resources));
 
 ---
 
-## 8. 实现优先级
+## 8. 实现状态 (2025-01-04 更新)
 
-| 优先级 | 模块 | 说明 | 依赖 |
-|:------:|------|------|------|
-| **P0** | `Engine` | 引擎入口类 | Core.Scene, RHI.WebGLDevice |
-| **P0** | `ForwardRenderer` | 前向渲染器 | Core.Renderer |
-| **P0** | `PBRMaterial` | PBR 材质 | Core.MaterialInstance |
-| **P1** | `GLTFLoader` | glTF 加载器 | Core.ResourceManager |
-| **P1** | `ShadowPass` | 阴影渲染 | ForwardRenderer |
-| **P1** | `Primitives` | 内置几何体 | - |
-| **P2** | `LODSystem` | LOD 系统 | Core.System |
-| **P2** | `CullingSystem` | 视锥剔除 | Core.System |
-| **P2** | `PostProcessPasses` | 后处理 | ForwardRenderer |
-| **P3** | `DeferredRenderer` | 延迟渲染 | Core.Renderer |
-| **P3** | `HDRLoader` | HDR 加载 | Core.ResourceManager |
+| 优先级 | 模块 | 状态 | 说明 |
+|:------:|------|:----:|------|
+| **P0** | `Engine` | **完成** | 引擎入口类，包含便捷 API |
+| **P0** | `SimpleWebGLRenderer` | **完成** | 基于 RHI BindGroup/UBO 的渲染器 |
+| **P0** | `PBRMaterial` | **完成** | PBR 材质 (金属度-粗糙度工作流) |
+| **P0** | `UnlitMaterial` | **完成** | 无光照材质 |
+| **P0** | `MeshInstance` | **完成** | GPU 网格资源组件 |
+| **P0** | `MaterialInstance` | **完成** | 材质引用组件 |
+| **P0** | `Primitives` | **完成** | Box/Sphere/Plane/Cylinder 几何体 |
+| **P0** | `Engine Demo` | **完成** | quick-start.ts 演示 |
+| **P1** | `ForwardRenderer` | 框架 | 完整的前向渲染管线 |
+| **P1** | `GLTFLoader` | TODO | glTF 2.0 加载器 |
+| **P1** | `ShadowPass` | TODO | 阴影渲染 |
+| **P2** | `LODSystem` | TODO | LOD 系统 |
+| **P2** | `CullingSystem` | TODO | 视锥剔除 |
+| **P2** | `PostProcessPasses` | TODO | 后处理 |
+| **P3** | `DeferredRenderer` | TODO | 延迟渲染 |
+| **P3** | `HDRLoader` | TODO | HDR 加载 |
+
+### 已完成的关键里程碑
+
+1. **RHI 抽象层集成** - SimpleWebGLRenderer 使用 `device.createBindGroup()`, `device.createBuffer()` 等 RHI API，不再直接调用 WebGL
+2. **std140 UBO 支持** - 着色器使用 `layout(std140) uniform Block { ... }` 语法
+3. **ECS 组件模式** - MeshInstance + MaterialInstance 组件配合 ECS 查询
+4. **便捷 API** - Engine.createMesh() 一站式创建可渲染实体
 
 ---
 

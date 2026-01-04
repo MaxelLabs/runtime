@@ -10,19 +10,19 @@
 // BoundingBox
 // ========================================
 
-export { BoundingBox } from './BoundingBox';
-export type { BoundingBoxData, BoundingBoxOptions } from './BoundingBox';
+export { BoundingBox } from './bounding-box';
+export type { BoundingBoxData, BoundingBoxOptions } from './bounding-box';
 
 // ========================================
 // FrustumCuller
 // ========================================
 
-export { Frustum, FrustumCuller, FrustumPlane, IntersectionResult } from './FrustumCuller';
-export type { FrustumData, CullingStats, ICullable } from './FrustumCuller';
+export { Frustum, FrustumCuller, FrustumPlane, IntersectionResult } from './frustum-culler';
+export type { FrustumData, CullingStats, ICullable } from './frustum-culler';
 
 // ========================================
 // EnvironmentProbe
 // ========================================
 
-export { EnvironmentProbe, ProbeType, ProbeUpdateMode, ProbeState } from './EnvironmentProbe';
-export type { EnvironmentProbeConfig, EnvironmentProbeData, SphericalHarmonics } from './EnvironmentProbe';
+export { EnvironmentProbe, ProbeType, ProbeUpdateMode, ProbeState } from './environment-probe';
+export type { EnvironmentProbeConfig, EnvironmentProbeData, SphericalHarmonics } from './environment-probe';

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>@maxellabs/engine Demo Gallery</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      color: white;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 60px 24px;
+      background: linear-gradient(135deg, rgba(97, 218, 251, 0.1) 0%, rgba(156, 39, 176, 0.1) 100%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .hero-title {
+      font-size: 48px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #61dafb, #9c27b0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+
+    .hero-subtitle {
+      font-size: 18px;
+      color: #888;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .hero-badges {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      font-size: 14px;
+      color: #61dafb;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #fff;
+      padding: 32px 24px 16px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .demo-gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .demo-card {
+      background: linear-gradient(135deg, rgba(30, 30, 30, 0.9) 0%, rgba(45, 45, 45, 0.9) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 24px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      backdrop-filter: blur(10px);
+    }
+
+    .demo-card:hover {
+      transform: translateY(-4px);
+      border-color: #61dafb;
+      box-shadow: 0 8px 24px rgba(97, 218, 251, 0.15);
+    }
+
+    .demo-card-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .demo-card-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #61dafb;
+      margin-bottom: 8px;
+    }
+
+    .demo-card-description {
+      font-size: 14px;
+      color: #888;
+      line-height: 1.6;
+    }
+
+    .demo-card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .demo-tag {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #aaa;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .demo-tag.engine { background: rgba(97, 218, 251, 0.2); color: #61dafb; border-color: rgba(97, 218, 251, 0.3); }
+    .demo-tag.material { background: rgba(156, 39, 176, 0.2); color: #ce93d8; border-color: rgba(156, 39, 176, 0.3); }
+    .demo-tag.geometry { background: rgba(255, 152, 0, 0.2); color: #ffb74d; border-color: rgba(255, 152, 0, 0.3); }
+    .demo-tag.renderer { background: rgba(76, 175, 80, 0.2); color: #81c784; border-color: rgba(76, 175, 80, 0.3); }
+
+    .difficulty {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+
+    .difficulty.beginner { background: #4caf50; color: white; }
+    .difficulty.intermediate { background: #ff9800; color: white; }
+    .difficulty.advanced { background: #f44336; color: white; }
+
+    .architecture-section {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px;
+      max-width: 1352px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .architecture-section h3 {
+      color: #61dafb;
+      margin-bottom: 16px;
+    }
+
+    .architecture-diagram {
+      font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+      font-size: 12px;
+      color: #aaa;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 40px 24px;
+      color: #666;
+      font-size: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      margin-top: 40px;
+    }
+
+    .footer a {
+      color: #61dafb;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div class="hero-title">@maxellabs/engine Demo</div>
+    <div class="hero-subtitle">
+      开箱即用的 3D 渲染引擎，整合 Core ECS 架构和 RHI 硬件抽象层，提供便捷的高层 API
+    </div>
+    <div class="hero-badges">
+      <span class="hero-badge">Core ECS 集成</span>
+      <span class="hero-badge">PBR 材质系统</span>
+      <span class="hero-badge">内置几何体</span>
+      <span class="hero-badge">前向渲染器</span>
+    </div>
+  </div>
+
+  <div class="section-title">Quick Start</div>
+
+  <div class="demo-gallery">
+    <a href="html/quick-start.html" class="demo-card">
+      <div class="demo-card-icon">🚀</div>
+      <div class="demo-card-title">
+        快速入门
+        <span class="difficulty beginner">入门</span>
+      </div>
+      <div class="demo-card-description">
+        展示 Engine 主类的一站式创建流程：初始化引擎、创建材质、生成几何体、启动渲染循环。
+        演示 Engine 包的核心便捷 API 设计理念。
+      </div>
+      <div class="demo-card-tags">
+        <span class="demo-tag engine">Engine</span>
+        <span class="demo-tag material">PBRMaterial</span>
+        <span class="demo-tag geometry">BoxGeometry</span>
+        <span class="demo-tag renderer">ForwardRenderer</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="section-title">Architecture</div>
+
+  <div class="architecture-section">
+    <h3>Engine Package Architecture</h3>
+    <div class="architecture-diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                        @maxellabs/engine                         │
+├─────────────────────────────────────────────────────────────────┤
+│  Engine                                                          │
+│  ├─ device: IRHIDevice (WebGLDevice)                            │
+│  ├─ scene: Scene (from @maxellabs/core)                         │
+│  ├─ renderer: ForwardRenderer                                   │
+│  └─ resources: ResourceManager                                  │
+├─────────────────────────────────────────────────────────────────┤
+│  Convenience API                                                 │
+│  ├─ createPBRMaterial(config)      → PBRMaterial                │
+│  ├─ createUnlitMaterial(config)    → UnlitMaterial              │
+│  ├─ createBoxGeometry(w, h, d)     → GeometryData               │
+│  ├─ createSphereGeometry(r)        → GeometryData               │
+│  ├─ createPlaneGeometry(w, h)      → GeometryData               │
+│  └─ createCylinderGeometry(...)    → GeometryData               │
+├─────────────────────────────────────────────────────────────────┤
+│  Dependencies                                                    │
+│  ├─ @maxellabs/core   → Scene, ECS, ResourceManager             │
+│  └─ @maxellabs/rhi    → WebGLDevice, IRHIDevice                 │
+└─────────────────────────────────────────────────────────────────┘
+    </div>
+  </div>
+
+  <div class="section-title">Coming Soon</div>
+
+  <div class="demo-gallery">
+    <div class="demo-card" style="opacity: 0.6; cursor: not-allowed;">
+      <div class="demo-card-icon">💎</div>
+      <div class="demo-card-title">PBR 材质展示</div>
+      <div class="demo-card-description">
+        展示 PBR 材质系统的完整功能：金属度、粗糙度、法线贴图、环境光遮蔽、自发光等参数的实时调节。
+      </div>
+      <div class="demo-card-tags">
+        <span class="demo-tag material">Metallic-Roughness</span>
+        <span class="demo-tag material">Normal Map</span>
+        <span class="demo-tag material">AO</span>
+      </div>
+    </div>
+
+    <div class="demo-card" style="opacity: 0.6; cursor: not-allowed;">
+      <div class="demo-card-icon">📦</div>
+      <div class="demo-card-title">glTF 模型加载</div>
+      <div class="demo-card-description">
+        展示 GLTFLoader 的模型加载能力：支持 glTF 2.0 格式、嵌入式/分离式资源、动画、骨骼蒙皮。
+      </div>
+      <div class="demo-card-tags">
+        <span class="demo-tag engine">GLTFLoader</span>
+        <span class="demo-tag engine">Animation</span>
+        <span class="demo-tag engine">Skinning</span>
+      </div>
+    </div>
+
+    <div class="demo-card" style="opacity: 0.6; cursor: not-allowed;">
+      <div class="demo-card-icon">🌅</div>
+      <div class="demo-card-title">HDR 环境光照</div>
+      <div class="demo-card-description">
+        展示 HDR 环境贴图加载和 IBL (Image Based Lighting) 渲染：环境反射、漫反射辐照度。
+      </div>
+      <div class="demo-card-tags">
+        <span class="demo-tag renderer">IBL</span>
+        <span class="demo-tag renderer">Environment Map</span>
+        <span class="demo-tag renderer">HDR</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>@maxellabs/engine - 高性能 3D 渲染引擎</p>
+    <p>基于 Core ECS 架构 | RHI 硬件抽象 | PBR 材质系统</p>
+    <p style="margin-top: 12px;">
+      <a href="../../../core/demo/index.html">Core Demo</a> |
+      <a href="../../../rhi/demo/index.html">RHI Demo</a>
+    </p>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const cards = document.querySelectorAll('.demo-card');
+      cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+          card.style.opacity = card.style.cursor === 'not-allowed' ? '0.6' : '1';
+          card.style.transform = 'translateY(0)';
+        }, index * 100);
+      });
+    });
+  </script>
+</body>
+</html>
