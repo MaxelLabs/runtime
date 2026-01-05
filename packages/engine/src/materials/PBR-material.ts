@@ -28,9 +28,11 @@
  * ```
  */
 
-import type { IRHIDevice } from '@maxellabs/specification';
+import type { IRHIDevice, IUniformLayoutDescriptor } from '@maxellabs/specification';
 import { MaterialInstance } from '@maxellabs/core';
 import type { IMaterialResource } from '@maxellabs/specification';
+import { Std140Calculator, type Std140FieldDefinition } from '@maxellabs/rhi';
+import { MSpec } from '@maxellabs/core';
 
 /**
  * 透明度模式
@@ -119,6 +121,82 @@ const PBR_TEXTURE_SLOTS = {
  * @internal
  */
 const PBR_SHADER_ID = 'engine:pbr';
+
+/**
+ * PBR 材质 Uniform 布局字段定义
+ * @internal
+ */
+const PBR_UNIFORM_FIELDS: Std140FieldDefinition[] = [
+  { name: PBR_PROPERTIES.BASE_COLOR, type: MSpec.RHIUniformType.VEC4 },
+  { name: PBR_PROPERTIES.METALLIC, type: MSpec.RHIUniformType.FLOAT },
+  { name: PBR_PROPERTIES.ROUGHNESS, type: MSpec.RHIUniformType.FLOAT },
+  { name: PBR_PROPERTIES.NORMAL_SCALE, type: MSpec.RHIUniformType.FLOAT },
+  { name: PBR_PROPERTIES.OCCLUSION_STRENGTH, type: MSpec.RHIUniformType.FLOAT },
+  { name: PBR_PROPERTIES.EMISSIVE_COLOR, type: MSpec.RHIUniformType.VEC3 },
+  { name: PBR_PROPERTIES.EMISSIVE_INTENSITY, type: MSpec.RHIUniformType.FLOAT },
+  { name: PBR_PROPERTIES.ALPHA_CUTOFF, type: MSpec.RHIUniformType.FLOAT },
+];
+
+/**
+ * 创建 PBR 材质布局描述符
+ * @internal
+ */
+function createPBRLayoutDescriptor(): IUniformLayoutDescriptor {
+  const layout = Std140Calculator.calculateLayout(PBR_UNIFORM_FIELDS);
+
+  return {
+    totalSize: layout.totalSize,
+    packData: (properties: Map<string, unknown>): Float32Array => {
+      const buffer = Std140Calculator.createBuffer(layout);
+
+      // 打包各个属性
+      const baseColor = properties.get(PBR_PROPERTIES.BASE_COLOR) as number[] | undefined;
+      if (baseColor) {
+        Std140Calculator.writeField(buffer, layout, PBR_PROPERTIES.BASE_COLOR, baseColor);
+      }
+
+      const metallic = properties.get(PBR_PROPERTIES.METALLIC) as number | undefined;
+      if (metallic !== undefined) {
+        Std140Calculator.writeField(buffer, layout, PBR_PROPERTIES.METALLIC, metallic);
+      }
+
+      const roughness = properties.get(PBR_PROPERTIES.ROUGHNESS) as number | undefined;
+      if (roughness !== undefined) {
+        Std140Calculator.writeField(buffer, layout, PBR_PROPERTIES.ROUGHNESS, roughness);
+      }
+
+      const normalScale = properties.get(PBR_PROPERTIES.NORMAL_SCALE) as number | undefined;
+      if (normalScale !== undefined) {
+        Std140Calculator.writeField(buffer, layout, PBR_PROPERTIES.NORMAL_SCALE, normalScale);
+      }
+
+      const occlusionStrength = properties.get(PBR_PROPERTIES.OCCLUSION_STRENGTH) as number | undefined;
+      if (occlusionStrength !== undefined) {
+        Std140Calculator.writeField(buffer, layout, PBR_PROPERTIES.OCCLUSION_STRENGTH, occlusionStrength);
+      }
+
+      const emissiveColor = properties.get(PBR_PROPERTIES.EMISSIVE_COLOR) as number[] | undefined;
+      if (emissiveColor) {
+        Std140Calculator.writeField(buffer, layout, PBR_PROPERTIES.EMISSIVE_COLOR, emissiveColor);
+      }
+
+      const emissiveIntensity = properties.get(PBR_PROPERTIES.EMISSIVE_INTENSITY) as number | undefined;
+      if (emissiveIntensity !== undefined) {
+        Std140Calculator.writeField(buffer, layout, PBR_PROPERTIES.EMISSIVE_INTENSITY, emissiveIntensity);
+      }
+
+      const alphaCutoff = properties.get(PBR_PROPERTIES.ALPHA_CUTOFF) as number | undefined;
+      if (alphaCutoff !== undefined) {
+        Std140Calculator.writeField(buffer, layout, PBR_PROPERTIES.ALPHA_CUTOFF, alphaCutoff);
+      }
+
+      return buffer;
+    },
+    fieldMap: new Map(
+      Array.from(layout.fieldMap.entries()).map(([name, field]) => [name, { offset: field.offset, size: field.size }])
+    ),
+  };
+}
 
 /**
  * 创建 PBR 材质资源
@@ -220,6 +298,9 @@ export class PBRMaterial extends MaterialInstance {
       occlusionTexture: config.occlusionTexture,
       emissiveTexture: config.emissiveTexture,
     };
+
+    // 注入布局描述符，启用 GPU buffer 自动管理
+    this.setLayoutDescriptor(createPBRLayoutDescriptor());
   }
 
   // ==================== 基础颜色 ====================

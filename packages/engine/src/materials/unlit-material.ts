@@ -20,9 +20,11 @@
  * ```
  */
 
-import type { IRHIDevice } from '@maxellabs/specification';
+import type { IRHIDevice, IUniformLayoutDescriptor } from '@maxellabs/specification';
 import { MaterialInstance } from '@maxellabs/core';
 import type { IMaterialResource } from '@maxellabs/specification';
+import { Std140Calculator, type Std140FieldDefinition } from '@maxellabs/rhi';
+import { MSpec } from '@maxellabs/core';
 
 /**
  * Unlit 材质配置
@@ -66,6 +68,45 @@ const UNLIT_TEXTURE_SLOTS = {
  * @internal
  */
 const UNLIT_SHADER_ID = 'engine:unlit';
+
+/**
+ * Unlit 材质 Uniform 布局字段定义
+ * @internal
+ */
+const UNLIT_UNIFORM_FIELDS: Std140FieldDefinition[] = [
+  { name: UNLIT_PROPERTIES.COLOR, type: MSpec.RHIUniformType.VEC4 },
+  { name: UNLIT_PROPERTIES.ALPHA_CUTOFF, type: MSpec.RHIUniformType.FLOAT },
+];
+
+/**
+ * 创建 Unlit 材质布局描述符
+ * @internal
+ */
+function createUnlitLayoutDescriptor(): IUniformLayoutDescriptor {
+  const layout = Std140Calculator.calculateLayout(UNLIT_UNIFORM_FIELDS);
+
+  return {
+    totalSize: layout.totalSize,
+    packData: (properties: Map<string, unknown>): Float32Array => {
+      const buffer = Std140Calculator.createBuffer(layout);
+
+      const color = properties.get(UNLIT_PROPERTIES.COLOR) as number[] | undefined;
+      if (color) {
+        Std140Calculator.writeField(buffer, layout, UNLIT_PROPERTIES.COLOR, color);
+      }
+
+      const alphaCutoff = properties.get(UNLIT_PROPERTIES.ALPHA_CUTOFF) as number | undefined;
+      if (alphaCutoff !== undefined) {
+        Std140Calculator.writeField(buffer, layout, UNLIT_PROPERTIES.ALPHA_CUTOFF, alphaCutoff);
+      }
+
+      return buffer;
+    },
+    fieldMap: new Map(
+      Array.from(layout.fieldMap.entries()).map(([name, field]) => [name, { offset: field.offset, size: field.size }])
+    ),
+  };
+}
 
 /**
  * 创建 Unlit 材质资源
@@ -124,6 +165,9 @@ export class UnlitMaterial extends MaterialInstance {
       doubleSided: config.doubleSided ?? false,
       texture: config.texture,
     };
+
+    // 注入布局描述符，启用 GPU buffer 自动管理
+    this.setLayoutDescriptor(createUnlitLayoutDescriptor());
   }
 
   /** 获取颜色 */

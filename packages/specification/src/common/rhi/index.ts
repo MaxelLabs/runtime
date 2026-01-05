@@ -16,3 +16,6 @@ export * from './passes';
 
 // 设备接口和命令
 export * from './device';
+
+// Uniform 布局描述符
+export * from './uniform-layout';

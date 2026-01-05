@@ -32,8 +32,9 @@
  * - Dispose properly to avoid memory leaks
  */
 
-import type { IRHIDevice } from '@maxellabs/specification';
+import type { IRHIDevice, IRHIBuffer, IUniformLayoutDescriptor } from '@maxellabs/specification';
 import type { IMaterialResource } from '@maxellabs/specification';
+import { RHIBufferUsage } from '@maxellabs/specification';
 
 /**
  * MaterialInstance - Material Instance
@@ -53,7 +54,10 @@ export class MaterialInstance {
   private textureBindings: Map<string, string> = new Map();
 
   /** Uniform Buffer (GPU resource) */
-  private uniformBuffer: unknown = null; // TODO: Use IRHIBuffer when available
+  private uniformBuffer: IRHIBuffer | null = null;
+
+  /** Uniform layout descriptor (injected by Engine/Renderer) */
+  private layoutDescriptor?: IUniformLayoutDescriptor;
 
   /** Dirty flag (needs GPU data update) */
   private dirty: boolean = true;
@@ -174,6 +178,26 @@ export class MaterialInstance {
   }
 
   /**
+   * Set uniform layout descriptor
+   * @param descriptor Layout descriptor for packing properties
+   *
+   * @remarks
+   * This method is typically called by Engine-layer materials (PBRMaterial, UnlitMaterial)
+   * to inject the layout information needed for GPU buffer packing.
+   *
+   * @example
+   * ```typescript
+   * // In PBRMaterial constructor
+   * const descriptor = createPBRLayoutDescriptor();
+   * this.setLayoutDescriptor(descriptor);
+   * ```
+   */
+  setLayoutDescriptor(descriptor: IUniformLayoutDescriptor): void {
+    this.layoutDescriptor = descriptor;
+    this.dirty = true; // Mark dirty to trigger buffer update
+  }
+
+  /**
    * Bind material instance to render pipeline
    *
    * @remarks
@@ -225,22 +249,30 @@ export class MaterialInstance {
    * @remarks Packs properties into GPU buffer
    *
    * @privateRemarks
-   * This is a placeholder. Actual implementation requires:
-   * - Shader reflection to determine layout
-   * - Buffer packing according to std140/std430
-   * - IRHIBuffer creation and update
+   * Uses the injected layout descriptor to pack properties into std140/std430 format.
+   * Creates buffer on first call, updates on subsequent calls.
    */
   private updateUniformBuffer(): void {
-    // TODO: Pack properties according to shader layout
-    // const data = this.packProperties();
-    // if (!this.uniformBuffer) {
-    //   this.uniformBuffer = device.createBuffer({
-    //     usage: 'uniform',
-    //     data
-    //   });
-    // } else {
-    //   device.updateBuffer(this.uniformBuffer, data);
-    // }
+    if (!this.layoutDescriptor) {
+      console.warn('[MaterialInstance] No layout descriptor set, skipping uniform buffer update');
+      return;
+    }
+
+    // Pack properties using layout descriptor
+    const data = this.layoutDescriptor.packData(this.properties) as BufferSource;
+
+    if (!this.uniformBuffer) {
+      // Create buffer on first update
+      this.uniformBuffer = this.device.createBuffer({
+        size: data.byteLength,
+        usage: RHIBufferUsage.UNIFORM,
+        hint: 'dynamic',
+        label: `MaterialInstance_${this.getShaderId()}_UBO`,
+      });
+    }
+
+    // Update buffer data
+    this.uniformBuffer.update(data);
   }
 
   /**
@@ -256,8 +288,7 @@ export class MaterialInstance {
    */
   dispose(): void {
     if (this.uniformBuffer) {
-      // TODO: Destroy buffer when IRHIBuffer available
-      // this.uniformBuffer.destroy();
+      this.uniformBuffer.destroy();
       this.uniformBuffer = null;
     }
 
