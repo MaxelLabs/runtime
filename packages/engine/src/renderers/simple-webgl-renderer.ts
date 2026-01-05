@@ -13,11 +13,13 @@
  * - 提供基础的 PBR 光照
  */
 
-import { MSpec } from '@maxellabs/core';
+import type { World } from '@maxellabs/core';
+import { MSpec, Camera, CameraTarget, WorldTransform } from '@maxellabs/core';
 import { Renderer, type RendererConfig, type RenderContext } from '@maxellabs/core';
 import { MeshInstance, MaterialInstance } from '../components';
 import { PBRMaterial } from '../materials/PBR-material';
 import { UnlitMaterial } from '../materials/unlit-material';
+import type { Vector3Like, QuaternionLike } from '@maxellabs/specification';
 import {
   BASIC_VERTEX_SHADER_300,
   BASIC_FRAGMENT_SHADER_300,
@@ -442,28 +444,48 @@ export class SimpleWebGLRenderer extends Renderer {
   private renderMeshInstances(ctx: RenderContext, renderPass: MSpec.IRHIRenderPass, aspect: number): void {
     const world = ctx.scene.world;
 
-    // 查询所有带有 MeshInstance 和 MaterialInstance 的实体
-    const query = world.query({
-      all: [MeshInstance, MaterialInstance],
-    });
+    // 查找主相机
+    const cameraData = this.findMainCamera(world);
 
     // 获取视图和投影矩阵
-    const viewMatrix = this.createDefaultViewMatrix();
-    const projectionMatrix = this.createDefaultProjectionMatrix(aspect);
+    let viewMatrix: Float32Array;
+    let projectionMatrix: Float32Array;
+    let cameraPosition: Vector3Like;
+
+    if (cameraData) {
+      viewMatrix = this.buildViewMatrix(cameraData.transform, cameraData.target);
+      projectionMatrix = this.buildProjectionMatrix(cameraData.camera, aspect);
+      cameraPosition = cameraData.transform.position;
+    } else {
+      // 回退到默认值
+      console.warn('[SimpleWebGLRenderer] No camera found, using defaults');
+      viewMatrix = this.createDefaultViewMatrix();
+      projectionMatrix = this.createDefaultProjectionMatrix(aspect);
+      cameraPosition = { x: 0, y: 2, z: 5 };
+    }
+
+    // 查询所有带有 MeshInstance、MaterialInstance 和 WorldTransform 的实体
+    const query = world.query({
+      all: [MeshInstance, MaterialInstance, WorldTransform],
+    });
 
     query.forEach((_entity, components) => {
       const meshInstance = components[0] as MeshInstance;
       const materialInstance = components[1] as MaterialInstance;
+      const worldTransform = components[2] as WorldTransform;
 
       if (!meshInstance.vertexBuffer || !materialInstance.material) {
         return;
       }
 
-      // 更新矩阵 UBO
-      this.updateMatricesUBO(this.createIdentityMatrix(), viewMatrix, projectionMatrix);
+      // 从 WorldTransform 构建模型矩阵
+      const modelMatrix = this.buildModelMatrix(worldTransform);
 
-      // 更新材质 UBO
-      this.updateMaterialUBO(materialInstance.material);
+      // 更新矩阵 UBO
+      this.updateMatricesUBO(modelMatrix, viewMatrix, projectionMatrix);
+
+      // 更新材质 UBO（包含相机位置）
+      this.updateMaterialUBO(materialInstance.material, cameraPosition);
 
       // 绑定 BindGroups
       if (this.matricesBindGroup) {
@@ -491,6 +513,172 @@ export class SimpleWebGLRenderer extends Renderer {
 
     // 清理查询
     world.removeQuery(query);
+  }
+
+  // ==================== Camera 相关方法 ====================
+
+  /**
+   * 查找场景中的主相机
+   * @param world ECS World
+   * @returns 相机数据或 null
+   */
+  private findMainCamera(world: World): {
+    camera: Camera;
+    transform: WorldTransform;
+    target?: CameraTarget;
+  } | null {
+    const query = world.query({
+      all: [Camera, WorldTransform],
+    });
+
+    let mainCameraData: {
+      camera: Camera;
+      transform: WorldTransform;
+      target?: CameraTarget;
+    } | null = null;
+
+    query.forEach((entity, components) => {
+      const camera = components[0] as Camera;
+      const transform = components[1] as WorldTransform;
+
+      // 尝试获取 CameraTarget 组件
+      const target = world.getComponent(entity, CameraTarget) as CameraTarget | undefined;
+
+      // 优先选择 isMain = true 的相机
+      if (camera.isMain || !mainCameraData) {
+        mainCameraData = { camera, transform, target };
+      }
+    });
+
+    world.removeQuery(query);
+    return mainCameraData;
+  }
+
+  /**
+   * 从相机组件构建视图矩阵
+   * @param transform 相机的 WorldTransform
+   * @param target 可选的 CameraTarget
+   * @returns 视图矩阵
+   */
+  private buildViewMatrix(transform: WorldTransform, target?: CameraTarget): Float32Array {
+    const eye = [transform.position.x, transform.position.y, transform.position.z];
+
+    if (target) {
+      // 使用 LookAt 目标
+      const targetPos = [target.target.x, target.target.y, target.target.z];
+      const up = [target.up.x, target.up.y, target.up.z];
+      return this.createLookAtMatrix(eye, targetPos, up);
+    } else {
+      // 从相机的旋转四元数计算前向方向
+      const forward = this.quaternionToForward(transform.rotation);
+      const targetPos = [eye[0] - forward[0], eye[1] - forward[1], eye[2] - forward[2]];
+      return this.createLookAtMatrix(eye, targetPos, [0, 1, 0]);
+    }
+  }
+
+  /**
+   * 从四元数提取前向方向
+   */
+  private quaternionToForward(q: QuaternionLike): number[] {
+    const { x, y, z, w } = q;
+    return [2 * (x * z + w * y), 2 * (y * z - w * x), 1 - 2 * (x * x + y * y)];
+  }
+
+  /**
+   * 从 Camera 组件构建投影矩阵
+   * @param camera Camera 组件
+   * @param aspect 宽高比 (如果 camera.aspect 未设置则使用此值)
+   * @returns 投影矩阵
+   */
+  private buildProjectionMatrix(camera: Camera, aspect: number): Float32Array {
+    const actualAspect = camera.aspect || aspect;
+
+    if (camera.projectionType === 'orthographic') {
+      return this.createOrthographicMatrix(camera.orthographicSize, actualAspect, camera.near, camera.far);
+    } else {
+      // 透视投影 - Camera.fov 已经是度数
+      return this.createPerspectiveMatrix(camera.fov, actualAspect, camera.near, camera.far);
+    }
+  }
+
+  /**
+   * 创建正交投影矩阵
+   */
+  private createOrthographicMatrix(size: number, aspect: number, near: number, far: number): Float32Array {
+    const halfHeight = size;
+    const halfWidth = size * aspect;
+
+    return new Float32Array([
+      1 / halfWidth,
+      0,
+      0,
+      0,
+      0,
+      1 / halfHeight,
+      0,
+      0,
+      0,
+      0,
+      -2 / (far - near),
+      0,
+      0,
+      0,
+      -(far + near) / (far - near),
+      1,
+    ]);
+  }
+
+  // ==================== Transform 相关方法 ====================
+
+  /**
+   * 从 WorldTransform 组件构建模型矩阵
+   * @param transform WorldTransform 组件
+   * @returns 4x4 模型矩阵 (列主序)
+   */
+  private buildModelMatrix(transform: WorldTransform): Float32Array {
+    const { position, rotation, scale } = transform;
+
+    // 从四元数构建旋转矩阵
+    const x = rotation.x,
+      y = rotation.y,
+      z = rotation.z,
+      w = rotation.w;
+    const x2 = x + x,
+      y2 = y + y,
+      z2 = z + z;
+    const xx = x * x2,
+      xy = x * y2,
+      xz = x * z2;
+    const yy = y * y2,
+      yz = y * z2,
+      zz = z * z2;
+    const wx = w * x2,
+      wy = w * y2,
+      wz = w * z2;
+
+    const sx = scale.x,
+      sy = scale.y,
+      sz = scale.z;
+
+    // 列主序矩阵: TRS (Translation * Rotation * Scale)
+    return new Float32Array([
+      (1 - (yy + zz)) * sx,
+      (xy + wz) * sx,
+      (xz - wy) * sx,
+      0,
+      (xy - wz) * sy,
+      (1 - (xx + zz)) * sy,
+      (yz + wx) * sy,
+      0,
+      (xz + wy) * sz,
+      (yz - wx) * sz,
+      (1 - (xx + yy)) * sz,
+      0,
+      position.x,
+      position.y,
+      position.z,
+      1,
+    ]);
   }
 
   /**
@@ -534,7 +722,7 @@ export class SimpleWebGLRenderer extends Renderer {
    *   float _pad3 (4 bytes)
    * Total: 80 bytes = 20 floats
    */
-  private updateMaterialUBO(material: PBRMaterial | UnlitMaterial): void {
+  private updateMaterialUBO(material: PBRMaterial | UnlitMaterial, cameraPosition?: Vector3Like): void {
     if (!this.materialBuffer) {
       return;
     }
@@ -579,10 +767,11 @@ export class SimpleWebGLRenderer extends Renderer {
     data[14] = 1.0;
     data[15] = 0; // _pad2
 
-    // cameraPosition (vec3) + pad
-    data[16] = 0;
-    data[17] = 2;
-    data[18] = 5;
+    // cameraPosition (vec3) + pad - 使用传入的相机位置或默认值
+    const camPos = cameraPosition ?? { x: 0, y: 2, z: 5 };
+    data[16] = camPos.x;
+    data[17] = camPos.y;
+    data[18] = camPos.z;
     data[19] = 0; // _pad3
 
     this.materialBuffer.update(data);

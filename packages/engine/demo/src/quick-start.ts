@@ -26,6 +26,7 @@
  */
 
 import { Engine } from '../../src';
+import { LocalTransform, WorldTransform } from '@maxellabs/core';
 
 // Stats tracking
 let frameCount = 0;
@@ -182,9 +183,57 @@ async function main(): Promise<void> {
     });
     console.info('[Engine Quick Start] Cylinder Mesh entity created:', cylinderMesh);
 
+    // 6. Animation state
+    let time = 0;
+    const cameraRadius = 6;
+    const cameraHeight = 3;
+
     // 7. Set up callbacks for the render loop
     engine.onBeforeRender = (deltaTime: number) => {
-      // Update rotation for animation
+      time += deltaTime;
+
+      // Animate camera around the scene (验证 Camera 集成)
+      const cameraEntity = engine.mainCamera;
+      if (cameraEntity !== null) {
+        const localTransform = engine.scene.world.getComponent(cameraEntity, LocalTransform);
+        const worldTransform = engine.scene.world.getComponent(cameraEntity, WorldTransform);
+
+        if (localTransform) {
+          // 相机绕 Y 轴旋转
+          localTransform.position.x = Math.sin(time * 0.3) * cameraRadius;
+          localTransform.position.y = cameraHeight;
+          localTransform.position.z = Math.cos(time * 0.3) * cameraRadius;
+          localTransform.markDirty();
+
+          // 同步到 WorldTransform (简化版，实际应由 TransformSystem 处理)
+          if (worldTransform) {
+            worldTransform.position.x = localTransform.position.x;
+            worldTransform.position.y = localTransform.position.y;
+            worldTransform.position.z = localTransform.position.z;
+          }
+        }
+      }
+
+      // Animate box rotation (验证 WorldTransform 集成)
+      const boxTransform = engine.scene.world.getComponent(boxMesh, LocalTransform);
+      const boxWorldTransform = engine.scene.world.getComponent(boxMesh, WorldTransform);
+      if (boxTransform && boxWorldTransform) {
+        // 绕 Y 轴旋转
+        const angle = time * 0.5;
+        const halfAngle = angle / 2;
+        boxTransform.rotation.x = 0;
+        boxTransform.rotation.y = Math.sin(halfAngle);
+        boxTransform.rotation.z = 0;
+        boxTransform.rotation.w = Math.cos(halfAngle);
+        boxTransform.markDirty();
+
+        // 同步到 WorldTransform
+        boxWorldTransform.rotation.x = boxTransform.rotation.x;
+        boxWorldTransform.rotation.y = boxTransform.rotation.y;
+        boxWorldTransform.rotation.z = boxTransform.rotation.z;
+        boxWorldTransform.rotation.w = boxTransform.rotation.w;
+      }
+
       // Update stats
       updateStats(deltaTime);
     };

@@ -10,7 +10,13 @@ related_ids: ["doc-standard", "constitution-core-runtime"]
 
 ## 🎯 Quick Start
 
-**最近更新** (2025-12-24):
+**最近更新** (2026-01-05):
+- ✅ **Engine 包架构规格文档** - 完成 Engine 包完整技术规格
+  - 新增 `engine-architecture-spec.md` - 组件状态矩阵、UBO 布局、开发路线图
+  - 新增 6 个策略文档: 光照、阴影、glTF、相机控制、后处理、渲染优化
+  - 参见: `llmdoc/architecture/engine-architecture-spec.md`
+
+**历史更新** (2025-12-24):
 - ✅ **资源加载失败处理修复** - 修复资源加载失败后清理逻辑错误
   - ResourceManager 现使用 Loader 的 `dispose()` 方法清理资源
   - 修复加载失败时未从缓存移除导致的内存泄漏
@@ -92,6 +98,7 @@ related_ids: ["doc-standard", "constitution-core-runtime"]
 | **Shader Compiler** | `architecture-shader-compiler` | ShaderCompiler 编译、缓存、生命周期管理，与 Renderer/MaterialInstance 集成 | **Rendering** |
 | **Logic Systems** | `architecture-logic-systems` | System execution stages (FrameStart/Update/PostUpdate), dependencies, TransformSystem/LayoutSystem/AnimationSystem flow | **System Scheduling** |
 | **Engine Package** | `arch-engine-package` | Engine 包架构设计，3D 渲染引擎入口，PBR/阴影/glTF/后处理 | **Engine 开发** |
+| **Engine Architecture Spec** | `arch-engine-architecture-spec` | Engine 包完整架构规格，组件状态矩阵，UBO 布局，开发路线图 | **Engine 规格** |
 
 **Key Architecture Patterns:**
 1. **Specification-First**: Interface → Implementation → Factory
@@ -120,6 +127,12 @@ related_ids: ["doc-standard", "constitution-core-runtime"]
 |----------|----|----|---------|----------|
 | **Scene-Resource Integration** | `strategy-scene-resource-integration` | ✅ Completed | Scene 与 ResourceManager 集成实施方案，包括 API 设计、生命周期管理、测试策略 | **Integration Reference** |
 | **Scene Architecture Refactoring** | `strategy-scene-refactoring` | 🚧 Draft | Scene 类重构为模块化架构（EntityManager, HierarchyManager, EventBus, ResourceFacade, Serializer） | **Refactoring Reference** |
+| **Lighting System** | `strategy-lighting-system` | 📋 Spec | 多光源系统技术规格，支持 8 个光源，PBR 光照计算 | **Engine 光照** |
+| **Shadow System** | `strategy-shadow-system` | 📋 Spec | 阴影系统技术规格，ShadowPass，CSM 级联阴影，PCF 软阴影 | **Engine 阴影** |
+| **glTF Loader** | `strategy-gltf-loader` | 📋 Spec | glTF 2.0 加载器技术规格，GLB 解析，场景构建 | **Engine 资源** |
+| **Camera Controller** | `strategy-camera-controller` | 📋 Spec | 相机控制器技术规格，OrbitController，FPSController | **Engine 交互** |
+| **Post Processing** | `strategy-post-processing` | 📋 Spec | 后处理框架技术规格，Bloom，Tone Mapping，FXAA | **Engine 后处理** |
+| **Render Optimization** | `strategy-render-optimization` | 📋 Spec | 渲染优化系统技术规格，视锥剔除，批处理，实例化，LOD | **Engine 优化** |
 
 ---
 
@@ -148,7 +161,13 @@ llmdoc/
 │
 ├── agent/                            ← Strategic Memory
 │   ├── strategy-scene-resource-integration.md  ← Scene + ResourceManager 集成 (✅ Completed)
-│   └── strategy-scene-refactoring.md           ← Scene 重构策略 (🚧 Draft)
+│   ├── strategy-scene-refactoring.md           ← Scene 重构策略 (🚧 Draft)
+│   ├── strategy-lighting-system.md             ← 多光源系统规格 (📋 Spec)
+│   ├── strategy-shadow-system.md               ← 阴影系统规格 (📋 Spec)
+│   ├── strategy-gltf-loader.md                 ← glTF 加载器规格 (📋 Spec)
+│   ├── strategy-camera-controller.md           ← 相机控制器规格 (📋 Spec)
+│   ├── strategy-post-processing.md             ← 后处理框架规格 (📋 Spec)
+│   └── strategy-render-optimization.md         ← 渲染优化规格 (📋 Spec)
 │
 └── guides/                           ← Procedures
     └── doc-standard.md               ← Documentation standards
@@ -237,6 +256,12 @@ Application Packages (Usage)
 | **Implement shader compilation** | `architecture-shader-compiler` | `architecture-scene-systems`, `ref-specification` |
 | **Integrate Scene + Resources** | `strategy-scene-resource-integration` | `architecture-scene-systems`, `architecture-resources` |
 | **Develop Engine package** | `arch-engine-package` | `arch-core-unified`, `architecture-shader-compiler` |
+| **Implement lighting system** | `strategy-lighting-system` | `arch-engine-architecture-spec` |
+| **Implement shadow system** | `strategy-shadow-system` | `strategy-lighting-system` |
+| **Implement glTF loader** | `strategy-gltf-loader` | `architecture-resources` |
+| **Implement camera controls** | `strategy-camera-controller` | `arch-engine-architecture-spec` |
+| **Implement post-processing** | `strategy-post-processing` | `arch-engine-architecture-spec` |
+| **Optimize rendering** | `strategy-render-optimization` | `arch-engine-architecture-spec` |
 
 ---
 

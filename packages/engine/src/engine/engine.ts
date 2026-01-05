@@ -194,8 +194,13 @@ export class Engine {
     });
     this.scene.world.addComponent(cameraEntity, LocalTransform, localTransform);
 
-    // Add WorldTransform component (required by CameraSystem)
-    this.scene.world.addComponent(cameraEntity, WorldTransform, new WorldTransform());
+    // Add WorldTransform component (initialized from LocalTransform)
+    const worldTransform = WorldTransform.fromData({
+      position: { x: 0, y: 2, z: 5 },
+      rotation: { x: 0, y: 0, z: 0, w: 1 },
+      scale: { x: 1, y: 1, z: 1 },
+    });
+    this.scene.world.addComponent(cameraEntity, WorldTransform, worldTransform);
 
     // Add Camera component
     const camera = new Camera();
@@ -506,8 +511,13 @@ export class Engine {
     });
     this.scene.world.addComponent(cameraEntity, LocalTransform, localTransform);
 
-    // Add WorldTransform component
-    this.scene.world.addComponent(cameraEntity, WorldTransform, new WorldTransform());
+    // Add WorldTransform component (initialized from LocalTransform)
+    const worldTransform = WorldTransform.fromData({
+      position: { x: pos[0], y: pos[1], z: pos[2] },
+      rotation: { x: 0, y: 0, z: 0, w: 1 },
+      scale: { x: 1, y: 1, z: 1 },
+    });
+    this.scene.world.addComponent(cameraEntity, WorldTransform, worldTransform);
 
     // Add Camera component
     const camera = new Camera();
@@ -633,8 +643,15 @@ export class Engine {
     });
     this.scene.world.addComponent(entity, LocalTransform, localTransform);
 
-    // 4. Add WorldTransform component
-    this.scene.world.addComponent(entity, WorldTransform, new WorldTransform());
+    // 4. Add WorldTransform component (initialized from LocalTransform)
+    // Note: In a proper architecture, TransformSystem would sync LocalTransform -> WorldTransform
+    // For now, we initialize WorldTransform with the same values as LocalTransform
+    const worldTransform = WorldTransform.fromData({
+      position: { x: pos[0], y: pos[1], z: pos[2] },
+      rotation: { x: rot[0], y: rot[1], z: rot[2], w: rot[3] },
+      scale: { x: scl[0], y: scl[1], z: scl[2] },
+    });
+    this.scene.world.addComponent(entity, WorldTransform, worldTransform);
 
     // 5. Add Visible component
     const visible = new Visible();
