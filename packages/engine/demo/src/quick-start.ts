@@ -183,12 +183,58 @@ async function main(): Promise<void> {
     });
     console.info('[Engine Quick Start] Cylinder Mesh entity created:', cylinderMesh);
 
-    // 6. Animation state
+    // ==================== 多光源系统演示 ====================
+    // 6. Create multiple lights to demonstrate the lighting system
+
+    // 6.1 方向光 - 模拟太阳光
+    const sunLight = engine.createDirectionalLight({
+      direction: [-0.5, -1, -0.5],
+      color: [1.0, 0.95, 0.9], // 暖白色
+      intensity: 1.0,
+    });
+    console.info('[Engine Quick Start] Directional Light (Sun) created:', sunLight);
+
+    // 6.2 点光源 - 红色
+    const redPointLight = engine.createPointLight({
+      position: [3, 2, 0],
+      color: [1.0, 0.3, 0.3], // 红色
+      intensity: 2.0,
+      range: 8,
+      decay: 2,
+    });
+    console.info('[Engine Quick Start] Point Light (Red) created:', redPointLight);
+
+    // 6.3 点光源 - 蓝色
+    const bluePointLight = engine.createPointLight({
+      position: [-3, 2, 0],
+      color: [0.3, 0.3, 1.0], // 蓝色
+      intensity: 2.0,
+      range: 8,
+      decay: 2,
+    });
+    console.info('[Engine Quick Start] Point Light (Blue) created:', bluePointLight);
+
+    // 6.4 聚光灯 - 白色，照向中心
+    const spotLight = engine.createSpotLight({
+      position: [0, 5, 3],
+      direction: [0, -0.8, -0.6],
+      color: [1.0, 1.0, 1.0], // 白色
+      intensity: 3.0,
+      range: 15,
+      innerAngle: Math.PI / 8, // 22.5 度
+      outerAngle: Math.PI / 5, // 36 度
+      decay: 2,
+    });
+    console.info('[Engine Quick Start] Spot Light created:', spotLight);
+
+    console.info('[Engine Quick Start] Multi-light system initialized with 4 lights');
+
+    // 7. Animation state
     let time = 0;
     const cameraRadius = 6;
     const cameraHeight = 3;
 
-    // 7. Set up callbacks for the render loop
+    // 8. Set up callbacks for the render loop
     engine.onBeforeRender = (deltaTime: number) => {
       time += deltaTime;
 
@@ -234,6 +280,21 @@ async function main(): Promise<void> {
         boxWorldTransform.rotation.w = boxTransform.rotation.w;
       }
 
+      // Animate point lights (演示动态光源)
+      // 红色点光源绕 Y 轴旋转
+      const redLightTransform = engine.scene.world.getComponent(redPointLight, WorldTransform);
+      if (redLightTransform) {
+        redLightTransform.position.x = Math.sin(time * 0.5) * 3;
+        redLightTransform.position.z = Math.cos(time * 0.5) * 3;
+      }
+
+      // 蓝色点光源反向旋转
+      const blueLightTransform = engine.scene.world.getComponent(bluePointLight, WorldTransform);
+      if (blueLightTransform) {
+        blueLightTransform.position.x = Math.sin(-time * 0.5) * 3;
+        blueLightTransform.position.z = Math.cos(-time * 0.5) * 3;
+      }
+
       // Update stats
       updateStats(deltaTime);
     };
@@ -242,11 +303,11 @@ async function main(): Promise<void> {
       // Post-render logic (if needed)
     };
 
-    // 8. Start the render loop
+    // 9. Start the render loop
     console.info('[Engine Quick Start] Starting render loop...');
     engine.start();
 
-    // 9. Handle cleanup on ESC key
+    // 10. Handle cleanup on ESC key
     window.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         console.info('[Engine Quick Start] Stopping...');
@@ -256,7 +317,7 @@ async function main(): Promise<void> {
       }
     });
 
-    // 10. Log success
+    // 11. Log success
     console.info('[Engine Quick Start] Initialized successfully!');
     console.info('[Engine Quick Start] Press ESC to exit');
 
@@ -264,6 +325,7 @@ async function main(): Promise<void> {
     console.info(`
 ╔══════════════════════════════════════════════════════════════╗
 ║                    Engine Quick Start Demo                   ║
+║                  (Multi-Light System Demo)                   ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Created Resources:                                          ║
 ║  ├─ PBRMaterial (red, metallic=0.5, roughness=0.3)          ║
@@ -274,15 +336,21 @@ async function main(): Promise<void> {
 ║  └─ CylinderGeometry (r=0.5, h=1)                           ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Created Mesh Entities:                                      ║
-║  ├─ RedBox (center)                                          ║
+║  ├─ RedBox (center, rotating)                                ║
 ║  ├─ WhiteSphere (right)                                      ║
 ║  ├─ RedPlane (floor)                                         ║
 ║  └─ WhiteCylinder (left)                                     ║
 ╠══════════════════════════════════════════════════════════════╣
+║  Created Light Entities (Multi-Light System):                ║
+║  ├─ DirectionalLight (Sun, warm white)                       ║
+║  ├─ PointLight (Red, orbiting)                               ║
+║  ├─ PointLight (Blue, orbiting reverse)                      ║
+║  └─ SpotLight (White, from above)                            ║
+╠══════════════════════════════════════════════════════════════╣
 ║  Engine Architecture:                                        ║
 ║  ├─ device: IRHIDevice (WebGLDevice)                        ║
 ║  ├─ scene: Scene (from @maxellabs/core)                     ║
-║  ├─ renderer: ForwardRenderer                                ║
+║  ├─ renderer: SimpleWebGLRenderer (Multi-Light PBR)         ║
 ║  └─ resources: ResourceManager                               ║
 ╚══════════════════════════════════════════════════════════════╝
     `);

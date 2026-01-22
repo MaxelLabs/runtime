@@ -16,7 +16,7 @@
 import type { World } from '@maxellabs/core';
 import { MSpec, Camera, CameraTarget, WorldTransform } from '@maxellabs/core';
 import { Renderer, type RendererConfig, type RenderContext } from '@maxellabs/core';
-import { MeshInstance, MaterialInstance } from '../components';
+import { MeshInstance, MaterialInstance, Light } from '../components';
 import { PBRMaterial } from '../materials/PBR-material';
 import { UnlitMaterial } from '../materials/unlit-material';
 import type { Vector3Like, QuaternionLike } from '@maxellabs/specification';
@@ -26,6 +26,16 @@ import {
   BASIC_VERTEX_SHADER_100,
   BASIC_FRAGMENT_SHADER_100,
 } from './shaders';
+import {
+  MAX_LIGHTS,
+  LIGHTS_UBO_SIZE,
+  createLightsUBOData,
+  updateLightsUBO,
+  packLightsUBO,
+  type LightsUBOData,
+  type LightWithTransform,
+} from './lights-ubo';
+import { FrustumCuller, type CullingStats } from '../utils/frustum-culler';
 
 /**
  * SimpleWebGLRenderer 配置
@@ -50,6 +60,11 @@ const MATRICES_UBO_SIZE = 256;
 const MATERIAL_UBO_SIZE = 80;
 
 /**
+ * 光照 UBO binding point
+ */
+const LIGHTS_UBO_BINDING = 2;
+
+/**
  * SimpleWebGLRenderer - 基于 RHI 封装的简化渲染器
  */
 export class SimpleWebGLRenderer extends Renderer {
@@ -72,14 +87,29 @@ export class SimpleWebGLRenderer extends Renderer {
   /** 绑定组布局 */
   private matricesBindGroupLayout: MSpec.IRHIBindGroupLayout | null = null;
   private materialBindGroupLayout: MSpec.IRHIBindGroupLayout | null = null;
+  private lightsBindGroupLayout: MSpec.IRHIBindGroupLayout | null = null;
 
   /** Uniform 缓冲区 */
   private matricesBuffer: MSpec.IRHIBuffer | null = null;
   private materialBuffer: MSpec.IRHIBuffer | null = null;
+  private lightsBuffer: MSpec.IRHIBuffer | null = null;
 
   /** 绑定组 */
   private matricesBindGroup: MSpec.IRHIBindGroup | null = null;
   private materialBindGroup: MSpec.IRHIBindGroup | null = null;
+  private lightsBindGroup: MSpec.IRHIBindGroup | null = null;
+
+  /** 光照 UBO 数据 */
+  private lightsUBOData: LightsUBOData;
+
+  /** 视锥剔除器 */
+  private frustumCuller: FrustumCuller;
+
+  /** 是否启用视锥剔除 */
+  private cullingEnabled: boolean = true;
+
+  /** 上一帧的剔除统计 */
+  private lastCullingStats: CullingStats | null = null;
 
   /** 背景颜色 */
   private backgroundColor: [number, number, number, number];
@@ -101,6 +131,12 @@ export class SimpleWebGLRenderer extends Renderer {
     this.rhiDevice = config.device as MSpec.IRHIDevice;
     this.isWebGL2 = this.rhiDevice.info.backend === MSpec.RHIBackend.WebGL2;
     this.backgroundColor = config.backgroundColor ?? [0.1, 0.1, 0.15, 1.0];
+
+    // 初始化光照 UBO 数据
+    this.lightsUBOData = createLightsUBOData();
+
+    // 初始化视锥剔除器
+    this.frustumCuller = new FrustumCuller();
 
     // 初始化 RHI 资源
     this.initRHIResources();
@@ -172,6 +208,14 @@ export class SimpleWebGLRenderer extends Renderer {
       label: 'MaterialUBO',
     });
 
+    // 光照 UBO (binding 2): 多光源数据
+    this.lightsBuffer = this.rhiDevice.createBuffer({
+      size: LIGHTS_UBO_SIZE,
+      usage: MSpec.RHIBufferUsage.UNIFORM,
+      hint: 'dynamic',
+      label: 'LightsUBO',
+    });
+
     console.info('[SimpleWebGLRenderer] Uniform buffers created');
   }
 
@@ -208,9 +252,22 @@ export class SimpleWebGLRenderer extends Renderer {
       'MaterialBindGroupLayout'
     );
 
+    // 光照绑定组布局 (group 2)
+    this.lightsBindGroupLayout = this.rhiDevice.createBindGroupLayout(
+      [
+        {
+          binding: LIGHTS_UBO_BINDING, // UBO binding point 2
+          visibility: MSpec.RHIShaderStage.FRAGMENT,
+          buffer: { type: 'uniform' },
+          name: 'Lights', // 必须匹配着色器中的 uniform block 名称
+        } as MSpec.IRHIBindGroupLayoutEntry & { name: string },
+      ],
+      'LightsBindGroupLayout'
+    );
+
     // 管线布局
     this.pipelineLayout = this.rhiDevice.createPipelineLayout(
-      [this.matricesBindGroupLayout, this.materialBindGroupLayout],
+      [this.matricesBindGroupLayout, this.materialBindGroupLayout, this.lightsBindGroupLayout],
       'BasicPipelineLayout'
     );
 
@@ -221,7 +278,7 @@ export class SimpleWebGLRenderer extends Renderer {
    * 创建绑定组
    */
   private createBindGroups(): void {
-    if (!this.matricesBindGroupLayout || !this.materialBindGroupLayout) {
+    if (!this.matricesBindGroupLayout || !this.materialBindGroupLayout || !this.lightsBindGroupLayout) {
       throw new Error('[SimpleWebGLRenderer] Bind group layouts not initialized');
     }
 
@@ -247,6 +304,18 @@ export class SimpleWebGLRenderer extends Renderer {
         },
       ],
       'MaterialBindGroup'
+    );
+
+    // 光照绑定组 (binding point 2)
+    this.lightsBindGroup = this.rhiDevice.createBindGroup(
+      this.lightsBindGroupLayout,
+      [
+        {
+          binding: LIGHTS_UBO_BINDING, // 与 layout 中的 binding 保持一致
+          resource: { buffer: this.lightsBuffer!, offset: 0, size: LIGHTS_UBO_SIZE },
+        },
+      ],
+      'LightsBindGroup'
     );
 
     console.info('[SimpleWebGLRenderer] Bind groups created');
@@ -439,6 +508,29 @@ export class SimpleWebGLRenderer extends Renderer {
   }
 
   /**
+   * 设置是否启用视锥剔除
+   * @param enabled 是否启用
+   */
+  setCullingEnabled(enabled: boolean): void {
+    this.cullingEnabled = enabled;
+    this.frustumCuller.setEnabled(enabled);
+  }
+
+  /**
+   * 获取是否启用视锥剔除
+   */
+  isCullingEnabled(): boolean {
+    return this.cullingEnabled;
+  }
+
+  /**
+   * 获取上一帧的剔除统计
+   */
+  getCullingStats(): CullingStats | null {
+    return this.lastCullingStats;
+  }
+
+  /**
    * 渲染所有 MeshInstance 实体
    */
   private renderMeshInstances(ctx: RenderContext, renderPass: MSpec.IRHIRenderPass, aspect: number): void {
@@ -464,10 +556,25 @@ export class SimpleWebGLRenderer extends Renderer {
       cameraPosition = { x: 0, y: 2, z: 5 };
     }
 
+    // 计算 ViewProjection 矩阵并更新视锥剔除器
+    if (this.cullingEnabled) {
+      const vpMatrix = this.multiplyMatrices(viewMatrix, projectionMatrix);
+      this.frustumCuller.setFrustum(this.float32ArrayToMatrix4Like(vpMatrix));
+    }
+
+    // 收集场景中的光源并更新光照 UBO
+    const lights = this.collectLights(world);
+    this.updateLightsUBOBuffer(lights);
+
     // 查询所有带有 MeshInstance、MaterialInstance 和 WorldTransform 的实体
     const query = world.query({
       all: [MeshInstance, MaterialInstance, WorldTransform],
     });
+
+    // 剔除统计
+    let totalTested = 0;
+    let visible = 0;
+    let culled = 0;
 
     query.forEach((_entity, components) => {
       const meshInstance = components[0] as MeshInstance;
@@ -478,8 +585,34 @@ export class SimpleWebGLRenderer extends Renderer {
         return;
       }
 
+      totalTested++;
+
       // 从 WorldTransform 构建模型矩阵
       const modelMatrix = this.buildModelMatrix(worldTransform);
+
+      // 视锥剔除测试
+      if (this.cullingEnabled && meshInstance.localBounds) {
+        // 更新世界空间包围盒
+        meshInstance.localBounds.updateWorldBounds(this.float32ArrayToMatrix4Like(modelMatrix));
+
+        // 获取世界空间包围盒并测试
+        const worldBox = meshInstance.localBounds.worldBox;
+        const isVisible = this.frustumCuller.isBoxVisible({
+          min: { x: worldBox.min.x, y: worldBox.min.y, z: worldBox.min.z },
+          max: { x: worldBox.max.x, y: worldBox.max.y, z: worldBox.max.z },
+        });
+
+        meshInstance.culled = !isVisible;
+
+        if (!isVisible) {
+          culled++;
+          return; // 跳过被剔除的物体
+        }
+      } else {
+        meshInstance.culled = false;
+      }
+
+      visible++;
 
       // 更新矩阵 UBO
       this.updateMatricesUBO(modelMatrix, viewMatrix, projectionMatrix);
@@ -493,6 +626,9 @@ export class SimpleWebGLRenderer extends Renderer {
       }
       if (this.materialBindGroup) {
         renderPass.setBindGroup(1, this.materialBindGroup);
+      }
+      if (this.lightsBindGroup) {
+        renderPass.setBindGroup(2, this.lightsBindGroup);
       }
 
       // 设置顶点缓冲区
@@ -511,8 +647,63 @@ export class SimpleWebGLRenderer extends Renderer {
       }
     });
 
+    // 更新剔除统计
+    this.lastCullingStats = {
+      totalTested,
+      visible,
+      culled,
+      fullyInside: 0, // 简化版本不区分完全在内部
+    };
+
     // 清理查询
     world.removeQuery(query);
+  }
+
+  // ==================== 光照相关方法 ====================
+
+  /**
+   * 收集场景中的所有光源
+   * @param world ECS World
+   * @returns 光源列表（最多 MAX_LIGHTS 个）
+   */
+  private collectLights(world: World): LightWithTransform[] {
+    const lights: LightWithTransform[] = [];
+
+    const query = world.query({
+      all: [Light, WorldTransform],
+    });
+
+    query.forEach((_entity, components) => {
+      if (lights.length >= MAX_LIGHTS) {
+        return;
+      }
+
+      const light = components[0] as Light;
+      const transform = components[1] as WorldTransform;
+
+      lights.push({ light, transform });
+    });
+
+    world.removeQuery(query);
+    return lights;
+  }
+
+  /**
+   * 更新光照 UBO 缓冲区
+   * @param lights 光源列表
+   */
+  private updateLightsUBOBuffer(lights: LightWithTransform[]): void {
+    if (!this.lightsBuffer) {
+      return;
+    }
+
+    // 更新 UBO 数据
+    updateLightsUBO(this.lightsUBOData, lights);
+
+    // 打包并上传到 GPU
+    const packedData = packLightsUBO(this.lightsUBOData);
+    // 使用 buffer 属性获取底层 ArrayBuffer
+    this.lightsBuffer.update(packedData.buffer as ArrayBuffer);
   }
 
   // ==================== Camera 相关方法 ====================
@@ -856,6 +1047,54 @@ export class SimpleWebGLRenderer extends Renderer {
     ]);
   }
 
+  /**
+   * 矩阵乘法 (A * B)
+   * 用于计算 ViewProjection 矩阵
+   */
+  private multiplyMatrices(a: Float32Array, b: Float32Array): Float32Array {
+    const result = new Float32Array(16);
+
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 4; j++) {
+        let sum = 0;
+        for (let k = 0; k < 4; k++) {
+          // 列主序: element[col][row] = array[col * 4 + row]
+          sum += a[k * 4 + i] * b[j * 4 + k];
+        }
+        result[j * 4 + i] = sum;
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * 将 Float32Array 转换为 Matrix4Like
+   * 列主序 Float32Array -> Row-Major Matrix4Like
+   */
+  private float32ArrayToMatrix4Like(arr: Float32Array): MSpec.Matrix4Like {
+    // Float32Array 是列主序，Matrix4Like 是 row-major 命名
+    // arr[0-3] = column 0, arr[4-7] = column 1, etc.
+    return {
+      m00: arr[0],
+      m01: arr[4],
+      m02: arr[8],
+      m03: arr[12],
+      m10: arr[1],
+      m11: arr[5],
+      m12: arr[9],
+      m13: arr[13],
+      m20: arr[2],
+      m21: arr[6],
+      m22: arr[10],
+      m23: arr[14],
+      m30: arr[3],
+      m31: arr[7],
+      m32: arr[11],
+      m33: arr[15],
+    };
+  }
+
   // 向量工具
   private normalize(v: number[]): number[] {
     const len = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
@@ -880,10 +1119,13 @@ export class SimpleWebGLRenderer extends Renderer {
     this.pipelineLayout?.destroy();
     this.matricesBindGroupLayout?.destroy();
     this.materialBindGroupLayout?.destroy();
+    this.lightsBindGroupLayout?.destroy();
     this.matricesBindGroup?.destroy();
     this.materialBindGroup?.destroy();
+    this.lightsBindGroup?.destroy();
     this.matricesBuffer?.destroy();
     this.materialBuffer?.destroy();
+    this.lightsBuffer?.destroy();
     this.colorTexture?.destroy();
     this.depthTexture?.destroy();
 
@@ -893,10 +1135,13 @@ export class SimpleWebGLRenderer extends Renderer {
     this.pipelineLayout = null;
     this.matricesBindGroupLayout = null;
     this.materialBindGroupLayout = null;
+    this.lightsBindGroupLayout = null;
     this.matricesBindGroup = null;
     this.materialBindGroup = null;
+    this.lightsBindGroup = null;
     this.matricesBuffer = null;
     this.materialBuffer = null;
+    this.lightsBuffer = null;
     this.colorTexture = null;
     this.depthTexture = null;
 

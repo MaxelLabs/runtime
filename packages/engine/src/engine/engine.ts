@@ -47,8 +47,9 @@ import { SimpleWebGLRenderer } from '../renderers/simple-webgl-renderer';
 import { PBRMaterial, type PBRMaterialConfig } from '../materials/PBR-material';
 import { UnlitMaterial, type UnlitMaterialConfig } from '../materials/unlit-material';
 import { BoxGeometry, SphereGeometry, PlaneGeometry, CylinderGeometry, type GeometryData } from '../primitives';
-import { MeshInstance, MaterialInstance, STANDARD_VERTEX_LAYOUT } from '../components';
+import { MeshInstance, MaterialInstance, STANDARD_VERTEX_LAYOUT, Light, LightType } from '../components';
 import type { MaterialType } from '../components';
+import { GLTFLoader, type GLTFResult, type GLTFLoadOptions } from '../loaders';
 
 /**
  * Engine 类
@@ -176,6 +177,9 @@ export class Engine {
     this.scene.world.registerComponent(MeshInstance);
     this.scene.world.registerComponent(MaterialInstance);
     this.scene.world.registerComponent(Visible);
+
+    // Register Light component
+    this.scene.world.registerComponent(Light);
   }
 
   /**
@@ -547,11 +551,44 @@ export class Engine {
    * @param config Light configuration
    * @returns Light entity ID
    *
-   * @remarks
-   * TODO: Implement when Light component is available
+   * @example
+   * ```typescript
+   * const light = engine.createDirectionalLight({
+   *   direction: [-1, -1, -1],
+   *   color: [1, 1, 1],
+   *   intensity: 1
+   * });
+   * ```
    */
-  createDirectionalLight(_config?: unknown): unknown {
-    throw new Error('[Engine] createDirectionalLight not implemented yet');
+  createDirectionalLight(config?: {
+    direction?: [number, number, number];
+    color?: [number, number, number];
+    intensity?: number;
+    castShadow?: boolean;
+  }): EntityId {
+    const entity = this.scene.createEntity('DirectionalLight');
+
+    // Add Light component
+    const light = Light.fromData({
+      lightType: LightType.DIRECTIONAL,
+      direction: config?.direction
+        ? { x: config.direction[0], y: config.direction[1], z: config.direction[2] }
+        : { x: 0, y: -1, z: 0 },
+      color: config?.color ?? [1, 1, 1],
+      intensity: config?.intensity ?? 1,
+      castShadow: config?.castShadow ?? false,
+    });
+    this.scene.world.addComponent(entity, Light, light);
+
+    // Add WorldTransform component (position doesn't matter for directional light)
+    const worldTransform = WorldTransform.fromData({
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { x: 0, y: 0, z: 0, w: 1 },
+      scale: { x: 1, y: 1, z: 1 },
+    });
+    this.scene.world.addComponent(entity, WorldTransform, worldTransform);
+
+    return entity;
   }
 
   /**
@@ -559,11 +596,106 @@ export class Engine {
    * @param config Light configuration
    * @returns Light entity ID
    *
-   * @remarks
-   * TODO: Implement when Light component is available
+   * @example
+   * ```typescript
+   * const light = engine.createPointLight({
+   *   position: [0, 2, 0],
+   *   color: [1, 0.8, 0.6],
+   *   intensity: 2,
+   *   range: 10
+   * });
+   * ```
    */
-  createPointLight(_config?: unknown): unknown {
-    throw new Error('[Engine] createPointLight not implemented yet');
+  createPointLight(config?: {
+    position?: [number, number, number];
+    color?: [number, number, number];
+    intensity?: number;
+    range?: number;
+    decay?: number;
+    castShadow?: boolean;
+  }): EntityId {
+    const entity = this.scene.createEntity('PointLight');
+
+    // Add Light component
+    const light = Light.fromData({
+      lightType: LightType.POINT,
+      color: config?.color ?? [1, 1, 1],
+      intensity: config?.intensity ?? 1,
+      range: config?.range ?? 10,
+      decay: config?.decay ?? 2,
+      castShadow: config?.castShadow ?? false,
+    });
+    this.scene.world.addComponent(entity, Light, light);
+
+    // Add WorldTransform component
+    const pos = config?.position ?? [0, 0, 0];
+    const worldTransform = WorldTransform.fromData({
+      position: { x: pos[0], y: pos[1], z: pos[2] },
+      rotation: { x: 0, y: 0, z: 0, w: 1 },
+      scale: { x: 1, y: 1, z: 1 },
+    });
+    this.scene.world.addComponent(entity, WorldTransform, worldTransform);
+
+    return entity;
+  }
+
+  /**
+   * Create spot light entity
+   * @param config Light configuration
+   * @returns Light entity ID
+   *
+   * @example
+   * ```typescript
+   * const light = engine.createSpotLight({
+   *   position: [0, 5, 0],
+   *   direction: [0, -1, 0],
+   *   color: [1, 1, 1],
+   *   intensity: 5,
+   *   range: 20,
+   *   innerAngle: Math.PI / 6,
+   *   outerAngle: Math.PI / 4
+   * });
+   * ```
+   */
+  createSpotLight(config?: {
+    position?: [number, number, number];
+    direction?: [number, number, number];
+    color?: [number, number, number];
+    intensity?: number;
+    range?: number;
+    innerAngle?: number;
+    outerAngle?: number;
+    decay?: number;
+    castShadow?: boolean;
+  }): EntityId {
+    const entity = this.scene.createEntity('SpotLight');
+
+    // Add Light component
+    const light = Light.fromData({
+      lightType: LightType.SPOT,
+      direction: config?.direction
+        ? { x: config.direction[0], y: config.direction[1], z: config.direction[2] }
+        : { x: 0, y: -1, z: 0 },
+      color: config?.color ?? [1, 1, 1],
+      intensity: config?.intensity ?? 1,
+      range: config?.range ?? 10,
+      innerAngle: config?.innerAngle ?? Math.PI / 6,
+      outerAngle: config?.outerAngle ?? Math.PI / 4,
+      decay: config?.decay ?? 2,
+      castShadow: config?.castShadow ?? false,
+    });
+    this.scene.world.addComponent(entity, Light, light);
+
+    // Add WorldTransform component
+    const pos = config?.position ?? [0, 0, 0];
+    const worldTransform = WorldTransform.fromData({
+      position: { x: pos[0], y: pos[1], z: pos[2] },
+      rotation: { x: 0, y: 0, z: 0, w: 1 },
+      scale: { x: 1, y: 1, z: 1 },
+    });
+    this.scene.world.addComponent(entity, WorldTransform, worldTransform);
+
+    return entity;
   }
 
   /**
@@ -624,6 +756,9 @@ export class Engine {
       meshInstance.indexBuffer = indexBuffer;
       meshInstance.indexCount = geometry.indices.length;
     }
+
+    // Calculate local bounding box from positions (for frustum culling)
+    meshInstance.setLocalBoundsFromPositions(geometry.positions);
 
     this.scene.world.addComponent(entity, MeshInstance, meshInstance);
 
@@ -704,18 +839,30 @@ export class Engine {
     return data;
   }
 
-  // -------------------- Resource Loading (TODO) --------------------
+  // -------------------- Resource Loading --------------------
 
   /**
    * Load glTF model
-   * @param url Model URL
-   * @returns glTF result
+   * @param url Model URL (.gltf or .glb)
+   * @param options Load options
+   * @returns GLTFResult containing meshes, materials, textures, and scene hierarchy
    *
-   * @remarks
-   * TODO: Implement when GLTFLoader is available
+   * @example
+   * ```typescript
+   * // Load a glTF model
+   * const result = await engine.loadGLTF('/models/character.glb');
+   *
+   * // Access loaded data
+   * console.log('Meshes:', result.meshes.size);
+   * console.log('Materials:', result.materials.size);
+   *
+   * // The default scene root entity
+   * console.log('Scene root:', result.scene);
+   * ```
    */
-  async loadGLTF(_url: string): Promise<unknown> {
-    throw new Error('[Engine] loadGLTF not implemented yet');
+  async loadGLTF(url: string, options?: GLTFLoadOptions): Promise<GLTFResult> {
+    const loader = new GLTFLoader(this.device, this.scene, options?.config);
+    return loader.load(url, options?.onProgress);
   }
 
   /**

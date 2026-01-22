@@ -11,10 +11,12 @@
  * - **直接持有 GPU 资源**: 避免每帧通过 ResourceManager 查找
  * - **与 GeometryData 配合**: GeometryData 是 CPU 数据，MeshInstance 是 GPU 数据
  * - **支持动态更新**: 可以替换 GPU 缓冲区实现动态网格
+ * - **包围盒支持**: 用于视锥剔除优化
  */
 
 import type { IRHIBuffer, IRHIRenderPipeline } from '@maxellabs/specification';
 import { Component } from '@maxellabs/core';
+import { BoundingBox } from '../utils/bounding-box';
 
 /**
  * MeshInstance 组件 - 存储 GPU 网格资源
@@ -22,6 +24,7 @@ import { Component } from '@maxellabs/core';
  * @remarks
  * 此组件由 Engine.createMesh() 创建并添加到实体上。
  * ForwardRenderer 在渲染时读取此组件获取 GPU 缓冲区。
+ * 包含本地空间包围盒，用于视锥剔除优化。
  */
 export class MeshInstance extends Component {
   /** 顶点缓冲区 */
@@ -45,6 +48,25 @@ export class MeshInstance extends Component {
   /** 关联的渲染管线（缓存，避免重复创建） */
   pipeline: IRHIRenderPipeline | null = null;
 
+  /** 本地空间包围盒（用于视锥剔除） */
+  localBounds: BoundingBox | null = null;
+
+  /** 是否被视锥剔除（每帧由渲染器更新） */
+  culled: boolean = false;
+
+  /**
+   * 从顶点数据设置本地包围盒
+   * @param positions 顶点位置数组（每三个数为一个点）
+   */
+  setLocalBoundsFromPositions(positions: number[] | Float32Array): void {
+    if (!this.localBounds) {
+      this.localBounds = new BoundingBox();
+    }
+    // BoundingBox.setFromVertices 接受 number[]，需要转换 Float32Array
+    const posArray = positions instanceof Float32Array ? Array.from(positions) : positions;
+    this.localBounds.setFromVertices(posArray);
+  }
+
   /**
    * 克隆组件
    * @returns 克隆的 MeshInstance 实例
@@ -62,6 +84,8 @@ export class MeshInstance extends Component {
     cloned.primitiveType = this.primitiveType;
     cloned.vertexLayout = [...this.vertexLayout];
     cloned.pipeline = this.pipeline;
+    cloned.localBounds = this.localBounds?.clone() ?? null;
+    cloned.culled = false;
     return cloned;
   }
 

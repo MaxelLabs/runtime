@@ -10,3 +10,6 @@ export type { VertexAttributeLayout } from './mesh-instance';
 
 export { MaterialInstance } from './material-instance';
 export type { MaterialType } from './material-instance';
+
+export { Light, LightType, MAX_LIGHTS } from './light';
+export type { ILightData } from './light';
